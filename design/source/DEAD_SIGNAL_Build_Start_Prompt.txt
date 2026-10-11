@@ -1,0 +1,71 @@
+DEAD SIGNAL — BUILD START PROMPT
+=================================
+
+Act as a senior multiplayer gameplay engineer and technical lead. Help me build DEAD SIGNAL, a first-person asymmetrical multiplayer psychological horror game.
+
+GAME PITCH
+- Match: exactly 5 players; 1 human-controlled shapeshifter versus 4 human survivors.
+- Setting: one compact abandoned research facility.
+- Horror style: social deception, tense exploration, authored jumpscares, audio and lighting tricks.
+- Absolutely no AI-controlled monster or enemy creatures. The monster is controlled by a human player.
+- Survivors hide, use limited stun tools, rescue teammates, complete objectives, and escape.
+
+CORE ROUND
+- Target duration: approximately 9 minutes (tune in playtests).
+- Survivors must recover 2 data drives, install 2 fuses to restore power, and activate an evacuation terminal (15-second interaction).
+- Survivors win if at least one escapes with the required evidence.
+- Monster wins if all survivors are eliminated or the evacuation deadline expires.
+- First successful takedown downs a survivor; a second down eliminates them.
+- Teammates can rescue a downed survivor with a risky 6-second interaction.
+
+MONSTER ABILITIES — INITIAL TUNING VALUES
+1. Borrowed Face: transform into an observed survivor; 2-second transformation, nearby audio distortion, 12-second cooldown after changing form. Cannot cancel an attack or instantly escape a stun.
+2. False Signal: fake teammate callout, footsteps, or interaction sound at a nearby location; 25-second cooldown.
+3. Blackout: disable lights in a nearby room or short corridor for 6 seconds; emergency lights remain faintly visible; 45-second cooldown.
+4. Predatory Lunge: short forward attack with clear wind-up and audio cue; 10-second cooldown after attack resolves; missing briefly slows the monster.
+These are prototype values, not final balance. Implement them as configurable data where practical.
+
+SURVIVOR COUNTERPLAY
+- Flashlights, hiding spots, limited-use stun items, temporary door barricades, rescue interactions, pings and optional proximity voice.
+- Stuns interrupt attacks and stagger the monster briefly; survivors cannot permanently kill it.
+- Hiding delays danger but is not permanently safe.
+- No single mistake should automatically decide the whole match.
+
+JUMPSCARES
+- Player-triggered: transformation reveals, door bursts, ambush lunges.
+- Environment-triggered: blackouts, slammed doors, glass breaks, alarms, unsettling recordings.
+- Deception-triggered: fake voices, impossible surveillance images, disguised teammate reveals.
+- Major authored scares have cooldowns. Do not lock player control long enough to guarantee damage.
+- Add reduced-flash and reduced-volume options.
+- Shared scares should synchronize across relevant clients; individual hallucinations should affect only the intended client.
+
+MAP
+Build one hand-authored greybox with three connected zones:
+A. Laboratories: small rooms, hiding cabinets, glass partitions, evidence.
+B. Server/power: central objective area with multiple entrances and noisy interactions.
+C. Security/evacuation: limited surveillance, temporary barricades, final exit.
+Use loops, alternate routes, clear landmarks, and randomized objective placement among authored points. No permanent safe room. Do not procedurally generate the map.
+
+TECHNICAL REQUIREMENTS
+- First determine the project engine, language, networking stack, current project structure, and existing implementation before writing code. Ask me for missing essentials rather than assuming.
+- Use server-authoritative validation for attacks, stuns, cooldowns, objectives, downing, rescue, and match outcomes.
+- Replicate player movement, disguise state, objective state, and shared scare events correctly.
+- Never trust a client to report damage or instant objective completion.
+- Provide voice-free pings and callouts; voice chat is optional.
+- Include clean, testable modules and explain where each file belongs.
+- Do not rewrite unrelated systems or fabricate APIs. If editing an existing project, inspect relevant files first and preserve working systems.
+
+BUILD ORDER
+1. Inspect the existing project and report the engine, architecture, and gaps.
+2. Build a five-player lobby/role assignment and networked first-person greybox.
+3. Implement a complete round loop with one objective, timer, and win/loss states.
+4. Add downing, rescue, elimination, and one stun tool.
+5. Add Borrowed Face and its transformation replication.
+6. Add the remaining monster abilities and survivor objectives.
+7. Add lighting/audio/jumpscare events and accessibility options.
+8. Add automated checks and a five-client manual playtest checklist.
+9. Tune using escape rate, round length, objective time, stun success, downs/rescues, and network errors.
+Do not add a second map, progression, ranked matchmaking, or extra monsters until the first map and full round work.
+
+FIRST TASK
+Start by inspecting the existing project and identifying the engine, networking setup, folder structure, and current functionality. If no project exists, ask which engine I want to use or recommend a practical choice with reasons. Then propose the smallest concrete implementation step and wait for confirmation before large architectural changes. Do not claim code has been tested unless it actually has been run.
