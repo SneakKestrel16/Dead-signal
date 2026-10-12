@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (re-review: shot passes through Seized/Downed survivors; knobs completed)
+> **Last Updated**: 2026-10-11 (second re-review: friendly shocks at rescues and on objective holds accepted, playtest-gated, W7/W8)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -280,6 +280,8 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | A disguised monster (immune) or a survivor is hit again while already under the shock lock | Lock is not extended or restarted; charge spent; normal hit presentation | Rule 14 no-refresh: repeat hits cannot chain the lock, so `lock_share` and rule 17 hold in every form (second re-review B2) |
 | Stun fired while the monster is mid-transformation | Transformation cancelled; monster stunned | Source: transform cannot escape a stun |
 | A survivor stands between the shooter and the monster | The survivor is shocked; the monster is not stunned | The shot hits the first body in its path |
+| A defender fires past a Healthy survivor holding a rescue and clips them, or the monster sets that up | The rescuer is shocked: rooted, rescue cancelled (progress kept, decaying), taser locked | Accepted (second re-review W7): any rule that spares the rescuer or prefers the monster turns the shot into an identity test; playtest counts it |
+| A survivor deliberately shocks a teammate to reset their objective hold | Hold cancelled and reset as for any hit; feedback identical to a monster hit | Accepted (second re-review W8): bounded by 2 charges per survivor; a shock on a suspected disguise gives no information (Survivor Objectives rule 26 is the better test); playtest counts it |
 | A Seized or Downed survivor is between the shooter and the monster | The shot passes through them; the monster is stunned if valid | A held victim must never shield the monster (rule 8) |
 | Monster Searches the spot a survivor is entering | Entry completes first, then the search ejects | Search resolves on completion |
 | Survivor hides while being lunged at | Entry takes 1 s; the survivor is targetable until hidden | No instant escape |
@@ -427,6 +429,7 @@ keeps the monster permanently stuck.
 - [ ] A lunge whose path crosses a closed door stops at the door and resolves as a miss.
 - [ ] After a barricade breaks, a survivor cannot start a barricade on that door for 30 s.
 - [ ] A survivor hidden for 20 s makes the long-hide cue, then again every 5 s.
+- [ ] Playtest: across at least 10 rounds, Match Telemetry records friendly shocks, split into shocks on a survivor holding a rescue and shocks on a survivor holding an objective. The designer reviews both counts before Milestone 2; if either shows rescues failing or holds griefed, revisit rule 8 (W7) or rule 11 (W8).
 - [ ] Every value in Tuning Knobs is loaded from data, not hardcoded.
 
 ## Open Questions

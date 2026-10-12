@@ -457,9 +457,32 @@ constants:
     referenced_by:
       - design/gdd/downing-and-rescue.md
       - design/gdd/match-flow.md
-    value: 60   # (proposed) bleed-out itself decided 2026-10-12; pauses during an active rescue and while any other non-Downed player is within camp_pause_radius_m (10 m) and a survivor is Healthy
+    value: 60   # (proposed) bleed-out itself decided 2026-10-12; pauses during an active rescue; runs at camp_slow_mult (0.25) while any other non-Downed player is within camp_slow_radius_m (10 m) and a survivor is Healthy
     unit: seconds
     added: 2026-10-12
+    revised: ""
+
+  # (proposed) radius decided 2026-10-11 (cross-review blocker 3, re-review R1/R5)
+  - name: camp_slow_radius_m
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/systems-index.md
+    value: 10
+    unit: m
+    added: 2026-10-11
+    revised: ""
+
+  # (proposed) slow instead of freeze decided 2026-10-11 (second re-review W5)
+  - name: camp_slow_mult
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+    value: 0.25
+    unit: multiplier
+    added: 2026-10-11
     revised: ""
 
   - name: rescue_duration_s
@@ -523,6 +546,7 @@ constants:
       - design/gdd/monster-abilities.md
       - design/gdd/downing-and-rescue.md
       - design/gdd/borrowed-face.md
+      - design/gdd/pings-and-callouts.md
     value: 2.0
     unit: s
     added: 2026-10-12

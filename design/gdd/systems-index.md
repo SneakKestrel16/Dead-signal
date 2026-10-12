@@ -55,7 +55,7 @@ event. Only the owner writes it. Readers never change it.
 |-------|-------|---------|---------|
 | Transforming flag (target form, start time) | Borrowed Face (rule 8) | Pings & Callouts, Survivor Defense, all clients (rendering) | A transformation is in progress |
 | Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation) | Whether a survivor can be lunged |
-| Player positions and life states | Network Authority & Replication; life state from Downing, Rescue & Elimination | Downing, Rescue & Elimination (camp pause, rule 6), Survivor Objectives (zone counts) | Where each player is and whether they are Healthy, Seized, Downed or Eliminated |
+| Player positions and life states | Network Authority & Replication; life state from Downing, Rescue & Elimination | Downing, Rescue & Elimination (camping slow, rule 6), Survivor Objectives (zone counts) | Where each player is and whether they are Healthy, Seized, Downed or Eliminated |
 | Hidden and item-use state | Survivor Defense | Survivor Objectives (hidden survivors cannot interact or hold the zone) | Whether a survivor is hidden or using an item |
 | Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities | A player is under the taser action lock |
 
