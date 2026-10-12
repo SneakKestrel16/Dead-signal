@@ -19,3 +19,18 @@ Reviewed-Content-Hash: design/gdd/survivor-defense.md 20a6b2cb7e5ac5802c292a5901
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-11 (re-review after R2) — Verdict: NEEDS REVISION → APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 4
+Summary: Re-review after the cross-review re-review decisions in 55dd311 (one shock lock for all). Prior blocker is resolved, and the lock agrees with Pings rule 23 and Borrowed Face. A new blocker: a Seized victim could shield the monster from a rescuer's shot. Revised in the same session by designer decision, together with the recommended items, then approved.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Rule 8: the shot hits the first body, so a Seized victim next to the committing monster could block a rescue shot, and a shock on a Seized or Downed body was undefined. Resolved: the shot passes through Seized and Downed survivors and never shocks them; edge case and AC added.
+- [RECOMMENDED] Tuning Knobs: `stun_slow_mult`, `stun_item_reuse_s`, `hide_noise_radius_m`, the barricade removal hold and the long-hide cue interval were missing. Added; the last two named `barricade_remove_s` and `hide_cue_interval_s`.
+- [RECOMMENDED] Game Feel: "survivors keep full control" contradicted the friendly-shock root. Fixed.
+- [RECOMMENDED] Interactions/Dependencies: Borrowed Face listed as one-way although this doc reads the disguised and Transforming state; no Pings row for the lock. Fixed.
+- [RECOMMENDED] Header said Approved while the index said Needs Revision. Index now Approved.
+Reviewed-Content-Hash: design/gdd/survivor-defense.md ea8806b2c8819d7f3c1f40ae783f93900f792a50
+Reviewed-Content-Hash: design/registry/entities.yaml 2d26b4ae2b547500e777d53de28678ac521730f4

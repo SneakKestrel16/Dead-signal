@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (design review: friendly shock mirrors a disguised stun)
+> **Last Updated**: 2026-10-11 (re-review: shot passes through Seized/Downed survivors; knobs completed)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -85,6 +85,9 @@ tools, they're yours.
    `stun_aim_tolerance_deg` = 10° **(proposed)** so latency does not punish a
    fair aim. The shot hits the **first** body in its path (monster or survivor)
    with line of sight **(proposed)**; a body in front shields anyone behind it.
+   Seized and Downed survivors are not bodies for the shot: it passes through
+   them and never shocks them, so a victim held in a takedown never shields the
+   monster from a rescuer (designer decision, 2026-10-11).
    Each use consumes one cartridge whether or not it hits **(proposed)**. Reuse
    delay `stun_item_reuse_s` = 1 s **(proposed)**.
 9. **Valid target:** the monster in any form (disguised or true form) **(proposed)**. If the
@@ -160,7 +163,8 @@ tools, they're yours.
     sight), cannot interact with objectives, use items or carry out rescues, and
     has a restricted peek view.
 21. **Never permanently safe:** after `hide_quiet_s` = 20 s of continuous hiding,
-    the spot emits a faint periodic breathing/creak cue every 5 s **(proposed)**.
+    the spot emits a faint periodic breathing/creak cue every
+    `hide_cue_interval_s` = 5 s **(proposed)**.
 22. **Monster investigation:** the monster may Search any hiding spot by holding
     for `search_duration_s` = 1.5 s **(proposed)** in any form. If empty, nothing
     happens. If occupied, the survivor is ejected in front of the spot; the
@@ -179,7 +183,8 @@ tools, they're yours.
     survivor holding `barricade_duration_s` = 3 s **(proposed)** from either
     side. No consumable is needed **(proposed)**.
 26. A barricaded door cannot be opened by anyone until broken or removed. A
-    survivor can remove a barricade by holding for 1 s **(proposed)**.
+    survivor can remove a barricade by holding for `barricade_remove_s` = 1 s
+    **(proposed)**.
 27. **Breaking:** the monster holds Break on the door. The barricade breaks after
     `barricade_break_s` = 5 s of total break time **(proposed)**. Progress
     persists if the monster stops **(proposed)**. Each strike makes loud,
@@ -216,7 +221,8 @@ Closed.
 |--------|----|-----|
 | Monster Abilities | Lunge wind-up/flight state; Blackout zone | `MonsterStunned` (cancels lunge); doors block lunge path; hidden survivors not targetable |
 | Downing, Rescue & Elimination | Committing, Seized, Downed states | `MonsterStunned` cancels commit; Downed/Seized cannot use items or hide |
-| Borrowed Face | — | `MonsterStunned` (cancels transform; stun-while-disguised presentation owned there) |
+| Borrowed Face | Disguised form, Transforming flag (picks shock presentation and network event, rules 1 and 10) | `MonsterStunned` (cancels transform; stun-while-disguised presentation owned there); shock lock blocks starting a transformation |
+| Pings & Callouts | — | Shock/stun lock blocks pings and callouts (Pings rule 23) |
 | Facility Map | Hiding spot and barricadable door placement, backup switches | — |
 | Survivor Objectives | — | Hidden/item-using survivors cannot interact with objectives |
 | First-Person Controller & Interaction | Hold-to-interact pattern | Root and slow for friendly shock and stun |
@@ -269,6 +275,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Two survivors stun on the same tick | First processed applies the stun; second is "resisted" in true form, or a full shock presentation while disguised (rule 10); both charges consumed | Immunity applies from the first stun |
 | Stun fired while the monster is mid-transformation | Transformation cancelled; monster stunned | Source: transform cannot escape a stun |
 | A survivor stands between the shooter and the monster | The survivor is shocked; the monster is not stunned | The shot hits the first body in its path |
+| A Seized or Downed survivor is between the shooter and the monster | The shot passes through them; the monster is stunned if valid | A held victim must never shield the monster (rule 8) |
 | Monster Searches the spot a survivor is entering | Entry completes first, then the search ejects | Search resolves on completion |
 | Survivor hides while being lunged at | Entry takes 1 s; the survivor is targetable until hidden | No instant escape |
 | Downed survivor inside a hiding spot | Cannot happen; hiding requires Healthy. A hidden survivor cannot be hit | Downing owns state |
@@ -284,7 +291,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 |--------|-----------|---------------------|
 | Monster Abilities | Bidirectional | Reads lunge and Blackout state; Monster Abilities consumes `MonsterStunned` and door blocking |
 | Downing, Rescue & Elimination | Bidirectional | Reads Committing/Seized/Downed; Downing consumes `MonsterStunned` |
-| Borrowed Face | Borrowed Face depends on this | Reads `MonsterStunned` to cancel/block transformation |
+| Borrowed Face | Bidirectional | Borrowed Face reads `MonsterStunned` to cancel/block transformation; this reads disguised and Transforming state to pick the shock presentation |
 | First-Person Controller & Interaction | This depends on it | Hold-to-interact, movement modifiers |
 | Facility Map | This depends on it | Hiding spot, door, backup switch placement |
 | Survivor Objectives | Objectives depends on this | Hidden survivors cannot interact |
@@ -301,14 +308,19 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | stun_item_charges | 2 (proposed) | 1–3 | Monster attacks less; stun-lock risk | Stuns rare; downs frequent |
 | stun_duration_s | 2.0 (proposed) | 1.0–3.0 | More escape time; frustrating for monster | Stun barely matters |
 | stun_root_s | 1.0 (proposed) | 0.5–2.0 | Harder chase after stun | Monster recovers fast |
+| stun_slow_mult | 0.5 (proposed) | 0.3–0.8 | Monster recovers faster after root | Longer effective escape window |
+| stun_item_reuse_s | 1 (proposed) | 0.5–2 | Double shots harder | Panic double-fire wastes cartridges |
 | stun_immunity_s | 6 (proposed) | 4–10 | Less stun-lock; double stuns wasted | Chain-stun risk |
 | stun_range_m | 5 (proposed) | 3–7 | Easier stuns, safer rescues | Must be very close |
 | stun_aim_tolerance_deg | 10 (proposed) | 0–20 | Forgiving aim under latency | Pure aim; more misses |
 | stun_use_delay_s | 0.2 (proposed) | 0–0.5 | Harder to react to lunges | Instant reaction |
 | hide_transition_s | 1.0 (proposed) | 0.5–2.0 | Hiding needs planning | Panic-hide too easy |
+| hide_noise_radius_m | 8 (proposed) | 4–15 | Hiding easier to hear | Silent panic-hides |
 | hide_quiet_s | 20 (proposed) | 10–40 | Longer safe hides | Hiding barely useful |
+| hide_cue_interval_s | 5 (proposed) | 3–10 | Long hides harder to find | Long hides easy to find |
 | search_duration_s | 1.5 (proposed) | 0.5–3.0 | Searches costly for monster | Spots near useless |
 | barricade_duration_s | 3 (proposed) | 2–5 | Barricades need cover | Spammed barricades |
+| barricade_remove_s | 1 (proposed) | 0.5–2 | Own barricades trap survivors longer | Barricades cheap to undo |
 | barricade_break_s | 5 (proposed) | 3–10 | Doors hold longer | Barricades pointless |
 | rebarricade_lockout_s | 30 (proposed) | 15–60 | Door chokes less abusable | Repeated stalling |
 
@@ -360,7 +372,7 @@ keeps the monster permanently stuck.
 ### Weight and Responsiveness Profile
 
 - **Weight**: the taser is light and instant; hide and barricade are deliberate holds.
-- **Player control**: survivors keep full control; the monster loses it for 1 s.
+- **Player control**: survivors keep full control unless shocked; a stunned monster or shocked survivor is rooted for `stun_root_s` (1 s).
 - **Failure texture**: a missed or resisted stun must clearly show why (missed, blocked by a body, out of range, immune).
 
 ### Feel Acceptance Criteria
@@ -394,6 +406,7 @@ keeps the monster permanently stuck.
 
 - [ ] A Taser shot whose first hit is the monster within 5 m applies a 2.0 s stun and emits `MonsterStunned`; out of range, missed, or blocked by a survivor, the monster is not stunned and one cartridge is consumed.
 - [ ] A stun during lunge wind-up produces no `SurvivorHit`; a stun during a takedown commit frees the victim.
+- [ ] A shot whose path crosses a Seized or Downed survivor before the monster stuns the monster and does not shock the survivor.
 - [ ] A second stun on the true-form monster within `stun_immunity_s` after a stun ends is "resisted" and does not stun. On a disguised monster it plays the full shock presentation and applies the rule 14 lock, but no new stun or immunity.
 - [ ] Each survivor starts with exactly 2 charges; a third fire attempt does nothing.
 - [ ] A forged client "stun hit" or "barricade complete" message causes no state change.
