@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-11 (design review: player warning pings static, Seized/Escaped states, hidden pinging)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 
@@ -36,8 +36,8 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 5. Three ping types **(proposed)**:
    - **Location ping**: marks a world point the sender is looking at ("go here / look here").
    - **Item ping**: marks a specific interactable object the sender can see (data drive, fuse, fuse box, evacuation terminal, hiding spot, barricadable door, backup light switch, stun item). The marker shows the object type.
-   - **Warning ping**: marks a point ("danger here") or a player ("suspicious"). A warning ping on a player attaches to that player's displayed identity and follows them for its lifetime.
-6. Server validation for a ping: sender is alive and not eliminated; sender is not in a state that blocks pinging (see States); rate limit not exceeded (Formulas); target is within `ping_max_range_m` and in line of sight from the sender's view; for an item ping, the object exists and is pingable; for a player warning ping, the target player is visible to the sender.
+   - **Warning ping**: marks a point ("danger here") or a player ("suspicious"). A warning ping on a player is a static marker at the position the player stood when pinged, labelled with their displayed identity; it never follows the player (designer decision, 2026-10-11, design review). A following marker would have to choose a body when two share a name (rule 24) and would either track a transforming monster into its new disguise or vanish when it transforms; either is an identity tell no survivor earned.
+6. Server validation for a ping: sender is in play (not Eliminated or Escaped); sender is not in a state that blocks pinging (see States); rate limit not exceeded (Formulas); target is within `ping_max_range_m` and in line of sight from the sender's view; for an item ping, the object exists and is pingable; for a player warning ping, the target player is visible to the sender.
 7. Recipients: all living players, including the monster **(proposed; see Open Questions)**. Markers are visible through walls with direction and distance for `ping_lifetime_s`, then fade.
 8. Each marker shows the sender's displayed identity (name/colour). A sender may have at most `ping_max_active` markers; a new one replaces the oldest **(proposed)**.
 
@@ -49,6 +49,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 12. A real callout also plays a short visible gesture on the speaker's body **(proposed)**, so a survivor with line of sight can confirm who spoke.
 13. "Drive here" and "Fuse here" may optionally attach an item ping if the sender is looking at a valid item; the attached ping is validated like any item ping and counts against the ping rate limit.
 14. A downed survivor can use "Need rescue", "Danger" and pings; this is how a downed survivor "calls for help" in voice-free play.
+14a. A hidden survivor (Survivor Defense rules 18–20) can ping from its restricted peek view and can call out **(proposed)**. The callout plays from the hiding spot, so it reveals the spot to anyone in range; no gesture is visible. Line of sight for a ping is measured from the peek view.
 
 **Spam limits** (server-enforced; rejected requests are dropped and the sender sees a local "too fast" tick; nothing reaches other players)
 
@@ -88,9 +89,11 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 | State (per player) | Entry Condition | Exit Condition | Behavior |
 |---|---|---|---|
-| Survivor: Healthy | Round start; `SurvivorRescued` | `SurvivorDowned` | All pings and callouts |
+| Survivor: Healthy | Round start; `SurvivorRescued`; commit cancelled | Valid `SurvivorHit` (→ Seized); `SurvivorEscaped` | All pings and callouts (hidden: rule 14a) |
 | Survivor: Downed | `SurvivorDowned` | `SurvivorRescued` or `SurvivorEliminated` | Pings, "Need rescue", "Danger"; voice if enabled |
+| Survivor: Seized | Valid `SurvivorHit` (Downing rule 4) | Commit completes (`SurvivorDowned` / `SurvivorEliminated`) or is cancelled (`MonsterStunned`, monster disconnect) | Blocked: no input except camera (Downing States table); voice if enabled |
 | Survivor: Eliminated | `SurvivorEliminated` | Round end | No pings, callouts or voice to living players **(proposed)** |
+| Survivor: Escaped | `SurvivorEscaped` | Round end | No pings, callouts or voice to living players (Match Flow rule 10) |
 | Monster: Disguised | `FormChanged` to a survivor form completes | A transformation starts (replicated transforming flag, Borrowed Face rule 8) | All pings and callouts as the borrowed identity |
 | Monster: Transforming | A transformation starts (replicated transforming flag) | `FormChanged` on completion, or a stun interrupts it (back to the previous form) | Blocked **(proposed)** |
 | Monster: True form | `FormChanged` into true form; round start | A transformation starts | Blocked **(proposed)** |
@@ -126,7 +129,7 @@ accept ping if tokens >= 1, then tokens -= 1
 | ping_refill_s | float | 1–4 | data | Seconds per token (proposed 2) |
 | elapsed_s | float | ≥0 | server clock | Time since last update |
 
-**Expected output**: 3 pings in a burst, then one every 2 s (max 30 per minute). **Example**: three pings at t=0, a fourth at t=1 is rejected (tokens 0.5), one at t=2 is accepted.
+**Expected output**: 3 pings in a burst, then one every 2 s (30 per minute steady state; 33 in a first minute that starts with a full bucket). **Example**: three pings at t=0, a fourth at t=1 is rejected (tokens 0.5), one at t=2 is accepted.
 
 ### Callout acceptance
 
@@ -135,7 +138,7 @@ accept if (now - last_callout_any) >= callout_global_cooldown_s
       and (now - last_callout[line]) >= callout_repeat_block_s
 ```
 
-Proposed 3 s and 8 s: at most 20 callouts per minute, and the same line at most once every 8 s. **Example**: "Danger" at t=0, "Wait" at t=3 accepted, "Danger" at t=6 rejected, "Danger" at t=8 accepted.
+Only accepted callouts update `last_callout_any` and `last_callout[line]`; a rejected request changes nothing (as with a rejected ping, which spends no token). Proposed 3 s and 8 s: at most 20 callouts per minute, and the same line at most once every 8 s. **Example**: "Danger" at t=0, "Wait" at t=3 accepted, "Danger" at t=6 rejected, "Danger" at t=8 accepted.
 
 ### Callout recipients
 
@@ -157,7 +160,10 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Downed survivor spams "Need rescue" | Repeat block applies (8 s) | One clear call is enough; no audio spam |
 | Survivor is rescued mid-callout | Line finishes playing | Presentation only |
 | Two callouts overlap at one listener | Both play; feed shows both in arrival order | No information silently dropped |
-| Survivor warning-pings a teammate who is real | Allowed; marker follows them | Distrust is part of play |
+| Survivor warning-pings a teammate who is real | Allowed; static marker where they stood, with their name | Distrust is part of play |
+| Disguised monster is warning-pinged, then transforms | Marker stays where it was placed, under the old name, until expiry | Rule 5: the marker never follows a body, so it carries no transform information |
+| Two bodies share the name of the warning-pinged player | Only the pinged body's position is marked; nothing attaches to the other | Rule 5 |
+| Hidden survivor calls out | Line plays from the hiding spot; anyone in range can locate the spot | Rule 14a; the survivor's choice |
 | Proximity voice On, monster player speaks in own voice while disguised | Heard as the player's real voice, coming from the disguised body | Rule 25 (decided 2026-10-12); the mismatch is the tell |
 | Monster speaks in true form | Heard through the distortion filter from its position | Rule 25 (proposed filter) |
 | Player disconnects with active markers | Markers expire normally | No state to clean up beyond timers |
@@ -234,8 +240,8 @@ Light and instant. The player keeps full movement control while pinging or using
 
 ### Feel Acceptance Criteria
 
-- [ ] Playtesters can ping an item and use a callout without stopping movement.
-- [ ] No playtester reports needing voice to complete a round.
+- [ ] With a survivor moving at walk speed, sending a ping and opening the callout wheel to send a callout leaves the server-recorded velocity unchanged on every tick.
+- [ ] Across ≥10 playtest rounds with proximity voice Off, at most 10% of survivor players answer "yes" to the post-round question "Did you need voice to do something this round?".
 
 ## UI Requirements
 
@@ -260,7 +266,9 @@ Light and instant. The player keeps full movement control while pinging or using
 
 ## Acceptance Criteria
 
-- [ ] With 5 clients, a survivor's item ping appears on all 4 other clients at the same object with the same sender name within 1 network round trip.
+- [ ] With 5 clients, a survivor's item ping appears on all 4 other clients at the same object with the same sender name within 250 ms of the server accepting it.
+- [ ] A survivor's player warning ping appears at the target's position at ping time and does not move for its lifetime, even if the target moves or transforms.
+- [ ] A ping or callout request from a Seized or Escaped survivor is rejected.
 - [ ] A client that sends a ping at a point outside its line of sight is rejected by the server; no other client receives it.
 - [ ] A client sending 10 pings in 1 s results in exactly 3 delivered pings.
 - [ ] The same callout sent twice within 8 s is delivered once.
@@ -279,7 +287,7 @@ Light and instant. The player keeps full movement control while pinging or using
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
 | Monster voice: proximity voice, preset lines only, or both? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: both** (rule 25). The true-form distortion filter is proposed |
-| Does the monster receive survivor pings (proposed yes, as a member of the group), or only those it could see in-world? | SneakKestrel16 | Before Milestone 4 | |
+| Does the monster receive survivor pings (proposed yes, as a member of the group), or only those it could see in-world? Note: through-wall pings from a Downed survivor would show the monster the body it cannot otherwise locate (Downing rule 6 gives it no marker or ring, S1), compounding rescue camping (cross-review 2026-10-11 warning) | SneakKestrel16 | Before Milestone 4 | |
 | Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate)? | SneakKestrel16 | Before Milestone 4 | |
 | Should a fake callout carry any authored tell beyond rule 28 (e.g. faint signal distortion), or rely only on position and verification? | SneakKestrel16 | Before Milestone 3 | |
 | Are callouts positional only (proposed) or also carried over a facility radio? | SneakKestrel16 | Before Milestone 4 | |

@@ -33,8 +33,8 @@ through an event.
 |-------|-----------|-------------|---------|
 | `RoundPhaseChanged` | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map (lighting), HUD | Phase moved (Infiltration, Investigation, Evacuation) |
 | `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
-| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Survivor Objectives (carried drives become Extracted, rule 22), Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
-| `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination | A validated Predatory Lunge hit; starts the takedown commit |
+| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Survivor Objectives (carried drives become Extracted, rule 22), Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), Pings & Callouts (no comms to living players), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
+| `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination, Pings & Callouts (Seized state) | A validated Predatory Lunge hit; starts the takedown commit |
 | `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
 | `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
 | `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Monster Abilities (lunge resolved), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
@@ -77,7 +77,7 @@ event. Only the owner writes it. Readers never change it.
 | 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Approved | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Approved | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map |
 | 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | Approved | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
-| 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | Needs Revision | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face |
+| 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | In Review | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face |
 | 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Design | design/levels/research-facility.md | Controller & Interaction |
 | 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Design | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority |
 | 13 | HUD & Results Screen | UI | MVP | Not Started | — (`/ux-design`) | Match Flow, Survivor Objectives, Downing, Rescue & Elimination |
