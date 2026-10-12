@@ -1,6 +1,6 @@
 # Lobby & Role Assignment
 
-> **Status**: Designed
+> **Status**: Approved
 > **Creative Director Review (CD-GDD-ALIGN)**: skipped — Lean mode
 > **Author**: SneakKestrel16 + agents
 > **Last Updated**: 2026-10-12
@@ -26,7 +26,7 @@ A round always has exactly one shapeshifter and `player_count` − 1 survivors, 
 **Session and joining**
 1. One player hosts a lobby on a configurable port, and the others join by address and port (designer decision, 2026-10-12: direct join for MVP; no matchmaking, Pillar 5). With a listen server the host's process is the server. Whether a dedicated server is also supported belongs to the Network Authority ADR.
 2. The server validates every join and rejects it with a reason if the lobby already has `max_players` players, a round is in progress (only Match Flow reconnects within `reconnect_grace_s` are accepted, `match-flow.md` rules 19–20), or the game version string differs from the host's (exact match).
-3. Each player brings a display name of 1–16 characters; the server rejects a join with any other length. The server makes names unique by appending " (2)", " (3)" and so on; the suffix may take a name past 16 characters.
+3. Each player brings a display name of 1–16 characters; the server rejects a join with any other length. Names are compared case-insensitively, and the server makes them unique by appending the lowest free suffix " (2)", " (3)" and so on, skipping any suffixed name a player already holds; the suffix may take a name past 16 characters.
 4. A lobby with fewer than `min_players` waits. No bot or AI ever fills a seat (anti-pillar: no AI monsters, and no AI survivors either).
 
 **Survivor characters**
@@ -38,21 +38,22 @@ A round always has exactly one shapeshifter and `player_count` − 1 survivors, 
 8. Before the session's first round, the server shuffles all connected players into a rotation queue (designer decision, 2026-10-12: rotation). The head of the queue is the shapeshifter; everyone else is a survivor. Clients cannot request a role.
 9. After a round that reaches Ended (any outcome, including a forfeit), the head moves to the back. A Cancelled round does not advance the queue.
 10. The queue holds a per-session player token for everyone who has joined the session, not peer IDs, so a reconnect keeps its place. A player who leaves keeps their position; absent players are skipped when the shapeshifter is picked. A player who rejoins gets their old position back, so a skipped turn is owed and comes first (designer decision, 2026-10-12: no dodging the monster turn by leaving and rejoining). A first-time joiner goes to the back. With a stable roster of N players, each player is the shapeshifter once every N rounds.
-11. Roles are public (designer decision, 2026-10-12). The lobby shows the queue order and the next shapeshifter. The monster player can be deduced at spawn anyway; deception is about which body is real, not which player is the monster.
+11. Roles are public (designer decision, 2026-10-12). The lobby shows the queue order and the next shapeshifter. The monster player can be deduced at spawn anyway; deception is about which body is real, not which player is the monster. Rounds therefore show no name tags or role indicators on bodies: players identify each other only by character look and colour, which Borrowed Face copies (designer decision, 2026-10-12, design review). Pings and callouts carry the displayed identity (Pings & Callouts rule 8), and proximity voice is the player's real voice, which Pings & Callouts rule 25 already accepts.
 
 **Start**
 12. Each player toggles Ready. A Ready player cannot change their character preference.
 13. When at least `min_players` are connected and every connected player is Ready, a `lobby_countdown_s` = 5 countdown runs. It is cancelled if anyone un-readies, leaves or joins (designer decision, 2026-10-12: all-ready countdown, no host Start button).
-14. When the countdown reaches 0, the server locks the roster, assigns roles (rule 8) and characters (rule 7), and hands Match Flow the roster: `player_count`, and for each player the peer ID, display name, role and (survivors only) character. Match Flow's Loading state begins.
+14. When the countdown reaches 0, the server locks the roster, assigns roles (rule 8) and characters (rule 7), and hands Match Flow the roster: session ID, round index, `player_count`, and for each player the peer ID, display name, role and (survivors only) character. Match Flow's Loading state begins.
 15. The player count is fixed for the round. A join during a round is rejected (rule 2), and the next round uses whoever is in the lobby then.
 
 **Settings**
 16. Proximity voice (Off by default, `pings-and-callouts.md` rule 18) can be changed by the host only, in the lobby and outside the countdown (designer decision, 2026-10-12). It applies to every player.
 
 **Return and teardown**
-17. After Results or Cancelled, every connected player returns to the lobby. Ready flags reset; preferences and the queue persist. A player whose reconnect grace expired is not in the lobby.
+17. After Results or Cancelled, every connected player returns to the lobby. Ready flags reset; preferences and the queue persist. A player whose reconnect grace expired is not in the lobby, but keeps their queue position (rule 10), as does any player who leaves the lobby.
 18. A non-host player who disconnects in the lobby is removed at once; there is no lobby grace.
 19. If the host leaves, in any state including mid-round, the session closes for everyone with "Host left". A round in progress gets no result. There is no host migration (designer decision, 2026-10-12; Pillar 5).
+20. In Waiting, the host can kick any other player, so one player who never readies cannot stall the lobby (designer decision, 2026-10-12, design review). A kicked player is removed like a leaver, keeps their queue position (rule 10), and may rejoin.
 
 ### States and Transitions
 
@@ -168,6 +169,8 @@ The lobby_countdown formula is defined as:
 | One player keeps losing character clashes | Losses are not remembered. Accepted, because the effect is cosmetic. |
 | The shapeshifter's own character preference | Ignored that round and kept for later rounds. |
 | Someone disconnects in the same server tick the countdown reaches 0 | At lock the server checks rule 13 again. If it no longer holds, the countdown is cancelled and the lobby returns to Waiting. |
+| Tokens of players who left accumulate in the queue | Accepted: a session sees a handful of players, so the queue stays small. Absent tokens are skipped (rule 10). |
+| A player never readies | The host kicks them (rule 20). |
 | Two players use the same display name | The server appends " (2)" (rule 3). |
 | A client's game build differs from the host's | Join rejected with both version strings shown. |
 
@@ -184,6 +187,16 @@ The lobby_countdown formula is defined as:
 | Match Telemetry | Downstream | Soft | Not started | Session ID, round index, player count, roles, characters |
 
 Bidirectional entries in Match Flow, Borrowed Face, Pings & Callouts, Facility Map and the systems index are pending propagation (Open Questions).
+
+## Tuning Knobs
+
+| Knob | Default | Safe range | Affects | Owner |
+|------|---------|------------|---------|-------|
+| `min_players` | 4 | 4–5 | Smallest round (3 survivors). Raising it to 5 drops 3-survivor rounds | This GDD |
+| `max_players` | 6 | 5–6 | Largest round (5 survivors). Above 6 needs a sixth character and spawn | This GDD |
+| `lobby_countdown_s` | 5 s | 3–10 s | Time to back out before the roster locks | This GDD |
+| Display name length | 1–16 | — | UI fit of names in lists and feed | This GDD |
+| `reconnect_grace_s` | 60 s | — | How long a dropped player keeps their round seat | `match-flow.md` |
 
 ## Visual/Audio Requirements
 
@@ -227,7 +240,7 @@ Lobby screen, to be specified with `/ux-design`:
 - [ ] **AC-LB-08** [unit] Given survivors whose preferences are all distinct, when characters are assigned, then every survivor gets their pick.
 - [ ] **AC-LB-09** [unit] Given survivor preferences C1, C1, C2, C4, C4 and a fixed seed, when characters are assigned, then the C2 survivor keeps C2, one C1 claimant keeps C1, one C4 claimant keeps C4, and the two losers get {C3, C5}. All five characters are distinct.
 - [ ] **AC-LB-10** [unit] Given 1,000 seeded random preference sets at each of 3, 4 and 5 survivors (including "all prefer C1"), when characters are assigned, then every result is distinct, a sole claimant always keeps their pick, and every survivor holds exactly one character.
-- [ ] **AC-LB-11** [unit] Given k = 2, 3 and 5 survivors sharing one preference over 10,000 fixed-seed trials, when characters are assigned, then each claimant keeps the shared character in 1/k ± 0.02 of trials, and each clash loser's dealt character is uniform within the same tolerance.
+- [ ] **AC-LB-11** [unit] Given k = 2, 3 and 5 survivors sharing one preference over 10,000 fixed-seed trials, when characters are assigned, then each claimant keeps the shared character in 1/k ± 0.02 of trials, and, over the trials in which a given survivor loses the clash, each free character is dealt to them in 1/|free| ± 0.02 of those trials (±0.02 is over 4σ at these trial counts).
 - [ ] **AC-LB-12** [unit] Given a shapeshifter whose preference is C3, when characters are assigned, then the shapeshifter has no character and a survivor may receive C3. The shapeshifter's preference is still C3 next round.
 - [ ] **AC-LB-13** [unit] Given N connected tokens and a seeded RNG before the session's first round, when the queue is built, then Q_1 holds each token exactly once, its order is reproducible from the seed, and its head is the shapeshifter.
 - [ ] **AC-LB-14** [integration/playtest] Given a client that sends a role request RPC, when the server receives it, then the request is ignored and the assigned roles are unchanged.
@@ -246,6 +259,8 @@ Lobby screen, to be specified with `/ux-design`:
 - [ ] **AC-LB-27** [integration/playtest] Given a round that ends in Results, and separately one that is Cancelled, when it ends, then every connected peer is back in Waiting with Ready cleared and with preferences and queue unchanged. A survivor whose grace expired mid-round is absent from the lobby, but their token keeps its queue position.
 - [ ] **AC-LB-28** [integration/playtest] Given a non-host peer that disconnects in Waiting or Countdown, when the server sees the disconnect, then that player is removed from the lobby on the same tick, with no grace period.
 - [ ] **AC-LB-29** [integration/playtest] Given the host leaves in Waiting, in Countdown and in In Match (including while the host is the shapeshifter), then every client returns to the main menu with "Host left", and no round result or forfeit is recorded.
+- [ ] **AC-LB-30** [unit] Given a lobby in Waiting, when the host kicks a player, then that player is removed, their queue position is kept, and they can rejoin. A kick from a non-host, or by the host outside Waiting, is rejected.
+- [ ] **AC-LB-31** [integration/playtest] Given a running round, when any player looks at another body, then no name tag or role indicator is shown; only character look and colour identify it. A screenshot is retained in `production/qa/evidence/`.
 
 Not covered by a criterion: rule 1's dedicated-server support (Network Authority ADR); rule 11's "deduced at spawn" and the Overview's "fair turns" are experience claims for playtest.
 
@@ -253,7 +268,7 @@ Not covered by a criterion: rule 1's dedicated-server support (Network Authority
 
 | Question | Owner | Target | Resolution |
 |----------|-------|--------|------------|
-| Update the approved docs for 4–6 players: Match Flow rule 1 (and its now-redundant rule 24 name reveal), registry `players_per_match`, Facility Map spawn S5, Pings & Callouts voice sets per character, and Lobby dependency entries in each | SneakKestrel16 | Before re-running `/gate-check technical-setup` | |
-| Balance at 3 and 5 survivors: objective counts, bleed-out, camping slow, taser cartridges and lunge cooldown are tuned for 4. MVP balance stays at 4 survivors; 3 and 5 are playable but untuned until Match Telemetry data exists | SneakKestrel16 | Milestone 5 playtest | |
+| Update the approved docs for 4–6 players. `match-flow.md`: rules 1 and 2 ("all 5 clients"), Overview, Loading state, dependency rows, the load-timeout AC, rule 24's now-redundant name reveal, and a new rule for "host left, no result" (Lobby rule 19). Registry: mark `players_per_match` superseded by `min_players`/`max_players`. `research-facility.md`: prerequisite line ("4 survivors") and spawn S5. `pings-and-callouts.md`: rules 18 and 25 ("all five"), voice sets per character C1–C5. Lobby dependency entries in Match Flow, Borrowed Face, Pings & Callouts and Facility Map | SneakKestrel16 | Before re-running `/gate-check technical-setup` | |
+| Balance at 3 and 5 survivors: objective counts, bleed-out, camping slow, taser cartridges and lunge cooldown are tuned for 4. Borrowed Face also has only 3 disguise targets at 3 survivors, fewer after the first elimination. MVP balance stays at 4 survivors; 3 and 5 are playable but untuned until Match Telemetry data exists | SneakKestrel16 | Milestone 5 playtest | |
 | A lost session token lets a player dodge their monster turn; a platform account ID (e.g. Steam) would close it | SneakKestrel16 | Post-MVP | |
 | Listen server vs dedicated server, and the transport | Network Authority ADR | Technical Setup | |

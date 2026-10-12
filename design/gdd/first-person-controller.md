@@ -1,6 +1,6 @@
 # First-Person Controller & Interaction
 
-> **Status**: Designed
+> **Status**: In Review
 > **Creative Director Review (CD-GDD-ALIGN)**: skipped — Lean mode
 > **Author**: SneakKestrel16 + agents
 > **Last Updated**: 2026-10-12
@@ -25,9 +25,9 @@ Values marked **(proposed)** are pinned in Formulas.
 
 **Body and movement**
 
-1. Every player, survivor or shapeshifter in any form, has the same upright capsule: radius `player_radius_m` = 0.3, height 1.8 m standing and 1.2 m crouched **(proposed)**. True form looks bigger but collides the same, so a disguise never fits a gap the real survivor could not, and a transformation never sticks in a corridor.
+1. Every player, survivor or shapeshifter in any form, has the same upright capsule: radius `player_radius_m` = 0.3, height 1.8 m standing and 1.2 m crouched **(proposed)**. True form looks bigger but collides the same, so a disguise never fits a gap the real survivor could not, and a transformation never sticks in a corridor. Upright capsules are solid against each other for every pair of players alike, survivor or shapeshifter: any difference between survivor–survivor and survivor–shapeshifter collision would be a disguise tell (designer decision, 2026-10-12, design review). Doorway blocking by a teammate is a playtest risk (Open Questions).
 2. Gaits: **walk** (default), **sprint**, **crouch**, and **crawl** (Downed only; `crawl_speed_mult` owned by Downing, Rescue & Elimination). Survivors and the disguised shapeshifter use survivor speeds (Borrowed Face: speed is never a tell). True form walks at survivor walk speed and sprints at `monster_sprint_mult` × survivor sprint, slightly faster, so a revealed chase is a clock that doors, tasers, hiding and teammates break **(designer decision, 2026-10-12)**.
-3. **Sprint** requires the sprint input held and forward input within 45° of facing; strafe and backpedal always move at walk speed **(designer decision, 2026-10-12)**. No stamina and no limit **(designer decision, 2026-10-12)**; the cost is noise (rule 8). Unavailable while crouched, Downed, Transforming (Borrowed Face rule 8) or Holding.
+3. **Sprint** requires the sprint input held and forward input within 45° of facing; strafe and backpedal always move at walk speed **(designer decision, 2026-10-12)**. A W+A or W+D diagonal is 45° off facing, so it sprints at full sprint speed (about 3.5 m/s of it lateral). No stamina and no limit **(designer decision, 2026-10-12)**; the cost is noise (rule 8). Unavailable while crouched, Downed, Transforming (Borrowed Face rule 8) or Holding.
 4. **Crouch** lowers eye height, moves at `crouch_speed_mult` × walk, and makes the quietest footsteps. It has no traversal use: the prototype map has no crouch-only spaces. If something blocks the head, standing up waits until there is room.
 5. **No jump** **(designer decision, 2026-10-12)**. The body auto-climbs steps up to `step_height_m` and slopes up to 40°. No fall damage; the map has no drops that need it.
 6. **Speed modifiers** come from their owning systems: root (speed 0), slow (multiplier with a duration), lock (no movement). The controller applies only the **most restrictive** active modifier (lock > root > lowest slow); modifiers never multiply together. Each owner adds and removes only its own modifier. A slow scales the current gait's speed.
@@ -45,9 +45,9 @@ Values marked **(proposed)** are pinned in Formulas.
 **Hold-to-interact pattern**
 
 11. Each interactable is defined by its owning system: action, eligible roles and states, `range_m`, `duration_s` (0 = instant, e.g. doors), `roots_actor`, progress on cancel (reset, keep, or keep and decay), whether it takes an exclusive one-actor lock, and whether the shapeshifter may fake it.
-12. **Target:** the first interactable the view ray hits within `interact_ray_max_m` that is also within its own `range_m`. A prompt shows only for a valid target.
+12. **Target:** the nearest interactable along the view ray, within `interact_ray_max_m`, that is also within its own `range_m`. Interactables out of their own range are skipped and do not hide one behind them; world geometry still blocks the ray (designer decision, 2026-10-12, design review). A prompt shows only for a valid target.
 13. **Start:** the client sends Start(target). The server checks actor eligibility (shock lock, hidden, Downed, role, per the owner), range (actor capsule centre to the object's interaction point), line of sight (eye to interaction point) and the lock. Rejected: the client's bar cancels. Accepted: **Holding**. The client shows its predicted bar within 100 ms (Survivor Objectives, Game Feel).
-14. **While Holding**, the server checks every tick: input still held, range, line of sight, eligibility, and any owner interrupt (e.g. `SurvivorHit`, `PlayerShocked`). Looking away does **not** cancel, so the actor can watch their back. The actor may walk but not sprint, unless the owner sets `roots_actor` (Rescue does, `downing-and-rescue.md` rule 7) **(designer decision, 2026-10-12: owner decides)**.
+14. **While Holding**, the server checks every tick: input still held, range (to `range_m` + `hold_range_tolerance_m` = 0.25, so one tick of prediction drift does not cancel; Start stays strict at `range_m`) (designer decision, 2026-10-12, design review), line of sight, eligibility, and any owner interrupt (e.g. `SurvivorHit`, `PlayerShocked`). Looking away does **not** cancel, so the actor can watch their back. The actor may walk but not sprint, unless the owner sets `roots_actor` (Rescue does, `downing-and-rescue.md` rule 7) **(designer decision, 2026-10-12: owner decides)**. Crouch input is ignored while Holding: a hold started crouched stays crouched and one started standing stays standing, so the capsule centre and the range check never change mid-hold (designer decision, 2026-10-12, design review).
 15. **Completion:** when elapsed time reaches `duration_s`, the server completes the hold and notifies the owner; the owner emits its event. A client "done" message is ignored.
 16. One hold per actor. Starting another hold, using an item or hiding cancels the current one. A disconnect cancels it; the owner's cancel rule then applies.
 17. **Fake holds:** where the owner allows, the shapeshifter's hold plays the same animation and quiet loop, makes no progress and never takes the lock (Survivor Objectives rule 25).
@@ -58,7 +58,7 @@ Values marked **(proposed)** are pinned in Formulas.
 | State | Entered by | Move | Look | Interact |
 |---|---|---|---|---|
 | Free | Default | Walk / sprint / crouch | Free | Yes |
-| Holding | Accepted Start | Walk only; none if `roots_actor` | Free | Current hold only |
+| Holding | Accepted Start | Walk only (crouch speed if started crouched; crouch input ignored); none if `roots_actor` | Free | Current hold only |
 | Rooted | Owner root (stun root, rescue, takedown commit, lunge wind-up) | None | Free | Per owner |
 | Slowed | Owner slow (stun slow, miss slow) | Gait × multiplier | Free | Per owner |
 | Locked | Seized (Downing, Rescue & Elimination) | None | Free | No |
@@ -67,7 +67,7 @@ Values marked **(proposed)** are pinned in Formulas.
 | Transforming | Borrowed Face rule 8 | Walk only | Free | No |
 | Out | Eliminated, Escaped or disconnected | No body | Spectator (Match Flow) | No |
 
-The owning system decides entry and exit; the controller only reads the state and applies its movement, look and interact limits.
+The owning system decides entry and exit; the controller only reads the state and applies its movement, look and interact limits. States can overlap (e.g. Holding + Slowed, Downed + Locked): each column takes the most restrictive value among the active states, and speed follows Effective speed with modifiers.
 
 ### Interactions with Other Systems
 
@@ -106,8 +106,9 @@ The gait_speed formula is defined as:
 | move_input | float | 0–1 | calculated | Length of the stick or key input, capped at 1, multiplied into the speed |
 
 **Output Range:** 0–5.75 m/s in normal play: crawl 1.0, crouch 2.0, walk and strafe 4.0, survivor sprint 5.0, true-form sprint 5.75. Safe-range edges:
-- `walk_speed` below 3.7 drops the dodge margin under 1.15 and stretches the map's 20 s room-to-room target by 4.0/walk. Above 4.5 shrinks the map and needs the chase limit rechecked.
-- `sprint_mult` below 1.15 makes sprint not worth its noise. Above 1.3 makes open-ground chases lunge-proof.
+- `walk_speed` below about 3.7 (3.68) drops the dodge margin under 1.15 and stretches the map's 20 s room-to-room target by 4.0/walk. Above 4.5 shrinks the map and needs the chase limit rechecked.
+- `sprint_mult` below 1.15 makes sprint not worth its noise. Above it, the joint cap below decides.
+- **Joint cap (designer decision, 2026-10-12, design review):** the ranges above are safe one at a time, not together. Survivor sprint `walk_speed × sprint_mult` must stay ≤ `max_survivor_sprint_mps` = 5.4, because above about 5.44 m/s `catch_gap` < 2 × `player_radius_m` (at r 0.3) and an open-ground chase becomes lunge-proof; at walk 4.0 that is `sprint_mult` ≤ 1.35. True-form sprint must also exceed survivor sprint (`monster_sprint_mult` > 1). Both are asserted when the data loads, like the `interact_ray_max_m` check. Example: walk 4.5 × 1.25 = 5.63 is inside both ranges but fails the cap.
 - `crouch_speed_mult` above 0.6 competes with walk while staying quiet. Below 0.4 makes crouch a trap.
 - `monster_sprint_mult` below 1.1 makes a 10 m chase take more than 18 s. Above 1.2 gives tasers and doors under 9 s to break it.
 
@@ -144,13 +145,13 @@ It is infinite if `catch_gap` < 2 × `player_radius_m`: two capsules can never b
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | gap | float m | 0–30 | calculated | Centre-to-centre distance when the chase starts |
-| v_s | float m/s | 4.3–5.85 | calculated | Survivor sprint, `walk_speed × sprint_mult` |
+| v_s | float m/s | 4.3–5.4 | calculated | Survivor sprint, `walk_speed × sprint_mult`, capped by `max_survivor_sprint_mps` (Gait speed) |
 | v_m | float m/s | 1.1–1.2 × v_s | calculated | True-form sprint |
 | lunge_distance_m, lunge_hit_radius_m, lunge_windup_s, lunge_dash_s | float | 4, 1.2, 0.6, 0.3 | owned by Monster Abilities | Dash and reach |
 | player_radius_m | float m | 0.25–0.35 | data file | Capsule radius; the hit is measured to the survivor's body |
 | catch_gap | float m | — | calculated | Largest centre gap at wind-up start from which a straight-line lunge still connects |
 
-**Output Range:** `catch_gap` = 5.5 − 0.9 × v_s at r 0.3: 1.18 m at v_s 4.8, 1.0 at 5.0, 0.55 at 5.5 (never), 0.1 at 6.0 (never). This is why `sprint_mult` tops out at 1.3. Corners cost the survivor time, so the straight-line time is an upper bound.
+**Output Range:** `catch_gap` = 5.5 − 0.9 × v_s at r 0.3: 1.18 m at v_s 4.8, 1.0 at 5.0, 0.55 at 5.5 (never), 0.1 at 6.0 (never). The never-catch threshold is v_s ≈ 5.44 m/s, which is why survivor sprint is capped at 5.4 (Gait speed joint cap). Corners cost the survivor time, so the straight-line time is an upper bound.
 
 **Example:** v_s 5.0, v_m 5.75: catch gap 1.0 m; a 10 m gap closes in (10 − 1) / 0.75 = 12 s (18 s at ×1.1, 9 s at ×1.2). A survivor who only walks (4.0) gives a 1.9 m catch gap and is caught from 10 m in 4.6 s, so sprinting pays in a chase.
 
@@ -188,6 +189,8 @@ The dodge_margin formula is defined as:
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
+| slow | float | 0–1 | calculated (Effective speed with modifiers) | Lowest active slow multiplier on the survivor; 1 when none |
+| lunge_windup_turn_deg_s, lunge_dash_turn_deg_s | float deg/s | 15, 30 | owned by Monster Abilities | Monster's maximum turn rate during wind-up and dash; inputs to the pursuit simulation |
 | v_dodge_min | float m/s | 2.65–3.6 | calculated (pursuit simulation) | Slowest strafe that dodges when started 0.40 s after the cue: r 0 → 2.65, 0.3 → 3.2, 0.35 → 3.3, 0.5 → 3.6 |
 | player_radius_m | float m | 0.25–0.35 | data file | **0.3**: standard human capsule that still dodges with margin |
 | accel_time_s | float s | 0–0.1 | data file | **0.05**: time to reach full ground speed. A linear ramp delays displacement by `accel_time_s` / 2 |
@@ -218,7 +221,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 
 **Output Range:** the required ray length runs from 2.4 (owner range 1.5, eye 1.5) to 3.8 (owner range 3, eye 1.7); crouched, 3.5 at most. 3.0 covers every owner range up to 2.3 m; a larger owner range needs a longer ray.
 
-**Example:** a standing survivor (eye 1.6, capsule centre 0.9) needs 2.0 + 0.7 = 2.7 ≤ 3.0, so a terminal 2.0 m away is always targetable. The Start check measures capsule centre to point, finds 2.0 ≤ 2.0, and accepts. Once Holding, walking out to 2.05 cancels the hold on that tick.
+**Example:** a standing survivor (eye 1.6, capsule centre 0.9) needs 2.0 + 0.7 = 2.7 ≤ 3.0, so a terminal 2.0 m away is always targetable. The Start check measures capsule centre to point, finds 2.0 ≤ 2.0, and accepts. Once Holding, walking out to 2.2 keeps the hold (tolerance 0.25); walking out to 2.3 cancels it on that tick.
 
 ## Edge Cases
 
@@ -254,7 +257,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 | Borrowed Face | Depends on this | Hard | Survivor speeds and footstep set while disguised; interaction rejection while Transforming |
 | Monster Abilities | Depends on this | Hard | True-form speeds, `player_radius_m` (dodge window), root and slow, doors |
 | Pings & Callouts | Depends on this | Soft | View ray, input bindings |
-| Facility Map | Depends on this | Hard | `walk_speed` (traversal times), step and slope limits, capsule (doorways ≥ 0.8 m clear) |
+| Facility Map (`design/levels/research-facility.md`) | Depends on this | Hard | `walk_speed` (traversal times), step and slope limits, capsule (doorways ≥ 0.8 m clear) |
 | Scare Events | None | — | Scares never move or lock the camera (Core Rule 7); a limit both GDDs state, not a data flow |
 
 ## Visual/Audio Requirements
@@ -336,7 +339,11 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 
 - [ ] **[U]** **GIVEN** standing eye height 1.6 m, capsule centre 0.9 m, `interact_ray_max_m` 3.0 and an interactable with `range_m` 2.0 whose point is 2.0 m from the capsule centre, **WHEN** the player aims at it, **THEN** a prompt shows and Start is accepted. **WHEN** the point is 2.05 m away, **THEN** no prompt shows and Start is rejected. A load-time check fails if `interact_ray_max_m` < max owner `range_m` + (`eye_height_m` − `capsule_height_m` / 2) for either posture. (Rules 12, 13, interact_ray_max)
 - [ ] **[I]** **GIVEN** a Start, **WHEN** the actor is ineligible (shocked, hidden, Downed, wrong role), line of sight is blocked, or another actor holds the exclusive lock, **THEN** it is rejected and the client bar cancels. **GIVEN** two Starts on the same exclusive target in one tick, **THEN** the first to arrive is accepted and the second rejected. **GIVEN** Stop arriving before acceptance, **THEN** the hold is accepted and cancelled on that tick with progress 0. (Rule 13, edge cases)
-- [ ] **[I]** **GIVEN** an accepted hold, **WHEN** the actor turns 180°, **THEN** it continues. **WHEN** the actor walks out of range, loses line of sight, releases input, receives an owner interrupt (`SurvivorHit`, `PlayerShocked`), starts another hold, uses an item, hides or disconnects, **THEN** it cancels on that tick with the owner's reset, keep or decay rule applied. While Holding, sprint input gives 4.0 m/s; with `roots_actor` it gives 0. (Rules 14, 16)
+- [ ] **[I]** **GIVEN** an accepted hold, **WHEN** the actor turns 180°, **THEN** it continues. **WHEN** the actor walks to `range_m` + 0.2, **THEN** it continues; **WHEN** the actor walks beyond `range_m` + 0.25, loses line of sight, releases input, receives an owner interrupt (`SurvivorHit`, `PlayerShocked`), starts another hold, uses an item, hides or disconnects, **THEN** it cancels on that tick with the owner's reset, keep or decay rule applied. While Holding, sprint input gives 4.0 m/s; with `roots_actor` it gives 0. While Holding, crouch input leaves posture and capsule height unchanged. (Rules 14, 16)
+- [ ] **[U]** **GIVEN** an out-of-range interactable 1.0 m along the view ray and an in-range one 1.8 m along it, **WHEN** the player aims, **THEN** the prompt shows for the 1.8 m one. **GIVEN** a wall between the player and an in-range interactable, **THEN** no prompt shows. (Rule 12)
+- [ ] **[U]** **GIVEN** data with `walk_speed` 4.5 and `sprint_mult` 1.25 (5.63 m/s), or `monster_sprint_mult` 1.0, **WHEN** the data loads, **THEN** the load-time check fails and names the joint cap. 4.0 × 1.35 = 5.4 passes. (Gait speed joint cap)
+- [ ] **[I]** **GIVEN** players moving and Holding, **WHEN** `RoundEnded` arrives, **THEN** on that tick all movement stops, every hold cancels, and further intent is ignored. **GIVEN** a player who becomes Eliminated, Escaped or disconnected, **THEN** their body is removed (Out) and they get the Match Flow spectator view. (States table, Dependencies)
+- [ ] **[I]** **GIVEN** a hidden survivor, **WHEN** they look, **THEN** look is limited to the Survivor Defense peek view and restored to free look on exit. (Rule 7 exception)
 - [ ] **[I]** **GIVEN** a hold with `duration_s` D, **WHEN** input is held continuously, **THEN** completion fires once, on the first server tick where elapsed ≥ D (±1 tick), and the owner emits its event. `duration_s` 0 completes on the Start tick. (Rule 15)
 - [ ] **[I]** **Cross-system:** **GIVEN** the Survivor Objectives fuse install, Rescue and barricade interactables built from their owners' definitions, **WHEN** each is held to completion and, separately, cancelled midway, **THEN** each owner gets start, complete and cancel callbacks through this pattern with its own duration, range, `roots_actor` and cancel rule (Rescue roots the actor at 0 m/s). No owner runs its own hold timer.
 - [ ] **[I]** **GIVEN** a shapeshifter faking an allowed hold on a free exclusive target, **WHEN** it holds longer than `duration_s`, **THEN** progress stays 0, the lock is never taken (a survivor can Start on the same target), and remote clients see the same animation and audio loop as a real hold. A disallowed target rejects the fake Start. (Rule 17)
@@ -372,3 +379,4 @@ Not covered here: reconciliation smoothness (waits on the Network Authority ADR)
 | `match-flow.md` does not list this system as a dependent (one-directional dependency) | SneakKestrel16 | Phase 5 of this authoring session | — |
 | Crouch as toggle or hold: offer both as a setting? | SneakKestrel16 | Accessibility Options GDD | — |
 | Is a 1.0 m/s sprint gain over walk worth its noise? | SneakKestrel16 | Milestone 5 closed playtest | — |
+| Solid capsules let a player (or a disguised shapeshifter) plug a doorway. Watch for griefing and body-blocking | SneakKestrel16 | Milestone 5 closed playtest | — |

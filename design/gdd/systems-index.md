@@ -72,8 +72,8 @@ event. Only the owner writes it. Readers never change it.
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
-| 2 | Lobby & Role Assignment | Core | MVP | Designed | design/gdd/lobby-role-assignment.md | Network Authority |
-| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Designed | design/gdd/first-person-controller.md | Network Authority, Match Flow (soft) |
+| 2 | Lobby & Role Assignment | Core | MVP | Approved | design/gdd/lobby-role-assignment.md | Network Authority |
+| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | In Review | design/gdd/first-person-controller.md | Network Authority, Match Flow (soft) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Network Authority, Controller & Interaction, Monster Abilities (Predatory Lunge), Survivor Defense, Match Flow, Pings & Callouts |
@@ -201,9 +201,9 @@ engine choice first; it must be settled before any gameplay code is written.
 |--------|-------|
 | Total systems identified | 15 |
 | Design docs started | 11 |
-| Design docs reviewed | 9 |
-| Design docs approved | 9 |
-| MVP systems with a GDD | 9/11, 7 approved, 2 designed (Monster Abilities counted as MVP) |
+| Design docs reviewed | 11 |
+| Design docs approved | 10 |
+| MVP systems with a GDD | 9/11, 8 approved, 1 in review (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a GDD | 2/3, both approved (Pings & Callouts, Scare Events) |
 
 ---

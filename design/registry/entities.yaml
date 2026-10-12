@@ -778,6 +778,28 @@ constants:
     added: 2026-10-12
     revised: ""
 
+  # (proposed) extra keep-range once Holding; Start stays strict at range_m
+  - name: hold_range_tolerance_m
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+    value: 0.25
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # joint cap walk_speed x sprint_mult; above ~5.44 a straight lunge never catches (r 0.3)
+  - name: max_survivor_sprint_mps
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+    value: 5.4
+    unit: m/s
+    added: 2026-10-12
+    revised: ""
+
   # (proposed); below hide_noise_radius_m 8; proposed False Signal footstep range
   - name: footstep_radius_walk_m
     status: active
