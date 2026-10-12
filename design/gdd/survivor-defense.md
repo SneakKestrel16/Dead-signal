@@ -218,6 +218,19 @@ tools, they're yours.
 28. A broken barricade cannot be rebuilt on that door for
     `rebarricade_lockout_s` = 30 s **(proposed)**.
 
+28a. **Interactable contract** (`first-person-controller.md` rule 11; every field below is **(proposed)**, cross-review 12d W2). `range_m` for all of them is `survivor_interact_range_m` = 2.0 m, the Objectives `interact_range_m` value, measured to the object's interaction point:
+
+| Interactable | Who | `duration_s` | `roots_actor` | Progress on cancel | Exclusive lock | Shapeshifter may fake |
+|---|---|---|---|---|---|---|
+| Hide enter / exit | Healthy survivor | `hide_transition_s` 1.0 | Yes | Reset (stay out / stay in) | One occupant per spot | No (survivors only) |
+| Barricade | Healthy survivor | `barricade_duration_s` 3 | No | Reset | One actor per door | No |
+| Remove barricade | Survivor | `barricade_remove_s` 1 | No | Reset | One actor per door | No |
+| Search | Monster, any form | `search_duration_s` 1.5 | Yes | Reset | One actor per spot | n/a (a real, visible monster action) |
+| Break | Monster, any form | `barricade_break_s` 5 total | Yes | Keep (rule 27) | One actor per door | n/a (a real, visible monster action) |
+| Door toggle (open / close) | Anyone | 0 (instant) | No | n/a | None | n/a (a real action in any form) |
+
+The Controller's load-time check (`interact_ray_max_m` >= largest owner range + 0.7) therefore sees 2.0 m from this system.
+
 #### Starting kit
 
 29. Each survivor starts with 1 flashlight + 1 Taser with 2 cartridges
@@ -278,7 +291,7 @@ stun-locked.
 ### Team stun budget
 
 ```
-team_stuns = survivors * stun_item_charges = 4 * 2 = 8 per round
+team_stuns = survivor_count * stun_item_charges = 4 * 2 = 8 per round at 4 survivors (6 at 3, 10 at 5; the MVP config of 5 players has 4)
 max_stunned_time = team_stuns * stun_duration_s = 16 s of a 540 s round (~3%)
 ```
 
@@ -366,7 +379,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Monster stunned | Stagger animation; while disguised it plays on the borrowed body (Borrowed Face rule 10) | Monster pain cry in true form; survivor grunt while disguised | MVP |
 | Stun resisted (true form) | Small spark, no stagger | Dull fizz | MVP |
 | Stun resisted (disguised) | Identical to Survivor shocked | Identical to Survivor shocked | MVP |
-| Survivor shocked | Same stagger as a stunned disguised monster for observers; camera jitter and brief blue edge for the victim (reduced-motion/flash variant) | Crackle and shocked grunt | MVP |
+| Survivor shocked | Same stagger as a stunned disguised monster for observers; camera jitter and brief blue edge for the victim (reduced-motion/flash variant); the jitter is a visual offset only: view direction and aim unchanged (`first-person-controller.md` rule 7; designer decision, 2026-10-12, cross-review 12d) | Crackle and shocked grunt | MVP |
 | Hide enter/exit | Door motion | Soft creak | MVP |
 | Long-hide cue | — | Breathing/creak every 5 s | Vertical Slice |
 | Search | Monster opens spot | Door rattle | MVP |
@@ -400,7 +413,7 @@ keeps the monster permanently stuck.
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |-------------|--------------|-------------------|---------------|
 | Arc flash | 150 | Brief arc at the target | Yes (reduced flash) |
-| Camera impact (monster) | 200 | Jolt on stun | Yes |
+| Camera impact (monster) | 200 | Jolt on stun; visual offset only, view direction and aim unchanged (designer decision, 2026-10-12, cross-review 12d) | Yes |
 
 ### Weight and Responsiveness Profile
 

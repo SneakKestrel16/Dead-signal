@@ -60,7 +60,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 | Body, outfit, head, colour identity | Yes | Exact match to the target's survivor appearance |
 | Walk, sprint, crouch animations and footstep sound set | Yes | Basic movement presentation |
 | Movement speeds | Yes — survivor speeds while disguised **(proposed)** | So speed alone is never a tell |
-| Name label (wherever survivor labels are shown) | Yes **(proposed)** | Otherwise the label is a one-glance random tell |
+| Name label (wherever survivor labels are shown) | Yes **(proposed)** | Otherwise the label is a one-glance random tell. Currently vacuous: rounds show no body name labels (`lobby-role-assignment.md` rule 11, AC-LB-31); feed and ping names still apply |
 | Flashlight | Cosmetic copy **(proposed)** | Shapeshifter toggles it itself; it has no survivor-defense effect |
 | Carried data drive or fuse | **No (proposed)** | Deliberate tell: verify shared objective knowledge |
 | Held or carried stun item | **No (proposed)** | |

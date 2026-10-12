@@ -84,7 +84,7 @@ Structure:
 +---------+-------------------------------------------------+
 ```
 
-Placement overlay (same grid). `S1-S5` survivor spawns · `M1-M3` shapeshifter spawn candidates · `d1-d6` data drive candidates · `f1-f7` fuse candidates · `P1-P3` fuse box candidates · `T1-T3` evacuation terminal candidates · `h1-h6` hiding spots · `c1-c4` cameras (`c-monitors` = viewing station) · `s` backup light switch.
+Placement overlay (same grid). `S1-S5` survivor spawns (S5 only in 5-survivor rounds) · `M1-M3` shapeshifter spawn candidates · `d1-d6` data drive candidates · `f1-f7` fuse candidates · `P1-P3` fuse box candidates · `T1-T3` evacuation terminal candidates · `h1-h6` hiding spots · `c1-c4` cameras (`c-monitors` = viewing station) · `s` backup light switch.
 
 ```
 +-----------------------------------------------+-----------+
@@ -102,7 +102,7 @@ Placement overlay (same grid). `S1-S5` survivor spawns · `M1-M3` shapeshifter s
 |         :  :        |     [P2 core]   |         |         |
 |         :  +---D----+                 |         |         |
 +----D----+  |        +--------D--------+----D----+----B----+
-|S1 S2    |  |d5 f2   | P3 f3 h5        | T3 d6 M1 s        |
+|S1 S2 S5 |  |d5 f2   | P3 f3 h5        | T3 d6 M1 s        |
 |S3 S4    D  |h4 s    | s               |                   |
 |s        |  |        |                 |                   |
 |         +  +---D----+--------D--------+---------B---------+
@@ -248,6 +248,8 @@ Each lighting volume carries a **`blackout_able`** flag that Monster Abilities r
 
 ## Dimensions and Traversal
 
+**Geometry limits** (from `first-person-controller.md`: capsule `player_radius_m` 0.3, `step_height_m` 0.35, slope limit 40 degrees; cross-review 12d W4). The greybox must respect them: every doorway and archway at least 0.8 m clear width; steps no higher than `step_height_m` 0.35 m; slopes no steeper than 40 degrees; each door's swing area kept clear of fixtures and props, since a door close is rejected while a capsule overlaps the swing area. The map has no jumps and no drops.
+
 Traversal times use a reference walk speed of 4.0 m/s **(proposed)**. First-Person Controller owns the real speed; if it differs, scale every time below by the ratio.
 
 | Route | Path length | Walk time |
@@ -383,7 +385,8 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 
 | System | Direction | Interface |
 |--------|-----------|-----------|
-| First-Person Controller & Interaction | Map depends on it | Walk speed (traversal times), hold-to-interact at switches, doors, terminals |
+| First-Person Controller & Interaction | Map depends on it | Walk speed (traversal times), hold-to-interact at switches, doors, terminals; step and slope limits, capsule and door swing areas (Geometry limits under Dimensions and Traversal) |
+| Lobby & Role Assignment | Map depends on it | Places 3–5 survivors and 1 shapeshifter; survivor spawns S1–S5 and shapeshifter candidates M1–M3 (Spawn Points) |
 | Survivor Objectives | Bidirectional | Candidate point sets (d, f, P, T), terminal zone, exit E; Objectives owns selection rules, counts and `ObjectiveProgressChanged`; the map reads objective state for lighting |
 | Survivor Defense | Depends on map | Hiding spot (h) and barricadable door (B) placement; Defense owns their behaviour |
 | Monster Abilities | Depends on map | Lighting volumes for Blackout; switch (s) placement; room/door geometry for Predatory Lunge and False Signal positions |
@@ -419,7 +422,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 8. **Lighting states (5 clients)**: On the Evacuation phase change and on power restored, all 5 clients enter the new lighting state within 1 s of each other **(proposed tolerance)**. Pass: recorded on all clients.
 9. **Blackout scope**: A Blackout darkens exactly one lighting volume, and emergency strips stay visible in it. Pass: verified in each room and each corridor segment.
 10. **Exit gating**: Exit E stays closed until the server reports activation complete. A client cannot open it by interacting early. Pass: attempted on 5 clients, 0 openings.
-11. **Grouping (playtest)** (cross-review D1, 2026-10-12): across at least 10 M2 rounds, Match Telemetry records whether the survivors ever split (any two Healthy survivors more than 20 m apart for 30 s or more) and the win rate of teams that never split. Pass: the designer reviews both before Milestone 3; if never-split teams win more often than split ones, revisit D1 (an objective that rewards parallel work, or a shorter clock).
+11. **Grouping (playtest)** (cross-review D1, 2026-10-12): across at least 10 M2 rounds, Match Telemetry records whether the survivors ever split (any two Healthy survivors more than 20 m apart for 30 s or more) and the win rate of teams that never split. It also records each survivor's share of time spent sprinting and, for each sprint, whether the shapeshifter was within 20 m, plus each survivor's total time with the monster within 20 m (cross-review D1, 2026-10-12), so the M2 playtest can settle whether free sprint is a thin choice (`first-person-controller.md` Open Questions). Pass: the designer reviews both before Milestone 3; if never-split teams win more often than split ones, revisit D1 (an objective that rewards parallel work, or a shorter clock).
 12. **Lighting precedence (5 clients)**: With both fuses installed, then Evacuation, then a Blackout in a Zone B room, all 5 clients show that room dark with emergency strips; when the Blackout ends it shows Evacuation lighting, not Power Restored. After `RoundEnded`, every volume is Low Power on all clients.
 
 ## Open Questions

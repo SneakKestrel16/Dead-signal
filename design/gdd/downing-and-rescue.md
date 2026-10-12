@@ -137,7 +137,10 @@ someone is truly alone.
    - Only one rescuer counts at a time; extra helpers do not speed it up
      **(proposed)**.
    - **Interruptions** (server-checked every tick): rescuer releases the input,
-     leaves range or loses line of sight, the rescuer receives a valid
+     leaves range or loses line of sight (range and line of sight follow the
+     Controller hold pattern, `first-person-controller.md` rule 14: the range
+     check allows `rescue_range_m` + `hold_range_tolerance_m` 0.25 once the
+     hold has started; moot while rescue roots the rescuer), the rescuer receives a valid
      `SurvivorHit`, the rescuer is shocked by a taser (Survivor Defense rule 11),
      the rescuer is otherwise no longer Healthy, or the match
      ends. Blackout and scare events do *not* interrupt a rescue **(proposed)**.
@@ -247,7 +250,7 @@ Eliminated when bleed_elapsed_s >= bleedout_s
 | nearest_player_distance_m | float m | 0+ | server state | Straight-line distance to the Downed survivor from the nearest other player who is in the world and not Downed: a survivor or the shapeshifter in any form. Eliminated, Escaped and disconnected players are excluded |
 | camp_slow_radius_m | float m | 5–20 | proposed 10 | Any other non-Downed player closer than this slows bleed-out |
 | camp_slow_mult | float | 0–1 | proposed 0.25 | Bleed-out rate while slowed; 0 would freeze it (the pre-W5 rule) |
-| healthy_survivors | int | 0–3 | server state | Living, non-escaped, connected survivors who are Healthy (not Seized, Downed or Eliminated) |
+| healthy_survivors | int | 0–4 (0–3 at the 5-player MVP config) | server state | Living, non-escaped, connected survivors who are Healthy (not Seized, Downed or Eliminated) |
 
 Example: downed at 200 s, a teammate holds a rescue from 230 s to 233 s (interrupted),
 nobody else comes → bleed_elapsed reaches 60 s at 263 s → Eliminated at 263 s.
@@ -261,7 +264,7 @@ Worst-case stall with everyone Downed: `bleedout_s` (60 s), down from "until the
 ```
 crawl_speed = walk_speed * crawl_speed_mult
 ```
-`walk_speed` is owned by First-Person Controller (no GDD yet). With
+`walk_speed` is owned by First-Person Controller (`first-person-controller.md`, 4.0 m/s). With
 `crawl_speed_mult` 0.25, a survivor walking 4 m/s crawls 1 m/s.
 
 ### Monster exposure per takedown
@@ -334,7 +337,7 @@ team has at least 1.5 s to stun the monster after a hit lands, if a teammate is 
 
 | Event | Visual Feedback | Audio Feedback | Priority |
 |-------|----------------|---------------|----------|
-| Takedown commit start | Monster true form pinning victim; victim camera shake (reduced-flash safe) | Loud, directional struggle cue | MVP |
+| Takedown commit start | Monster true form pinning victim; victim camera shake (reduced-flash safe; visual offset only, view direction and aim unchanged) | Loud, directional struggle cue | MVP |
 | Commit cancelled by stun | Victim released, stumbles free | Stun crack + release gasp | MVP |
 | Downed | Victim drops; desaturated, low camera for victim | Collapse + heartbeat for victim | MVP |
 | Call for Help | Brief directional marker for survivors | Directional voice cry | MVP |
@@ -371,8 +374,8 @@ instant kill. Anti-reference: one-hit deaths with no window.
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |-------------|--------------|-------------------|---------------|
-| Camera impact (victim) | 200 | Jolt on `SurvivorHit` | Yes (reduced-flash/motion) |
-| Screen shake (victim) | 300 | Decaying during commit | Yes |
+| Camera impact (victim) | 200 | Jolt on `SurvivorHit`; visual offset only, view direction and aim unchanged (`first-person-controller.md` rule 7; designer decision, 2026-10-12, cross-review 12d) | Yes (reduced-flash/motion) |
+| Screen shake (victim) | 300 | Decaying during commit; visual offset only, view direction and aim unchanged | Yes |
 
 ### Weight and Responsiveness Profile
 

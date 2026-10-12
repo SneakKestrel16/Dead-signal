@@ -9,8 +9,8 @@
 
 ## Overview
 
-Dead Signal is a five-player, first-person asymmetric horror game: one human
-shapeshifter against four human survivors in one hand-authored research
+Dead Signal is a 4–6 player, first-person asymmetric horror game: one human
+shapeshifter against 3–5 human survivors (MVP config: five players, 1 vs 4) in one hand-authored research
 facility, over a ~9-minute round. Its systems fall into three groups: the round
 itself (match flow, objectives, downing and rescue), the two sides' kits
 (the shapeshifter's Borrowed Face and abilities; the survivors' defenses and
@@ -32,7 +32,7 @@ through an event.
 | Event | Emitted by | Consumed by | Meaning |
 |-------|-----------|-------------|---------|
 | `RoundPhaseChanged` | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map (lighting), HUD | Phase moved (Infiltration, Investigation, Evacuation) |
-| `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
+| `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze; the First-Person Controller & Interaction freezes movement and holds), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
 | `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Survivor Objectives (carried drives become Extracted, rule 22), Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), Pings & Callouts (no comms to living players), Monster Abilities (no fake callout as an Escaped survivor, rule 14), Borrowed Face (no new disguise as an Escaped survivor, rule 6), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
 | `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination, Pings & Callouts (Seized state) | A validated Predatory Lunge hit; starts the takedown commit |
 | `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
@@ -45,7 +45,7 @@ through an event.
 | `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
 | `AbilityUsed` **(proposed)** | Monster Abilities | Scare Events (scare triggers), Pings & Callouts (False Signal fake callout), Survivor Defense (a Lunge wind-up ends immunity, rule 16), Match Telemetry | A validated Lunge wind-up, False Signal or Blackout; carries ability, position and, for False Signal, the sound or impersonated callout |
 | `BarricadeBroken` **(proposed)** | Survivor Defense | Scare Events, HUD | A barricade was destroyed |
-| `PlayerConnectionChanged` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (cancel commit on monster disconnect), Monster Abilities, Survivor Objectives (items drop on disconnect, rule 13), Borrowed Face (no disguise as a disconnected survivor, rule 6; disguise lost on monster reconnect), HUD | A player disconnected, reconnected or ran out of reconnect grace |
+| `PlayerConnectionChanged` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (cancel commit on monster disconnect), Monster Abilities, Survivor Objectives (items drop on disconnect, rule 13), Borrowed Face (no disguise as a disconnected survivor, rule 6; disguise lost on monster reconnect), First-Person Controller & Interaction (cancels holds), HUD | A player disconnected, reconnected or ran out of reconnect grace |
 
 ### Read-only replicated state
 
@@ -55,14 +55,15 @@ event. Only the owner writes it. Readers never change it.
 | State | Owner | Read by | Meaning |
 |-------|-------|---------|---------|
 | Shapeshifter form (true form or disguised, and whose body) | Borrowed Face | Survivor Defense (rules 1 and 10: which shock presentation and which events survivor clients receive), Monster Abilities (rule 4: Lunge needs True Form), all clients (rendering) | The form the shapeshifter currently shows; `FormChanged` announces each change |
-| Transforming flag (target form, start time) | Borrowed Face (rule 8) | Pings & Callouts, Survivor Defense, Monster Abilities (rule 2: no ability while Transforming), all clients (rendering) | A transformation is in progress |
-| Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation), Survivor Defense (rule 8 shot pass-through, rule 13 item use) | Whether a survivor can be lunged |
+| Transforming flag (target form, start time) | Borrowed Face (rule 8) | Pings & Callouts, Survivor Defense, Monster Abilities (rule 2: no ability while Transforming), First-Person Controller & Interaction (no sprint, interaction rejection while Transforming), all clients (rendering) | A transformation is in progress |
+| Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation), Survivor Defense (rule 8 shot pass-through, rule 13 item use), First-Person Controller & Interaction (Seized and Downed locks and gaits) | Whether a survivor can be lunged |
 | Player positions and life states | Network Authority & Replication; life state from Downing, Rescue & Elimination | Downing, Rescue & Elimination (camping slow, rule 6), Survivor Objectives (zone counts) | Where each player is and whether they are Healthy, Seized, Downed or Eliminated |
 | `blackout_able` per lighting volume | Facility Map (`research-facility.md`); flips to false for the active terminal room on `RoundPhaseChanged` to Evacuation | Monster Abilities (rule 17 Blackout target validation) | Whether a lighting volume may be blacked out |
-| Hidden and item-use state | Survivor Defense | Survivor Objectives (hidden survivors cannot interact or hold the zone), Downing, Rescue & Elimination (rules 3 and 7), Monster Abilities (rule 7: hidden survivors are not lunge targets), Pings & Callouts (rules 6, 7a and 14a) | Whether a survivor is hidden or using an item |
-| Lunge state (wind-up, Active, takedown commit) | Monster Abilities (States table) | Borrowed Face (rule 7 rejects transforms), Survivor Defense (rule 15 cancels; rule 16 reads wind-up start), Scare Events (rule 14 flinch suppression) | Where the current lunge is in its timeline |
-| Committing state | Downing, Rescue & Elimination | Survivor Defense (a stun cancels the commit), Borrowed Face (rule 7 rejects transforms) | A takedown commit is running |
+| Hidden and item-use state | Survivor Defense | Survivor Objectives (hidden survivors cannot interact or hold the zone), Downing, Rescue & Elimination (rules 3 and 7), Monster Abilities (rule 7: hidden survivors are not lunge targets), Pings & Callouts (rules 6, 7a and 14a), First-Person Controller & Interaction (peek view, hold rejection and cancel) | Whether a survivor is hidden or using an item |
+| Lunge state (wind-up, Active, takedown commit) | Monster Abilities (States table) | Borrowed Face (rule 7 rejects transforms), Survivor Defense (rule 15 cancels; rule 16 reads wind-up start), Scare Events (rule 14 flinch suppression), First-Person Controller & Interaction (wind-up root) | Where the current lunge is in its timeline |
+| Committing state | Downing, Rescue & Elimination | Survivor Defense (a stun cancels the commit), Borrowed Face (rule 7 rejects transforms), First-Person Controller & Interaction (commit root) | A takedown commit is running |
 | Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities, Downing, Rescue & Elimination (rule 7 rescue interrupt), First-Person Controller & Interaction (root, slow, doors) | A player is under the taser action lock |
+| Movement modifiers (root, slow, lock) | Each modifier is owned by its requester: Survivor Defense (shock lock, stun root and slow), Downing, Rescue & Elimination (Seized, rescue and commit roots, crawl), Monster Abilities (lunge wind-up root, miss slow) | First-Person Controller & Interaction (applies the most restrictive, rule 6) | A system adds or removes its own movement modifier |
 | Player roster (`player_count`; per player display name, role, survivor character) | Lobby & Role Assignment (rule 14) | Match Flow, Borrowed Face, Pings & Callouts, HUD, all clients | Who is in the round, who is the shapeshifter and which character each survivor plays; fixed for the round |
 
 ---
@@ -73,7 +74,7 @@ event. Only the owner writes it. Readers never change it.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Approved | design/gdd/lobby-role-assignment.md | Network Authority |
-| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Approved | design/gdd/first-person-controller.md | Network Authority, Match Flow (soft) |
+| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Approved | design/gdd/first-person-controller.md | Network Authority (Match Flow events only) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Network Authority, Controller & Interaction, Monster Abilities (Predatory Lunge), Survivor Defense, Match Flow, Pings & Callouts |

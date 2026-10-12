@@ -281,6 +281,6 @@ Not applicable: Match Flow has no character animation.
 | Should "Evidence lost" (nobody left inside, drives not out) end the round immediately? | SneakKestrel16 | Before Milestone 2 | Proposed: yes |
 | Should the shapeshifter be prevented from attacking during Infiltration? | SneakKestrel16 | Before Milestone 3 | Open |
 | Confirm the disconnect rule (60 s grace, survivor counted as eliminated, monster → survivor win by forfeit) | SneakKestrel16 | Before Milestone 1 | Monster forfeit **decided 2026-10-11** (was No Contest; cross-review blocker 4); the rest proposed |
-| Should the results screen reveal the shapeshifter player's name? | SneakKestrel16 | Before Milestone 2 | Proposed: yes |
+| Should the results screen reveal the shapeshifter player's name? | SneakKestrel16 | Before Milestone 2 | Resolved 2026-10-12: yes; roles are public in the lobby (`lobby-role-assignment.md` rule 11), see rule 24 |
 | Can survivors who are Downed escape by crawling to the exit? | SneakKestrel16 | Before Milestone 2 | Proposed: no |
 | Cooldowns keep counting down while the shapeshifter is disconnected (rule 20), so a mid-chase disconnect and reconnect within grace refreshes its abilities at the cost of its disguise. Should cooldowns pause instead? | SneakKestrel16 | Before Milestone 3 | Open (design review 2026-10-11) |

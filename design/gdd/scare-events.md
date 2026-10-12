@@ -66,7 +66,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 **Control-loss limit**
 
-13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge) of at most `scare_max_control_loss_s` = 0.3 s **(proposed)**, during which the player can still move and use a stun item.
+13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge, **the single view rotation `first-person-controller.md` rule 7 sanctions**; it is server-applied, so the server's view direction and aim ray follow the nudge and stay consistent with the client's view; every other camera effect in the game is a visual offset only) of at most `scare_max_control_loss_s` = 0.3 s **(proposed)**, during which the player can still move and use a stun item.
 14. Flinch never fires on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active (Monster Abilities rules 5–6); any Major scare reaching that survivor then plays without its flinch, and a flinch already running ends when such a wind-up starts (fourth cross-review W3). The ambush lunge scare is therefore stinger only, so a forced view nudge never spoils a dodge (design review 2026-10-12, **proposed**). The flinch duration must also stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
 15. No scare plays a non-skippable animation, forced camera move or full-screen overlay that hides the monster.
 
@@ -123,6 +123,7 @@ Per-client scare cooldown state: Ready → Major cooldown (`major_scare_cooldown
 - **Monster Abilities**: Blackout and Predatory Lunge send scare triggers (source Monster) through `AbilityUsed` after the server validates the ability; False Signal sends none (rule 4a); lunge wind-up timing bounds the flinch rule.
 - **Borrowed Face**: `FormChanged` into true form triggers the reveal scare for survivors within `reveal_radius_m` (10 m, owned by Borrowed Face rule 15) with line of sight.
 - **Survivor Defense**: barricade breaks trigger door burst; stun use is never blocked by scares.
+- **First-Person Controller & Interaction**: the camera flinch (rules 13-14) is the single sanctioned view rotation in Controller rule 7; the server applies it, so the server's view direction follows it (designer decision, 2026-10-12, cross-review 12d). Scares otherwise never move or lock movement or look.
 - **Survivor Objectives**: fuse install triggers an alarm; both fuses installed triggers Power Restored.
 - **Facility Map**: owns per-volume lighting state (rule 22); scare anchors (doors, glass), recording speakers, surveillance monitors, emergency lights.
 - **Pings & Callouts**: callouts and pings outrank scare audio.
@@ -190,6 +191,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | Monster Abilities | This depends on it | Blackout and Lunge triggers and wind-up timing |
 | Borrowed Face | This depends on it | Reveal trigger, `FormChanged` |
 | Survivor Defense | This depends on it | `BarricadeBroken` trigger; stun input never blocked |
+| First-Person Controller & Interaction | Bidirectional | The camera flinch is the single sanctioned view rotation (Controller rule 7); server-applied, so the server view direction follows it |
 | Survivor Objectives | This depends on it | Fuse install alarm, power restored |
 | Facility Map | This depends on it | Lighting states (owner), lighting volumes for the ambush test, scare anchors, emergency lights, monitors |
 | Network Authority & Replication | This depends on it | `ScareTriggered` replication and scoping |
@@ -247,7 +249,7 @@ Alien: Isolation's vent and alarm sounds: frightening because they tell you wher
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |---|---|---|---|
-| Camera flinch | ≤300 | View nudge toward origin | Yes (toggle) |
+| Camera flinch | ≤300 | View nudge toward origin; the single sanctioned view rotation, server-applied (the server view direction follows it) | Yes (toggle) |
 | Screen flash | ≤150 per flash | Brightness pulse, rate-capped | Yes (scale) |
 
 ### Weight and Responsiveness Profile

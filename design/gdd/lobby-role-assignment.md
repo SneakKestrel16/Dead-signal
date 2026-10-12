@@ -186,7 +186,9 @@ The lobby_countdown formula is defined as:
 | HUD & Results Screen | Downstream | Hard | Not started | Lobby screen data |
 | Match Telemetry | Downstream | Soft | Not started | Session ID, round index, player count, roles, characters |
 
-Bidirectional entries in Match Flow, Borrowed Face, Pings & Callouts, Facility Map and the systems index are pending propagation (Open Questions).
+Bidirectional entries in Match Flow, Borrowed Face, Pings & Callouts, Facility Map and the systems index were propagated in d373070 (Open Questions).
+
+**Delivery** (designer decision, 2026-10-12, cross-review 12d): Milestone 1 ships a random shapeshifter and random characters. The rotation queue, preference persistence and host kick follow once the round loop works. The design above is unchanged; this is build order only (pillar: Small, Shippable Scope).
 
 ## Tuning Knobs
 
@@ -223,7 +225,7 @@ Lobby screen, to be specified with `/ux-design`:
 - `design/gdd/match-flow.md`: rules 1, 2, 19–21, 24, 27 (roster in, return out, disconnect grace, results)
 - `design/gdd/pings-and-callouts.md`: rules 10, 18, 21 and the voice-set Open Question (one voice set per character, settled here)
 - `design/gdd/borrowed-face.md`: "What the disguise copies" (body, outfit, colour identity are the target's character)
-- `design/levels/research-facility.md`: Spawn Points (S1–S4)
+- `design/levels/research-facility.md`: Spawn Points (S1–S5)
 - `design/gdd/game-concept.md`: Session-Level loop (rotating who plays the shapeshifter)
 
 ## Acceptance Criteria

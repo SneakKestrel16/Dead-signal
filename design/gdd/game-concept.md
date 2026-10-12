@@ -8,10 +8,10 @@
 
 ## Elevator Pitch
 
-> It's a first-person, five-player psychological horror game where four survivors
-> recover evidence and power up an evacuation system in an abandoned research
-> facility, while the fifth player, a shapeshifter, walks among them wearing their
-> friends' faces.
+> It's a first-person, 4–6 player psychological horror game (MVP config: five
+> players) where the survivors (four at the MVP config) recover evidence and
+> power up an evacuation system in an abandoned research facility, while one
+> player, a shapeshifter, walks among them wearing their friends' faces.
 
 ---
 
@@ -22,7 +22,7 @@
 | **Genre** | Asymmetrical multiplayer horror; social deception |
 | **Platform** | PC first (to be confirmed — see Open Questions) |
 | **Target Audience** | See Target Player Profile |
-| **Player Count** | Exactly 5 per match: 1 monster vs. 4 survivors, all human |
+| **Player Count** | 4–6 players: 1 shapeshifter vs 3–5 survivors (MVP config: 5, 1 vs 4), all human |
 | **Session Length** | ~9-minute rounds; sessions of several rounds back to back |
 | **Monetization** | Not decided |
 | **Estimated Scope** | Small-to-medium: one map, one monster kit, one complete round |
@@ -276,7 +276,7 @@ understandable on both sides.
 
 **Required for MVP**:
 
-1. Networked greybox: five-player lobby, role assignment, first-person movement.
+1. Networked greybox: 4–6 player lobby (MVP config five), role assignment, first-person movement.
 2. Complete round loop: objectives, timer, win/loss, results.
 3. Downing, rescue, elimination and one stun tool.
 4. Borrowed Face with correct replication.

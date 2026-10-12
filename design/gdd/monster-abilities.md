@@ -66,9 +66,9 @@ Counters (pillar: Counterplay): **dodge sideways** (the narrow cone and short re
 13. Activation: cooldown ready; aim point chosen within `false_signal_range_m` = 20 m of the monster **(proposed)**; the server snaps it to the nearest walkable floor point and rejects points inside walls or outside the range.
 14. Choose one signal type (source list):
     - **Teammate callout**: an authored callout in the voice set of a survivor the monster has *observed* (Borrowed Face) and who is not Eliminated or Escaped (designer decision, 2026-10-11) **(proposed)**. Its presentation is owned by Pings & Callouts (rules 26–29 there) and is not redefined here: it uses the same authored line, voice set and `[Name]: [text]` feed line as a real callout from that survivor, reaches listeners by the same range rule measured from the chosen point, and differs only in that it has no speaker gesture, cannot attach an item ping, and the impersonated survivor sees it marked "(not you)" **(proposed, per Pings & Callouts)**.
-    - **Footsteps**: 3 s of survivor footsteps at the point, moving up to 3 m along a direction chosen by the monster **(proposed)**.
+    - **Footsteps**: 3 s of survivor footsteps at the point, moving up to ~12 m along a direction chosen by the monster (walk gait, 4.0 m/s over 3 s, so the cadence matches real walking), audible at the walk radius `footstep_radius_walk_m` = 6 m **(designer decision, 2026-10-12, cross-review 12d)**.
     - **Familiar interaction sound**: an objective interaction sound (e.g. drive extraction, fuse handling) or door sound **(proposed)**. It never changes objective state or alerts.
-15. The sound is spatialised from the chosen point and replicated as a shared event to every survivor client within the audible range of the real sound it imitates (the same asset and attenuation; for a callout, the Pings & Callouts range rule) **(proposed)**. Fake sounds use the same audio assets as real ones; they carry no visual source (no body, no light, no ping marker) **(proposed)**. A fake teammate callout additionally shows its feed line as defined by Pings & Callouts.
+15. The sound is spatialised from the chosen point and replicated as a shared event to every survivor client within the audible range of the real sound it imitates (the same asset and attenuation; for Footsteps that is the walk radius, `footstep_radius_walk_m` 6 m, around the fake's current position; for a callout, the Pings & Callouts range rule) **(proposed)**. Fake sounds use the same audio assets as real ones; they carry no visual source (no body, no light, no ping marker) **(proposed)**. A fake teammate callout additionally shows its feed line as defined by Pings & Callouts.
 16. Cooldown: 25 s (source), starting on activation **(proposed)**.
 
 Counters: sound is only an **approximate clue** (source) — survivors **verify by sight** (nobody is there), **team communication** (the named survivor pings their real position), and objective state (no progress appeared on the objective whose sound played).
@@ -77,7 +77,7 @@ Counters: sound is only an **approximate clue** (source) — survivors **verify 
 
 17. Activation: cooldown ready; the target is the lighting zone the monster is standing in or one it aims at within `blackout_range_m` = 15 m with line of sight **(proposed)**. Lighting zones are authored per room or short corridor in the Facility Map; the server rejects any zone whose `blackout_able` flag is false (defined per lighting volume in `research-facility.md`; the active terminal room is excluded during Evacuation).
 18. Effect: all normal lights in the zone go out for `blackout_duration_s` = 6 s (source). Emergency lights remain faintly visible (source). Flashlights are unaffected **(proposed)**.
-19. A backup switch (Facility Map: one per room, none in corridors) restores only the zone containing it, immediately, when a survivor interacts with it for `backup_switch_hold_s` = 1 s **(proposed)**. Restoring early does not reduce the monster's cooldown.
+19. A backup switch (Facility Map: one per room, none in corridors) restores only the zone containing it, immediately, when a survivor interacts with it for `backup_switch_hold_s` = 1 s **(proposed)**. It follows the Controller's hold pattern (`first-person-controller.md` rule 11): `range_m` 2.0 m **(proposed)**, `roots_actor` no (the survivor may walk, not sprint), progress resets on cancel, no exclusive lock (any survivor may hold it; the first to complete restores the zone), and the shapeshifter may not fake it **(proposed)**. Restoring early does not reduce the monster's cooldown.
 20. One zone per Blackout; Blackout cannot target a zone already blacked out **(proposed)**. Lighting state is server-owned and replicated so every client sees the same zone dark.
 21. Cooldown: 45 s (source), starting on activation **(proposed: start on activation, not on expiry)**.
 
@@ -215,6 +215,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | blackout_range_m | 15 (proposed) | 8–25 | Ambush from further away | Must be near the target zone |
 | blackout_cooldown_s | 45 (source) | 30–90 | Rarer | Map feels permanently dark |
 | backup_switch_hold_s | 1 (proposed) | 0.5–3 | Counter riskier | Counter trivial |
+| backup_switch_range_m | 2.0 (proposed) | 1.5–2.5 | Easier to restore from a distance | Must stand at the switch |
 
 ## Visual/Audio Requirements
 
@@ -297,7 +298,7 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 - [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
-- [ ] During wind-up the monster's facing changes by no more than 15°/s, and during the dash by no more than 30°/s; with the monster at 150 ms latency, a survivor 3 m ahead with body radius 0.3 m who strafes at walk speed 4.0 m/s starting 0.25 s after the cue is not hit (`first-person-controller.md` speeds and radius; steering pursuit model).
+- [ ] During wind-up the monster's facing changes by no more than 15°/s, and during the dash by no more than 30°/s; with the monster at 150 ms latency, a survivor 3 m ahead with body radius 0.3 m who strafes at walk speed 4.0 m/s starting 0.25 s after the cue is not hit (`first-person-controller.md` speeds and radius; steering pursuit model). The authoritative dodge test is `first-person-controller.md`'s Monster Abilities dodge AC (steering model, 0.40 s strafe, 20 seeds); this criterion is a smoke check of the same budget.
 - [ ] With the monster at 150 ms latency, hit checks use survivor positions rewound 150 ms; at 300 ms they use positions rewound 150 ms (the cap). A survivor who became hidden or entered grace after the rewound time is not hit.
 - [ ] While a lunge is in wind-up, Active or takedown commit, False Signal and Blackout requests are rejected with no cooldown cost.
 - [ ] With two valid survivors in the cone, only the closer one receives `SurvivorHit`, and the dash ends on the hit tick.
@@ -308,7 +309,7 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 - [ ] Every `AbilityUsed` stays on the server; a packet capture on a survivor client shows no `AbilityUsed` and no monster position from it.
 - [ ] Every accepted Lunge, False Signal and Blackout emits exactly one `AbilityUsed` with its ability, position and target; a rejected request emits none.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
-- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved, Eliminated or Escaped survivor is rejected; Footsteps play for 3 s and move no more than 3 m from the aim point; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
+- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved, Eliminated or Escaped survivor is rejected; Footsteps play for 3 s at walk cadence, move no more than ~12 m from the aim point and are audible within 6 m of their current position; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
 - [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch held for 1 s restores its own zone on all clients and no other zone, and releasing it earlier does not. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
 - [ ] Changing any Tuning Knobs value in the data file changes in-game behavior with no code change, and ability code contains no literal for those parameters.
 

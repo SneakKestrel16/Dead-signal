@@ -92,7 +92,8 @@ entities:
       - design/gdd/scare-events.md
       - design/levels/research-facility.md
     controlled_by: human_player
-    count_per_match: 4
+    count_per_match: 4   # MVP / tuned count (5-player MVP config); survivors per match range 3-5 (min_players 4 .. max_players 6, lobby-role-assignment.md); the approved GDDs are tuned for 4
+    count_range: [3, 5]
     life_states: [Healthy, Downed, Eliminated]   # Seized is a transient sub-state during a takedown commit
     added: 2026-10-12
     revised: ""
@@ -300,7 +301,7 @@ constants:
     added: 2026-10-12
     revised: 2026-10-12
 
-  # 1 shapeshifter + 3 survivors; lobby waits below this
+  # 1 shapeshifter + 3 survivors; lobby waits below this. MVP config: min_players = max_players = 5 (lobby-role-assignment.md Tuning Knobs)
   - name: min_players
     status: active
     source: design/gdd/lobby-role-assignment.md
@@ -313,7 +314,7 @@ constants:
     added: 2026-10-12
     revised: ""
 
-  # 1 shapeshifter + 5 survivors; join rejected above this
+  # 1 shapeshifter + 5 survivors; join rejected above this. MVP config: min_players = max_players = 5
   - name: max_players
     status: active
     source: design/gdd/lobby-role-assignment.md
@@ -385,6 +386,7 @@ constants:
       - design/gdd/match-flow.md
       - design/gdd/survivor-objectives.md
       - design/gdd/borrowed-face.md
+      - design/gdd/lobby-role-assignment.md
     value: 60
     unit: s
     added: 2026-10-12
@@ -804,7 +806,7 @@ constants:
     added: 2026-10-12
     revised: ""
 
-  # (proposed); below hide_noise_radius_m 8; proposed False Signal footstep range
+  # (proposed); below hide_noise_radius_m 8; also the False Signal footstep audible radius (decided 2026-10-12, cross-review 12d)
   - name: footstep_radius_walk_m
     status: active
     source: design/gdd/first-person-controller.md
@@ -927,6 +929,151 @@ constants:
       - design/gdd/borrowed-face.md
     value: 45
     unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) Downed crawl gait; 0.25 x 4.0 = 1.0 m/s
+  - name: crawl_speed_mult
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/first-person-controller.md
+    value: 0.25
+    unit: x walk speed
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) dash length
+  - name: lunge_distance_m
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+    value: 4
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) reach beyond the dash path; above ~1.29 the 0.40 s strafe is caught
+  - name: lunge_hit_radius_m
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+    value: 1.2
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) dash duration
+  - name: lunge_dash_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+    value: 0.3
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) monster speed multiplier for 1.5 s after a miss
+  - name: miss_slow_multiplier
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+    value: 0.5
+    unit: x speed
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) root after a taser hit, then stun_slow_mult until stun_duration_s ends
+  - name: stun_root_s
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/first-person-controller.md
+    value: 1.0
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) slow after stun_root_s
+  - name: stun_slow_mult
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/first-person-controller.md
+    value: 0.5
+    unit: x speed
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) survivors within this radius hear the lunge cue; flinch suppression radius
+  - name: lunge_cue_radius_m
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/scare-events.md
+      - design/gdd/first-person-controller.md
+    value: 20
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) Start range for objective holds; Holding keep-range adds hold_range_tolerance_m 0.25
+  - name: interact_range_m
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/first-person-controller.md
+    value: 2.0
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) rescue Start range
+  - name: rescue_range_m
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/first-person-controller.md
+    value: 1.5
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) loudest noise; above footstep_radius_sprint_m 20
+  - name: install_noise_radius_m
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/first-person-controller.md
+    value: 25
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) hide enter/exit sound; above footstep_radius_walk_m 6
+  - name: hide_noise_radius_m
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/first-person-controller.md
+    value: 8
+    unit: m
     added: 2026-10-12
     revised: ""
 

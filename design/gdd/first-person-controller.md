@@ -11,7 +11,7 @@
 
 First-Person Controller & Interaction is the body, view and "do a thing" layer every player shares. It moves players in four gaits (walk 4.0 m/s; sprint 5.0 with no stamina but loud; crouch; crawl), applies the roots, slows and locks other systems request, and provides the one server-validated hold-to-interact pattern that objectives, rescues, barricades and doors reuse. It keeps the round fair and readable: survivors can dodge a lunge on reaction, a revealed chase eventually ends, and a disguise moves exactly like the survivor it copies.
 
-> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Network Authority & Replication, Match Flow & Win Conditions`
+> **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `Network Authority & Replication` (Match Flow events only)
 
 ## Overview
 
@@ -31,7 +31,7 @@ Values marked **(proposed)** are pinned in Formulas.
 4. **Crouch** lowers eye height, moves at `crouch_speed_mult` × walk, and makes the quietest footsteps. It has no traversal use: the prototype map has no crouch-only spaces. If something blocks the head, standing up waits until there is room.
 5. **No jump** **(designer decision, 2026-10-12)**. The body auto-climbs steps up to `step_height_m` and slopes up to 40°. No fall damage; the map has no drops that need it.
 6. **Speed modifiers** come from their owning systems: root (speed 0), slow (multiplier with a duration), lock (no movement). The controller applies only the **most restrictive** active modifier (lock > root > lowest slow); modifiers never multiply together. Each owner adds and removes only its own modifier. A slow scales the current gait's speed.
-7. **Look is never taken.** Mouse look is free in every state (yaw 360°, pitch ±85°), except the restricted peek view of a hidden survivor (Survivor Defense rule 20). No system rotates or locks a player's camera (pillar: Fair Fear).
+7. **Look is never taken.** Mouse look is free in every state (yaw 360°, pitch ±85°), except the restricted peek view of a hidden survivor (Survivor Defense rule 20). The **one sanctioned exception** is the Scare Events camera flinch (Scare Events rules 13-14): a server-applied view nudge of at most `scare_max_control_loss_s` = 0.3 s, accessibility-toggleable, never during a lunge wind-up. The server's view direction (rule 10) follows the flinch, so aim and the client's view stay consistent. Every other camera effect (downing and rescue camera impact and screen shake, survivor-defense camera jitter and stun jolt) is a **visual offset only** that never changes the server's view direction or aim ray. No other system rotates or locks a player's camera (pillar: Fair Fear) **(designer decision, 2026-10-12, cross-review 12d)**.
 8. **Footstep noise** follows gait: sprint is loudest, then walk, then crouch and crawl (radii in Formulas). Clients play footsteps from each player's replicated gait. A disguised shapeshifter uses its target's footstep set (Borrowed Face). Only real movement makes footsteps; False Signal fakes are separate (Monster Abilities).
 
 **Authority**
@@ -253,7 +253,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 | System | Direction | Hard/soft | Interface |
 |---|---|---|---|
 | Network Authority & Replication | This depends on it | Hard | Server tick, intent transport, position replication, prediction and reconciliation (ADR not yet written; provisional) |
-| Match Flow & Win Conditions | This depends on it | Soft | `RoundEnded` freezes movement and holds; `PlayerConnectionChanged` cancels holds; spectating in the Out state. `match-flow.md` does not yet name this system (one-directional; to fix) |
+| Match Flow & Win Conditions | Event-only | Soft | Consumes the `RoundEnded` and `PlayerConnectionChanged` events (no other Match Flow state): `RoundEnded` freezes movement and holds; `PlayerConnectionChanged` cancels holds; spectating in the Out state. Not a layer dependency, so Foundation does not depend on Feature (designer decision, 2026-10-12, cross-review 12d) |
 | Survivor Objectives | Depends on this | Hard | Hold pattern, view ray, range and line-of-sight checks |
 | Downing, Rescue & Elimination | Depends on this | Hard | Hold (Rescue), Seized lock, roots, crawl gait, `walk_speed` |
 | Survivor Defense | Depends on this | Hard | Holds (barricade, hide, search, break), root and slow, view ray (taser aim), doors |
@@ -261,7 +261,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 | Monster Abilities | Depends on this | Hard | True-form speeds, `player_radius_m` (dodge window), root and slow, doors |
 | Pings & Callouts | Depends on this | Soft | View ray, input bindings |
 | Facility Map (`design/levels/research-facility.md`) | Depends on this | Hard | `walk_speed` (traversal times), step and slope limits, capsule (doorways ≥ 0.8 m clear) |
-| Scare Events | None | — | Scares never move or lock the camera (Core Rule 7); a limit both GDDs state, not a data flow |
+| Scare Events | Soft | The camera flinch is the single sanctioned view rotation (Core Rule 7; Scare Events rules 13-14): a server-applied nudge, so the server's view direction follows it. Every other camera effect is a visual offset only |
 
 ## Visual/Audio Requirements
 
@@ -323,7 +323,7 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 
 **Look and view ray**
 
-- [ ] **[U]** **GIVEN** any state except Hidden, **WHEN** the player looks, **THEN** yaw covers 360°, pitch clamps at ±85°, and no system call changes camera orientation. Test: apply every root, slow, lock, Downed, Seized, Transforming and Holding state and assert the view direction follows input only. (Rule 7)
+- [ ] **[U]** **GIVEN** any state except Hidden, **WHEN** the player looks, **THEN** yaw covers 360°, pitch clamps at ±85°, and no system call changes camera orientation, except the Scare Events flinch (a server-applied nudge of at most 0.3 s, never during a lunge wind-up) **(designer decision, 2026-10-12, cross-review 12d)**. Test: apply every root, slow, lock, Downed, Seized, Transforming and Holding state and assert the view direction follows input only; then play the downing camera impact and shake and the survivor-defense jitter and jolt and assert the view direction and aim ray are unchanged, and play a flinch and assert the server view direction moves with it for at most 0.3 s. (Rule 7)
 - [ ] **[I]** **GIVEN** the server's yaw and pitch differ from a client-claimed value, **WHEN** a taser shot, a ping and an interaction Start are made, **THEN** all three resolve against the server's ray from the eye position. (Rule 10)
 
 **Footsteps**
@@ -376,10 +376,10 @@ Not covered here: reconciliation smoothness (waits on the Network Authority ADR)
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
 | Monster Abilities' dodge example (lines 138, 142; AC at line 298) uses a 4.5 m/s strafe and zero radius. Update it to the 4.0 m/s walk strafe and `player_radius_m` 0.3, and rerun its straight-line check | SneakKestrel16 | Before Monster Abilities' next review | Resolved 2026-10-12: updated; the straight-line model catches the strafe, so Monster Abilities adopts this GDD's steering pursuit model, which dodges (designer decision) |
-| False Signal footsteps need a gait for their audible range. Proposed: walk (6 m) | SneakKestrel16 | Before Monster Abilities' next review | — |
+| False Signal footsteps need a gait for their audible range. Proposed: walk (6 m) | SneakKestrel16 | Before Monster Abilities' next review | Resolved 2026-10-12: walk gait, `footstep_radius_walk_m` 6 m, fake path up to ~12 m over 3 s at 4.0 m/s (designer decision, cross-review 12d); `monster-abilities.md` rules 14-15 |
 | Does `accel_time_s` up to 0.1 s keep the dodge? Rerun the pursuit simulation with the strafe starting at 0.40 + `accel_time_s` / 2 | SneakKestrel16 | Before Milestone 3 | — |
 | Prediction and reconciliation method, and the controller's server performance budget | technical-director | Network Authority ADR | — |
-| `match-flow.md` does not list this system as a dependent (one-directional dependency) | SneakKestrel16 | Phase 5 of this authoring session | Resolved 2026-10-12: row added to `match-flow.md` Dependencies |
+| Match Flow dependency direction (the Controller's link is event-only) | SneakKestrel16 | Phase 5 of this authoring session | Resolved 2026-10-12: row added to `match-flow.md` Dependencies |
 | Crouch as toggle or hold: offer both as a setting? | SneakKestrel16 | Accessibility Options GDD | — |
 | Is a 1.0 m/s sprint gain over walk worth its noise? | SneakKestrel16 | Milestone 5 closed playtest | — |
 | Solid capsules let a player (or a disguised shapeshifter) plug a doorway. Watch for griefing and body-blocking | SneakKestrel16 | Milestone 5 closed playtest | — |
