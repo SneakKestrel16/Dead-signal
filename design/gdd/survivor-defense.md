@@ -1,8 +1,8 @@
 # Survivor Defense
 
-> **Status**: Approved
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (second re-review: friendly shocks at rescues and on objective holds accepted, playtest-gated, W7/W8)
+> **Last Updated**: 2026-10-12 (cross-review B4: post-lock window bounds back-to-back locks in every form; rules 10, 11, 14, 17, `lock_share`, eight-hit AC)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -99,16 +99,20 @@ tools, they're yours.
 10. **Immune target:** if the monster is immune, the cartridge is still consumed
     and no stun state is applied. In true form every client shows a "resisted"
     spark **(proposed)**. While disguised, the hit plays the full shock
-    presentation and applies the same root, slow and action lock as a stun
-    (rule 14), with no new immunity (designer decision, 2026-10-11; lock added
-    in re-review R2). It cancels any hold in progress, but it does not cancel a
+    presentation, with no new immunity (designer decision, 2026-10-11). It
+    applies no root, slow or action lock: immunity starts when a lock ends and
+    lasts `stun_immunity_s`, so an immune hit always falls inside the post-lock
+    window (rule 14) and looks exactly like a hit on a survivor inside theirs
+    (designer decision, 2026-10-12, cross-review B4; replaces the re-review R2
+    lock). It cancels any hold in progress, but it does not cancel a
     transformation already in progress. Immunity is therefore never visible on
     a borrowed body. If the hit lands while Transforming, the presentation
     follows the body shown at that moment: the full shock on the borrowed body,
     the "resisted" spark on the true form **(proposed)**.
 11. **Survivor hit (friendly fire):** a real survivor hit by the shot is shocked
     exactly as a disguised monster is stunned, as every observer sees it
-    (designer decision, 2026-10-11): the same stagger on their body, rooted for
+    (designer decision, 2026-10-11), unless they are inside their post-lock
+    window (rule 14; designer decision, 2026-10-12, cross-review B4): the same stagger on their body, rooted for
     `stun_root_s`, then `stun_slow_mult` until `stun_duration_s` ends, with the
     shocked grunt and no whiteout. For `stun_duration_s` they get the same
     action lock as a stunned monster (rule 14): no doors, interact, items
@@ -130,13 +134,20 @@ tools, they're yours.
     **(proposed)**. The whole time it cannot attack, use any ability, transform,
     interact (search, break barricades), use items, ping or call out, or use
     doors. **One lock for all** (designer decision, 2026-10-11, re-review R2):
-    a shocked survivor (rule 11) and an immune disguised monster (rule 10) get
-    exactly this lock for exactly this time, so "shock them, then ask them to
-    ping or open a door" tells nobody anything. **No refresh** (designer
-    decision, 2026-10-11, second re-review B2): a hit on a player already
-    under the lock does not extend or restart it; the charge is still spent
-    and the hit plays its normal presentation. So no number of shooters can
-    chain the lock, in either form.
+    a shocked survivor (rule 11) and a stunned disguised monster get exactly
+    this lock for exactly this time, so "shock them, then ask them to ping or
+    open a door" tells nobody anything. **No refresh** (designer decision,
+    2026-10-11, second re-review B2): a hit on a player already under the lock
+    does not extend or restart it; the charge is still spent and the hit plays
+    its normal presentation. **Post-lock window** (designer decision,
+    2026-10-12, cross-review B4): after any lock ends, the player, survivor or
+    disguised monster alike, ignores new locks for `stun_immunity_s`. A hit in
+    that window still spends the charge and plays its full presentation, but
+    applies no root, slow or lock. For the monster the window is its immunity
+    (rule 16), including the early end on a lunge wind-up. Together, no
+    refresh and the post-lock window mean no number of shooters can chain the
+    lock, in either form: back-to-back hits lock a player at most
+    `stun_duration_s` out of every `stun_duration_s + stun_immunity_s`.
 15. **Cancels on entry:**
     - Predatory Lunge in wind-up or in flight: cancelled; no `SurvivorHit` is
       produced. Whether the lunge cooldown starts is owned by Monster Abilities
@@ -152,10 +163,11 @@ tools, they're yours.
     `stun_immunity_s` = 6 s **(proposed)**. Immunity ends early if the monster
     starts a lunge wind-up **(proposed)**, so a monster that re-engages can be
     punished again, but one that disengages cannot be locked.
-17. **Anti-stun-lock (source risk):** limited charges, a short stun and the
-    immunity window together keep the monster stunned at most 25% of any
-    sustained stun chain (see Formulas) while it disengages after each stun, and
-    always give it a window to retreat. A monster that winds up a lunge inside
+17. **Anti-stun-lock (source risk):** limited charges, a short lock and the
+    post-lock window (rule 14) together keep any player, survivor or monster in
+    either form, locked at most 25% of any sustained chain (`lock_share`, see
+    Formulas) while it disengages after each lock, and always give it
+    `stun_immunity_s` to retreat (designer decision, 2026-10-12, cross-review B4). A monster that winds up a lunge inside
     immunity ends it early (rule 16) and can be stunned again: that share is its
     own choice.
 
@@ -213,7 +225,7 @@ tools, they're yours.
 |-------|----------------|----------------|----------|
 | Normal | Round start; immunity ends | Valid stun → Stunned | Full kit |
 | Stunned | Valid Taser hit while Normal | `stun_duration_s` elapses → Immune | Rooted then slowed; no attacks, abilities, transform, interact |
-| Immune | Stun ends | `stun_immunity_s` elapses or lunge wind-up starts → Normal | Full kit; stun hits are "resisted" in true form, a root, slow and action-lock shock while disguised (rule 10) |
+| Immune | Stun ends | `stun_immunity_s` elapses or lunge wind-up starts → Normal | Full kit; stun hits are "resisted" in true form, a full shock presentation with no root, slow or lock while disguised (rules 10 and 14) |
 
 **Hiding spot:** Empty → Entering (1 s) → Occupied → Exiting (1 s) → Empty;
 Occupied → (Search completes) → Empty with survivor ejected.
@@ -250,8 +262,9 @@ lock_share = stun_duration_s / (stun_duration_s + stun_immunity_s)
 | stun_duration_s | float s | 1.0–3.0 | proposed 2.0 | Stun length |
 | stun_immunity_s | float s | 4–10 | proposed 6 | Immunity after stun |
 
-Example: 2 / (2 + 6) = 0.25, so a monster that disengages after each stun is
-stunned at most 25% of the time. A monster that winds up a lunge inside
+Example: 2 / (2 + 6) = 0.25, so any player, survivor or monster in either form,
+that disengages after each lock is locked at most 25% of the time (post-lock
+window, rule 14; designer decision, 2026-10-12, cross-review B4). A monster that winds up a lunge inside
 immunity ends it early (rule 16) and can exceed this share by its own choice. Expected range 0.1–0.4; above 0.4 the monster risks being
 stun-locked.
 
@@ -280,7 +293,8 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Scenario | Expected Behavior | Rationale |
 |----------|------------------|-----------|
 | Two survivors stun on the same tick | First processed applies the stun; second is "resisted" in true form, or a full shock presentation while disguised (rule 10); both charges consumed | Immunity applies from the first stun |
-| A disguised monster (immune) or a survivor is hit again while already under the shock lock | Lock is not extended or restarted; charge spent; normal hit presentation | Rule 14 no-refresh: repeat hits cannot chain the lock, so `lock_share` and rule 17 hold in every form (second re-review B2) |
+| A disguised monster (immune) or a survivor is hit again while already under the shock lock | Lock is not extended or restarted; charge spent; normal hit presentation | Rule 14 no-refresh: overlapping hits cannot extend the lock (second re-review B2) |
+| A player is hit again just as their lock ends, or at any time in the next `stun_immunity_s` | No root, slow or lock; charge spent; full presentation. The monster's immunity is the same window | Rule 14 post-lock window: back-to-back hits cannot chain the lock, so `lock_share` and rule 17 hold in every form (designer decision, 2026-10-12, cross-review B4) |
 | Stun fired while the monster is mid-transformation | Transformation cancelled; monster stunned | Source: transform cannot escape a stun |
 | A survivor stands between the shooter and the monster | The survivor is shocked; the monster is not stunned | The shot hits the first body in its path |
 | A defender fires past a Healthy survivor holding a rescue and clips them, or the monster sets that up | The rescuer is shocked: rooted, rescue cancelled (progress kept, decaying), taser locked | Accepted (second re-review W7): any rule that spares the rescuer or prefers the monster turns the shot into an identity test; playtest counts it |
@@ -417,15 +431,16 @@ keeps the monster permanently stuck.
 - [ ] A Taser shot whose first hit is the monster within 5 m applies a 2.0 s stun and emits `MonsterStunned`; out of range, missed, or blocked by a survivor, the monster is not stunned and one cartridge is consumed.
 - [ ] A stun during lunge wind-up produces no `SurvivorHit`; a stun during a takedown commit frees the victim.
 - [ ] A shot whose path crosses a Seized or Downed survivor before the monster stuns the monster and does not shock the survivor.
-- [ ] A second stun on the true-form monster within `stun_immunity_s` after a stun ends is "resisted" and does not stun. On a disguised monster it plays the full shock presentation and applies the rule 14 lock, but no new stun or immunity.
+- [ ] A second stun on the true-form monster within `stun_immunity_s` after a stun ends is "resisted" and does not stun. On a disguised monster it plays the full shock presentation and applies no root, slow, lock, new stun or immunity (rule 14 post-lock window).
 - [ ] Each survivor starts with exactly 2 charges; a third fire attempt does nothing.
 - [ ] A forged client "stun hit" or "barricade complete" message causes no state change.
 - [ ] Searching an occupied hiding spot ejects the survivor without a down.
 - [ ] A barricade breaks after exactly 5 s of total monster break time, with progress kept across interruptions.
 - [ ] With 5 clients connected, all 5 agree on stun state (as visible to their role), charges remaining, hiding-spot occupancy (as visible to their role) and barricade state after each event.
-- [ ] A survivor hit by a taser is rooted for `stun_root_s` and slowed until `stun_duration_s`; a recording of it is indistinguishable from a recording of a stunned disguised monster, and from a disguised monster hit while immune.
-- [ ] For `stun_duration_s` after a taser hit, a shocked survivor, a stunned disguised monster and an immune disguised monster each fail every attempt to open a door, interact, use an item, ping or call out; all three succeed on the first attempt after it ends.
+- [ ] A survivor hit by a taser is rooted for `stun_root_s` and slowed until `stun_duration_s`; a recording of it is indistinguishable from a recording of a stunned disguised monster. A recording of a disguised monster hit while immune is indistinguishable from one of a survivor hit inside their post-lock window.
+- [ ] For `stun_duration_s` after a taser hit, a shocked survivor and a stunned disguised monster each fail every attempt to open a door, interact, use an item, ping or call out; both succeed on the first attempt after it ends.
 - [ ] Four taser hits 0.5 s apart on a disguised monster leave it locked for exactly `stun_duration_s` from the first hit; four charges are spent. The same holds for a shocked survivor.
+- [ ] Eight taser hits 2 s apart (at 0, 2, 4, …, 14 s) on a disguised monster that is Normal at 0 s: it is locked from 0 to 2 s and from 8 to 10 s only; the hits at 2, 4, 6, 10, 12 and 14 s each play the full presentation and spend a charge but apply no root, slow or lock; eight charges are spent and the monster can start a transformation at 2 s and at 10 s if Borrowed Face rule 7 otherwise allows. The same eight hits on a survivor lock them for exactly the same intervals (designer decision, 2026-10-12, cross-review B4).
 - [ ] A taser hit on a survivor holding a rescue, an objective hold or a barricade cancels that hold; an immune hit on a disguised monster mid-transformation does not cancel the transformation.
 - [ ] While the monster is disguised, a packet capture on a survivor client shows one identical `PlayerShocked` event for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` or immunity data.
 - [ ] A stun on a true-form monster, then a lunge wind-up 2 s into immunity, ends immunity; a stun on that wind-up applies.

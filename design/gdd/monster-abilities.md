@@ -2,7 +2,7 @@
 
 > **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-12 (cross-review B1–B4: ambush test replaces "lunge out of a hiding place"; Facility Map owns lighting; False Signal triggers no scare; immune hits no longer lock)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay (primary), Human Deception, Fair Fear
 
@@ -29,7 +29,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 **General**
 
 1. The server owns all ability state: cooldowns, wind-up, hit resolution, ability placement and duration. The client sends only an activation request (and an aim point where needed); the server validates and rejects invalid requests with no effect and no cooldown cost. Clients never report hits or damage.
-2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14, which includes an immune hit on a disguised shapeshifter), Transforming (Borrowed Face), or in Lunge wind-up, Active or takedown commit **(proposed)**. A lunge is a committed, telegraphed action; no hidden second action rides on it. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
+2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14; an immune hit no longer locks, designer decision, 2026-10-12, cross-review B4), Transforming (Borrowed Face), or in Lunge wind-up, Active or takedown commit **(proposed)**. A lunge is a committed, telegraphed action; no hidden second action rides on it. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
 3. Cooldowns are independent of each other and of the form-change cooldown **(proposed)**.
 3a. On every validated activation (Lunge wind-up start, False Signal, Blackout) the server emits `AbilityUsed` (systems-index event table) carrying the ability, the monster's position and facing, the target point or zone, and for False Signal the signal type and, for a callout, the impersonated survivor **(proposed)**. Scare Events and Pings & Callouts consume it; rejected requests emit nothing. `AbilityUsed` is server-internal and is never replicated to survivor clients: it carries the monster's position, which would locate a disguised shapeshifter. Consumers replicate only the effect they present (the sound, the dark zone, the feed line) **(proposed)**.
 
@@ -105,7 +105,7 @@ False Signal and Blackout each go Ready → Active (signal playing / zone dark) 
 - **Borrowed Face**: Lunge needs True Form; no ability during Transforming; transformation cannot start during Lunge wind-up, active or takedown commit; False Signal callouts use the observed-survivor list.
 - **Pings & Callouts**: owns the authored callout set and the fake-callout presentation rule (same line, voice and feed line; no gesture, no item ping, "(not you)" mark).
 - **Facility Map**: lighting zones, blackout-able flags, emergency lights, backup switches, doors.
-- **Scare Events**: Blackout can trigger a lighting scare state; a lunge out of a hiding place counts as a player-triggered scare. Scare Events owns those presentations and cooldowns; scares never delay or block the ability.
+- **Scare Events**: Blackout triggers the Blackout scare; the Facility Map owns the lighting state and Scare Events adds only flicker and stinger (designer decision, 2026-10-12, cross-review B2). A lunge counts as an ambush scare when Scare Events' ambush test passes at wind-up start (cross-review B1). False Signal never triggers a scare (designer decision, 2026-10-12, cross-review B3). Scare Events owns those presentations and cooldowns; scares never delay or block the ability.
 - **Match Telemetry**: logs every lunge (hit/miss/interrupted, latency rewind used), False Signal type, Blackout zone.
 - **HUD & Results Screen**: cooldowns on the shapeshifter HUD; attack counts in results.
 
@@ -280,14 +280,14 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 | True Form requirement, observed list | `design/gdd/borrowed-face.md` | Disguise state | Rule dependency |
 | Fake callout presentation | `design/gdd/pings-and-callouts.md` | Authored callouts, monster voice rules | Rule dependency |
 | Lighting zones, switches | `design/levels/research-facility.md` | Zones, emergency lights, backup switches | Data dependency |
-| Scare presentation | `design/gdd/scare-events.md` | `ScareTriggered`, lighting scare state | Ownership handoff |
+| Scare presentation | `design/gdd/scare-events.md` | `ScareTriggered`, ambush test, flicker and stingers | Ownership handoff |
 | Round reset | `design/gdd/match-flow.md` | `RoundPhaseChanged`, round end | State trigger |
 
 ## Acceptance Criteria
 
 - [ ] Lunge plays its cue 0.6 s before the dash; a survivor 20 m away hears it from a bearing within ±15° of the monster's true bearing **(proposed tolerance)**.
 - [ ] Server rejects a lunge during cooldown, while Disguised (Borrowed Face rule 11, kept until playtest), while Stunned, or while Transforming.
-- [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the `stun_duration_s` after an immune taser hit (shock lock, Survivor Defense rule 14), and accepts them once the lock ends.
+- [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the shock lock (Survivor Defense rule 14), and accepts them once the lock ends; an immune taser hit applies no lock and rejects nothing (designer decision, 2026-10-12, cross-review B4).
 - [ ] A survivor behind a closed door 1 m from the monster is never hit.
 - [ ] A dash whose path meets a hidden, grace, Downed or Seized survivor stops at that body, emits no `SurvivorHit`, and applies the miss slow.
 - [ ] A miss slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution.

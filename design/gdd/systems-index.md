@@ -74,9 +74,9 @@ event. Only the owner writes it. Readers never change it.
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
-| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Approved | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
+| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | In Review | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Approved | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map |
-| 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | Approved | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
+| 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | In Review | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | Approved | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face, Match Flow, Downing & Rescue, Monster Abilities, Survivor Defense, Survivor Objectives |
 | 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Design | design/levels/research-facility.md | Controller & Interaction |
 | 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Design | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority |

@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (eighth design review, approved: shock as a timed lock, (not you) ping range measured at acceptance, fake-ping and gesture ACs)
+> **Last Updated**: 2026-10-12 (cross-review B4: an immune taser hit no longer blocks pings and callouts; previously eighth design review, approved)
 > **Last Verified**: 2026-10-12
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 
@@ -68,7 +68,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**. If the borrowed survivor is Eliminated or Escaped, the disguised monster's pings and callouts are rejected (Borrowed Face rule 13 keeps the disguise on); a dead voice is a free tell, the same reason Monster Abilities rejects a fake callout as that survivor (designer decision, 2026-10-12, design review). Apart from that Eliminated or Escaped rejection, the monster's own state alone decides what it can send (Disguised, Transforming, stunned): the borrowed survivor's Downed, Seized or Hidden state does not restrict it, so a disguise as a Downed survivor may send any ping or callout, not only the Downed subset of rule 14 (designer decision, 2026-10-12, design review; the mismatch is a fair clue).
 22. **True form**: the monster cannot ping or call out **(proposed)**. It has no teammate identity to speak as.
-23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**. **Shocked or stunned**: for `stun_duration_s` after a taser hit, pings and callouts are blocked for a shocked survivor and for the disguised monster, stunned or immune, alike (Survivor Defense rule 14; designer decision, 2026-10-11, cross-review re-review R2). Proximity voice is not blocked.
+23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**. **Shocked or stunned**: for `stun_duration_s` after a taser hit, pings and callouts are blocked for a shocked survivor and for a stunned disguised monster alike (Survivor Defense rule 14; designer decision, 2026-10-11, cross-review re-review R2). A hit inside the post-lock window, including any immune hit, blocks nothing (designer decision, 2026-10-12, cross-review B4). Proximity voice is not blocked.
 24. Duplicate identity is a fair clue: if the monster and the real survivor it is copying both ping or call out, both appear with the same name. The server does not hide or merge them **(proposed)**.
 25. **Monster voice: both** (designer decision, 2026-10-12). The monster has (a) **preset lines**: while Disguised, the authored callouts in the borrowed survivor's voice set (rule 21); and (b) **proximity voice**: its own real voice, under the same lobby setting and range as survivors (rules 18–19), so voice availability is never a role tell.
     - While Disguised, its proximity voice is its own, unaltered **(proposed)**. The game never changes it to sound like the borrowed survivor (the source rules out voice-imitation software). A voice that does not match the face is a fair tell, and a quiet monster leaning on preset lines is a fair bluff.
@@ -310,7 +310,7 @@ Light and instant. The player keeps full movement control while pinging or using
 - [ ] With proximity voice Off, each information type in rule 4 (objective found, objective location, rescue needed, danger, distrust, regroup) is sent by a client using only a ping or callout and received by the other 3 survivor clients.
 - [ ] A disguised monster whose borrowed survivor is Eliminated or Escaped has its ping and callout requests rejected; one whose borrowed survivor is Downed has them accepted.
 - [ ] No ping or callout changes objective, downing, stun or outcome state on the server.
-- [ ] For `stun_duration_s` after a taser hit, a ping or callout from a shocked survivor, a stunned disguised monster or an immune disguised monster is rejected, and the first one after it ends is accepted.
+- [ ] For `stun_duration_s` after a taser hit, a ping or callout from a shocked survivor or a stunned disguised monster is rejected, and the first one after it ends is accepted; after a hit on an immune disguised monster or on a survivor inside their post-lock window, it is accepted (cross-review B4).
 
 ## Open Questions
 

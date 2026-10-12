@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-12 (cross-review B1: scare-anchor table; B2: this map owns per-volume lighting state)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Readable Objectives, Counterplay, Fair Fear, Small Shippable Scope (supports Human Deception)
 
@@ -224,6 +224,22 @@ Four of the six are in Zone A (the source places hiding cabinets in the labs). N
 
 Feeds can be watched only at the C1 monitor station, one feed at a time **(proposed)**. Zone A rooms, A1 spawn and H-N are uncovered on purpose. The feeds are the only place an "impossible surveillance image" scare (Scare Events) can appear. What a disguised shapeshifter looks like on a feed is decided by Borrowed Face (Open Question).
 
+**Scare anchors** (cross-review B1). The only places a door or glass scare from Scare Events can play. Scare Events owns which scare fires and when (RoundScript only); this map owns placement. Every anchor is presentation only: a door anchor never locks or barricades its door, and a glass anchor's pane cracks but stays see-through and not passable **(proposed)**.
+
+| ID | Type | Location | Scare (Scare Events) |
+|----|------|----------|----------------------|
+| sd1 | Door | A2-A3 door | Slammed door |
+| sd2 | Door | A4-A5 door | Slammed door |
+| sd3 | Door | A6-H-N door | Slammed door |
+| sd4 | Door | B1-B3 door | Slammed door |
+| sd5 | Door | C2-C3 door | Slammed door |
+| sd6 | Door | C5-C2 door | Slammed door |
+| sg1 | Glass | A2-A3 glass wall | Glass break |
+| sg2 | Glass | A2-A4 glass wall | Glass break |
+| sg3 | Glass | A7 window into A4 | Glass break |
+
+All door anchors are ordinary `D` doors, never a barricadable `B` door or exit E, so a slam never touches a barricade or the exit **(proposed)**. Six doors spread over all three zones and three glass anchors in Zone A **(proposed counts)**.
+
 **Backup light switches** (`s`): one per room, none in corridors or the A2 spine **(proposed)**. They are the source's counterplay to Blackout. Their effect (for example, ending a Blackout early) is owned by Monster Abilities. With no switches in corridors, a blackout there is the riskier one for survivors. C5 also holds the **backup controls panel** named in the source; its function is an Open Question.
 
 **Lighting volumes**: Blackout affects "a nearby room or short corridor" (source). Each room is one lighting volume. H-N and H-S are each split into four ~12 m segments and A2 into three ~11 m segments, so a blackout never darkens a whole corridor **(proposed)**.
@@ -282,7 +298,7 @@ There are no enemies and no AI. "Encounters" here are spaces the layout sets up 
 
 Emergency lights (faint floor-level strips plus exit signage) are always on in every volume, including during Blackout **(proposed)**, matching the source's "emergency lights remain faintly visible".
 
-**Lighting states** (server-driven; every client shows the same state):
+**Lighting states** (server-driven; every client shows the same state). This map owns per-volume lighting state. Scare Events only requests these states and adds flicker and stingers on top; it defines no lighting state of its own (designer decision, 2026-10-12, cross-review B2).
 
 | State | Trigger | Look |
 |-------|---------|------|
@@ -352,7 +368,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Survivor Objectives | Bidirectional | Candidate point sets (d, f, P, T), terminal zone, exit E; Objectives owns selection rules, counts and `ObjectiveProgressChanged`; the map reads objective state for lighting |
 | Survivor Defense | Depends on map | Hiding spot (h) and barricadable door (B) placement; Defense owns their behaviour |
 | Monster Abilities | Depends on map | Lighting volumes for Blackout; switch (s) placement; room/door geometry for Predatory Lunge and False Signal positions |
-| Scare Events | Depends on map | Camera feeds, lighting states, door/glass scare anchors |
+| Scare Events | Depends on map | Camera feeds, lighting states (this map owns them; Scare Events requests them), lighting volumes for the ambush test, door/glass scare anchors (Scare anchors table) |
 | Pings & Callouts | Depends on map | Room IDs and names as callout locations; backup light switches (s) are item-pingable |
 | Match Flow & Win Conditions | Map depends on it | `RoundPhaseChanged` drives Evacuation lighting; exit E ends a survivor's round |
 | Borrowed Face | Depends on map | Spawn distances for the observation rule; camera-feed appearance of a disguise |
