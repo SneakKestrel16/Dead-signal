@@ -64,7 +64,7 @@ event. Only the owner writes it. Readers never change it.
 | Committing state | Downing, Rescue & Elimination | Survivor Defense (a stun cancels the commit), Borrowed Face (rule 7 rejects transforms), First-Person Controller & Interaction (commit root) | A takedown commit is running |
 | Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities, Downing, Rescue & Elimination (rule 7 rescue interrupt), First-Person Controller & Interaction (root, slow, doors) | A player is under the taser action lock |
 | Movement modifiers (root, slow, lock) | Each modifier is owned by its requester: Survivor Defense (shock lock, stun root and slow), Downing, Rescue & Elimination (Seized, rescue and commit roots, crawl), Monster Abilities (lunge wind-up root, miss slow) | First-Person Controller & Interaction (applies the most restrictive, rule 6) | A system adds or removes its own movement modifier |
-| Camera flinch toggle (per player) | Accessibility Options (the setting); the client sends it on join and on change and the server holds it | Scare Events (rule 13: no view offset written when off) | Whether a player takes the flinch rotation or only the screen-edge pulse |
+| Camera flinch toggle (per player) | Accessibility Options (the setting); the client sends it on join and on change and the server holds it | Scare Events (rule 13: no view offset written when off); First-Person Controller & Interaction (rule 7: re-baselines a held view offset when the flag goes off) | Whether a player takes the flinch rotation or only the screen-edge pulse |
 | View offset (per player, `yaw`/`pitch` **(proposed)**) | Scare Events (rules 13-14) writes new flinches only; the Controller owns the input, applies it and performs every reset | First-Person Controller & Interaction (adds it to the client's yaw/pitch for the server view direction, rule 7), the flinched client | The camera flinch for a Major scare: an offset that ramps in within 0.3 s and is then held; a new flinch replaces it; capped at `flinch_max_angle_deg`; reset by the Controller (as a re-baseline, no visible rotation) at round end, on Downed, Hidden or Seized, on reconnect and when the flinch toggle is switched off (designer decision, 2026-10-12, cross-review 12g). Written only for a player whose flinch toggle is on and never near a lunge wind-up. Same read-only-state pattern as movement modifiers: the Controller does not depend on Scare Events (designer decision, 2026-10-12, cross-review 12f) |
 | Player roster (`player_count`; per player display name, role, survivor character) | Lobby & Role Assignment (rule 14) | Match Flow, Borrowed Face, Pings & Callouts, HUD, all clients | Who is in the round, who is the shapeshifter and which character each survivor plays; fixed for the round |
 
@@ -142,7 +142,7 @@ the source brief excludes progression and economy from the prototype.
 
 ### Presentation Layer (depends on features)
 
-1. Scare Events — depends on: Monster Abilities, Borrowed Face, Facility Map, Match Flow, First-Person Controller & Interaction (soft: writes the view-offset input)
+1. Scare Events — depends on: Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority, Survivor Defense, Survivor Objectives, Pings & Callouts, First-Person Controller & Interaction (soft: writes the view-offset input)
 2. HUD & Results Screen — depends on: Match Flow, Survivor Objectives, Downing, Rescue & Elimination
 
 ### Polish Layer (depends on everything)

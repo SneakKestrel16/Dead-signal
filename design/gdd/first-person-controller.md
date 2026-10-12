@@ -261,7 +261,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 | Monster Abilities | Depends on this | Hard | True-form speeds, `player_radius_m` (dodge window), root and slow, doors |
 | Pings & Callouts | Depends on this | Soft | View ray, input bindings |
 | Facility Map (`design/levels/research-facility.md`) | Depends on this | Hard | `walk_speed` (traversal times), step and slope limits, capsule (doorways ≥ 0.8 m clear) |
-| Scare Events | Depends on this (writes the view-offset input) | Soft | The camera flinch is the single sanctioned view rotation (Core Rule 7; Scare Events rules 13-14): a server-held offset added to client yaw/pitch, written by Scare Events into this system's view-offset input (systems-index state row), reset by this system (re-baseline) and absent for a player with the toggle off. This does not depend on Scare Events. Every other camera effect is a visual offset only |
+| Scare Events | Depends on this (writes the view-offset input) | Soft | The camera flinch is the single sanctioned view rotation (Core Rule 7; Scare Events rules 13-14): a server-held offset added to client yaw/pitch, written by Scare Events into this system's view-offset input; this system also reads the per-player flinch toggle (state, Accessibility Options) and re-baselines a held offset when it goes off (systems-index state row), reset by this system (re-baseline) and absent for a player with the toggle off. This does not depend on Scare Events. Every other camera effect is a visual offset only |
 
 ## Visual/Audio Requirements
 
