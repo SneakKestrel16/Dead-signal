@@ -1,8 +1,8 @@
 # Survivor Objectives
 
-> **Status**: Draft
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-12 (design review revisions)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Readable Objectives, Human Deception, Counterplay
 
@@ -27,7 +27,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 **Shared rules for all objective interactions**
 1. Every objective interaction is a timed hold-to-interact (pattern owned by First-Person Controller & Interaction). The client only asks to start or stop. The server checks range, line of sight to the object, the actor's role and state, and the elapsed time. Only the server completes the interaction and broadcasts `ObjectiveProgressChanged`. A client message saying "done" is ignored.
 2. Only a survivor in the Healthy state can start or continue an objective interaction. Being Downed, being hit, moving out of `interact_range_m` = 2.0 **(proposed)**, or releasing input cancels it.
-3. Cancelled hold interactions lose their progress (they reset) **(proposed)**. The evacuation activation is the exception (rule 16).
+3. Cancelled hold interactions lose their progress (they reset) **(proposed)**. The evacuation activation is the exception (rule 19).
 4. When Match Flow ends the round, all objective state freezes.
 
 **Randomization (owned here; candidate points authored in Facility Map)**
@@ -44,7 +44,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 8. `data_drives_required` = 2. Each drive is retrieved from its secured room by a `drive_extract_s` = 5 **(proposed)** hold at the room's drive console. On completion the drive goes to the extracting survivor.
 9. A survivor can carry up to `max_drives_carried` = 2 drives **(proposed; was 1)**. "Each drive is carried by one player" is read as: a drive is a physical item held by one survivor at a time. The cap has to be 2 because the evidence must leave through the exit (rule 22): with a cap of 1, a lone surviving survivor could never win. Carrying both drives makes that survivor the only target that matters.
 10. A carried drive is visible on the carrier's model and shown on every survivor's HUD next to the carrier's name **(proposed)**. Carrying a drive does not slow the carrier **(proposed)**.
-11. A survivor can drop a drive on purpose (instant) **(proposed)**. Any Healthy survivor without a drive can pick a dropped drive up with a `pickup_s` = 1 **(proposed)** hold.
+11. A survivor can drop a drive on purpose (instant) **(proposed)**. Any Healthy survivor carrying fewer than `max_drives_carried` drives can pick a dropped drive up with a `pickup_s` = 1 **(proposed)** hold.
 12. *Carrier downed* **(proposed)**: when the server processes `SurvivorDowned` for a carrier, the drive drops at the downed position, is marked for all survivors as "Drive dropped", and can be picked up by another survivor. If the carrier is rescued, the drive is not returned automatically; they must pick it up again.
 13. *Carrier eliminated or disconnected* **(proposed)**: the drive drops at their last position (it is already on the ground if they were Downed). A dropped drive stays where it fell for the rest of the round. It never despawns or respawns, and it cannot be destroyed.
 14. *Docking* **(proposed)**: a carrier places a drive into one of the terminal's two drive slots with a `dock_s` = 2 hold. A docked drive cannot be removed until evacuation is activated (rule 20) and has no carrier while docked. Drives can be docked before power is restored. Docking is how the evidence is "used at the terminal" (source); it is verified there, not consumed.
@@ -56,7 +56,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 
 **Evacuation terminal**
 18. The terminal is **armed** when both drives are docked and both fuses are installed. Match Flow reads this state (it may start Evacuation early; see `match-flow.md`).
-19. Any Healthy survivor starts activation at the armed terminal with an `activation_start_s` = 1 **(proposed)** hold. After that, the source's 15-second activation runs as a **hold-the-area countdown** **(proposed)**: `evac_activation_s` = 15 counts down only while at least one Healthy survivor is inside the authored terminal zone (Facility Map). If no Healthy survivor is in the zone, the countdown **pauses** and keeps its progress **(proposed)**. It does not reset. The shapeshifter's presence, disguised or not, neither counts toward holding the zone nor blocks it **(proposed)**.
+19. Any Healthy survivor starts activation at the armed terminal with an `activation_start_s` = 1 **(proposed)** hold. After that, the source's 15-second activation runs as a **hold-the-area countdown** **(proposed)**: `evac_activation_s` = 15 counts down only while at least one Healthy survivor is inside the authored terminal zone (Facility Map). If no Healthy survivor is in the zone, the countdown **pauses** and keeps its progress **(proposed)**. It does not reset. The shapeshifter's presence, disguised or not, neither counts toward holding the zone nor blocks it **(proposed)**. A survivor who is hiding (Survivor Defense) does not count toward holding the zone (designer decision, 2026-10-12): hiding cannot be used to run the countdown safely.
 20. When the countdown reaches 0 the server marks **evacuation activated**, opens the exit, **ejects both docked drives** at the terminal as Dropped items **(proposed)**, and broadcasts `ObjectiveProgressChanged`. Any Healthy survivor can pick them up (`pickup_s`), up to `max_drives_carried`.
 
 **The "escape with the required evidence" rule (designer decision, 2026-10-12: the evidence is carried to the extract)**
@@ -122,7 +122,7 @@ real_time_to_activate_s = evac_activation_s + total_paused_s
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | evac_activation_s | float | 10–25 | data | 15 (source) |
-| healthy_survivors_in_zone | int | 0–4 | server | Shapeshifter never counted |
+| healthy_survivors_in_zone | int | 0–4 | server | Shapeshifter and hidden survivors never counted |
 | total_paused_s | float | ≥ 0 | server | Time the zone held no Healthy survivor |
 
 **Example**: the team holds 9 s, everyone is driven out for 6 s, then they return and hold 6 s → activated after 21 s of real time.
@@ -148,7 +148,8 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | Scenario | Expected Behavior | Rationale |
 |----------|------------------|-----------|
 | Drive carrier downed while docking | Dock cancels (resets); drive drops at their position | Rules 2, 3, 12 |
-| Drive carrier downed in the same tick a teammate starts rescuing them | Drive drops anyway; the rescuer can't pick it up while rescuing | One interaction at a time |
+| A teammate is rescuing a Downed carrier whose drive lies next to them | The rescuer cannot pick the drive up while rescuing; the rescued survivor must pick it up again | One interaction at a time; rule 12 |
+| Only hidden survivors are in the terminal zone | Countdown is paused | Rule 19: hidden survivors do not hold the zone |
 | Drive dropped in a spot the shapeshifter camps | Stays there; survivors must contest it | Creates counterplay, no despawn |
 | Both drives with one survivor | Allowed (`max_drives_carried` = 2); if they are downed, both drives drop together | Rule 9; a lone survivor must be able to win |
 | Carrier downed between the terminal and the exit | Drives drop where they fell; any Healthy survivor can pick them up and continue | Rule 12; recoverable |
@@ -246,8 +247,8 @@ Dead by Daylight generator repair: committed, exposed, and audible. Anti-referen
 - **Failure texture**: A reset bar always has a visible cause (hit, moved, released).
 
 ### Feel Acceptance Criteria
-- [ ] Playtesters describe fuse installs as "risky" or "loud" without prompting.
-- [ ] No playtester reports an objective completing or failing without a visible reason.
+- [ ] Across ≥10 playtest rounds, at least half of players choose "risky" or "loud" for fuse installs in the post-round survey's open description question.
+- [ ] Across ≥10 playtest rounds, 0 players answer "yes" to "Did an objective complete or fail without a visible reason?".
 
 ## UI Requirements
 
@@ -280,9 +281,10 @@ Dead by Daylight generator repair: committed, exposed, and audible. Anti-referen
 
 - [ ] Over 20 rounds, active drive rooms, fuse spawns, fuse boxes and the terminal vary, all come from authored candidates (6 drive, 7 fuse, 3 fuse box, 3 terminal), and no round breaks a rule 6 placement constraint.
 - [ ] A survivor holding interact at a drive console for 5 s receives the drive. Releasing at 4 s gives nothing and resets the bar.
+- [ ] After activation ejects both drives, one survivor can pick up both and Extract them alone.
 - [ ] A survivor can carry both drives; a third pickup attempt is impossible because only two drives exist, and downing them drops both.
 - [ ] Downing a carrier drops the drive at their position on all 5 clients within 200 ms, and another Healthy survivor can pick it up.
-- [ ] Starting a fuse install plays the install sound for players within 25 m and shows the shapeshifter an area circle that contains the box. The circle is not centred on the box in at least 90% of 50 tests.
+- [ ] Starting a fuse install plays the install sound for players within 25 m and shows the shapeshifter an area circle that contains the box. In at least 90% of 50 tests, the circle's centre is more than 1 m from the box.
 - [ ] The terminal accepts activation only when 2 drives are docked and 2 fuses installed. The countdown takes 15 s with a survivor in the zone and pauses when the zone holds no Healthy survivor.
 - [ ] A shapeshifter (disguised or not) interacting with any objective changes no objective state on any client, and does not count toward the terminal zone.
 - [ ] A modified client sending a "complete" message for any interaction causes no state change.

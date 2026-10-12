@@ -49,7 +49,7 @@ them after validation; clients never emit them. Every GDD uses these exact names
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
-| 5 | Survivor Objectives | Gameplay | MVP | In Design | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
+| 5 | Survivor Objectives | Gameplay | MVP | In Review | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | In Design | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
 | 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | In Design | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | In Design | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction |
@@ -175,7 +175,7 @@ engine choice first; it must be settled before any gameplay code is written.
 |--------|-------|
 | Total systems identified | 15 |
 | Design docs started | 9 |
-| Design docs reviewed | 1 |
+| Design docs reviewed | 2 |
 | Design docs approved | 1 |
 | MVP systems with a Draft GDD (none approved) | 7/11 (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a Draft GDD (none approved) | 2/3 |
