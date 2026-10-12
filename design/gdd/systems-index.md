@@ -63,6 +63,7 @@ event. Only the owner writes it. Readers never change it.
 | Lunge state (wind-up, Active, takedown commit) | Monster Abilities (States table) | Borrowed Face (rule 7 rejects transforms), Survivor Defense (rule 15 cancels; rule 16 reads wind-up start), Scare Events (rule 14 flinch suppression) | Where the current lunge is in its timeline |
 | Committing state | Downing, Rescue & Elimination | Survivor Defense (a stun cancels the commit), Borrowed Face (rule 7 rejects transforms) | A takedown commit is running |
 | Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities, Downing, Rescue & Elimination (rule 7 rescue interrupt), First-Person Controller & Interaction (root, slow, doors) | A player is under the taser action lock |
+| Player roster (`player_count`; per player display name, role, survivor character) | Lobby & Role Assignment (rule 14) | Match Flow, Borrowed Face, Pings & Callouts, HUD, all clients | Who is in the round, who is the shapeshifter and which character each survivor plays; fixed for the round |
 
 ---
 
@@ -71,7 +72,7 @@ event. Only the owner writes it. Readers never change it.
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
-| 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
+| 2 | Lobby & Role Assignment | Core | MVP | Designed | design/gdd/lobby-role-assignment.md | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Designed | design/gdd/first-person-controller.md | Network Authority, Match Flow (soft) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
@@ -199,10 +200,10 @@ engine choice first; it must be settled before any gameplay code is written.
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 15 |
-| Design docs started | 10 |
+| Design docs started | 11 |
 | Design docs reviewed | 9 |
 | Design docs approved | 9 |
-| MVP systems with a GDD | 8/11, 7 approved, 1 designed (Monster Abilities counted as MVP) |
+| MVP systems with a GDD | 9/11, 7 approved, 2 designed (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a GDD | 2/3, both approved (Pings & Callouts, Scare Events) |
 
 ---

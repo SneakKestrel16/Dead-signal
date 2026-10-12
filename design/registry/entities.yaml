@@ -299,6 +299,40 @@ constants:
     added: 2026-10-12
     revised: ""
 
+  # 1 shapeshifter + 3 survivors; lobby waits below this. Conflicts with
+  # players_per_match = 5 until propagation (lobby-role-assignment.md Open Questions)
+  - name: min_players
+    status: active
+    source: design/gdd/lobby-role-assignment.md
+    referenced_by:
+      - design/gdd/lobby-role-assignment.md
+    value: 4
+    unit: players
+    added: 2026-10-12
+    revised: ""
+
+  # 1 shapeshifter + 5 survivors; join rejected above this
+  - name: max_players
+    status: active
+    source: design/gdd/lobby-role-assignment.md
+    referenced_by:
+      - design/gdd/lobby-role-assignment.md
+    value: 6
+    unit: players
+    added: 2026-10-12
+    revised: ""
+
+  # all-Ready countdown before the roster locks (provisional, safe 3-10)
+  - name: lobby_countdown_s
+    status: active
+    source: design/gdd/lobby-role-assignment.md
+    referenced_by:
+      - design/gdd/lobby-role-assignment.md
+    value: 5
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
   # ~9 min, tune in playtests (source)
   - name: round_duration_s
     status: active
