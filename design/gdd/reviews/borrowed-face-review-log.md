@@ -39,3 +39,17 @@ Findings:
 - [NICE-TO-HAVE] Dependencies: `design/accessibility-requirements.md` and the Network Authority, Controller and HUD GDDs do not exist yet. These are forward references in design order.
 Reviewed-Content-Hash: design/gdd/borrowed-face.md 4920f56b6d26875a3b80148f77b650f0b4cd4810
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 1 | Recommended: 2
+Summary: Third review. The prior blocker held: the stun event during a transformation agrees with Survivor Defense rules 1 and 10. The new blocker is an over-broad edge case. It said every immune hit during a transformation roots the shapeshifter, but Survivor Defense rule 10 gives the true form a "resisted" spark with no lock. The blocker and both recommended items were revised in the same session.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Edge Cases, Acceptance Criteria: an immune hit during a transformation out of true form was given the disguised root and lock. Resolved: split into an out-of-disguise row (full shock, lock) and an out-of-true-form row (spark, no lock, walk continues). The AC covers both.
+- [RECOMMENDED] Rule 12, tells table: hiding, barricading and searching were real tells (Survivor Defense rules 19, 22, 25 and 26) but went unnamed. Resolved: added to rule 12 and T4.
+- [RECOMMENDED] Rule 3: it did not say whether observation continues while Transforming. Resolved: it does.
+- [NICE-TO-HAVE] Rule 11 and Open Questions: the 2026-10-12 decision dates are later than this review. Left as written.
+Reviewed-Content-Hash: design/gdd/borrowed-face.md f62b3a15e16021633b43d6365def2243e6b0d812
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
