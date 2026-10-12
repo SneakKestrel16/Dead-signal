@@ -1,8 +1,8 @@
 # Survivor Objectives
 
-> **Status**: In Review
+> **Status**: Approved (2026-10-12, solo review)
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review revisions)
+> **Last Updated**: 2026-10-12 (post-approval clarifications)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Readable Objectives, Human Deception, Counterplay
 
@@ -31,7 +31,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 4. When Match Flow ends the round, all objective state freezes.
 
 **Randomization (owned here; candidate points authored in Facility Map)**
-5. At round start the server picks the active points uniformly at random from the authored candidates and replicates only the active ones to clients **(proposed: the shapeshifter is told all active points; survivors discover them)**:
+5. At round start the server picks the active points uniformly at random from the authored candidates and replicates only the active ones to clients **(proposed: the shapeshifter is told all active points. Survivors receive fuse boxes and the terminal at round start, but a drive room or fuse spawn only once it is discovered (rule 7), so a modified client cannot read undiscovered points)**:
    - 2 drive rooms from `drive_candidates` = 6 secured-room candidates (5 in Zone A, 1 in Zone C's Records Archive) **(proposed counts)**.
    - 2 fuse spawns from `fuse_candidates` = 7 candidates across all zones and corridors **(proposed)**.
    - 2 active fuse boxes from `fuse_box_candidates` = 3 candidates, all in Zone B **(proposed)**.
@@ -50,7 +50,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 14. *Docking* **(proposed)**: a carrier places a drive into one of the terminal's two drive slots with a `dock_s` = 2 hold. A docked drive cannot be removed until evacuation is activated (rule 20) and has no carrier while docked. Drives can be docked before power is restored. Docking is how the evidence is "used at the terminal" (source); it is verified there, not consumed.
 
 **Fuses**
-15. `fuses_required` = 2. Picking up a fuse is a `pickup_s` = 1 hold. A survivor can carry one fuse at a time **(proposed)**, and can carry a fuse and a drive together **(proposed)**. Each active fuse box takes exactly one fuse (designer decision, 2026-10-12); a box with a fuse installed refuses further installs. Installing a fuse at an empty active fuse box is a `fuse_install_s` = 8 **(proposed)** hold. A carried fuse drops on down, elimination or disconnect, the same way as a drive (rules 12–13) **(proposed)**.
+15. `fuses_required` = 2. Picking up a fuse is a `pickup_s` = 1 hold. A survivor can carry one fuse at a time **(proposed)**, and can carry a fuse and a drive together **(proposed)**. Each active fuse box takes exactly one fuse (designer decision, 2026-10-12); a box with a fuse installed refuses further installs. Installing a fuse at an empty active fuse box is a `fuse_install_s` = 8 **(proposed)** hold. A survivor can drop a fuse on purpose (instant) **(proposed)**, the same as a drive (rule 11). A carried fuse drops on down, elimination or disconnect, the same way as a drive (rules 12–13) **(proposed)**.
 16. *Noise and monster alert* (source: "alerts the monster to the general area"): when an install starts, the server (a) plays a loud, spatialized install sound audible to everyone within `install_noise_radius_m` = 25 **(proposed)**, and (b) sends only the shapeshifter's client an area marker: a circle of radius `alert_area_radius_m` = 10 **(proposed)**, whose centre is offset by a random amount up to that radius so it never pinpoints the box. The marker lasts `alert_duration_s` = 5 **(proposed)**. A cancelled and restarted install raises a new alert. Installed fuses are permanent.
 17. Power is restored when both fuses are installed. This is broadcast as `ObjectiveProgressChanged` (power restored).
 
@@ -66,7 +66,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 24. *Why this shape*: the endgame becomes terminal holdout → pick up the drives → run, giving the shapeshifter a final carrier hunt between the terminal and the exit. A carrier who is downed on the way drops the drives (rule 12), which keeps the run tense but recoverable (Counterplay).
 
 **The shapeshifter and objectives**
-25. *Recommended rule* **(proposed)**: the shapeshifter can **fake** an objective interaction but can never make real progress. In any form it can play the interact animation and the authentic interaction sound at any objective point (drive console, fuse box, terminal). The server makes no state change, and the progress bar shown to survivors above the object does not move. The shapeshifter cannot pick up, carry, dock, install, drop, move or destroy drives or fuses, cannot start activation, and does not count toward holding the terminal zone. A fake interaction never holds the one-interaction-per-point lock (designer decision, 2026-10-12): a survivor can start a real interaction at that point at any time, and the fake is cancelled.
+25. *Recommended rule* **(proposed)**: the shapeshifter can **fake** an objective interaction but can never make real progress. In any form it can play the interact animation and the quiet interact loop (the same sound a real interaction plays, never the loud install sound) at any objective point (drive console, fuse box, terminal). The server makes no state change, and the progress bar shown to survivors above the object does not move. The shapeshifter cannot pick up, carry, dock, install, drop, move or destroy drives or fuses, cannot start activation, and does not count toward holding the terminal zone. A fake interaction never holds the one-interaction-per-point lock (designer decision, 2026-10-12): a survivor can start a real interaction at that point at any time, and the fake is cancelled.
 26. *Why*: Human Deception gets a strong, cheap bluff ("I'm on the fuse box, cover me"). Counterplay and Readable Objectives get a learnable, verifiable tell: a survivor who looks at the progress bar can catch the fake. Real objective state is never corrupted, so the HUD checklist is always true. A fake fuse install does not trigger the install noise or the alert in rule 16 **(proposed)**; the progress bar and the missing loud install sound are both tells.
 27. All objective progress bars and the HUD checklist come from server state only.
 
@@ -158,7 +158,7 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | No Healthy or Downed survivor left inside and a drive is not Extracted | The evidence is lost; Match Flow ends the round as a monster win. If only Downed survivors remain, the round waits for rescue or bleed-out | Owned by Match Flow (rule 13) |
 | Last Healthy survivor in the terminal zone is downed mid-countdown | Countdown pauses with progress kept | Rule 19 |
 | Round deadline hits during activation | Activation never completes; Match Flow ends the round as a monster win | Owned by Match Flow (hard deadline) |
-| Disguised shapeshifter "installs" a fuse | Animation and quiet interact sound only; no progress, no install noise, no alert | Rules 25–26 |
+| Disguised shapeshifter "installs" a fuse | Animation and quiet interact loop only; no progress, no install noise, no alert | Rules 25–26 |
 | Shapeshifter stands in the terminal zone alone | Countdown is paused | Rule 19 |
 | Two survivors try to install at the same fuse box | Second request refused; one interaction per point | Server check |
 | A survivor tries to install at a box that already has a fuse | Refused; each box takes one fuse | Rule 15 |
@@ -281,14 +281,18 @@ Dead by Daylight generator repair: committed, exposed, and audible. Anti-referen
 
 ## Acceptance Criteria
 
-- [ ] Over 20 rounds, active drive rooms, fuse spawns, fuse boxes and the terminal vary (at least 4 distinct active drive pairs and all 3 terminal candidates appear), all come from authored candidates (6 drive, 7 fuse, 3 fuse box, 3 terminal), and no round breaks a rule 6 placement constraint.
+- [ ] With a fixed seed, over 20 rounds, active drive rooms, fuse spawns, fuse boxes and the terminal vary (at least 4 distinct active drive pairs and all 3 terminal candidates appear), all come from authored candidates (6 drive, 7 fuse, 3 fuse box, 3 terminal), and no round breaks a rule 6 placement constraint.
 - [ ] A survivor holding interact at a drive console for 5 s receives the drive. Releasing at 4 s gives nothing and resets the bar.
 - [ ] After activation ejects both drives, one survivor can pick up both and Extract them alone.
 - [ ] A survivor can carry both drives, and downing them drops both. With a data override of `max_drives_carried` = 1, a survivor carrying a drive cannot pick up the second.
 - [ ] Downing a carrier drops the drive at their position on all 5 clients within 200 ms, and another Healthy survivor can pick it up.
-- [ ] Starting a fuse install plays the install sound for players within 25 m and shows the shapeshifter an area circle that contains the box. In at least 90% of 50 tests, the circle's centre is more than 1 m from the box.
-- [ ] The terminal accepts activation only when 2 drives are docked and 2 fuses installed. The countdown takes 15 s with a survivor in the zone and pauses when the zone holds no Healthy survivor.
+- [ ] Starting a fuse install plays the install sound for players within 25 m and shows the shapeshifter an area circle that contains the box. With a fixed seed, in at least 90% of 50 tests, the circle's centre is more than 1 m from the box.
+- [ ] The terminal accepts activation only when 2 drives are docked and 2 fuses installed. The countdown takes 15 s with a survivor in the zone and pauses when the zone holds no Healthy survivor who is not hidden; a hidden survivor alone does not run it.
 - [ ] A shapeshifter (disguised or not) interacting with any objective changes no objective state on any client, and does not count toward the terminal zone.
+- [ ] Installing a fuse at a box that already has one is refused, and the second fuse stays carried.
+- [ ] A survivor starting a real interaction at a point where the shapeshifter is faking starts normally, and the fake is cancelled.
+- [ ] A drive room or fuse spawn appears on all survivor HUDs once any survivor has had it in view within 8 m, and not before. A survivor client receives no data for an undiscovered point.
+- [ ] A rescued former carrier does not get their dropped drive back automatically; it stays Dropped until someone picks it up.
 - [ ] A modified client sending a "complete" message for any interaction causes no state change.
 - [ ] All 5 clients show identical objective state (checklist, carriers, docked/installed counts, terminal state) at every `ObjectiveProgressChanged`.
 - [ ] When evacuation activates, both drives eject at the terminal on all 5 clients and can be picked up.

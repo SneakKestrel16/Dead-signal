@@ -29,4 +29,18 @@ Findings:
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md 8ca3abe3aa5059b4f68fd1098cc7efc8ad492775
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
-The hash is for the document as it was reviewed, before the revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+## Review — 2026-10-12 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 3
+Summary: Both prior blockers are resolved, and Match Flow agrees on evidence, disconnect drops, the armed trigger and the deadline. Network Authority, Controller & Interaction, HUD and Telemetry have no GDD yet; that is expected at Not Started. The recommended and nice-to-have items were applied after approval.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Acceptance Criteria: no criterion for hidden survivors not running the countdown, one fuse per box, a real interaction cancelling a fake, rule 7 discovery, or a rescued carrier not regaining their drive. Applied: 4 criteria added, terminal criterion extended.
+- [RECOMMENDED] Core Rules 5/7: every active point was sent to every client, so a modified client could read undiscovered points. Applied: survivors receive a drive room or fuse spawn only once discovered.
+- [RECOMMENDED] Core Rules 15: no rule for dropping a fuse on purpose. Applied: allowed, instant, same as a drive (proposed).
+- [NICE-TO-HAVE] Rule 25 sound named inconsistently; random-placement criteria lacked a fixed seed; `ObjectiveProgressChanged` triggers in systems-index.md omitted ejection and extraction. All applied.
+Reviewed-Content-Hash: design/gdd/survivor-objectives.md a1f5a15c7daeb622426dda4e411ff91b02a25e0c
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
