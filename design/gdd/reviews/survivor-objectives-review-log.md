@@ -17,4 +17,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md 8787d554312b6a3435cc7c6fb2b072be9d488ed1
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
+## Review — 2026-10-12 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 2 | Recommended: 0
+Summary: The prior blocker is resolved. Two new blockers: the fuse-box rules left install capacity and fake-interaction locking undefined, and three acceptance criteria were not independently testable. Revised in the same session by designer decision.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 15/25: undefined whether a box takes one fuse or many, and whether a fake interaction holds the one-interaction lock. Resolved: each active box takes exactly one fuse; fakes never hold the lock, and a real interaction cancels the fake. Two edge cases added.
+- [BLOCKING] Acceptance Criteria: "points vary" had no bar; the third-pickup criterion was vacuous; the fuse feel survey was free text. Rewritten: ≥4 distinct drive pairs and all 3 terminals over 20 rounds; `max_drives_carried` = 1 override test; fixed-choice survey question.
+Reviewed-Content-Hash: design/gdd/survivor-objectives.md 8ca3abe3aa5059b4f68fd1098cc7efc8ad492775
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
 The hash is for the document as it was reviewed, before the revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
