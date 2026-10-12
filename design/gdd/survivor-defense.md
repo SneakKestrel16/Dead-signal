@@ -129,7 +129,11 @@ tools, they're yours.
     doors. **One lock for all** (designer decision, 2026-10-11, re-review R2):
     a shocked survivor (rule 11) and an immune disguised monster (rule 10) get
     exactly this lock for exactly this time, so "shock them, then ask them to
-    ping or open a door" tells nobody anything.
+    ping or open a door" tells nobody anything. **No refresh** (designer
+    decision, 2026-10-11, second re-review B2): a hit on a player already
+    under the lock does not extend or restart it; the charge is still spent
+    and the hit plays its normal presentation. So no number of shooters can
+    chain the lock, in either form.
 15. **Cancels on entry:**
     - Predatory Lunge in wind-up or in flight: cancelled; no `SurvivorHit` is
       produced. Whether the lunge cooldown starts is owned by Monster Abilities
@@ -273,6 +277,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Scenario | Expected Behavior | Rationale |
 |----------|------------------|-----------|
 | Two survivors stun on the same tick | First processed applies the stun; second is "resisted" in true form, or a full shock presentation while disguised (rule 10); both charges consumed | Immunity applies from the first stun |
+| A disguised monster (immune) or a survivor is hit again while already under the shock lock | Lock is not extended or restarted; charge spent; normal hit presentation | Rule 14 no-refresh: repeat hits cannot chain the lock, so `lock_share` and rule 17 hold in every form (second re-review B2) |
 | Stun fired while the monster is mid-transformation | Transformation cancelled; monster stunned | Source: transform cannot escape a stun |
 | A survivor stands between the shooter and the monster | The survivor is shocked; the monster is not stunned | The shot hits the first body in its path |
 | A Seized or Downed survivor is between the shooter and the monster | The shot passes through them; the monster is stunned if valid | A held victim must never shield the monster (rule 8) |
@@ -415,6 +420,7 @@ keeps the monster permanently stuck.
 - [ ] With 5 clients connected, all 5 agree on stun state (as visible to their role), charges remaining, hiding-spot occupancy (as visible to their role) and barricade state after each event.
 - [ ] A survivor hit by a taser is rooted for `stun_root_s` and slowed until `stun_duration_s`; a recording of it is indistinguishable from a recording of a stunned disguised monster, and from a disguised monster hit while immune.
 - [ ] For `stun_duration_s` after a taser hit, a shocked survivor, a stunned disguised monster and an immune disguised monster each fail every attempt to open a door, interact, use an item, ping or call out; all three succeed on the first attempt after it ends.
+- [ ] Four taser hits 0.5 s apart on a disguised monster leave it locked for exactly `stun_duration_s` from the first hit; four charges are spent. The same holds for a shocked survivor.
 - [ ] A taser hit on a survivor holding a rescue, an objective hold or a barricade cancels that hold; an immune hit on a disguised monster mid-transformation does not cancel the transformation.
 - [ ] While the monster is disguised, a packet capture on a survivor client shows one identical "shocked" event for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` or immunity data.
 - [ ] A stun on a true-form monster, then a lunge wind-up 2 s into immunity, ends immunity; a stun on that wind-up applies.

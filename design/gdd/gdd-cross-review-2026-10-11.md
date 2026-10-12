@@ -414,3 +414,5 @@ The systems index now marks Survivor Objectives, Downing, Survivor Defense, Borr
 ### Second Re-review Verdict: FAIL
 
 B1 is a mechanical edit. B2 needs a designer decision on repeat shocks; W5–W8 and S1 need designer decisions before Milestone 2.
+
+Resolved 2026-10-11: B1 (shock-lock checks added to Monster Abilities rules 2 and 4, Borrowed Face rule 7 and States table, index reader). B2 (designer decision: a hit during an active lock does not extend or restart it; Survivor Defense rule 14, edge case and AC). Still open: W1–W8, S1–S5.
