@@ -43,7 +43,6 @@ through an event.
 | `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events (transformation reveal on change into true form), Survivor Defense (immunity ends on a change into a disguise, rule 16), Monster Abilities (Lunge needs True Form, rule 4), all clients (rendering) | Shapeshifter form changed |
 | `ObjectiveProgressChanged` | Survivor Objectives | Match Flow, Scare Events, Facility Map (lighting), HUD | Any objective state change (carry, drop, dock, install, power restored, armed, activated, drives ejected, drive extracted) |
 | `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
-| `ViewNudge` **(proposed)** | Scare Events (rules 13-14) | First-Person Controller & Interaction (adds the offset to the player's server view direction; soft dependency), the nudged client | The camera flinch for a Major scare: a yaw/pitch offset that ramps in within 0.3 s and stays. Sent only for a player whose flinch toggle is on and never near a lunge wind-up (designer decision, 2026-10-12, cross-review 12e) |
 | `AbilityUsed` **(proposed)** | Monster Abilities | Scare Events (scare triggers), Pings & Callouts (False Signal fake callout), Survivor Defense (a Lunge wind-up ends immunity, rule 16), Match Telemetry | A validated Lunge wind-up, False Signal or Blackout; carries ability, position and, for False Signal, the sound or impersonated callout |
 | `BarricadeBroken` **(proposed)** | Survivor Defense | Scare Events, HUD | A barricade was destroyed |
 | `PlayerConnectionChanged` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (cancel commit on monster disconnect), Monster Abilities, Survivor Objectives (items drop on disconnect, rule 13), Borrowed Face (no disguise as a disconnected survivor, rule 6; disguise lost on monster reconnect), First-Person Controller & Interaction (cancels holds), HUD | A player disconnected, reconnected or ran out of reconnect grace |
@@ -65,7 +64,8 @@ event. Only the owner writes it. Readers never change it.
 | Committing state | Downing, Rescue & Elimination | Survivor Defense (a stun cancels the commit), Borrowed Face (rule 7 rejects transforms), First-Person Controller & Interaction (commit root) | A takedown commit is running |
 | Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities, Downing, Rescue & Elimination (rule 7 rescue interrupt), First-Person Controller & Interaction (root, slow, doors) | A player is under the taser action lock |
 | Movement modifiers (root, slow, lock) | Each modifier is owned by its requester: Survivor Defense (shock lock, stun root and slow), Downing, Rescue & Elimination (Seized, rescue and commit roots, crawl), Monster Abilities (lunge wind-up root, miss slow) | First-Person Controller & Interaction (applies the most restrictive, rule 6) | A system adds or removes its own movement modifier |
-| Camera flinch toggle (per player) | Accessibility Options (the setting); the client sends it on join and on change and the server holds it | Scare Events (rule 13: no `ViewNudge` when off) | Whether a player takes the flinch rotation or only the screen-edge pulse |
+| Camera flinch toggle (per player) | Accessibility Options (the setting); the client sends it on join and on change and the server holds it | Scare Events (rule 13: no view offset written when off) | Whether a player takes the flinch rotation or only the screen-edge pulse |
+| View offset (per player, `yaw`/`pitch` **(proposed)**) | Scare Events (rules 13-14) writes it; the Controller owns the input and applies it | First-Person Controller & Interaction (adds it to the client's yaw/pitch for the server view direction, rule 7), the flinched client | The camera flinch for a Major scare: an offset that ramps in within 0.3 s and is then held; a new flinch replaces it; reset (as a re-baseline, no visible rotation) at round end, on Downed, Hidden or Seized and on reconnect. Written only for a player whose flinch toggle is on and never near a lunge wind-up. Same read-only-state pattern as movement modifiers: the Controller does not depend on Scare Events (designer decision, 2026-10-12, cross-review 12f) |
 | Player roster (`player_count`; per player display name, role, survivor character) | Lobby & Role Assignment (rule 14) | Match Flow, Borrowed Face, Pings & Callouts, HUD, all clients | Who is in the round, who is the shapeshifter and which character each survivor plays; fixed for the round |
 
 ---
@@ -76,7 +76,7 @@ event. Only the owner writes it. Readers never change it.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Approved | design/gdd/lobby-role-assignment.md | Network Authority |
-| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Approved | design/gdd/first-person-controller.md | Network Authority (Match Flow events only); Scare Events (`ViewNudge`, soft) |
+| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Approved | design/gdd/first-person-controller.md | Network Authority (Match Flow events only) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Network Authority, Controller & Interaction, Monster Abilities (Predatory Lunge), Survivor Defense, Match Flow, Pings & Callouts |
@@ -120,7 +120,7 @@ the source brief excludes progression and economy from the prototype.
 
 ## Dependency Map
 
-### Foundation Layer (Network Authority has none; the Controller depends only on it, plus the soft `ViewNudge` event from Scare Events)
+### Foundation Layer (Network Authority has none; the Controller depends only on it. Scare Events writes the Controller's view-offset input, so the arrow runs Scare Events to the Controller, not back)
 
 1. Network Authority & Replication — every rule (hits, stuns, cooldowns, objectives, downs, outcomes) is validated on the server.
 2. First-Person Controller & Interaction — movement and the timed "hold to interact" pattern used by objectives, rescues and barricades.

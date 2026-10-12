@@ -197,7 +197,7 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | pickup_s **(proposed)** | 1 | 0.5–2 | Dropped items riskier | Instant swaps |
 | max_drives_carried **(proposed)** | 2 | 1–2 | One survivor can finish alone | Forces two carriers; a lone survivor cannot win |
 | activation_start_s **(proposed)** | 1 | 0.5–3 | — | — |
-| interact_range_m **(proposed)** | 2.0 | 1.5–3 | Easier interaction | Tighter positioning |
+| interact_range_m **(proposed)** | 2.0 | 1.5–2.3 | Easier interaction | Tighter positioning |
 | alert_area_radius_m **(proposed)** | 10 | 5–20 | Vaguer alert | Pinpoints survivors |
 | alert_duration_s **(proposed)** | 5 | 3–10 | Monster tracks longer | Easier to miss |
 | install_noise_radius_m **(proposed)** | 25 | 15–40 | More players hear it | Quieter |

@@ -187,7 +187,9 @@ tools, they're yours.
     **(proposed)**. Only Healthy survivors can hide **(proposed)**.
 20. While hidden the survivor cannot be seen, cannot be lunged (no valid line of
     sight), cannot interact with objectives, use items or carry out rescues, and
-    has a restricted peek view.
+    has a restricted peek view. A held Scare Events flinch offset is reset to 0 on entering
+    the hide (a re-baseline, no visible rotation) and the peek view ignores it, so it
+    cannot push the peek outside its cone (designer decision, 2026-10-12, cross-review 12f).
 21. **Never permanently safe:** after `hide_quiet_s` = 20 s of continuous hiding,
     the spot emits a faint periodic breathing/creak cue every
     `hide_cue_interval_s` = 5 s **(proposed)**.
