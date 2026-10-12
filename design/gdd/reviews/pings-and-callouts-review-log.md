@@ -100,3 +100,19 @@ Reviewed-Content-Hash: design/gdd/pings-and-callouts.md d752d34d94cc109bdd7293c9
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (sixth) — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 5
+Summary: Earlier fixes hold. One cross-document gap: a disguised monster could ping and call out as an Eliminated or Escaped survivor, a free tell that Monster Abilities already rejects for fake callouts. Resolved by designer decision in the same session, together with the recommended items; re-review needed to confirm.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 21 / States: disguised monster could send as an Eliminated or Escaped survivor. Resolved: rejected; Downed disguise still allowed.
+- [RECOMMENDED] Core Rules 27: "not detectable from network data" contradicted rule 28 gesture. Added the exception.
+- [RECOMMENDED] Formulas: callout recipients omitted monster audio-only. Added.
+- [RECOMMENDED] Acceptance Criteria: 250 ms had no network condition; scripted full-round criterion could not prove voice-free viability. Rewritten, plus new dead-identity criterion.
+- [RECOMMENDED] Visual/Audio: "(not you)" row omitted pings. Reworded.
+- [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Not applied.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md cc8a5f1e2c38debf3a991921983fc433b1043167
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
