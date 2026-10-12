@@ -30,7 +30,7 @@
 #   Superseded entries:     Grep pattern="status: superseded"
 
 version: 1
-last_updated: ""
+last_updated: "2026-10-12"
 
 # ─── STATE OWNERSHIP ─────────────────────────────────────────────────────────
 # Who is the authoritative owner of each piece of shared game state.
@@ -43,7 +43,17 @@ last_updated: ""
 # interface: how other systems access this state (read-only property, method call,
 #   signal, shared resource, etc.) — this is the contract other ADRs depend on.
 
-state_ownership: []
+state_ownership:
+  - state: player_identity
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    interface: "NetAuthority.player_id_of(peer_id) -> int and peer_id_of(player_id) -> int (read-only; -1 when unbound); session tokens never leave NetAuthority except to their owner"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -71,7 +81,20 @@ state_ownership: []
 #
 # pattern options: signal | direct_call | event_bus | shared_resource | rpc | none
 
-interfaces: []
+interfaces:
+  - contract: player_connection
+    status: active
+    pattern: signal
+    producer: network-authority
+    consumers:
+      - lobby-role-assignment   # removes a lobby leaver at once
+      - match-flow              # owns reconnect grace; emits PlayerConnectionChanged
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    signal_signature: "player_dropped(player_id: int); player_rejoined(player_id: int, new_peer_id: int); player_joined(player_id: int)"
+    referenced_by:
+      - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -131,7 +154,28 @@ performance_budgets: []
 # Register an API decision when the choice is non-obvious and other ADRs might
 # make a different choice for the same purpose without knowing this was decided.
 
-api_decisions: []
+api_decisions:
+  - purpose: join_validation
+    status: active
+    api: SceneMultiplayer.auth_callback + send_auth / complete_auth (both sides)
+    not: post-connect handshake RPC
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    reason: "Rejects before the peer is connected, so no unvalidated peer ever receives game RPCs; verified by the networking spike on 4.7.2 (H5)"
+    referenced_by:
+      - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: network_payload_decoding
+    status: active
+    api: bytes_to_var (after a size check and per-field type checks)
+    not: bytes_to_var_with_objects
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    reason: "Payloads from peers are untrusted; decoding objects from them would let a client instantiate arbitrary objects on the server"
+    referenced_by:
+      - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -157,7 +201,27 @@ api_decisions: []
 # Register a pattern when an ADR explicitly bans it AND other ADRs might
 # unknowingly use it (i.e., it's a tempting but wrong approach for this project).
 
-forbidden_patterns: []
+forbidden_patterns:
+  - pattern: peer_id_as_identity
+    status: active
+    description: "Code outside NetAuthority must not store a peer ID as a player's identity. Key all gameplay and lobby state by player ID."
+    why: "A reconnecting player gets a new peer ID; state keyed by peer ID is lost or misattributed on every reconnect."
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+
+  - pattern: host_input_shortcut
+    status: active
+    description: "The server must not read the host's local input directly. The host's player submits intent through the same queue as remote players."
+    why: "Shortcuts give the host rules remote players do not get and break a later headless dedicated build."
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+
+  - pattern: client_to_client_relay
+    status: active
+    description: "SceneMultiplayer.server_relay must be false; clients never send RPCs or state to each other."
+    why: "Every message must pass server validation and per-recipient projection, or hidden information (disguise, discovery, scares) leaks."
+    adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
 
 # Example:
 #
