@@ -1,6 +1,6 @@
 # Survivor Objectives
 
-> **Status**: Approved (2026-10-12, solo review)
+> **Status**: Approved
 > **Author**: SneakKestrel16
 > **Last Updated**: 2026-10-12 (post-approval clarifications)
 > **Last Verified**: 2026-10-11

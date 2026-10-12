@@ -1,6 +1,6 @@
 # Match Flow & Win Conditions
 
-> **Status**: Approved (2026-10-11 re-review, lean)
+> **Status**: Approved
 > **Author**: SneakKestrel16
 > **Last Updated**: 2026-10-12 (cross-review W11: stun and immunity timers run through a monster disconnect, with AC; earlier: re-review after cross-review blockers)
 > **Last Verified**: 2026-10-11

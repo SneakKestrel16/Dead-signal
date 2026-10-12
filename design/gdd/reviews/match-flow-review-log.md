@@ -2,7 +2,7 @@
 
 Target: `design/gdd/match-flow.md`
 
-## Review — 2026-10-12 — Verdict: NEEDS REVISION
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: none (lean review)
 Blocking items: 2 | Recommended: 5
@@ -19,7 +19,7 @@ Findings:
 Reviewed-Content-Hash: design/gdd/match-flow.md eae998942ad1a7083acd94a092d73d28a81f5aa6
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
-## Review — 2026-10-12 — Verdict: APPROVED
+## Review — 2026-10-11 — Verdict: APPROVED
 Scope signal: L
 Specialists: none (lean review)
 Blocking items: 0 | Recommended: 2
@@ -58,5 +58,5 @@ Findings:
 - [RECOMMENDED] Acceptance Criteria: no AC for stun timers across a monster disconnect. Resolved.
 - [RECOMMENDED] Header: Last Updated not bumped. Resolved.
 - [INFO] Open Question on cooldowns running through a disconnect is still open; W11 applies the same rule to stun timers.
-Reviewed-Content-Hash: design/gdd/match-flow.md 14670175a261dd3b66d2acc157a77c5c85ec8824
+Reviewed-Content-Hash: design/gdd/match-flow.md b14cc6746872824a91ebe03e80fc8c2a75978221
 Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

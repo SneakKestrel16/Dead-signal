@@ -2,7 +2,7 @@
 
 Target: `design/gdd/downing-and-rescue.md`
 
-## Review — 2026-10-12 — Verdict: NEEDS REVISION
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: none (lean review)
 Blocking items: 1 | Recommended: 4

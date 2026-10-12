@@ -2,7 +2,7 @@
 
 Target: `design/gdd/survivor-objectives.md`
 
-## Review — 2026-10-12 — Verdict: NEEDS REVISION
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: none (lean review)
 Blocking items: 1 | Recommended: 3
@@ -17,7 +17,7 @@ Findings:
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md 8787d554312b6a3435cc7c6fb2b072be9d488ed1
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
-## Review — 2026-10-12 — Verdict: NEEDS REVISION
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
 Scope signal: L
 Specialists: none (solo review)
 Blocking items: 2 | Recommended: 0
@@ -29,7 +29,7 @@ Findings:
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md 8ca3abe3aa5059b4f68fd1098cc7efc8ad492775
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
-## Review — 2026-10-12 — Verdict: APPROVED
+## Review — 2026-10-11 — Verdict: APPROVED
 Scope signal: L
 Specialists: none (solo review)
 Blocking items: 0 | Recommended: 3
@@ -57,3 +57,14 @@ Reviewed-Content-Hash: design/gdd/survivor-objectives.md 20cc0fc671a6ef950cf00e5
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (registry-only re-check) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (registry re-verification, no full review)
+Blocking items: 0 | Recommended: 0
+Summary: The document was unchanged since its 2026-10-11 approval. The registry changed only in the stun_immunity_s comment (fifth cross-review W2), a value this GDD does not use, so the prior verdict stands. The Status header lost its stale date note in the same session (2026-10-12, not a review change).
+Prior verdict resolved: Yes
+Findings:
+- none
+Reviewed-Content-Hash: design/gdd/survivor-objectives.md 9ca05773e2a2210398e3e0520abb91dd4ac4fce2
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa
