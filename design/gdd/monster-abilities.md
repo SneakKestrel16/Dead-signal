@@ -31,7 +31,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 1. The server owns all ability state: cooldowns, wind-up, hit resolution, ability placement and duration. The client sends only an activation request (and an aim point where needed); the server validates and rejects invalid requests with no effect and no cooldown cost. Clients never report hits or damage.
 2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14, which includes an immune hit on a disguised shapeshifter) or Transforming (Borrowed Face) **(proposed)**. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
 3. Cooldowns are independent of each other and of the form-change cooldown **(proposed)**.
-3a. On every validated activation (Lunge wind-up start, False Signal, Blackout) the server emits `AbilityUsed` (systems-index event table) carrying the ability, the monster's position and facing, the target point or zone, and for False Signal the signal type and, for a callout, the impersonated survivor **(proposed)**. Scare Events and Pings & Callouts consume it; rejected requests emit nothing.
+3a. On every validated activation (Lunge wind-up start, False Signal, Blackout) the server emits `AbilityUsed` (systems-index event table) carrying the ability, the monster's position and facing, the target point or zone, and for False Signal the signal type and, for a callout, the impersonated survivor **(proposed)**. Scare Events and Pings & Callouts consume it; rejected requests emit nothing. `AbilityUsed` is server-internal and is never replicated to survivor clients: it carries the monster's position, which would locate a disguised shapeshifter. Consumers replicate only the effect they present (the sound, the dark zone, the feed line) **(proposed)**.
 
 **Disguise interaction** (all **(proposed)**)
 
@@ -46,14 +46,14 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming.
 5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up and turns at no more than `lunge_windup_turn_deg_s` = 45°/s **(proposed)**, so a survivor who strafes on the cue still leaves the dash path (Formulas, Dodge window). Source canon: "clear wind-up and audible cue".
 6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to 30°/s **(proposed)**. Blocked by walls and closed or barricaded doors; the dash stops at the obstacle.
-7. **Hit validation** (server, during active): a survivor is hit if all of these hold (all **(proposed)**):
+7. **Hit validation** (server, every server tick of Active): a survivor is hit if all of these hold (all **(proposed)**):
    - the survivor is a valid takedown target as defined by Downing, Rescue & Elimination: Healthy, not Seized, and not in post-rescue or post-release grace (Downed survivors cannot be lunged); hidden survivors are also untargetable (Survivor Defense);
    - distance from the monster's attack point (the front of its collision body at chest height **(proposed)**) to the survivor's collision body is ≤ `lunge_hit_radius_m` = 1.2 m;
    - the survivor is inside a 60° forward cone;
    - unobstructed line of sight between the monster's chest and the survivor's chest (no wall, closed door, barricade);
    - the monster has not been Stunned since wind-up began.
-   Latency: the server checks against survivor positions rewound by the attacker's latency up to `max_rewind_ms` = 150 ms **(proposed)**; beyond that, current positions are used. Disputes are logged (Match Telemetry).
-8. A lunge hits at most one survivor (the closest valid one) **(proposed)**. On hit, the server emits `SurvivorHit` (monster, survivor, server time, position). Monster Abilities owns *whether* a hit occurred; Downing, Rescue & Elimination owns what it does.
+   Latency: the server checks against survivor positions rewound by the attacker's latency up to `max_rewind_ms` = 150 ms **(proposed)**; beyond that, current positions are used. Only positions are rewound: eligibility (Healthy, hidden, grace, Seized) and the stun check use current server state. Disputes are logged (Match Telemetry).
+8. A lunge hits at most one survivor: the first tick with one or more survivors passing rule 7 hits the closest of them on that tick, and the hit ends the dash immediately **(proposed, designer decision 2026-10-11)**. On hit, the server emits `SurvivorHit` (monster, survivor, server time, position). Monster Abilities owns *whether* a hit occurred; Downing, Rescue & Elimination owns what it does.
 9. **Lunge timeline** (stated identically in `downing-and-rescue.md`): wind-up → dash → **hit** → **takedown commit** (`takedown_commit_s` = 1.5 s **(proposed)**, owned by Downing, Rescue & Elimination) → **lunge resolved** (the commit completes, emitting `SurvivorDowned` or `SurvivorEliminated`, or is cancelled, e.g. by `MonsterStunned`) → **`lunge_cooldown_s` = 10 s cooldown** (source; owned here) starts at resolution. Without a hit, the lunge resolves when the dash ends or when a stun interrupts it, and the cooldown starts then **(proposed reading of "after the attack resolves")**.
 10. **Miss slow**: if it resolves without a hit (including blocked by a door), the monster moves at `miss_slow_multiplier` = 0.5 × speed for `miss_slow_s` = 1.5 s **(proposed)**. The source says "missing briefly slows the monster"; values are proposed.
 11. **After a hit**: there is no separate hit recovery. The takedown commit (rule 9) is the post-hit commitment: the monster is rooted and cannot use abilities or transform until it resolves (owned by Downing, Rescue & Elimination).
@@ -119,7 +119,8 @@ hit = is_valid_takedown_target(survivor)   # Downing rule 3: Healthy, not hidden
       and angle(monster_forward, to_survivor) <= lunge_cone_deg / 2
       and line_of_sight(monster_chest, survivor_chest)
       and not stunned_since(windup_start)
-check positions at: server_time - min(attacker_latency, max_rewind_ms)
+evaluated: every server tick of Active; first tick with any hit → closest wins, dash ends
+check positions at: server_time - min(attacker_latency, max_rewind_ms)   # eligibility and stun: current state
 ```
 
 | Variable | Type | Range | Source | Description |
@@ -131,7 +132,7 @@ check positions at: server_time - min(attacker_latency, max_rewind_ms)
 | lunge_windup_turn_deg_s | float | 0–60 | data | Turn rate during wind-up **(proposed 45)** |
 
 **Effective threat reach** ≈ `lunge_distance_m + lunge_hit_radius_m` = 5.2 m.
-**Dodge window**: a survivor 3 m ahead running at 4.5 m/s (example speed; controller-owned) who strafes on the cue is ~2.7 m sideways at dash start and ~4.05 m at dash end. To pass within `lunge_hit_radius_m` of them, the dash must leave about 48° off the monster's starting facing (worked: at 50° the dash end is 1.08 m from the survivor, at 45° it is 1.23 m). The monster reaches `lunge_windup_turn_deg_s` × `lunge_windup_s` + 30°/s × 0.3 s = 27° + 9° = 36°, so the strafe on the cue dodges. Above ~65°/s the monster tracks it and the dodge counter dies; that sets the 60°/s ceiling of the safe range. A late strafe (after about half the wind-up) is still caught.
+**Dodge window**: a survivor 3 m ahead running at 4.5 m/s (example speed; controller-owned) who strafes on the cue is ~2.7 m sideways at dash start and ~4.05 m at dash end. To pass within `lunge_hit_radius_m` of them, the dash must leave about 48° off the monster's starting facing (worked: at 50° the dash end is 1.08 m from the survivor, at 45° it is 1.23 m). The monster reaches `lunge_windup_turn_deg_s` × `lunge_windup_s` + 30°/s × 0.3 s = 27° + 9° = 36°, so the strafe on the cue dodges. Above ~65°/s the monster tracks it and the dodge counter dies; that sets the 60°/s ceiling of the safe range. A late strafe is still caught: starting 0.3 s into the wind-up, the survivor is ~2.7 m sideways at dash end, and a dash 25° off facing ends 1.19 m from them, well inside the 36° reach.
 
 ### Cooldown timing
 
@@ -232,7 +233,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |---|---|---|---|
-| Hit-stop | 80 | Brief freeze on server-confirmed hit only | Yes |
+| Hit-stop | 80 | Brief visual freeze on server-confirmed hit only; presentation-only, no simulation pause and no input lock | Yes |
 | Camera impact (survivor hit) | 200 | Jolt, no input lock beyond downing rules | Yes |
 
 ### Weight and Responsiveness Profile
@@ -243,8 +244,8 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 
 ### Feel Acceptance Criteria
 
-- [ ] Survivors who were hit report that they heard the wind-up.
-- [ ] No playtester describes a hit as having come from "nowhere".
+- [ ] In a playtest of at least 10 rounds, at least 80% of hit survivors answer yes to "did you hear the cue before the hit?" **(proposed threshold)**.
+- [ ] In the same playtest, 0 post-round surveys select "the hit came from nowhere".
 
 ## UI Requirements
 
@@ -277,14 +278,18 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
-- [ ] During wind-up the monster's facing changes by no more than 45°/s; a survivor 3 m ahead who strafes at 4.5 m/s from the cue is not hit.
-- [ ] With two valid survivors in the cone, only the closer one receives `SurvivorHit`.
-- [ ] A survivor in post-rescue or post-release grace inside the cone and radius is not hit.
+- [ ] During wind-up the monster's facing changes by no more than 45°/s, and during the dash by no more than 30°/s; a survivor 3 m ahead who strafes at `survivor_move_speed` from the cue is not hit (4.5 m/s example until the Controller GDD sets the speed).
+- [ ] With two valid survivors in the cone, only the closer one receives `SurvivorHit`, and the dash ends on the hit tick.
+- [ ] A survivor in post-rescue or post-release grace, or hidden, inside the cone and radius is not hit.
+- [ ] A stun during the dash ends it with no `SurvivorHit`, and the cooldown starts at the stun.
+- [ ] Using False Signal or Blackout while Disguised is accepted and leaves the disguise intact.
+- [ ] Using one ability does not change the other abilities' cooldowns or the form-change cooldown.
+- [ ] Every `AbilityUsed` stays on the server; a packet capture on a survivor client shows no `AbilityUsed` and no monster position from it.
 - [ ] Every accepted Lunge, False Signal and Blackout emits exactly one `AbilityUsed` with its ability, position and target; a rejected request emits none.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
 - [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved or Eliminated survivor is rejected; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
-- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch restores it on all clients. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark.
-- [ ] All values are read from data, not hardcoded.
+- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch restores it on all clients. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
+- [ ] Changing any Tuning Knobs value in the data file changes in-game behavior with no code change, and ability code contains no literal for those parameters.
 
 ## Open Questions
 

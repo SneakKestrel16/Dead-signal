@@ -443,6 +443,6 @@ keeps the monster permanently stuck.
 | Should stun items be refillable or found in the map? | SneakKestrel16 | Before Milestone 5 | Proposed: no |
 | Does stunning a disguised monster reveal it? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11: no.** Borrowed Face rule 10 |
 | Should a taser shot that hits a real survivor shock them? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11:** yes, identical to a disguised stun as observers see it (rule 11) |
-| Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | Owned by Monster Abilities |
+| Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | **Settled in Monster Abilities rule 12:** yes, the interrupted lunge counts as resolved and the cooldown starts (proposed) |
 | Does the flashlight need a battery limit? | SneakKestrel16 | Before Milestone 4 | Proposed: no |
 | Should the long-hide cue exist, or is Search enough? | SneakKestrel16 | Before Milestone 5 | |

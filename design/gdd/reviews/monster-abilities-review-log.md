@@ -36,3 +36,21 @@ Findings:
 - [NICE-TO-HAVE] Edge case "Downed by another cause" named an impossible cause; animation table listed 90 recovery frames for a movement slow. Resolved both. Header dates of 2026-10-12 left for the project-wide date pass.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md f99d03c7bfb3867537488c3be5fe682f0f6bd047
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 1 | Recommended: 6
+Summary: Third review. Both prior blockers held. One new blocker: when the hit check runs, and what a hit does to the dash, were undefined, so a programmer had to guess and the 12.4 s cycle quietly assumed the dash stopped on a hit. It and all recommended items were revised in the same session; index stays In Review.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Rules 7–8 / Formulas: hit-check cadence and dash-on-hit undefined. Resolved: designer chose every server tick of Active; first tick with a valid target hits the closest one, and the hit ends the dash.
+- [RECOMMENDED] Rule 3a: `AbilityUsed` carries monster position with no replication scope (radar risk, like cross-review R1). Resolved: server-internal; AC added.
+- [RECOMMENDED] Acceptance Criteria: the two feel ACs and "values read from data" were not measurable. Resolved: survey thresholds (proposed 80%, 0 "from nowhere") and a data-change/no-literal check.
+- [RECOMMENDED] Acceptance Criteria: the 4.5 m/s strafe speed belongs to the Controller GDD, which does not exist yet. Resolved: `survivor_move_speed`, 4.5 kept as example.
+- [RECOMMENDED] Acceptance Criteria: missing ACs for hidden target, dash steering, stun during dash, abilities while Disguised, independent cooldowns, flashlights under Blackout. Resolved: added.
+- [RECOMMENDED] Impact Moments: hit-stop could be read as an input lock. Resolved: presentation-only.
+- [RECOMMENDED] Rule 7: rewound positions vs "hit checks current state" ambiguous. Resolved: positions rewound, eligibility and stun current.
+- [NICE-TO-HAVE] Formulas: late-strafe claim unworked. Resolved: 0.3 s strafe caught by a 25° dash (1.19 m). Survivor Defense open question on stun-cancelled cooldown marked settled by rule 12. Header date 2026-10-12 left for the date pass.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md a17b1c6ea2f52caae3e0ec22180f3aba1808d69b
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
