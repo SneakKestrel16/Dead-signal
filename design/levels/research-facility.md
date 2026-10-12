@@ -1,9 +1,9 @@
 # Level: Research Facility (Greybox)
 
-> **Status**: Draft
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (cross-review B1: scare-anchor table; B2: this map owns per-volume lighting state)
-> **Last Verified**: 2026-10-11
+> **Last Updated**: 2026-10-12 (design review: candidate replication matches Objectives rule 5, lighting precedence, Edge Cases; earlier: cross-review B1 scare anchors, B2 lighting owner, W5, W13, D1)
+> **Last Verified**: 2026-10-12
 > **Implements Pillar**: Readable Objectives, Counterplay, Fair Fear, Small Shippable Scope (supports Human Deception)
 
 ## Quick Reference
@@ -167,7 +167,7 @@ Survivor objective flow. Selection and rules are owned by Survivor Objectives; t
 
 ## Authored Candidate Points
 
-The server picks the active subset at round start and never lets a client choose or move a point. It replicates every point to the monster at once and each point to survivor clients only once discovered (Survivor Objectives rule 5) (cross-review W5, 2026-10-12). Selection rules and counts belong to Survivor Objectives (rules 5–6 there, which adopt the counts and constraints below); this map owns the placements.
+The server picks the active subset at round start and never lets a client choose or move a point. It replicates every active point to the monster at once. Survivor clients get the active fuse boxes and terminal at round start, and an active drive room or fuse spawn only once it is discovered (Survivor Objectives rules 5 and 7) (design review 2026-10-12, correcting the cross-review W5 wording). Selection rules and counts belong to Survivor Objectives (rules 5–6 there, which adopt the counts and constraints below); this map owns the placements.
 
 | Set | Required (canon) | Candidates | Active per round | Locations |
 |-----|------------------|-----------|------------------|-----------|
@@ -178,7 +178,7 @@ The server picks the active subset at round start and never lets a client choose
 
 Placement constraints **(proposed)**:
 - The two active drives are in different rooms.
-- The two active fuses are in different zones (corridors count as their own zone), so the fuse hunt crosses the map.
+- The two active fuses are in different zones (each service corridor counts as its own zone, Survivor Objectives rule 6), so the fuse hunt crosses the map.
 - No drive or fuse candidate is in A1, so survivors cannot finish an objective without leaving spawn.
 - All fuse boxes are in Zone B, so fuse noise always points the shapeshifter to the centre. It never points at spawn or the exit.
 - If T3 (C3) is active, d6 (also C3) is not (an active terminal and an active drive never share a room).
@@ -261,7 +261,7 @@ Traversal times use a reference walk speed of 4.0 m/s **(proposed)**. First-Pers
 Targets **(proposed)**:
 - Any room to any other room in 20 s or less at walk speed.
 - Every drive and fuse candidate is within 5 s of a hiding spot, a door that can be closed, or a second exit.
-- Every active terminal is within 25 s of every other objective room, so the Evacuation phase (final 2:00) leaves time for at least one rescue (`rescue_duration_s` = 6) and a retreat around L8 or L9.
+- Every active terminal is within 25 s of every other objective room, so the Evacuation phase (normally the final 2:00; it starts earlier when the terminal is armed, Match Flow rule 6) leaves time for at least one rescue (`rescue_duration_s` = 6) and a retreat around L8 or L9.
 - Every terminal candidate is within 15 s of exit E at walk speed **(proposed)**. Since 2026-10-12 the drives eject at the terminal and must be carried out through E (`survivor-objectives.md` rule 22), so the terminal-to-exit run is the final, contested carry. It should be short enough to finish and long enough to contest; the route should offer two paths (for example via C2 or C1).
 - Total minimum survivor walking for a split team is about 2-3 min of the 5-min Investigation window. This leaves room for verification, hiding and rescues. Confirm in M2 playtests.
 - **Grouped worst case** (cross-review D1, 2026-10-12): one group of four touring every active point walks roughly the L1 loop (~42 s) plus room spurs, about 1-2 min, and does the objective work in series (`min_work_s` 50 s, Survivor Objectives): about 2-3 min in total. That is well inside the 420 s from Investigation start to the deadline, so the clock alone does not force a split. This is inference from the route table; time a grouped greybox run in M2 to settle it.
@@ -307,10 +307,16 @@ Emergency lights (faint floor-level strips plus exit signage) are always on in e
 | Fuse Installed (1/2) | `ObjectiveProgressChanged` | The fuse box's indicator lights; B1 Core pulses once **(proposed)** |
 | Power Restored (2/2) | `ObjectiveProgressChanged` | Overheads up to full in B and C; active terminal screen lights; route lights from B1 to the terminal **(proposed)** |
 | Blackout (local) | Blackout activation (Monster Abilities) | One volume dark for `blackout_duration_s` = 6; emergency strips stay faintly visible (canon) |
-| Evacuation | `RoundPhaseChanged` to Evacuation (final 2:00) | Emergency mode: overheads drop to ~50%; rotating amber beacons along H-N, H-S and C2 toward C4; exit sign over E brightens **(proposed)** |
+| Evacuation | `RoundPhaseChanged` to Evacuation (7:00, or earlier when the terminal is armed) | Emergency mode: overheads drop to ~50%; rotating amber beacons along H-N, H-S and C2 toward C4; exit sign over E brightens **(proposed)** |
 | Terminal Activating | `ObjectiveProgressChanged` (activation started) | C4 beacon spins red; alarm lights in the terminal room **(proposed)** |
 | Exit Open | Activation complete | Exit door E opens; green light floods C4 from the doorway **(proposed)** |
 | Reset | `RoundEnded`, and round start | Any active Blackout ends; every volume returns to the round-start Low Power state, so the results screen and the next round start clean (cross-review re-review R4, 2026-10-11) **(proposed)** |
+
+**Precedence** (design review 2026-10-12, **(proposed)**). Each volume shows one base state plus overlays:
+- The base state is the latest of Low Power → Power Restored → Evacuation. Evacuation replaces Power Restored's full overheads with its ~50% emergency mode, but keeps the route lights to the active terminal.
+- Fuse Installed (1/2), Terminal Activating and Exit Open are overlays on their own fixtures (fuse box indicator, terminal room alarm lights and C4 beacon, exit door light). They never change another volume.
+- Blackout (local) overrides everything in its one volume except the emergency strips, for its duration. The volume then returns to whatever its base state and overlays are at that moment.
+- Reset clears every overlay and Blackout and sets every volume to Low Power.
 
 In reduced-flash mode, rotating and pulsing lights become steady colour changes **(proposed)**; Accessibility Options owns the setting. Lighting changes never fully darken the route to the active terminal during Evacuation **(proposed)**, so Readable Objectives holds when the stakes are highest.
 
@@ -361,6 +367,18 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 - **Required Systems**: Network Authority & Replication; First-Person Controller & Interaction; Survivor Objectives; Survivor Defense; Monster Abilities; Scare Events; Pings & Callouts; Match Flow & Win Conditions.
 - **Server authority**: The server owns the active candidate set, door open/closed/barricaded state, lighting state per volume, camera feed content and exit state. It sends these to clients. Clients never select candidates, open the exit or change lighting state locally. The one exception is individual hallucinations sent only to their target client by Scare Events.
 
+## Edge Cases
+
+| Scenario | Expected Behavior | Rationale |
+|----------|------------------|-----------|
+| Terminal armed during Infiltration | Lighting goes Low Power (or Power Restored, since arming needs both fuses) straight to Evacuation | Match Flow rule 6; precedence takes the latest base state |
+| Blackout in a room when Power Restored lands | Room stays dark for the rest of the Blackout, then shows Power Restored | Blackout overrides its volume only for its duration |
+| Blackout in the active terminal room when Evacuation starts | Blackout ends at that moment; room shows Evacuation lighting | `blackout_able` paragraph |
+| Blackout in any other room when Evacuation starts | Blackout runs its remaining duration, then the room shows Evacuation lighting | Precedence |
+| Round ends during Terminal Activating or Exit Open | Reset clears all overlays; Low Power everywhere | Reset row |
+| A drive or fuse spawn is active in a room a survivor never sees within `discover_range_m` | No survivor client receives it; the monster's does | Survivor Objectives rules 5 and 7 |
+| Slammed-door anchor fires on an open door | Door plays the slam and shudder but stays open | Scare Events rule 7 |
+
 ## Dependencies
 
 | System | Direction | Interface |
@@ -394,14 +412,15 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 1. **Exits**: In the greybox, every room in the Zones and Rooms table has at least two traversable exits. Pass: a walk-through confirms each room; zero rooms fail.
 2. **No sealed rooms**: With all five barricadable doors barricaded, a player can still walk from H-N to C4 and to every other room. Pass: route walked successfully.
 3. **No single choke**: Block each single edge into Zone B in turn (A4-B1, B2-H-N, B3-H-S, B1-C2). B1 stays reachable from A1 every time. Pass: all four tests succeed.
-4. **Candidate agreement (5 clients)**: In 10 consecutive rounds with 5 connected clients, every client that has discovered a point shows it where the server log has it, the monster's client shows every active point, and no survivor client holds data for an undiscovered point (cross-review W5, 2026-10-12). Pass: 10/10 rounds agree.
+4. **Candidate agreement (5 clients)**: In 10 consecutive rounds with 5 connected clients, every client shows the active fuse boxes and terminal from round start where the server log has them; each survivor client shows an active drive room or fuse spawn only after its discovery, at the logged position; the monster's client shows every active point from round start; and no survivor client holds data for an undiscovered drive room or fuse spawn (Survivor Objectives rules 5 and 7). Pass: 10/10 rounds agree.
 5. **Candidate variety**: Over 20 rounds, at least 4 different drive pairs and all 3 terminal candidates appear, and no round breaks a placement constraint. Pass: log review.
 6. **No runtime geometry**: Wall, door and room layout is identical across 10 rounds; only candidate activation differs. Pass: visual and log comparison.
-7. **Traversal budget**: At the controller's walk speed, A1 to C4 exit takes 25 s or less and A6 to C3 takes 25 s or less. Pass: stopwatch in greybox.
+7. **Traversal budget**: At the controller's walk speed, A1 to C4 exit takes 20 s or less and A6 to C3 takes 20 s or less (the Targets bound). Pass: stopwatch in greybox.
 8. **Lighting states (5 clients)**: On the Evacuation phase change and on power restored, all 5 clients enter the new lighting state within 1 s of each other **(proposed tolerance)**. Pass: recorded on all clients.
 9. **Blackout scope**: A Blackout darkens exactly one lighting volume, and emergency strips stay visible in it. Pass: verified in each room and each corridor segment.
 10. **Exit gating**: Exit E stays closed until the server reports activation complete. A client cannot open it by interacting early. Pass: attempted on 5 clients, 0 openings.
 11. **Grouping (playtest)** (cross-review D1, 2026-10-12): across at least 10 M2 rounds, Match Telemetry records whether the survivors ever split (any two Healthy survivors more than 20 m apart for 30 s or more) and the win rate of teams that never split. Pass: the designer reviews both before Milestone 3; if never-split teams win more often than split ones, revisit D1 (an objective that rewards parallel work, or a shorter clock).
+12. **Lighting precedence (5 clients)**: With both fuses installed, then Evacuation, then a Blackout in a Zone B room, all 5 clients show that room dark with emergency strips; when the Blackout ends it shows Evacuation lighting, not Power Restored. After `RoundEnded`, every volume is Low Power on all clients.
 
 ## Open Questions
 
@@ -412,7 +431,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Is the exit fixed at C4, or does it follow the active terminal? | SneakKestrel16 | Before Milestone 2 |
 | What do C5's "backup controls" do beyond per-room switches (zone light reset, camera power, nothing)? | SneakKestrel16 | Before Milestone 3 |
 | Does the shapeshifter spawn disguised, or must it observe someone first? (Borrowed Face) | SneakKestrel16 | Before Milestone 3 |
-| Can the shapeshifter use the C1 monitors? How does a disguised shapeshifter appear on a feed? | SneakKestrel16 | Before Milestone 3 |
+| Can the shapeshifter use the C1 monitors? (Scare Events rule 2a already assumes any player, including the shapeshifter, can view one.) How does a disguised shapeshifter appear on a feed? | SneakKestrel16 | Before Milestone 3 |
 | Is a 60 x 40 m single floor the right size for 5 players, or too tight for hiding and deception? | SneakKestrel16 | Before Milestone 5 |
 | Should survivors have more than one spawn group to vary the openings? | SneakKestrel16 | Before Milestone 5 |
 | Is 6 hiding spots the right density? | SneakKestrel16 | Before Milestone 5 |
