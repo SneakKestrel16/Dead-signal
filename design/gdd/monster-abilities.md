@@ -1,6 +1,6 @@
 # Monster Abilities
 
-> **Status**: Draft
+> **Status**: In Review
 > **Author**: SneakKestrel16
 > **Last Updated**: 2026-10-12
 > **Last Verified**: 2026-10-11
@@ -93,7 +93,7 @@ Predatory Lunge:
 | Active | Wind-up complete | Hit → Takedown Commit; dash end, obstacle, stun → Resolved | Dash; server hit checks |
 | Takedown Commit | Hit (`SurvivorHit` emitted) | Commit completes or is cancelled → Resolved | Owned by Downing, Rescue & Elimination (`takedown_commit_s` = 1.5 s, proposed); monster rooted |
 | Resolved | Commit end, or a no-hit exit from Wind-up/Active | Immediate → Cooldown | Applies miss slow on a miss |
-| Cooldown | Resolved | 10 s elapsed → Ready | Cannot lunge; may transform once any miss slow has ended **(proposed)** |
+| Cooldown | Resolved | 10 s elapsed → Ready | Cannot lunge; may transform when Borrowed Face rule 7 allows (miss slow does not block it) |
 
 False Signal and Blackout each have Ready → Active (signal playing / zone dark) → Cooldown → Ready.
 
@@ -265,11 +265,12 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 
 ## Acceptance Criteria
 
-- [ ] Lunge plays its cue 0.6 s before the dash; a survivor 20 m away hears it from the correct direction.
-- [ ] Server rejects a lunge during cooldown, while Disguised, while Stunned, or while Transforming.
+- [ ] Lunge plays its cue 0.6 s before the dash; a survivor 20 m away hears it from a bearing within ±15° of the monster's true bearing **(proposed tolerance)**.
+- [ ] Server rejects a lunge during cooldown, while Disguised (Borrowed Face rule 11, kept until playtest), while Stunned, or while Transforming.
 - [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the `stun_duration_s` after an immune taser hit (shock lock, Survivor Defense rule 14), and accepts them once the lock ends.
 - [ ] A survivor behind a closed door 1 m from the monster is never hit.
 - [ ] A miss slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution.
+- [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
