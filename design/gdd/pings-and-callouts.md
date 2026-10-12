@@ -1,8 +1,8 @@
 # Pings & Callouts
 
-> **Status**: Draft
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (seventh design review: monster's own state governs sending, Shocked state row, item-ping AC fixed for monster line of sight)
+> **Last Updated**: 2026-10-12 (eighth design review, approved: shock as a timed lock, (not you) ping range measured at acceptance, fake-ping and gesture ACs)
 > **Last Verified**: 2026-10-12
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 
@@ -66,7 +66,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 **Monster communication**
 
-21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**. If the borrowed survivor is Eliminated or Escaped, the disguised monster's pings and callouts are rejected (Borrowed Face rule 13 keeps the disguise on); a dead voice is a free tell, the same reason Monster Abilities rejects a fake callout as that survivor (designer decision, 2026-10-12, design review). A disguise as a Downed survivor may still send, since the mismatch with the real survivor is a fair clue. Apart from that Eliminated or Escaped rejection, the monster's own state alone decides what it can send (Disguised, Transforming, stunned): the borrowed survivor's Downed, Seized or Hidden state does not restrict it, so a disguise as a Downed survivor may send any ping or callout, not only the Downed subset of rule 14 (designer decision, 2026-10-12, design review; the mismatch is a fair clue).
+21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**. If the borrowed survivor is Eliminated or Escaped, the disguised monster's pings and callouts are rejected (Borrowed Face rule 13 keeps the disguise on); a dead voice is a free tell, the same reason Monster Abilities rejects a fake callout as that survivor (designer decision, 2026-10-12, design review). Apart from that Eliminated or Escaped rejection, the monster's own state alone decides what it can send (Disguised, Transforming, stunned): the borrowed survivor's Downed, Seized or Hidden state does not restrict it, so a disguise as a Downed survivor may send any ping or callout, not only the Downed subset of rule 14 (designer decision, 2026-10-12, design review; the mismatch is a fair clue).
 22. **True form**: the monster cannot ping or call out **(proposed)**. It has no teammate identity to speak as.
 23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**. **Shocked or stunned**: for `stun_duration_s` after a taser hit, pings and callouts are blocked for a shocked survivor and for the disguised monster, stunned or immune, alike (Survivor Defense rule 14; designer decision, 2026-10-11, cross-review re-review R2). Proximity voice is not blocked.
 24. Duplicate identity is a fair clue: if the monster and the real survivor it is copying both ping or call out, both appear with the same name. The server does not hide or merge them **(proposed)**.
@@ -83,7 +83,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
     - The origin is the point the monster chose, not the impersonated survivor's actual position, so sight and team communication can disprove it.
     - No body performs the speaker gesture at the origin (rule 12).
     - A fake callout cannot attach an item ping (rule 13).
-    - The impersonated survivor, if in range, sees the feed line marked "(not you)" **(proposed)** and can answer with "That wasn't me". The same mark appears on *any* callout shown under your name that you did not send, including ones from a disguised monster, so the mark reveals impersonation but not whether it was a fake callout or a disguised body. A ping shown under your name that you did not send carries the mark **only if the ping's sender is within `callout_range_m` of you**; beyond that range the ping is unmarked (designer decision, 2026-10-12, design review), so a far-away disguised ping stays a usable lie while a near one exposes the monster. Note the consequence: a disguised monster that calls out or pings within `callout_range_m` of the real survivor it copies is tagged "(not you)", a near-certain reveal. Accepted as intended pressure on the monster; playtest-gated (see Tuning Knobs, `callout_range_m`).
+    - The impersonated survivor, if in range, sees the feed line marked "(not you)" **(proposed)** and can answer with "That wasn't me". The same mark appears on *any* callout shown under your name that you did not send, including ones from a disguised monster, so the mark reveals impersonation but not whether it was a fake callout or a disguised body. A ping shown under your name that you did not send carries the mark **only if the ping's sender is within `callout_range_m` of you**, measured between server positions at the moment the server accepts the ping; beyond that range the ping is unmarked (designer decision, 2026-10-12, design review), so a far-away disguised ping stays a usable lie while a near one exposes the monster. Note the consequence: a disguised monster that calls out or pings within `callout_range_m` of the real survivor it copies is tagged "(not you)", a near-certain reveal. Accepted as intended pressure on the monster; playtest-gated (see Tuning Knobs, `callout_range_m`).
     - Timing is a fair tell: a fake callout touches no limits (rule 17), so a same-line repeat inside `callout_repeat_block_s`, or two callouts inside `callout_global_cooldown_s`, under one name cannot all be that survivor's real ones. Accepted as a clue; the server does not hide it.
 29. Which identities False Signal may fake (for example, only observed survivors) is decided by Monster Abilities and Borrowed Face, not here.
 
@@ -96,10 +96,11 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 | Survivor: Seized | Valid `SurvivorHit` (Downing rule 4) | Commit completes (`SurvivorDowned` / `SurvivorEliminated`) or is cancelled (`MonsterStunned`, monster disconnect) | Blocked: no input except camera (Downing States table); voice if enabled |
 | Survivor: Eliminated | `SurvivorEliminated` | Round end | No pings, callouts or voice to living players **(proposed)** |
 | Survivor: Escaped | `SurvivorEscaped` | Round end | No pings, callouts or voice to living players (Match Flow rule 10) |
-| Survivor: Shocked | Taser hit (`PlayerShocked`) | `stun_duration_s` elapses | Pings and callouts blocked (rule 23); voice if enabled; returns to the prior state |
 | Monster: Disguised | `FormChanged` to a survivor form completes | A transformation starts (replicated transforming flag, Borrowed Face rule 8) | All pings and callouts as the borrowed identity, except while stunned (rule 23) or when that survivor is Eliminated or Escaped (rule 21: rejected); the borrowed survivor's other states do not restrict it |
 | Monster: Transforming | A transformation starts (replicated transforming flag) | `FormChanged` on completion, or a stun interrupts it (back to the previous form) | Blocked **(proposed)** |
 | Monster: True form | `FormChanged` into true form; round start | A transformation starts | Blocked **(proposed)** |
+
+Shock is a timed lock, not a state: for `stun_duration_s` after a taser hit (`PlayerShocked`), pings and callouts are blocked on top of whatever state the survivor is in (rule 23), and every transition above still applies during it.
 
 Existing markers persist with the identity they were sent under until they expire, even if the sender's form changes **(proposed)**.
 
@@ -301,6 +302,8 @@ Light and instant. The player keeps full movement control while pinging or using
 - [ ] Two bodies sharing a name that both ping show two markers under that name; the server does not merge them.
 - [ ] In true form and while transforming, the monster's ping and callout requests are rejected.
 - [ ] A False Signal fake callout is indistinguishable from a real one in the data received by survivor clients (packet inspection of the callout message shows no real/fake field; the absent speaker gesture of rule 28 is the only permitted difference).
+- [ ] A False Signal fake callout never carries an attached item ping, even when the line is "Drive here" or "Fuse here".
+- [ ] A real callout plays the speaker gesture on the sender's body on every survivor client with line of sight to it; a hidden survivor's callout and a fake callout play none.
 - [ ] The impersonated survivor, within range, sees "(not you)" on a fake callout; other survivors do not.
 - [ ] A player outside `callout_range_m` receives neither audio nor feed line.
 - [ ] A downed survivor can send "Need rescue"; an eliminated player cannot send any ping or callout.

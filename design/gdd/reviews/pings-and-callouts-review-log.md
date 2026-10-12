@@ -134,3 +134,19 @@ Reviewed-Content-Hash: design/gdd/pings-and-callouts.md 4ba56315055864670ac90497
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (eighth) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review, run headless in a fresh session)
+Blocking items: 0 | Recommended: 4
+Summary: Both seventh-review blockers are resolved. Formulas, cross-document facts and every information-leak rule from reviews 1 to 7 hold; the remaining items were precision fixes, applied in the same session.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] States: Shocked row had no exit when the survivor is hit during the shock. Replaced by a note: shock is a timed lock over any state.
+- [RECOMMENDED] Core Rules 28: "(not you)" ping range had no measurement moment. Now server positions at ping acceptance.
+- [RECOMMENDED] Acceptance Criteria: no criterion for "fake callout cannot attach an item ping" or for the real-callout gesture. Added.
+- [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Settle before audio content is commissioned. Not applied.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md c261d7b1fad1dec5f5e3366e9554915f0d5946fa
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
