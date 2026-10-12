@@ -18,3 +18,21 @@ Reviewed-Content-Hash: design/gdd/monster-abilities.md 2e90a91a3876a39852bfbfae4
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 2 | Recommended: 5
+Summary: Re-review. The prior blocker and both recommended items held. Two new blockers: the doc never emitted `AbilityUsed`, which the systems-index event table, Scare Events and Pings & Callouts all expect from it, and the wind-up turn rate was unspecified while the dodge-window math assumed no turning. Both, plus all five recommended items, were revised in the same session; index set to In Review.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules: `AbilityUsed` never emitted (cross-review second re-review note). Resolved: rule 3a defines emission and payload; AC added.
+- [BLOCKING] Rule 5 / Formulas: "turn at reduced rate" had no value, and the dodge window ignored turning (~20°/s plus dash steering defeated the stated dodge). Resolved: designer chose `lunge_windup_turn_deg_s` = 45°/s (safe 0–60); dodge window reworked (36° reachable vs ~48° needed at 3 m); knob, variable and AC added.
+- [RECOMMENDED] Formulas: hit check used `state == Healthy`, missing hidden, grace and commit exclusions. Resolved: `is_valid_takedown_target` per Downing rule 3; grace AC added.
+- [RECOMMENDED] Rule 7: attack point undefined. Resolved: front of collision body at chest height (proposed).
+- [RECOMMENDED] Rule 15: fake-sound hearing range undefined. Resolved: the imitated asset's audible range.
+- [RECOMMENDED] States: "Active → Cooldown" contradicted cooldown-on-activation. Resolved: reworded as overlapping.
+- [RECOMMENDED] Acceptance Criteria: no AC for closest-target, False Signal range/wall rejection, Blackout `blackout_able`/already-dark rejection. Resolved: added.
+- [NICE-TO-HAVE] Edge case "Downed by another cause" named an impossible cause; animation table listed 90 recovery frames for a movement slow. Resolved both. Header dates of 2026-10-12 left for the project-wide date pass.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md f99d03c7bfb3867537488c3be5fe682f0f6bd047
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
