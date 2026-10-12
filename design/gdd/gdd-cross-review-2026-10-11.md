@@ -358,3 +358,59 @@ The five blockers above must be resolved before architecture begins:
 | R5 | Accepted: camping just outside the radius still lets bleed-out run; a playtest AC gates the radius. Drops to a warning | downing-and-rescue rule 6, tuning row, edge row, playtest AC |
 
 R-W8 and the R-W9 qualifier gaps were fixed alongside. Still open: R-W1 (stale Depends On columns), R-W5 (Downing rule 4.3 ownership text), the R-W9 reconnect-grace question and the other warnings. Next: `/design-review` on downing-and-rescue and survivor-defense.
+
+---
+
+## Second Re-review (delta), 2026-10-11
+
+Scope: every GDD edit since `08a40ae` (the R1–R5 resolutions in `55dd311` and the approvals in `2982d6d` and `e5a533b`). `review-scope.sh` listed only downing-and-rescue and survivor-defense because this report was itself edited in `55dd311`, which hid the seven GDDs changed in the same commit. GDDs reviewed: 7 of 8 present (borrowed-face, downing-and-rescue, monster-abilities, pings-and-callouts, survivor-defense, survivor-objectives; match-flow and scare-events for interfaces only), plus systems-index and research-facility. Not read: none. Entity registry loaded.
+
+### Blocking
+
+**B1. Monster Abilities and Borrowed Face do not honour the shock lock.** Survivor Defense rule 14: the lock "cannot attack, use any ability, transform", and rule 10 applies it to an immune disguised monster, which emits no `MonsterStunned`. Monster Abilities rule 2 ("No ability can be activated while the shapeshifter is Stunned or Transforming") and rule 4 (Lunge: "not Stunned or Transforming") therefore accept False Signal and Blackout during an immune lock, and a Lunge if a transformation completes into true form during it. Borrowed Face rule 7 ("the shapeshifter is not Stunned") and its States table contradict Borrowed Face's own AC ("a transformation request during the following `stun_duration_s` is rejected"). Fix: add "or under the shock lock (Survivor Defense rule 14)" to Monster Abilities rules 2 and 4 and to Borrowed Face rule 7 and States table; add Monster Abilities as a reader of the lock in the systems index; add an AC in Monster Abilities.
+
+**B2. Repeat shocks are undefined.** No GDD says whether a taser hit on a player already under the lock refreshes it or is ignored. Because immune hits now lock a disguised monster, four survivors with `stun_item_reuse_s` 1 s and 8 cartridges can chain the lock through immunity, which breaks Survivor Defense rule 17 ("always give it a window to retreat"); the lock also blocks transforming away. The `lock_share` formula's "at most 25%" assumes no lock during immunity and is false for a disguised monster. Fix (designer decision): e.g. "a hit during an active lock does not extend it", or scope `lock_share` and rule 17 to true form; add an edge-case row either way.
+
+### Consistency warnings
+
+- **W1. Dependency tables not updated for the new reads.** borrowed-face Dependencies still says Survivor Defense "This depends on it" (Survivor Defense now says Bidirectional; it reads disguised form and Transforming). systems-index row 7 lists only Controller & Interaction and Monster Abilities; Survivor Defense now reads Borrowed Face and Downing (Seized/Downed, rule 8). downing-and-rescue's Survivor Defense row says it "reads Committing and Downed states" without Seized. pings-and-callouts (rule 23 lock), survivor-objectives (rule 2 shock) and downing-and-rescue (rule 7 shock interrupt) do not list the new Survivor Defense reads in their Dependencies.
+- **W2. The read-only state table is incomplete.** "Shock/stun lock" readers omit Downing (rule 7), Monster Abilities (B1) and First-Person Controller & Interaction (root, slow, doors). "Takedown eligibility" omits Survivor Defense (rules 8 and 13). The disguised form Survivor Defense reads (rules 1 and 10) is not in the table, and `FormChanged` does not list Survivor Defense. `blackout_able` (Monster Abilities rule 17) is absent though it flips when Evacuation starts; add it as Facility Map state, or say Monster Abilities derives it from map data plus `RoundPhaseChanged`.
+- **W3. The "shocked" event has no name or row.** Survivor Defense rule 1 sends survivor clients a "shocked" event; the index requires exact event names. Add a row (e.g. `PlayerShocked`, emitted by Survivor Defense, consumed by all clients for presentation).
+- **W4. Escaped is invisible to Downing.** Downing rule 6 and `healthy_survivors` exclude Escaped players, but `SurvivorEscaped` lists only HUD and Match Telemetry as consumers, and the life-state row lists Healthy, Seized, Downed, Eliminated. Add Downing as a consumer or Escaped to the row.
+
+### Design warnings
+
+- **W5. Bleed-out only punishes abandoned bodies.** Downing rule 6 freezes bleed-out while any non-Downed player is within 10 m, through walls, hidden survivors included. Downs cluster at objectives, a Downed survivor can crawl (0.25×) to within 10 m of a teammate, and anyone holding the evacuation terminal keeps nearby Downed survivors alive, so rescue can be deferred until the objective is done. The 60 s clock's "rescue now or hold the objective" choice survives only for isolated downs, eroding the downing fantasy ("saving a friend… is the bravest thing you do"). Options: a nearby player slows bleed-out (e.g. ×0.25) instead of freezing it (still identity-neutral); a pause budget per down; exclude hidden survivors; or accept with a playtest AC measuring rescues deferred past objective completion.
+- **W6. The freeze widens the payoff gap toward isolated, true-form hunts.** A down beside the group no longer bleeds; an isolated down does. This stacks on R-W6 (Lunge requires True Form) and pulls the monster's best play away from Human Deception. Options: resolve with W5, or add to the R-W6 M5 playtest AC (downs preceded by a disguised approach, isolated vs grouped).
+- **W7. A friendly shock at a rescue removes both counters R5 relied on.** Survivor Defense rule 11 roots the rescuer and locks their taser; rule 8 hits the first body in the path with `stun_aim_tolerance_deg` 10° (about 0.9 m at 5 m). A defender firing past a rescuer can clip them, and the monster can set that up. R5 was accepted because "the rescuer can release and dodge a lunge and teammates can tase". Options: the aim cone prefers the monster when it is inside it, with the exact ray deciding between survivors; a Healthy survivor holding a rescue is pass-through; or accept with a playtest AC counting friendly shocks at rescues.
+- **W8. Deliberate friendly fire is an untraceable grief tool.** A shock cancels an objective hold (Survivor Defense rule 11) and cancelled holds reset (Survivor Objectives rule 3); feedback is identical for teammate and monster. Bounded at 2 per player. Options: show friendly shocks per player on the results screen only; a shock pauses a hold with decay instead of resetting it; or accept under the charge cap. Tasering a suspected disguise is correctly dominated (no information; Objectives rule 26's progress bar is the better test).
+
+### Cross-system scenario issues
+
+Scenarios walked: friendly misfire on a rescuer during a contested rescue; immune hit on a disguised monster mid-transformation; Blackout active in the terminal room when Evacuation starts; hidden teammate near a Downed survivor.
+
+- **S1 (Warning). Monster view of the ring is a hider radar.** If the monster sees the bleed-out ring, a pause while it is more than 10 m away tells it a survivor, possibly hidden, is within 10 m. Downing's open question "Proposed: the monster does not see the timer" now carries this, and the AC "The bleed-out ring looks identical … on every client" presumes an answer. Settle it.
+- **S2 (Info).** A Blackout already active in the active terminal room when Evacuation starts: no GDD says whether it ends (at most 6 s). research-facility `blackout_able` paragraph.
+- **S3 (Info).** Scare Events ducks audio on `MonsterStunned` (interface row, rule 18); survivor clients no longer receive it while the monster is disguised. Trigger on the shocked event.
+- **S4 (Info).** A Healthy survivor disconnected inside reconnect grace is not counted in `healthy_survivors`, so the camp pause lapses for every Downed teammate. No edge-case row.
+- **S5 (Info, registry).** `camp_pause_radius_m` has no entry and the `bleedout_s` comment hardcodes "10 m"; `stun_duration_s` `referenced_by` lacks pings-and-callouts.
+
+### GDDs flagged for revision
+
+| GDD | Reason | Type | Priority |
+|-----|--------|------|----------|
+| monster-abilities.md | B1 | Consistency | Blocking |
+| borrowed-face.md | B1, W1 | Consistency | Blocking |
+| survivor-defense.md | B2, W7, W8 | Consistency + Design | Blocking |
+| systems-index.md | W1, W2, W3, W4 | Consistency | Warning |
+| downing-and-rescue.md | W1, W5, W6, S1, S4 | Design + Consistency | Warning |
+| pings-and-callouts.md | W1 | Consistency | Warning |
+| survivor-objectives.md | W1 | Consistency | Warning |
+| scare-events.md | S3 | Consistency | Info |
+| research-facility.md | S2 | Consistency | Info |
+
+The systems index now marks Survivor Objectives, Downing, Survivor Defense, Borrowed Face, Monster Abilities and Pings & Callouts Needs Revision (designer approval, 2026-10-11).
+
+### Second Re-review Verdict: FAIL
+
+B1 is a mechanical edit. B2 needs a designer decision on repeat shocks; W5–W8 and S1 need designer decisions before Milestone 2.

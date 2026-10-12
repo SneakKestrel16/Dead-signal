@@ -44,7 +44,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 **Transformation**
 
 6. The shapeshifter may request a form change to (a) any observed survivor who is Healthy or Downed, or (b) its true form. It cannot transform into an Eliminated or disconnected survivor **(proposed)**.
-7. The server accepts the request only if: the form-change cooldown is not running; the shapeshifter is not Stunned; it is not in Predatory Lunge wind-up, active or takedown commit (`takedown_commit_s`, Downing, Rescue & Elimination); and it is not already transforming. Otherwise the request is rejected with no effect and no cooldown cost.
+7. The server accepts the request only if: the form-change cooldown is not running; the shapeshifter is not Stunned and not under the shock lock (Survivor Defense rule 14); it is not in Predatory Lunge wind-up, active or takedown commit (`takedown_commit_s`, Downing, Rescue & Elimination); and it is not already transforming. Otherwise the request is rejected with no effect and no cooldown cost.
 8. Transformation takes `transform_duration_s` = 2 s (source). When the server accepts the request it sets the replicated transforming state (transforming flag, target form, start time); systems that react to a transformation *starting* (Pings & Callouts, client audio and visuals) read that state, because no event is emitted at the start. During it:
    - a distortion sound plays at the shapeshifter's position, audible to every client within `distortion_radius_m` = 15 m **(proposed)**, spatialised so its direction can be found (source: "nearby audio distortion");
    - the body shows a subtle visual warp over its current appearance **(proposed)**;
@@ -96,7 +96,7 @@ No single tell is always available; together they make a disguise beatable by at
 | True Form | Round start; or transformation into true form completes | Transformation into a survivor form starts | Monster appearance; may use all abilities |
 | Transforming | Valid form-change request accepted (rule 7) | 2 s elapse (→ new form) or stun lands (→ previous form) | Distortion audio, visual warp, walk-only, no abilities |
 | Disguised (as survivor X) | Transformation into X completes | Transformation starts; round ends | Renders as X to every client; may use False Signal and Blackout |
-| Stunned (read from Survivor Defense) | `MonsterStunned` | Stun ends | Form unchanged; disguised stagger uses the borrowed body and survivor grunt (rule 10); cannot start a transformation; interrupts Transforming |
+| Stunned (read from Survivor Defense) | `MonsterStunned` | Stun ends | Form unchanged; disguised stagger uses the borrowed body and survivor grunt (rule 10); cannot start a transformation; interrupts Transforming. The shock lock after an immune hit is not this state but also blocks starting a transformation (rule 7) |
 
 Form-change cooldown runs independently of these states from each completed or interrupted transformation.
 

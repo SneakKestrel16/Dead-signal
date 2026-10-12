@@ -29,7 +29,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 **General**
 
 1. The server owns all ability state: cooldowns, wind-up, hit resolution, ability placement and duration. The client sends only an activation request (and an aim point where needed); the server validates and rejects invalid requests with no effect and no cooldown cost. Clients never report hits or damage.
-2. No ability can be activated while the shapeshifter is Stunned or Transforming (Borrowed Face) **(proposed)**. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
+2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14, which includes an immune hit on a disguised shapeshifter) or Transforming (Borrowed Face) **(proposed)**. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
 3. Cooldowns are independent of each other and of the form-change cooldown **(proposed)**.
 
 **Disguise interaction** (all **(proposed)**)
@@ -42,7 +42,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 
 **Predatory Lunge** (MVP)
 
-4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned or Transforming.
+4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming.
 5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up but can turn at reduced rate **(proposed)**. Source canon: "clear wind-up and audible cue".
 6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to 30°/s **(proposed)**. Blocked by walls and closed or barricaded doors; the dash stops at the obstacle.
 7. **Hit validation** (server, during active): a survivor is hit if all of these hold (all **(proposed)**):
@@ -267,6 +267,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 
 - [ ] Lunge plays its cue 0.6 s before the dash; a survivor 20 m away hears it from the correct direction.
 - [ ] Server rejects a lunge during cooldown, while Disguised, while Stunned, or while Transforming.
+- [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the `stun_duration_s` after an immune taser hit (shock lock, Survivor Defense rule 14), and accepts them once the lock ends.
 - [ ] A survivor behind a closed door 1 m from the monster is never hit.
 - [ ] A miss slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
