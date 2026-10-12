@@ -72,3 +72,20 @@ Findings:
 - [NICE-TO-HAVE] Open Questions: Blackout cooldown row marked proposed-at-activation. Dash over ledges or through ineligible survivors not covered. Header date 2026-10-12 left for the date pass.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md fb55fcf42fe6b74d589df056b12c85dd4c8a12e7
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 1 | Recommended: 5
+Summary: Fifth review. All prior fixes held. One new blocker: the dodge proof tested the dash end, where the survivor is already behind the monster and outside the cone; the real deciding tick is mid-dash on the cone edge (1.30 m at 18°, a 0.1 m margin), and rule 7's front-of-body attack point would have erased that margin. Designer chose centre-measured hits and accepted survivor RTT inside the reaction budget. Revised in the same session; index stays In Review.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Formulas, Dodge window / rule 7: proof used dash-end distance; attack point offset unaccounted (0.3 m forward catches the 0.40 s strafe). Resolved: attack point and cone measured from the monster centre at chest height; window reworked by per-tick stepping (threshold ~19.5°, caught from 0.42 s at 18°).
+- [RECOMMENDED] Tuning Knobs: `lunge_hit_radius_m` up to 2.0 and `lunge_cone_deg` up to 90 broke the dodge (limits ~1.29 m, ~72°). Resolved: ranges 0.8–1.25 and 40–70; coupling note added.
+- [RECOMMENDED] Formulas: survivor round trip not in the 0.40 s budget (50–100 ms RTT gets caught). Resolved: designer accepted; documented, Open Question for the Network Authority ADR.
+- [RECOMMENDED] Rule 6 / Tuning Knobs: dash time, dash steering, `lunge_cue_radius_m`, `blackout_range_m` were literals outside the knob table. Resolved: `lunge_dash_s`, `lunge_dash_turn_deg_s` named; all four added.
+- [RECOMMENDED] Rule 7: cone origin unstated. Resolved: same attack point.
+- [RECOMMENDED] Formulas: "on the cue needs ~46°" and "0.45 s caught" used the dash-end check. Resolved: recomputed (~47°, ~15°).
+- [NICE-TO-HAVE] Header date 2026-10-12 left for the date pass.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md 106dadca5c983282ff2fa2c738c22bbf4d3f1a09
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
