@@ -21,7 +21,7 @@ Lobby & Role Assignment is the session layer between "a group of friends wants t
 
 ### Core Rules
 
-A round always has exactly one shapeshifter and `player_count` − 1 survivors, with `player_count` between `min_players` = 4 and `max_players` = 6 (designer decision, 2026-10-12: plan for 1 monster vs 3 survivors and up to 6 players). The approved GDDs are tuned for 4 survivors. See Open Questions for propagation.
+A round always has exactly one shapeshifter and `player_count` − 1 survivors, with `player_count` between `min_players` = 4 and `max_players` = 6 (designer decision, 2026-10-12: plan for 1 monster vs 3 survivors and up to 6 players). The approved GDDs are tuned for 4 survivors. **MVP runs 5 players only**: the code handles 4–6, but the MVP config sets `min_players` = `max_players` = 5, so only the tuned 1 vs 4 round is played and playtested; 4 and 6 are unlocked at Milestone 5 after balance work (designer decision, 2026-10-12, gate check, producer recommendation). The fifth survivor character C5 is still budgeted.
 
 **Session and joining**
 1. One player hosts a lobby on a configurable port, and the others join by address and port (designer decision, 2026-10-12: direct join for MVP; no matchmaking, Pillar 5). With a listen server the host's process is the server. Whether a dedicated server is also supported belongs to the Network Authority ADR.
@@ -179,10 +179,10 @@ The lobby_countdown formula is defined as:
 | System | Direction | Nature | Status | Interface |
 |--------|-----------|--------|--------|-----------|
 | Network Authority & Replication | Upstream | Hard | No ADR yet: interface **provisional** | Peer connect/disconnect, peer IDs, build version, transport (direct ENet for MVP) |
-| Match Flow & Win Conditions | Downstream | Hard | Approved, **needs update** | Takes the locked roster (`player_count`, roles, characters); returns players tagged Ended or Cancelled. Its rule 1 says exactly 5 and must become 4–6 |
+| Match Flow & Win Conditions | Downstream | Hard | Approved, updated 2026-10-12 (d373070) | Takes the locked roster (`player_count`, roles, characters); returns players tagged Ended or Cancelled. Its rule 1 now takes 4–6 |
 | Borrowed Face | Downstream | Hard | Approved | Reads each survivor's character; a disguise copies the target's character |
-| Pings & Callouts | Downstream | Hard | Approved, **needs update** | One voice set per character (C1–C5) settles its voice-set open question; proximity voice setting |
-| Facility Map | Downstream | Soft | Approved, **needs update** | Survivor spawns S1–S4 need an S5 for 5 survivors |
+| Pings & Callouts | Downstream | Hard | Approved, updated 2026-10-12 (d373070) | One voice set per character (C1–C5) settles its voice-set open question; proximity voice setting |
+| Facility Map | Downstream | Soft | Approved, updated 2026-10-12 (d373070) | Survivor spawns S1–S5 (S5 for 5-survivor rounds) |
 | HUD & Results Screen | Downstream | Hard | Not started | Lobby screen data |
 | Match Telemetry | Downstream | Soft | Not started | Session ID, round index, player count, roles, characters |
 
@@ -192,8 +192,8 @@ Bidirectional entries in Match Flow, Borrowed Face, Pings & Callouts, Facility M
 
 | Knob | Default | Safe range | Affects | Owner |
 |------|---------|------------|---------|-------|
-| `min_players` | 4 | 4–5 | Smallest round (3 survivors). Raising it to 5 drops 3-survivor rounds | This GDD |
-| `max_players` | 6 | 5–6 | Largest round (5 survivors). Above 6 needs a sixth character and spawn | This GDD |
+| `min_players` | 4 (MVP config: 5) | 4–5 | Smallest round (3 survivors). Raising it to 5 drops 3-survivor rounds | This GDD |
+| `max_players` | 6 (MVP config: 5) | 5–6 | Largest round (5 survivors). Above 6 needs a sixth character and spawn | This GDD |
 | `lobby_countdown_s` | 5 s | 3–10 s | Time to back out before the roster locks | This GDD |
 | Display name length | 1–16 | — | UI fit of names in lists and feed | This GDD |
 | `reconnect_grace_s` | 60 s | — | How long a dropped player keeps their round seat | `match-flow.md` |
