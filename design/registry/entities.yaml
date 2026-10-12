@@ -234,7 +234,26 @@ items:
 #   output_range[min, max], added
 # Optional: expression (the actual formula), notes
 
-formulas: []
+formulas:
+  - name: gait_speed
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/downing-and-rescue.md   # crawl_speed_mult
+      - design/gdd/borrowed-face.md        # disguise speed parity
+      - design/gdd/monster-abilities.md    # true-form sprint, strafe speed in dodge window
+    variables:
+      - walk_speed
+      - sprint_mult
+      - crouch_speed_mult
+      - crawl_speed_mult
+      - monster_sprint_mult
+    output_range: [0, 5.75]
+    expression: "walk_speed * gait_mult[gait] * form_mult"
+    notes: "Gait order crawl > crouch > sprint > walk; sprint only within 45 deg of facing. Modifiers then apply most-restrictive-wins (effective_speed)."
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -667,8 +686,87 @@ constants:
       - design/gdd/scare-events.md
       - design/gdd/survivor-defense.md
       - design/gdd/downing-and-rescue.md
+      - design/gdd/first-person-controller.md
     value: 0.6
     unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); map traversal reference speed, also strafe speed
+  - name: walk_speed
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/levels/research-facility.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/monster-abilities.md
+    value: 4.0
+    unit: m/s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); above ~1.3 a straight-line chase is lunge-proof
+  - name: sprint_mult
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+    value: 1.25
+    unit: x walk_speed
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); true form only, 10 m chase ~12 s
+  - name: monster_sprint_mult
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/monster-abilities.md
+    value: 1.15
+    unit: x survivor sprint
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); same capsule every form; dodge window and doorway width depend on it
+  - name: player_radius_m
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/monster-abilities.md
+      - design/levels/research-facility.md
+    value: 0.3
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); below hide_noise_radius_m 8; proposed False Signal footstep range
+  - name: footstep_radius_walk_m
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-defense.md
+    value: 6
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); <= lunge_cue_radius_m 20 <= install_noise_radius_m 25
+  - name: footstep_radius_sprint_m
+    status: active
+    source: design/gdd/first-person-controller.md
+    referenced_by:
+      - design/gdd/first-person-controller.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-objectives.md
+    value: 20
+    unit: m
     added: 2026-10-12
     revised: ""
 

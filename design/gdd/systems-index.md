@@ -72,7 +72,7 @@ event. Only the owner writes it. Readers never change it.
 |---|-------------|----------|----------|--------|------------|------------|
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
-| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
+| 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Designed | design/gdd/first-person-controller.md | Network Authority, Match Flow (soft) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Network Authority, Controller & Interaction, Monster Abilities (Predatory Lunge), Survivor Defense, Match Flow, Pings & Callouts |
@@ -199,10 +199,10 @@ engine choice first; it must be settled before any gameplay code is written.
 | Metric | Count |
 |--------|-------|
 | Total systems identified | 15 |
-| Design docs started | 9 |
+| Design docs started | 10 |
 | Design docs reviewed | 9 |
 | Design docs approved | 9 |
-| MVP systems with a GDD | 7/11, all 7 approved (Monster Abilities counted as MVP) |
+| MVP systems with a GDD | 8/11, 7 approved, 1 designed (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a GDD | 2/3, both approved (Pings & Callouts, Scare Events) |
 
 ---
