@@ -122,3 +122,15 @@ Findings:
 - [NICE-TO-HAVE] Header Last Updated 2026-10-12 is later than today; Blackout reveals the monster within ~15 m, not noted.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md 09b9230cb70e2a1c3b3623b34b5f58eaab6631c5
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after cross-review B1–B4) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 0
+Summary: The B1–B4 edits (ambush test, Facility Map lighting, False Signal emits no scare, immune hits no longer lock) are consistent with Scare Events, Survivor Defense and the Facility Map. The dodge-window formulas are unchanged and still hold, and Scare Events rule 14 now keeps the flinch out of the wind-up.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [NICE-TO-HAVE] Acceptance Criteria: the shock-lock AC lists a lunge from a disguised shapeshifter, which rule 4 always rejects anyway.
+- [INFO] Open from cross-reviews: the 200 ms survivor camera impact is defined here and in Downing (W9).
+Reviewed-Content-Hash: design/gdd/monster-abilities.md bee9a9cbf03c659ef4f41b5a640cf0c8bfa91c79
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

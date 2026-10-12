@@ -1,8 +1,8 @@
 # Borrowed Face
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (fourth cross-review B1: completing a change into a disguise ends immunity; earlier cross-review B4)
+> **Last Updated**: 2026-10-12 (design review: barricade break is a visible monster action, tell T4; fourth cross-review B1: completing a change into a disguise ends immunity; earlier cross-review B4)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Human Deception (primary), Fair Fear, Counterplay
 
@@ -68,7 +68,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 | Voice | **No** | Whether the monster may use proximity voice is owned by Pings & Callouts |
 | Pings and authored callouts as that survivor | Not by this system | Owned by Pings & Callouts |
 
-12. A disguised shapeshifter cannot pick up or carry drives or fuses, cannot add progress to any objective, and cannot rescue a downed survivor **(proposed)**. It cannot enter a hiding spot, barricade a door or remove a barricade, because those are Healthy-survivor actions (Survivor Defense rules 19, 25 and 26); searching a hiding spot stays a visible monster action in any form (Survivor Defense rule 22). It may stand at a station and play the hold-to-interact pose, but the server grants no progress; objective state shown to survivors is never altered by a disguise (pillar: Readable Objectives).
+12. A disguised shapeshifter cannot pick up or carry drives or fuses, cannot add progress to any objective, and cannot rescue a downed survivor **(proposed)**. It cannot enter a hiding spot, barricade a door or remove a barricade, because those are Healthy-survivor actions (Survivor Defense rules 19, 25 and 26); searching a hiding spot and breaking a barricade stay visible monster actions in any form (Survivor Defense rules 22 and 27). It may stand at a station and play the hold-to-interact pose, but the server grants no progress; objective state shown to survivors is never altered by a disguise (pillar: Readable Objectives).
 13. If the copied survivor is downed or eliminated while the disguise is worn, the disguise stays on **(proposed)**. Walking around as a survivor everyone knows is down is the shapeshifter's risk to take.
 
 **True form and the transformation reveal**
@@ -86,7 +86,7 @@ No single tell is always available; together they make a disguise beatable by at
 | T1 — Transformation cue | Within 15 m during the 2 s change | Listen for the cue |
 | T2 — Two of the same survivor / location contradiction | The real survivor is seen, pings, or is known to be elsewhere | Compare location |
 | T3 — Missing carried evidence | The copied survivor is carrying a drive or fuse | Verify shared objective knowledge |
-| T4 — No objective progress, no rescue, no hiding or barricading | The copy is asked to help with an interaction, hide or barricade; or it is seen searching a hiding spot | Verify shared objective knowledge |
+| T4 — No objective progress, no rescue, no hiding or barricading | The copy is asked to help with an interaction, hide or barricade; or it is seen searching a hiding spot or breaking a barricade | Verify shared objective knowledge |
 | T5 — Behaviour and voice | Always, but only as reliable as the group's knowledge of each other | Compare behaviour |
 
 ### States and Transitions
@@ -103,7 +103,7 @@ Form-change cooldown runs independently of these states from each completed or i
 ### Interactions with Other Systems
 
 - **Network Authority & Replication**: the server owns the disguise state (current form, transforming flag, target, start time, cooldown end). Every client renders the shapeshifter only from that replicated state; clients never decide form. `FormChanged` is sent to all clients; a reconnecting client receives the current form on join. Survivor clients should receive only what is needed to render the presented form, with no marker identifying the entity as the monster, as far as the network layer allows **(proposed)**.
-- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. A shocked survivor and a stunned disguised monster share one action lock for `stun_duration_s` (Survivor Defense rule 14, re-review R2). After any lock ends, both ignore new locks for `stun_immunity_s`, so an immune hit applies no lock and looks like a hit on a survivor inside that window; it does not interrupt a transformation already in progress and blocks neither starting one nor observation (designer decision, 2026-10-12, cross-review B4).
+- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. A shocked survivor and a stunned disguised monster share one action lock for `stun_duration_s` (Survivor Defense rule 14, re-review R2). After any lock ends, both ignore new locks for `stun_immunity_s`, so an immune hit applies no lock and looks like a hit on a survivor inside that window; it does not interrupt a transformation already in progress and blocks neither starting one nor observation (designer decision, 2026-10-12, cross-review B4). Completing a transformation into a disguise ends immunity (Survivor Defense rule 16), so a new disguise never carries immunity from a stun nobody saw on that body (cross-review B1, 2026-10-12b).
 - **Monster Abilities**: Lunge requires True Form; False Signal and Blackout are allowed while Disguised and do not break it. False Signal's fake callout voice uses observed survivors (this system supplies the observed list).
 - **Downing, Rescue & Elimination**: supplies Healthy/Downed/Eliminated status for rule 6 and 13.
 - **Survivor Objectives**: rejects carry, install and progress requests from the shapeshifter in any form (rule 12).

@@ -71,3 +71,16 @@ Findings:
 - [NICE-TO-HAVE] Fair Fear: the non-audio cue for T1 is still open (Milestone 4).
 Reviewed-Content-Hash: design/gdd/borrowed-face.md 10fc4ef4f6de434e207ea2507510b5db3c1c2a3c
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after cross-review B4 and fourth cross-review B1) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 2
+Summary: The immune-hit rows, the new disguise-completion immunity rule and their ACs agree with Survivor Defense rules 10, 14 and 16. Disguise-to-disguise and true-form-to-disguise changes during immunity were walked, and neither gives a tell. Two consistency edits were applied in the same session.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Rule 12 / tell T4: barricade break (Survivor Defense rule 27, any form) was missing as a visible monster action. Resolved.
+- [RECOMMENDED] Interactions (Survivor Defense): the disguise-completion end of immunity was not stated. Resolved.
+- [NICE-TO-HAVE] Formulas: not monster_shock_locked is now redundant with not monster_stunned (only a stun locks the monster); harmless.
+Reviewed-Content-Hash: design/gdd/borrowed-face.md 056a645e9c94b98e4aa38ce423f394c3a7a554a3
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

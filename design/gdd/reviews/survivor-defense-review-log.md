@@ -45,3 +45,17 @@ Findings:
 - [RECOMMENDED] Rule 1: event delivery outside a disguise was undefined. A survivor hit while the monster was in true form had no stated event, and a true-form stun "may" have reached survivor clients. As a result, Scare Events rule 18 never ducked for either case on survivor clients. Fixed: a survivor hit always sends `PlayerShocked`, and a true-form stun is sent to all clients as `MonsterStunned`. Scare Events rule 18 and the index `MonsterStunned` row are updated to match.
 Reviewed-Content-Hash: design/gdd/survivor-defense.md 10d099e3a8c89d4e889c70f3d6cc13a5d89df18e
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after cross-review B4 and fourth cross-review B1, W1) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 3
+Summary: The post-lock window (rule 14) and the new early end of immunity when a disguise completes (rule 16) are consistent across rules 10, 11, 14, 16 and 17, the States table, the Edge Cases and the ACs. No case was found where a shock tells a disguised monster from a survivor. Three clarifications were applied in the same session.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Rule 17 / Formulas: only the lunge wind-up was named as the monster's own way to exceed lock_share; the disguise-completion early end added. Resolved.
+- [RECOMMENDED] Formulas: stun_immunity_s described as monster immunity only; now also every player's post-lock window. Resolved.
+- [RECOMMENDED] Rule 27: Break had no form condition (prior cross-review W12). Resolved: any form, a visible monster action like Search (proposed).
+- [INFO] Open from cross-reviews: stun items as item-ping targets have no world object (W8); stun and immunity state across a monster disconnect (W11).
+Reviewed-Content-Hash: design/gdd/survivor-defense.md 88ced870a0699abc5285e39fc559b1d474fc9e1f
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

@@ -1,6 +1,6 @@
 # Monster Abilities
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: SneakKestrel16
 > **Last Updated**: 2026-10-12 (cross-review B1–B4: ambush test replaces "lunge out of a hiding place"; Facility Map owns lighting; False Signal triggers no scare; immune hits no longer lock)
 > **Last Verified**: 2026-10-11

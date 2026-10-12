@@ -1,8 +1,8 @@
 # Survivor Defense
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (fourth cross-review B1: a change into a disguise ends immunity; W1: rule 11 post-lock wording; earlier cross-review B4 post-lock window)
+> **Last Updated**: 2026-10-12 (design review: rule 17 and Formulas name the disguise early end; break in any form; fourth cross-review B1: a change into a disguise ends immunity; W1: rule 11 post-lock wording; earlier cross-review B4 post-lock window)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -175,8 +175,8 @@ tools, they're yours.
     either form, locked at most 25% of any sustained chain (`lock_share`, see
     Formulas) while it disengages after each lock, and always give it
     `stun_immunity_s` to retreat (designer decision, 2026-10-12, cross-review B4). A monster that winds up a lunge inside
-    immunity ends it early (rule 16) and can be stunned again: that share is its
-    own choice.
+    immunity, or completes a transformation into a disguise, ends it early
+    (rule 16) and can be stunned again: that share is its own choice.
 
 #### Hiding spots
 
@@ -211,7 +211,7 @@ tools, they're yours.
 26. A barricaded door cannot be opened by anyone until broken or removed. A
     survivor can remove a barricade by holding for `barricade_remove_s` = 1 s
     **(proposed)**.
-27. **Breaking:** the monster holds Break on the door. The barricade breaks after
+27. **Breaking:** the monster holds Break on the door, in any form **(proposed)**. Survivors cannot break a barricade, so, like a search (rule 22), a break is a visible monster action even while disguised. The barricade breaks after
     `barricade_break_s` = 5 s of total break time **(proposed)**. Progress
     persists if the monster stops **(proposed)**. Each strike makes loud,
     directional noise heard across the zone **(proposed)**.
@@ -267,12 +267,12 @@ lock_share = stun_duration_s / (stun_duration_s + stun_immunity_s)
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
 | stun_duration_s | float s | 1.0–3.0 | proposed 2.0 | Stun length |
-| stun_immunity_s | float s | 4–10 | proposed 6 | Immunity after stun |
+| stun_immunity_s | float s | 4–10 | proposed 6 | Monster immunity after a stun, and every player's post-lock window (rule 14) |
 
 Example: 2 / (2 + 6) = 0.25, so any player, survivor or monster in either form,
 that disengages after each lock is locked at most 25% of the time (post-lock
 window, rule 14; designer decision, 2026-10-12, cross-review B4). A monster that winds up a lunge inside
-immunity ends it early (rule 16) and can exceed this share by its own choice. Expected range 0.1–0.4; above 0.4 the monster risks being
+immunity, or completes a transformation into a disguise, ends it early (rule 16) and can exceed this share by its own choice. Expected range 0.1–0.4; above 0.4 the monster risks being
 stun-locked.
 
 ### Team stun budget

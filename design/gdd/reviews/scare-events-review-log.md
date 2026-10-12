@@ -21,3 +21,16 @@ Findings:
 - [INFO] Dependencies: Network Authority, Accessibility Options and Match Telemetry have no GDD yet (Not Started); `design/accessibility-requirements.md` marked not yet authored.
 Reviewed-Content-Hash: design/gdd/scare-events.md b15169f3fa1dd5e5c6946ab2462398f57805d38b
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (re-review after design review and fourth cross-review W2, W3) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 2
+Summary: Both prior blockers hold: no flinch near a lunge wind-up (now also ending one already running), and any player fires location triggers. Gating, intensity and the alarm on install completion are consistent with Survivor Objectives, Match Flow and Facility Map. Two consistency edits were applied in the same session.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Three-sources table: the reveal and "disguised teammate transforms" were two Major entries on one FormChanged (prior cross-review W9). Resolved: merged.
+- [RECOMMENDED] States and Transitions: no Low → Emergency transition for an early-armed terminal (prior cross-review W6). Resolved.
+- [INFO] Accessibility Options, Network Authority and Match Telemetry have no GDD yet (Not Started).
+Reviewed-Content-Hash: design/gdd/scare-events.md 036e78077dbd8c7a8aee0dee81abf9e4405e2746
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

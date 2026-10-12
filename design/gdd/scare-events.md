@@ -1,8 +1,8 @@
 # Scare Events
 
-> **Status**: Draft
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
+> **Last Updated**: 2026-10-12 (re-review: reveal rows merged, Low → Emergency transition; fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Fair Fear, Human Deception
 
@@ -41,7 +41,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 | Scare | Category | Source | Scope | Intensity **(proposed)** | Owner of the trigger |
 |---|---|---|---|---|---|
-| Transformation reveal (monster drops disguise) | Player-triggered | Monster | Shared | Major | Borrowed Face |
+| Transformation reveal (monster drops disguise; this is also the "disguised teammate transforms" deception scare, one entry per `FormChanged`) | Player-triggered | Monster | Shared | Major | Borrowed Face |
 | Door burst (monster breaks a barricade) | Player-triggered | Monster | Shared | Major | Survivor Defense (barricade break) |
 | Ambush lunge (wind-up passes the ambush test, rule 5a) | Player-triggered | Monster | Shared | Major, never a flinch (rule 14) | Monster Abilities (Predatory Lunge) |
 | Blackout (lights die) | Environment | Monster | Shared | Major | Monster Abilities (Blackout) |
@@ -49,7 +49,6 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 | Glass break | Environment | RoundScript, at a Facility Map glass scare anchor **(proposed)** (cross-review B1: trip-point and monster-through-glass triggers cut) | Shared | Major | This system |
 | Alarm | Environment | Survivor (fuse install completed, `ObjectiveProgressChanged`; the install-start noise is Survivor Objectives rule 16's own cue) or RoundScript (Evacuation) (designer decision, 2026-10-12, cross-review W2 (2026-10-12b)) | Shared | Minor | Survivor Objectives / Match Flow |
 | Unsettling recording | Environment | Survivor (any player enters authored room, rule 2a) or RoundScript **(proposed)** | Shared | Minor | This system |
-| Disguised teammate transforms | Deception | Monster | Shared | Major | Borrowed Face |
 | Impossible surveillance image | Deception | Survivor (any player views a monitor, rule 2a) + RoundScript selects **(proposed)** | Single-client | Minor | This system |
 
 5. Player-triggered scares are a presentation layer on top of the gameplay cue. The gameplay cue itself (transformation audio distortion, lunge wind-up and audible cue, barricade break sound) is owned by its system and is **never** suppressed, delayed or reduced by any rule here.
@@ -111,7 +110,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 | State (facility scare state) | Entry Condition | Exit Condition | Behavior |
 |---|---|---|---|
-| Low | Round start (Infiltration) | `RoundPhaseChanged` → Investigation | Low RoundScript budget |
+| Low | Round start (Infiltration) | `RoundPhaseChanged` → Investigation (Rising), or → Evacuation (Emergency) when the terminal is armed early (Match Flow rule 6) | Low RoundScript budget |
 | Rising | `RoundPhaseChanged` → Investigation | `RoundPhaseChanged` → Evacuation | Budget and flicker rise with time |
 | Emergency | `RoundPhaseChanged` → Evacuation | Round end | Emergency lights, alarm bed |
 | Results | Round end | Next round | No scares |
