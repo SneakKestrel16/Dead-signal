@@ -1,8 +1,8 @@
 # Level: Research Facility (Greybox)
 
-> **Status**: In Review
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review: candidate replication matches Objectives rule 5, lighting precedence, Edge Cases; earlier: cross-review B1 scare anchors, B2 lighting owner, W5, W13, D1)
+> **Last Updated**: 2026-10-12 (re-review: approved; early-arming edge row, fuse box indicator in Low Power; design review: candidate replication matches Objectives rule 5, lighting precedence, Edge Cases; earlier: cross-review B1 scare anchors, B2 lighting owner, W5, W13, D1)
 > **Last Verified**: 2026-10-12
 > **Implements Pillar**: Readable Objectives, Counterplay, Fair Fear, Small Shippable Scope (supports Human Deception)
 
@@ -303,7 +303,7 @@ Emergency lights (faint floor-level strips plus exit signage) are always on in e
 
 | State | Trigger | Look |
 |-------|---------|------|
-| Low Power | Round start | Zone base lighting at reduced level; Zone B dimmest; fuse boxes and terminal dark **(proposed)** |
+| Low Power | Round start | Zone base lighting at reduced level; Zone B dimmest; fuse box and terminal housings dark, except the small indicator on each active fuse box (N-03) **(proposed)** |
 | Fuse Installed (1/2) | `ObjectiveProgressChanged` | The fuse box's indicator lights; B1 Core pulses once **(proposed)** |
 | Power Restored (2/2) | `ObjectiveProgressChanged` | Overheads up to full in B and C; active terminal screen lights; route lights from B1 to the terminal **(proposed)** |
 | Blackout (local) | Blackout activation (Monster Abilities) | One volume dark for `blackout_duration_s` = 6; emergency strips stay faintly visible (canon) |
@@ -371,7 +371,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 
 | Scenario | Expected Behavior | Rationale |
 |----------|------------------|-----------|
-| Terminal armed during Infiltration | Lighting goes Low Power (or Power Restored, since arming needs both fuses) straight to Evacuation | Match Flow rule 6; precedence takes the latest base state |
+| Terminal armed during Infiltration | Lighting goes Power Restored (arming needs both fuses) straight to Evacuation; the Investigation flicker never plays | Match Flow rule 6; precedence takes the latest base state |
 | Blackout in a room when Power Restored lands | Room stays dark for the rest of the Blackout, then shows Power Restored | Blackout overrides its volume only for its duration |
 | Blackout in the active terminal room when Evacuation starts | Blackout ends at that moment; room shows Evacuation lighting | `blackout_able` paragraph |
 | Blackout in any other room when Evacuation starts | Blackout runs its remaining duration, then the room shows Evacuation lighting | Precedence |

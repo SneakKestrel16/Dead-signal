@@ -80,7 +80,7 @@ event. Only the owner writes it. Readers never change it.
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Approved | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map, Monster Abilities |
 | 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | Approved | design/gdd/monster-abilities.md | Network Authority, Controller & Interaction, Downing, Rescue & Elimination, Borrowed Face, Survivor Defense, Facility Map, Pings & Callouts, Match Flow |
 | 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | Approved | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face, Match Flow, Downing & Rescue, Monster Abilities, Survivor Defense, Survivor Objectives |
-| 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Review | design/levels/research-facility.md | Controller & Interaction |
+| 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | Approved | design/levels/research-facility.md | Controller & Interaction |
 | 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | Approved | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority, Survivor Defense, Survivor Objectives, Pings & Callouts |
 | 13 | HUD & Results Screen | UI | MVP | Not Started | — (`/ux-design`) | Match Flow, Survivor Objectives, Downing, Rescue & Elimination |
 | 14 | Accessibility Options (reduced flash, reduced volume) | Meta | Vertical Slice | Not Started | — (`design/accessibility-requirements.md`) | Scare Events |
@@ -200,9 +200,9 @@ engine choice first; it must be settled before any gameplay code is written.
 |--------|-------|
 | Total systems identified | 15 |
 | Design docs started | 9 |
-| Design docs reviewed | 8 |
-| Design docs approved | 8 |
-| MVP systems with a GDD | 7/11, 6 approved (Monster Abilities counted as MVP; Facility Map In Design) |
+| Design docs reviewed | 9 |
+| Design docs approved | 9 |
+| MVP systems with a GDD | 7/11, all 7 approved (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a GDD | 2/3, both approved (Pings & Callouts, Scare Events) |
 
 ---
