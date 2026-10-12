@@ -162,6 +162,7 @@ Example: the second drive is Extracted at 500 s → the round ends no later than
 | Borrowed Face | Bidirectional | Supplies form-change stats; owns disguise restore on monster reconnect |
 | Survivor Defense | It depends on this | Supplies stun stats; stops at round end |
 | Scare Events | It depends on this | Uses `RoundPhaseChanged` for emergency mode |
+| Pings & Callouts | It depends on this | Reads `SurvivorEscaped` (Escaped survivors send nothing, rule 10) |
 | HUD & Results Screen | It depends on this | Displays clock, phase, results payload |
 | Match Telemetry | It depends on this | Logs duration, escapes, disconnects |
 

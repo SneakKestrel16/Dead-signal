@@ -2,8 +2,8 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (design review: player warning pings static, Seized/Escaped states, hidden pinging)
-> **Last Verified**: 2026-10-11
+> **Last Updated**: 2026-10-12 (third design review: monster hears callouts as audio only, "(not you)" on pings limited to callout range, occupied hiding-spot pings)
+> **Last Verified**: 2026-10-12
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 
 ## Summary
@@ -36,16 +36,17 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 5. Three ping types **(proposed)**:
    - **Location ping**: marks a world point the sender is looking at ("go here / look here").
    - **Item ping**: marks a specific interactable object the sender can see (data drive, fuse, fuse box, evacuation terminal, hiding spot, barricadable door, backup light switch, stun item). The marker shows the object type.
-   - **Warning ping**: marks a point ("danger here") or a player ("suspicious"). A warning ping on a player is a static marker at the position the player stood when pinged, labelled with their displayed identity; it never follows the player (designer decision, 2026-10-11, design review). A following marker would have to choose a body when two share a name (rule 24) and would either track a transforming monster into its new disguise or vanish when it transforms; either is an identity tell no survivor earned.
+   - **Warning ping**: marks a point ("danger here") or a player ("suspicious"). A warning ping on a player is a static marker at the position the player stood when pinged, labelled with their displayed identity; it never follows the player (designer decision, 2026-10-11, design review). A warning ping on a monster in True Form is allowed and is labelled "Monster", since a True Form body has no displayed identity (designer decision, 2026-10-12, design review). A following marker would have to choose a body when two share a name (rule 24) and would either track a transforming monster into its new disguise or vanish when it transforms; either is an identity tell no survivor earned.
 6. Server validation for a ping: sender is in play (not Eliminated or Escaped); sender is not in a state that blocks pinging (see States); rate limit not exceeded (Formulas); target is within `ping_max_range_m` and in line of sight from the sender's view; for an item ping, the object exists and is pingable; for a player warning ping, the target player is visible to the sender.
-7. Recipients: all living players, including the monster **(proposed; see Open Questions)**. Markers are visible through walls with direction and distance for `ping_lifetime_s`, then fade.
+7. Recipients: all living survivors, plus the monster **only if the pinged point or object is in the monster's line of sight at the moment the server accepts the ping** (designer decision, 2026-10-12, design review; a Downed survivor's ping therefore never gives the monster a through-wall marker, consistent with Downing rule 6). A monster that cannot see the target receives nothing and no rejection signal reaches the sender. Markers are visible to survivors through walls with direction and distance for `ping_lifetime_s`, then fade; the monster's marker, once received, follows the same display rule.
+7a. An item ping on an occupied hiding spot shows the spot's object icon only; it never names or marks the occupant, and the occupant's presence is not part of the message **(proposed)**.
 8. Each marker shows the sender's displayed identity (name/colour). A sender may have at most `ping_max_active` markers; a new one replaces the oldest **(proposed)**.
 
 **Callouts**
 
 9. Authored callout set **(proposed: 8 lines)**: "Drive here", "Fuse here", "Need rescue", "I'm with you", "Follow me", "Wait", "Danger", "That wasn't me".
 10. A callout plays an authored voice line from the speaker's position using the voice set of the speaker's displayed identity **(proposed: one voice set per survivor slot)**, and adds a feed line `[Name]: [text]` with a direction indicator to every recipient.
-11. Recipients: every living player within that callout's audible range (`callout_range_m`; "Need rescue" uses `rescue_callout_range_m`) **(proposed)**. Players out of range get neither the audio nor the feed line.
+11. Recipients: every living player within that callout's audible range (`callout_range_m`; "Need rescue" uses `rescue_callout_range_m`) **(proposed)**. Players out of range get neither the audio nor the feed line. **The monster gets the audio only** (positional, wall-attenuated): no feed line, no name and no direction arrow (designer decision, 2026-10-12, design review), so a "Need rescue" within 40 m is not a through-wall locator, consistent with rule 7 and Downing rule 6. Survivors get audio, feed line and arrow.
 12. A real callout also plays a short visible gesture on the speaker's body **(proposed)**, so a survivor with line of sight can confirm who spoke.
 13. "Drive here" and "Fuse here" may optionally attach an item ping if the sender is looking at a valid item; the attached ping is validated like any item ping and counts against the ping rate limit.
 14. A downed survivor can use "Need rescue", "Danger" and pings; this is how a downed survivor "calls for help" in voice-free play.
@@ -55,7 +56,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 15. Pings: token bucket per player, `ping_bucket_size` tokens, refilling one per `ping_refill_s` **(proposed)**.
 16. Callouts: per-player `callout_global_cooldown_s` between any two callouts, and the same callout line cannot repeat within `callout_repeat_block_s` **(proposed)**.
-17. The monster uses the same limits as survivors while disguised. These limits are separate from False Signal's cooldown (`false_signal_cooldown_s`, owned by Monster Abilities).
+17. The monster uses the same limits as survivors while disguised. These limits are separate from False Signal's cooldown (`false_signal_cooldown_s`, owned by Monster Abilities). A False Signal fake callout touches no callout or ping limit state: it does not update `last_callout_any` or `last_callout[line]` for the impersonated survivor or for the monster player, and it spends no ping token. Only `false_signal_cooldown_s` limits it (designer decision, 2026-10-12, design review), so a fake can never suppress the impersonated survivor's real callout.
 
 **Proximity voice (optional)**
 
@@ -82,7 +83,8 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
     - The origin is the point the monster chose, not the impersonated survivor's actual position, so sight and team communication can disprove it.
     - No body performs the speaker gesture at the origin (rule 12).
     - A fake callout cannot attach an item ping (rule 13).
-    - The impersonated survivor, if in range, sees the feed line marked "(not you)" **(proposed)** and can answer with "That wasn't me". The same mark appears on *any* callout or ping shown under your name that you did not send, including ones from a disguised monster, so the mark reveals impersonation but not whether it was a fake callout or a disguised body.
+    - The impersonated survivor, if in range, sees the feed line marked "(not you)" **(proposed)** and can answer with "That wasn't me". The same mark appears on *any* callout shown under your name that you did not send, including ones from a disguised monster, so the mark reveals impersonation but not whether it was a fake callout or a disguised body. A ping shown under your name that you did not send carries the mark **only if the ping's sender is within `callout_range_m` of you**; beyond that range the ping is unmarked (designer decision, 2026-10-12, design review), so a far-away disguised ping stays a usable lie while a near one exposes the monster. Note the consequence: a disguised monster that calls out or pings within `callout_range_m` of the real survivor it copies is tagged "(not you)", a near-certain reveal. Accepted as intended pressure on the monster; playtest-gated (see Tuning Knobs, `callout_range_m`).
+    - Timing is a fair tell: a fake callout touches no limits (rule 17), so a same-line repeat inside `callout_repeat_block_s`, or two callouts inside `callout_global_cooldown_s`, under one name cannot all be that survivor's real ones. Accepted as a clue; the server does not hide it.
 29. Which identities False Signal may fake (for example, only observed survivors) is decided by Monster Abilities and Borrowed Face, not here.
 
 ### States and Transitions
@@ -166,6 +168,9 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Hidden survivor calls out | Line plays from the hiding spot; anyone in range can locate the spot | Rule 14a; the survivor's choice |
 | Proximity voice On, monster player speaks in own voice while disguised | Heard as the player's real voice, coming from the disguised body | Rule 25 (decided 2026-10-12); the mismatch is the tell |
 | Monster speaks in true form | Heard through the distortion filter from its position | Rule 25 (proposed filter) |
+| Survivor warning-pings a monster in True Form | Allowed; static marker at its position labelled "Monster" | Rule 5 (decided 2026-10-12) |
+| Downed survivor pings out of the monster's line of sight | Survivors receive it; the monster receives nothing | Rule 7 (decided 2026-10-12); no through-wall body locator |
+| Fake callout in survivor X's name, then X sends the same line | X's callout is accepted if X's own limits allow; the fake changed no timestamps | Rule 17 (decided 2026-10-12) |
 | Player disconnects with active markers | Markers expire normally | No state to clean up beyond timers |
 
 ## Dependencies
@@ -175,6 +180,7 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Network Authority & Replication | This depends on it | Server validation, broadcast, positions, line of sight |
 | First-Person Controller & Interaction | This depends on it | View ray, input |
 | Borrowed Face | This depends on it | Displayed identity, form state (`FormChanged`) |
+| Match Flow & Win Conditions | This depends on it | `SurvivorEscaped` (Escaped state; Match Flow rule 10) |
 | Downing, Rescue & Elimination | Bidirectional | Survivor state gates sending; Downing uses the "Need rescue" callout as its Call for Help |
 | Survivor Objectives | This depends on it | Pingable object types |
 | Survivor Defense | This depends on it | Pingable hiding spots, barricadable doors, stun items; the shock lock (Survivor Defense rule 14) blocks pings and callouts (rule 23) |
@@ -270,11 +276,19 @@ Light and instant. The player keeps full movement control while pinging or using
 - [ ] A survivor's player warning ping appears at the target's position at ping time and does not move for its lifetime, even if the target moves or transforms.
 - [ ] A ping or callout request from a Seized or Escaped survivor is rejected.
 - [ ] A client that sends a ping at a point outside its line of sight is rejected by the server; no other client receives it.
-- [ ] A client sending 10 pings in 1 s results in exactly 3 delivered pings.
+- [ ] A client with a full bucket (3 tokens) sending 10 pings in 1 s has exactly 3 accepted; with `ping_max_active` = 2, other clients display only the newest 2.
+- [ ] A survivor's ping on a point or object outside the monster's line of sight is delivered to the 4 survivors' clients and not to the monster's client, including when the sender is Downed.
+- [ ] A warning ping on a monster in True Form is accepted and shows the label "Monster" at its position at ping time.
+- [ ] A fake callout leaves the impersonated survivor's and the monster player's callout cooldowns and ping tokens unchanged: the survivor's same-line callout sent 1 s after the fake is accepted.
 - [ ] The same callout sent twice within 8 s is delivered once.
-- [ ] A disguised monster's ping and callout show the borrowed survivor's name and voice on all 4 survivor clients.
+- [ ] A disguised monster's ping and callout show the borrowed survivor's name (and, for callouts, voice) on every other survivor client in range; the copied survivor's client shows "(not you)" on a ping only when the sender is within `callout_range_m`, and always on an in-range callout.
+- [ ] A survivor's callout within range reaches the monster's client as audio only: the monster's client receives no feed line, name or direction field, including for "Need rescue" at 40 m through a wall.
+- [ ] A hidden survivor's callout plays from the hiding spot and shows no speaker gesture; its ping is validated from the peek view.
+- [ ] An item ping on an occupied hiding spot contains no occupant identity on any client.
+- [ ] Monster proximity voice in True Form or while Transforming is delivered through the distortion filter; Disguised it is delivered unaltered.
+- [ ] Two bodies sharing a name that both ping show two markers under that name; the server does not merge them.
 - [ ] In true form and while transforming, the monster's ping and callout requests are rejected.
-- [ ] A False Signal fake callout is indistinguishable from a real one in the data received by survivor clients (packet inspection shows no real/fake field).
+- [ ] A False Signal fake callout is indistinguishable from a real one in the data received by survivor clients (packet inspection of the callout message shows no real/fake field; the absent speaker gesture of rule 28 is the only permitted difference).
 - [ ] The impersonated survivor, within range, sees "(not you)" on a fake callout; other survivors do not.
 - [ ] A player outside `callout_range_m` receives neither audio nor feed line.
 - [ ] A downed survivor can send "Need rescue"; an eliminated player cannot send any ping or callout.
@@ -287,8 +301,8 @@ Light and instant. The player keeps full movement control while pinging or using
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
 | Monster voice: proximity voice, preset lines only, or both? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: both** (rule 25). The true-form distortion filter is proposed |
-| Does the monster receive survivor pings (proposed yes, as a member of the group), or only those it could see in-world? Note: through-wall pings from a Downed survivor would show the monster the body it cannot otherwise locate (Downing rule 6 gives it no marker or ring, S1), compounding rescue camping (cross-review 2026-10-11 warning) | SneakKestrel16 | Before Milestone 4 | |
-| Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate)? | SneakKestrel16 | Before Milestone 4 | |
+| Does the monster receive survivor pings, or only those it could see in-world? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: only pings whose target is in its line of sight** (rule 7) |
+| Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate, and relied on by rules 10 and 21)? Rules 10, 21 and 26 stay **(proposed)** until this is decided | SneakKestrel16 | Before Milestone 4 | |
 | Should a fake callout carry any authored tell beyond rule 28 (e.g. faint signal distortion), or rely only on position and verification? | SneakKestrel16 | Before Milestone 3 | |
 | Are callouts positional only (proposed) or also carried over a facility radio? | SneakKestrel16 | Before Milestone 4 | |
 | Is the 8-line callout set right, and is "That wasn't me" too strong a counter? | SneakKestrel16 | Before Milestone 5 | |

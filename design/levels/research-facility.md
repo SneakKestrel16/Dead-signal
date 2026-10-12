@@ -353,7 +353,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Survivor Defense | Depends on map | Hiding spot (h) and barricadable door (B) placement; Defense owns their behaviour |
 | Monster Abilities | Depends on map | Lighting volumes for Blackout; switch (s) placement; room/door geometry for Predatory Lunge and False Signal positions |
 | Scare Events | Depends on map | Camera feeds, lighting states, door/glass scare anchors |
-| Pings & Callouts | Depends on map | Room IDs and names as callout locations |
+| Pings & Callouts | Depends on map | Room IDs and names as callout locations; backup light switches (s) are item-pingable |
 | Match Flow & Win Conditions | Map depends on it | `RoundPhaseChanged` drives Evacuation lighting; exit E ends a survivor's round |
 | Borrowed Face | Depends on map | Spawn distances for the observation rule; camera-feed appearance of a disguise |
 | Network Authority & Replication | Map depends on it | Server-owned map state listed in Technical Notes |
