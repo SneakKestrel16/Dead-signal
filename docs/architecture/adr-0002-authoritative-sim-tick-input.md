@@ -138,6 +138,8 @@ var sprint: bool
 var crouch: bool
 var yaw: float
 var pitch: float           # clamped to ±85° by the server
+var view_tick: float       # added by ADR-0003: server tick the client was rendering remote players at
+var ack_snapshot_tick: int # added by ADR-0003: newest snapshot received; server measures RTT from it
 
 class_name TickRunner extends Node
 signal tick_started(tick: int)

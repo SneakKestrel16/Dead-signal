@@ -52,7 +52,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
    - the survivor is inside a 60° forward cone measured from the same attack point;
    - unobstructed line of sight between the monster's chest and the survivor's chest (no wall, closed door, barricade);
    - the monster has not been Stunned since wind-up began.
-   Latency: the server checks against survivor positions rewound by the attacker's latency up to `max_rewind_ms` = 150 ms **(proposed)**; beyond that, current positions are used. Only positions are rewound: eligibility (Healthy, hidden, grace, Seized) and the stun check use current server state. Disputes are logged (Match Telemetry).
+   Latency: the server checks against survivor positions rewound to the tick the attacker was viewing, up to `max_rewind_ms` = 180 ms (ADR-0003, 2026-10-12; was 150); beyond that, the positions at the cap are used. Only positions are rewound: eligibility (Healthy, hidden, grace, Seized) and the stun check use current server state. Disputes are logged (Match Telemetry).
 8. A lunge hits at most one survivor: the first tick with one or more survivors passing rule 7 hits the closest of them on that tick, and the hit ends the dash immediately **(proposed, designer decision 2026-10-11)**. On hit, the server emits `SurvivorHit` (monster, survivor, server time, position). Monster Abilities owns *whether* a hit occurred; Downing, Rescue & Elimination owns what it does.
 9. **Lunge timeline** (stated identically in `downing-and-rescue.md`): wind-up → dash → **hit** → **takedown commit** (`takedown_commit_s` = 1.5 s **(proposed)**, owned by Downing, Rescue & Elimination) → **lunge resolved** (the commit completes, emitting `SurvivorDowned` or `SurvivorEliminated`, or is cancelled, e.g. by `MonsterStunned`) → **`lunge_cooldown_s` = 10 s cooldown** (source; owned here) starts at resolution. Without a hit, the lunge resolves when the dash ends or when a stun interrupts it, and the cooldown starts then **(proposed reading of "after the attack resolves")**.
 10. **Miss slow**: if it resolves without a hit (including blocked by a door), the monster moves at `miss_slow_multiplier` = 0.5 × speed for `miss_slow_s` = 1.5 s **(proposed)**. The source says "missing briefly slows the monster"; values are proposed.
@@ -120,7 +120,7 @@ hit = is_valid_takedown_target(survivor)   # Downing rule 3: Healthy, not hidden
       and line_of_sight(monster_chest, survivor_chest)
       and not stunned_since(windup_start)
 evaluated: every server tick of Active; first tick with any hit → closest wins, dash ends
-check positions at: server_time - min(attacker_latency, max_rewind_ms)   # eligibility and stun: current state
+check positions at: server_tick - min(server_tick - attacker_view_tick, max_rewind_ms)   # ADR-0003; eligibility and stun: current state
 ```
 
 | Variable | Type | Range | Source | Description |
@@ -130,17 +130,18 @@ check positions at: server_time - min(attacker_latency, max_rewind_ms)   # eligi
 | lunge_dash_s | float | 0.2–0.5 | data | Dash duration **(proposed 0.3)** |
 | lunge_dash_turn_deg_s | float | 0–30 | data | Steering during the dash **(proposed 30)** |
 | lunge_distance_m | float | 2–6 | data | Dash length **(proposed 4)** |
-| max_rewind_ms | int | 0–250 | data | Latency compensation cap **(proposed 150)** |
+| max_rewind_ms | int | 0–250 | data | Latency compensation cap **(180, ADR-0003; was 150)**; above ~210 the dodge margin is gone once acceleration is counted (inference) |
 | lunge_windup_turn_deg_s | float | 0–17 | data | Turn rate during wind-up **(proposed 15)** |
 | survivor_reaction_s | float | — | design target | Strafe delay after the cue the dodge must survive: 0.25 s reaction + `max_rewind_ms` (designer decision 2026-10-11) |
 
 **Effective threat reach** ≈ `lunge_distance_m + lunge_hit_radius_m` = 5.2 m.
-**Dodge window** (designer decision 2026-10-11): the dodge must survive a survivor who starts strafing `survivor_reaction_s` = 0.25 s reaction + 0.15 s full rewind = 0.40 s after the cue. A survivor 3 m ahead strafing at walk speed 4.0 m/s with body radius 0.3 m (`first-person-controller.md`: strafing is always at walk speed, `player_radius_m` 0.3) from 0.40 s is 0.8 m sideways at dash start and 2.0 m at dash end.
+**Dodge window** (designer decision 2026-10-11): the dodge must survive a survivor who starts strafing `survivor_reaction_s` = 0.25 s reaction + 0.18 s full rewind = 0.43 s after the cue (ADR-0003, 2026-10-12; was 0.15 s and 0.40 s). A survivor 3 m ahead strafing at walk speed 4.0 m/s with body radius 0.3 m (`first-person-controller.md`: strafing is always at walk speed, `player_radius_m` 0.3) from 0.43 s is 0.68 m sideways at dash start and 1.88 m at dash end.
+**Budget change (ADR-0003, 2026-10-12):** the figures in the paragraphs below and the safe-range ceilings in this table and Tuning Knobs ("the 0.40 s strafe is caught") were worked at 0.40 s. Under the governing steering model the latest safe start is ~0.49 s, or ~0.465 s once `accel_time_s` 0.05 is counted (inference from `first-person-controller.md`), so a 0.43 s strafe still dodges with ~35 ms margin. The ceilings must be recomputed at 0.43 s (Open Questions).
 **Governing model: steering pursuit** (designer decision, 2026-10-12, gate-check follow-up). The check steps the per-tick test in 0.5 ms steps with the monster steering toward the survivor's current position within its turn limits, as the server does; it is the same model as `first-person-controller.md` (Dodge window consequence). Result at 4.0 m/s and r 0.3: the 0.40 s strafe dodges; the latest strafe start that still dodges is ~0.49 s; the slowest strafe that dodges from 0.40 s is ~3.16 m/s, so walk 4.0 has margin ~1.25. Under this model the 0.40 s strafe at 4.0 m/s and r 0.3 is first caught at about a 45°/s wind-up turn, `lunge_hit_radius_m` 1.8 or `lunge_cone_deg` 120, one knob at a time. The safe ranges below keep the tighter ceilings from the earlier upper-bound model, so they hold either way.
 
 *Upper-bound model (superseded, kept for reference)*: dash modelled as a straight line at its final heading, which overstates the monster's reach. The figures below were worked at the old 4.5 m/s and radius 0. At 4.0 m/s and r 0.3 this model has the strafe caught (closest in-cone approach 0.75 m against 1.2 m; latest safe start ~0.32 s), which is why it no longer governs. The deciding moment is mid-dash, not dash end: at dash end the survivor is ~0.8 m behind the monster and outside the cone. The closest in-cone approach is at ~0.17 s into the dash, with the survivor on the cone edge. At 18° off the starting facing that approach is 1.30 m (miss against 1.2 m). A hit needs ~19.5°.
 The monster reaches `lunge_windup_turn_deg_s` × `lunge_windup_s` + `lunge_dash_turn_deg_s` × `lunge_dash_s` = 9° + 9° = 18°, so that strafe dodges. The margin is ~0.1 m, or ~20 ms: at 18° a strafe from 0.42 s is caught. Above ~17°/s wind-up turn, `lunge_hit_radius_m` above ~1.29 or `lunge_cone_deg` from ~72, the 0.40 s strafe is caught; those set the safe-range ceilings. A strafe on the cue needs ~47° to catch. A strafe from 0.45 s needs only ~15°.
-**Survivor latency** (designer decision 2026-10-11, accepted): the 0.40 s budget covers the monster's rewind only. The survivor hears the cue one-way late, and their strafe reaches the server one-way late, so their round trip comes out of the 0.25 s reaction. A survivor at 100 ms RTT must react in ~0.15 s.
+**Survivor latency** (designer decision 2026-10-11, accepted): the 0.43 s budget (was 0.40, ADR-0003) covers the monster's rewind only. The survivor hears the cue one-way late, and their strafe reaches the server one-way late, so their round trip comes out of the 0.25 s reaction. A survivor at 100 ms RTT must react in ~0.15 s.
 Distances and the cone are measured from the monster's centre at chest height (rule 7). The survivor's collision radius is `player_radius_m` = 0.3 (`first-person-controller.md`); it is included in the steering check above. Rerun this check after any change to wind-up, turn rates, dash length or time, radius or cone: they are coupled.
 
 ### Cooldown timing
@@ -209,7 +210,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | lunge_hit_radius_m | 1.2 (proposed) | 0.8–1.25 | Forgiving for monster; above ~1.29 the 0.40 s strafe is caught | Whiffs feel unfair to monster |
 | lunge_cone_deg | 60 (proposed) | 40–70 | Sideways dodge weaker; from ~72 the 0.40 s strafe is caught | Too precise |
 | miss_slow_multiplier / miss_slow_s | 0.5 / 1.5 (proposed) | 0.3–0.8 / 0.5–3 | Misses punished harder | Misses nearly free |
-| max_rewind_ms | 150 (proposed) | 0–250 | Favors high-ping monster | Favors survivors |
+| max_rewind_ms | 180 (ADR-0003; was 150) | 0–250 | Favors high-ping monster; above ~210 breaks the dodge window (inference) | Favors survivors |
 | false_signal_cooldown_s | 25 (source) | 15–60 | Fake sounds rarer, more credible | Noise spam; real sounds devalued |
 | false_signal_range_m | 20 (proposed) | 10–30 | Wider misdirection | Locates the monster |
 | false_signal_footstep_duration_s | 3 (proposed) | 2–5 | Longer fake walk | Short fake, hard to notice |
@@ -301,8 +302,8 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 - [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
-- [ ] During wind-up the monster's facing changes by no more than 15°/s, and during the dash by no more than 30°/s; with the monster at 150 ms latency, a survivor 3 m ahead with body radius 0.3 m who strafes at walk speed 4.0 m/s starting 0.25 s after the cue is not hit (`first-person-controller.md` speeds and radius; steering pursuit model). The authoritative dodge test is `first-person-controller.md`'s Monster Abilities dodge AC (steering model, 0.40 s strafe, 20 seeds); this criterion is a smoke check of the same budget.
-- [ ] With the monster at 150 ms latency, hit checks use survivor positions rewound 150 ms; at 300 ms they use positions rewound 150 ms (the cap). A survivor who became hidden or entered grace after the rewound time is not hit.
+- [ ] During wind-up the monster's facing changes by no more than 15°/s, and during the dash by no more than 30°/s; with the monster at 150 ms RTT (rewind capped at 180 ms, ADR-0003), a survivor 3 m ahead with body radius 0.3 m who strafes at walk speed 4.0 m/s starting 0.25 s after the cue is not hit (`first-person-controller.md` speeds and radius; steering pursuit model). The authoritative dodge test is `first-person-controller.md`'s Monster Abilities dodge AC (steering model, 0.43 s strafe, 20 seeds); this criterion is a smoke check of the same budget.
+- [ ] With the monster at 80 ms RTT, hit checks use survivor positions at the tick the monster was viewing (about 147 ms back with 50 ms interpolation, ADR-0003); at 300 ms RTT they use positions rewound 180 ms (the cap). A survivor who became hidden or entered grace after the rewound time is not hit.
 - [ ] While a lunge is in wind-up, Active or takedown commit, False Signal and Blackout requests are rejected with no cooldown cost.
 - [ ] With two valid survivors in the cone, only the closer one receives `SurvivorHit`, and the dash ends on the hit tick.
 - [ ] A survivor in post-rescue or post-release grace, or hidden, inside the cone and radius is not hit.
@@ -329,5 +330,6 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 | Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map. **Proposed 2026-10-11 (re-review R4):** every volume except the active terminal room during Evacuation |
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | Proposed at activation (rule 21); confirm in playtest |
 | Does the lunge dodge survive a 0.40 s strafe once the survivor collision radius is set? | SneakKestrel16 | With the Controller GDD | Resolved 2026-10-12: yes under the steering pursuit model (4.0 m/s, r 0.3, latest safe start ~0.49 s); the straight-line upper bound no longer governs (designer decision) |
-| Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | Network Authority ADR |
+| Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | **Resolved 2026-10-12 by ADR-0003:** 180 ms cap with 50 ms interpolation; dodge budget 0.43 s |
+| Recompute the safe-range ceilings (wind-up turn, hit radius, cone) and the worked 18° figures at the 0.43 s strafe start, including `accel_time_s` | SneakKestrel16 | Before ADR-0003 is Accepted | Open (ADR-0003) |
 | Is a ~0.15 s reaction acceptable for a survivor at 100 ms RTT? (survivor RTT comes out of the 0.25 s budget) | SneakKestrel16 | Network Authority ADR | Accepted for now (2026-10-11); revisit with the hosting model |

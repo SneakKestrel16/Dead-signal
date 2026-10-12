@@ -64,6 +64,18 @@ state_ownership:
     write_access: network-authority-only
     referenced_by:
       - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+    revised: ""
+
+  - state: rewind_history
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    interface: "RewindHistory.sample(player_id, tick: float) -> {ok, pos, height, radius, chest} (read-only); 16 ticks per player, pushed in TickRunner's snapshot-history phase"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
     added: 2026-10-12
     revised: ""
 
@@ -118,6 +130,20 @@ interfaces:
     signal_signature: "server_tick(tick: int) -> void, called once per tick by TickRunner after the movement and snapshot-history phases"
     referenced_by:
       - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: lag_compensation
+    status: active
+    pattern: direct_call
+    producer: network-authority   # LagCompensation
+    consumers:
+      - monster-abilities         # Predatory Lunge hit check, every tick of Active
+      - survivor-defense          # taser hit-scan
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    signal_signature: "LagCompensation.rewind_ticks(attacker_id, tick) -> float (clamped to min(max_rewind_ms 180, server-measured RTT bound)); ray_first_hit(origin, dir, max_dist, targets, skip) -> Dictionary"
+    referenced_by:
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
     added: 2026-10-12
     revised: ""
 
@@ -229,6 +255,28 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: player_hit_test
+    status: active
+    api: analytic capsule tests in GDScript against RewindHistory samples
+    not: PhysicsDirectSpaceState3D.intersect_shape or moving player bodies to rewound positions
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    reason: "Shape queries only see bodies at their current transform, which defeats the rewind; analytic tests are cheaper and independent of physics-space timing"
+    referenced_by:
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: world_line_of_sight
+    status: active
+    api: PhysicsDirectSpaceState3D.intersect_ray with a static-geometry-only collision_mask; doors and barricades tested analytically from Facility Map state
+    not: ray masks that include doors or player bodies
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    reason: "A door toggled this tick may not yet be reflected in the physics space; authoritative state never lags"
+    referenced_by:
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -294,6 +342,20 @@ forbidden_patterns:
     description: "Clients must never send position, velocity, speed or progress; only input frames and discrete intents."
     why: "Any client-claimed state is a cheat vector; the server computes all of it (first-person-controller.md rule 9)."
     adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+
+  - pattern: rewound_eligibility
+    status: active
+    description: "Hit tests rewind target positions only. Eligibility (Healthy, hidden, grace, Seized), stun state and door/barricade state must be read at the current tick."
+    why: "Rewinding state would let a hit land on a survivor who has since hidden or entered grace (monster-abilities.md rule 7)."
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+
+  - pattern: client_claimed_latency
+    status: active
+    description: "The rewind amount must be clamped by the server-measured RTT bound (from ack_snapshot_tick), never taken from a client's view_tick or latency claim alone."
+    why: "A client claiming high latency would always get the maximum rewind."
+    adr: docs/architecture/adr-0003-lag-compensation-rewind.md
     added: 2026-10-12
 
 # Example:

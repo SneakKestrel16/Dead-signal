@@ -84,9 +84,11 @@ tools, they're yours.
    **(proposed)**.
 8. **Use:** press to fire one cartridge. After `stun_use_delay_s` = 0.2 s
    **(proposed)** the server traces the shot from the survivor's view: range
-   `stun_range_m` = 5 m **(proposed)**, with a small aim tolerance of
-   `stun_aim_tolerance_deg` = 10° **(proposed)** so latency does not punish a
-   fair aim. The shot hits the **first** body in its path (monster or survivor)
+   `stun_range_m` = 5 m **(proposed)**. Targets are checked where the shooter
+   saw them: positions rewound to the shooter's view tick, up to
+   `max_rewind_ms` = 180 ms (ADR-0003, 2026-10-12; same path as the lunge).
+   A small aim tolerance of `stun_aim_tolerance_deg` = 10° **(proposed)**
+   covers aim imprecision only. The shot hits the **first** body in its path (monster or survivor)
    with line of sight **(proposed)**; a body in front shields anyone behind it.
    Seized and Downed survivors are not bodies for the shot: it passes through
    them and never shocks them, so a victim held in a takedown never shields the
