@@ -89,3 +89,20 @@ Findings:
 - [NICE-TO-HAVE] Header date 2026-10-12 left for the date pass.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md 106dadca5c983282ff2fa2c738c22bbf4d3f1a09
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 1 | Recommended: 5
+Summary: Sixth review. The lunge dodge proof holds (re-stepped: 1.298 m at 18°, hit from ~19.5°). One new blocker: rule 19 put backup switches "in or near" blackout-able zones while the Facility Map has none in corridors, so which zone a switch restores was undefined. Designer chose own-zone only and dash-stops-at-body. Revised in the same session; index stays In Review.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Rule 19 / Counters: switch-to-zone mapping undefined and contradicted the Facility Map. Resolved: a switch restores only its own zone; corridor Blackouts have no switch; AC updated.
+- [RECOMMENDED] Rule 14: Escaped survivors could be impersonated. Resolved: rejected like Eliminated; edge case and AC.
+- [RECOMMENDED] Edge Cases: Blackout active in the terminal room when Evacuation starts was missing. Resolved: row deferring to the Facility Map.
+- [RECOMMENDED] Rule 6: dash against an ineligible survivor's body undefined. Resolved: designer chose stop at the body, miss with slow; edge case and AC.
+- [RECOMMENDED] Dependencies: Pings & Callouts, Borrowed Face, Survivor Defense were one-way. Resolved: Bidirectional here; Borrowed Face and Pings rows mirrored.
+- [RECOMMENDED] Acceptance Criteria: footsteps had no AC. Resolved: added to the False Signal AC.
+- [NICE-TO-HAVE] Header date 2026-10-12 left for the date pass. Rule 7 stun bullet redundant with rule 12. Blackout reveals the monster within ~15 m; not noted in the doc.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md 74af479140e2a2a4188f301293beb05d888fb42e
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

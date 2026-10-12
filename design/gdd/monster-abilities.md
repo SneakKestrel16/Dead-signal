@@ -45,7 +45,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 
 4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming.
 5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up and turns at no more than `lunge_windup_turn_deg_s` = 15°/s **(proposed, designer decision 2026-10-11)**, so a survivor who strafes within a realistic reaction time still leaves the dash path (Formulas, Dodge window). Source canon: "clear wind-up and audible cue".
-6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over `lunge_dash_s` = 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to `lunge_dash_turn_deg_s` = 30°/s **(proposed)**. Blocked by walls and closed or barricaded doors; the dash stops at the obstacle.
+6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over `lunge_dash_s` = 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to `lunge_dash_turn_deg_s` = 30°/s **(proposed)**. Blocked by walls, closed or barricaded doors, and the body of any survivor who is not a valid target (rule 7); the dash stops at the obstacle and the lunge resolves as a miss **(proposed; body rule designer decision 2026-10-11)**.
 7. **Hit validation** (server, every server tick of Active): a survivor is hit if all of these hold (all **(proposed)**):
    - the survivor is a valid takedown target as defined by Downing, Rescue & Elimination: Healthy, not Seized, and not in post-rescue or post-release grace (Downed survivors cannot be lunged); hidden survivors are also untargetable (Survivor Defense);
    - distance from the monster's attack point (the centre of its collision body at chest height, designer decision 2026-10-11) to the survivor's collision body is ≤ `lunge_hit_radius_m` = 1.2 m;
@@ -65,7 +65,7 @@ Counters (pillar: Counterplay): **dodge sideways** (the narrow cone and short re
 
 13. Activation: cooldown ready; aim point chosen within `false_signal_range_m` = 20 m of the monster **(proposed)**; the server snaps it to the nearest walkable floor point and rejects points inside walls or outside the range.
 14. Choose one signal type (source list):
-    - **Teammate callout**: an authored callout in the voice set of a survivor the monster has *observed* (Borrowed Face) and who is not Eliminated (designer decision, 2026-10-11) **(proposed)**. Its presentation is owned by Pings & Callouts (rules 26–29 there) and is not redefined here: it uses the same authored line, voice set and `[Name]: [text]` feed line as a real callout from that survivor, reaches listeners by the same range rule measured from the chosen point, and differs only in that it has no speaker gesture, cannot attach an item ping, and the impersonated survivor sees it marked "(not you)" **(proposed, per Pings & Callouts)**.
+    - **Teammate callout**: an authored callout in the voice set of a survivor the monster has *observed* (Borrowed Face) and who is not Eliminated or Escaped (designer decision, 2026-10-11) **(proposed)**. Its presentation is owned by Pings & Callouts (rules 26–29 there) and is not redefined here: it uses the same authored line, voice set and `[Name]: [text]` feed line as a real callout from that survivor, reaches listeners by the same range rule measured from the chosen point, and differs only in that it has no speaker gesture, cannot attach an item ping, and the impersonated survivor sees it marked "(not you)" **(proposed, per Pings & Callouts)**.
     - **Footsteps**: 3 s of survivor footsteps at the point, moving up to 3 m along a direction chosen by the monster **(proposed)**.
     - **Familiar interaction sound**: an objective interaction sound (e.g. drive extraction, fuse handling) or door sound **(proposed)**. It never changes objective state or alerts.
 15. The sound is spatialised from the chosen point and replicated as a shared event to every survivor client within the audible range of the real sound it imitates (the same asset and attenuation; for a callout, the Pings & Callouts range rule) **(proposed)**. Fake sounds use the same audio assets as real ones; they carry no visual source (no body, no light, no ping marker) **(proposed)**. A fake teammate callout additionally shows its feed line as defined by Pings & Callouts.
@@ -77,11 +77,11 @@ Counters: sound is only an **approximate clue** (source) — survivors **verify 
 
 17. Activation: cooldown ready; the target is the lighting zone the monster is standing in or one it aims at within `blackout_range_m` = 15 m with line of sight **(proposed)**. Lighting zones are authored per room or short corridor in the Facility Map; the server rejects any zone whose `blackout_able` flag is false (defined per lighting volume in `research-facility.md`; the active terminal room is excluded during Evacuation).
 18. Effect: all normal lights in the zone go out for `blackout_duration_s` = 6 s (source). Emergency lights remain faintly visible (source). Flashlights are unaffected **(proposed)**.
-19. Backup switches (Facility Map) placed in or near blackout-able zones restore the zone's lights immediately when a survivor interacts with them for `backup_switch_hold_s` = 1 s **(proposed)**. Restoring early does not reduce the monster's cooldown.
+19. A backup switch (Facility Map: one per room, none in corridors) restores only the zone containing it, immediately, when a survivor interacts with it for `backup_switch_hold_s` = 1 s **(proposed)**. Restoring early does not reduce the monster's cooldown.
 20. One zone per Blackout; Blackout cannot target a zone already blacked out **(proposed)**. Lighting state is server-owned and replicated so every client sees the same zone dark.
 21. Cooldown: 45 s (source), starting on activation **(proposed: start on activation, not on expiry)**.
 
-Counters (source): **flashlights**, **retreat to lit areas**, **backup switches**.
+Counters (source): **flashlights**, **retreat to lit areas**, **backup switches** (rooms only; a corridor Blackout has no switch and runs its full duration, designer decision 2026-10-11).
 
 ### States and Transitions
 
@@ -167,6 +167,9 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | False Signal aimed through a wall | Allowed if within range; sound plays there | Sound travels; sight verifies |
 | False Signal callout as an unobserved survivor | Rejected | Uses observed list |
 | False Signal callout as an Eliminated survivor | Rejected | Designer decision, 2026-10-11: a dead voice is a free tell, and survivors gain nothing from it |
+| False Signal callout as an Escaped survivor | Rejected **(proposed)** | Same as Eliminated: the survivor has left the facility, so the voice is a free tell |
+| Dash meets a survivor who is not a valid target (hidden, grace, Downed, Seized) | Dash stops at the body; miss with slow | Designer decision, 2026-10-11: no pass-through or clipping |
+| Blackout active in the terminal room when Evacuation starts | Blackout ends at that moment; cooldown unchanged | Owned by Facility Map (`research-facility.md`, `blackout_able`) |
 | Blackout on the evacuation zone | Rejected for the active terminal room during Evacuation; allowed before it (`blackout_able`, Facility Map) | Map owns zone flags |
 | Backup switch used then monster recasts | Cannot until 45 s cooldown ends | Counter must matter |
 | Monster disconnects mid-lunge | Wind-up or dash ends with no hit; a takedown commit is cancelled by Downing on `PlayerConnectionChanged`. No cooldown matters: Match Flow removes the character | Disconnect rule owned by Match Flow **(proposed)** |
@@ -176,12 +179,12 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 
 | System | Direction | Nature of Dependency |
 |---|---|---|
-| Borrowed Face | This depends on it | Form gates Lunge; observed list |
-| Survivor Defense | This depends on it | Stun interrupts; barricades block; flashlights |
+| Borrowed Face | Bidirectional | Form gates Lunge; observed list; reads Lunge state to block transformation (its rule 7) |
+| Survivor Defense | Bidirectional | Stun interrupts; barricades block; flashlights; reads Lunge wind-up to end stun immunity |
 | Facility Map | This depends on it | Lighting zones, emergency lights, backup switches, doors |
 | Network Authority & Replication | This depends on it | Server validation, latency rewind, replication |
 | First-Person Controller & Interaction | This depends on it | Movement for dash and slow; backup switch hold |
-| Pings & Callouts | This depends on it | Authored callout set; fake-callout presentation |
+| Pings & Callouts | Bidirectional | Authored callout set and fake-callout presentation; consumes `AbilityUsed` for False Signal |
 | Downing, Rescue & Elimination | Bidirectional | Consumes `SurvivorHit`; this system reads takedown eligibility and the commit end (lunge resolved) from it |
 | Match Flow & Win Conditions | Bidirectional | `RoundPhaseChanged`, round end (resets); supplies ability stats for results |
 | Survivor Objectives | This depends on it | Objective interaction sounds imitated by False Signal; install alert is sent to the shapeshifter |
@@ -286,6 +289,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] Server rejects a lunge during cooldown, while Disguised (Borrowed Face rule 11, kept until playtest), while Stunned, or while Transforming.
 - [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the `stun_duration_s` after an immune taser hit (shock lock, Survivor Defense rule 14), and accepts them once the lock ends.
 - [ ] A survivor behind a closed door 1 m from the monster is never hit.
+- [ ] A dash whose path meets a hidden, grace, Downed or Seized survivor stops at that body, emits no `SurvivorHit`, and applies the miss slow.
 - [ ] A miss slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution.
 - [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
@@ -301,8 +305,8 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] Every `AbilityUsed` stays on the server; a packet capture on a survivor client shows no `AbilityUsed` and no monster position from it.
 - [ ] Every accepted Lunge, False Signal and Blackout emits exactly one `AbilityUsed` with its ability, position and target; a rejected request emits none.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
-- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved or Eliminated survivor is rejected; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
-- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch held for 1 s restores it on all clients, and releasing it earlier does not. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
+- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved, Eliminated or Escaped survivor is rejected; Footsteps play for 3 s and move no more than 3 m from the aim point; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
+- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch held for 1 s restores its own zone on all clients and no other zone, and releasing it earlier does not. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
 - [ ] Changing any Tuning Knobs value in the data file changes in-game behavior with no code change, and ability code contains no literal for those parameters.
 
 ## Open Questions

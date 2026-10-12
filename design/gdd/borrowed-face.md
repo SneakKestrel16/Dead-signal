@@ -184,7 +184,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 | Survivor Defense | Bidirectional | `MonsterStunned` and the shock lock (Survivor Defense rule 14) block or interrupt transformation; Survivor Defense reads disguised form and the Transforming flag to pick the shock presentation |
 | Downing, Rescue & Elimination | This depends on it | Survivor status for valid targets |
 | Facility Map | This depends on it | Monster spawn point; line-of-sight blockers |
-| Monster Abilities | Depends on this | Form gates Lunge; observed list for False Signal |
+| Monster Abilities | Bidirectional | Form gates Lunge; observed list for False Signal; rule 7 reads Lunge wind-up, active and commit state |
 | Scare Events | Depends on this | Transformation reveal (`FormChanged`) |
 | Pings & Callouts | Depends on this | Disguise state for monster voice/ping rules |
 | Survivor Objectives | Depends on this | Rejects carry/progress from the shapeshifter |

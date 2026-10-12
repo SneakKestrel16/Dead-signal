@@ -173,7 +173,7 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Survivor Objectives | This depends on it | Pingable object types |
 | Survivor Defense | This depends on it | Pingable hiding spots, barricadable doors, stun items; the shock lock (Survivor Defense rule 14) blocks pings and callouts (rule 23) |
 | Facility Map | This depends on it | Room IDs and names as callout locations; pingable backup switches |
-| Monster Abilities | Monster Abilities depends on this | False Signal's fake callout is presented by this system |
+| Monster Abilities | Bidirectional | False Signal's fake callout is presented by this system; consumes `AbilityUsed` |
 | Scare Events | Scare Events depends on this | Must not mask callouts |
 | HUD & Results Screen | HUD depends on this | Markers, wheel, feed |
 | Match Telemetry | Telemetry depends on this | Ping/callout logs |
