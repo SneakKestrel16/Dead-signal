@@ -63,3 +63,40 @@ Reviewed-Content-Hash: design/gdd/pings-and-callouts.md 72223e4ab1ce60872d9b222b
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (fourth) — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 8
+Summary: Prior blockers hold and the information-leak rules agree with Downing and Borrowed Face. One gap remained: the monster's "line of sight" for receiving survivor pings was undefined. Resolved by designer decision in the same session, together with the recommended items below; re-review needed to confirm.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 7: monster line of sight undefined (ray vs view cone, facing, range). Resolved: unobstructed server ray from the monster's eye within ping_max_range_m, facing ignored.
+- [RECOMMENDED] Core Rules 11: "not a through-wall locator" overstated; positional audio is still a rough cue. Reworded, cites Downing rule 6.
+- [RECOMMENDED] Core Rules 19: Escaped players not muted. Added.
+- [RECOMMENDED] Core Rules 7 / Formulas: spectator reception undefined. Decided: Eliminated and Escaped receive, send nothing.
+- [RECOMMENDED] Core Rules 6 / Edge Cases: warning ping on a hidden survivor undefined. Rejected as a target.
+- [RECOMMENDED] Formulas: initial bucket and callout timestamps undefined. Added.
+- [RECOMMENDED] Acceptance Criteria: missing global cooldown, rejected pending marker, attached item ping token, spectator voice and hidden-target cases; full-round criterion had no pass condition. Added or rewritten.
+- [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Not applied.
+- [RECOMMENDED] Dependency Graph: no GDDs yet for Network Authority, First-Person Controller, Facility Map, HUD, Match Telemetry. Tracking note.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md 968847cd4cd75afea58467470fdafaff5e7e9fff
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (fifth) — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 3
+Summary: The fourth review's revisions hold: monster line of sight, Escaped muting, hidden-target rejection and initial limiter state are all precise. That revision introduced one gap: a spectator's "position" for callout range was undefined. Resolved from Downing rule 9 (spectators watch a living survivor) without a new design decision; re-review needed to confirm.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Core Rules 7 / Formulas: spectator "in their position" undefined; spectators have no body. Resolved: a spectator receives exactly what the survivor they watch receives (Downing rule 9, Match Flow rule 10).
+- [RECOMMENDED] Core Rules 13: zero-token behaviour of an attached ping stated only in Acceptance Criteria. Added to the rule: the callout plays without the ping.
+- [RECOMMENDED] Acceptance Criteria: global-cooldown criterion self-contradictory. Reworded with t=0/1/3 timings.
+- [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Not applied.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md d752d34d94cc109bdd7293c9188576efd83a1913
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
