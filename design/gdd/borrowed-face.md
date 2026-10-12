@@ -182,6 +182,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 | System | Direction | Nature of Dependency |
 |---|---|---|
 | Network Authority & Replication | This depends on it | Server-owned disguise state, `FormChanged` replication |
+| Lobby & Role Assignment | This depends on it | Each survivor's character (look, colour, voice set) is what a disguise copies; 3–5 survivors means 3–5 possible targets |
 | First-Person Controller & Interaction | This depends on it | Movement speeds, animation set, interaction rejection |
 | Survivor Defense | Bidirectional | `MonsterStunned` and the shock lock (Survivor Defense rule 14) block or interrupt transformation; Survivor Defense reads disguised form and the Transforming flag to pick the shock presentation, and ends immunity on `FormChanged` into a disguise (its rule 16) |
 | Downing, Rescue & Elimination | This depends on it | Survivor status for valid targets |

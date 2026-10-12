@@ -1,6 +1,6 @@
 # First-Person Controller & Interaction
 
-> **Status**: In Review
+> **Status**: Approved
 > **Creative Director Review (CD-GDD-ALIGN)**: skipped — Lean mode
 > **Author**: SneakKestrel16 + agents
 > **Last Updated**: 2026-10-12
@@ -103,12 +103,15 @@ The gait_speed formula is defined as:
 | crawl_speed_mult | float | 0.15–0.4 | owned by Downing, Rescue & Elimination | 0.25 → 1.0 m/s |
 | monster_sprint_mult | float | 1.1–1.2 | data file | **1.15 → 5.75 m/s**: a 10 m chase lasts about 12 s |
 | sprint_cone_deg | float | 45 | constant (designer decision) | Half-angle from facing within which sprint is allowed |
+| max_survivor_sprint_mps | float m/s | 5.4 | data file | Joint cap on `walk_speed × sprint_mult`; see the joint cap below |
+| hold_range_tolerance_m | float m | 0.25 (safe 0.1–0.4) | data file | Extra keep-range once Holding (Core Rule 14); Start stays strict |
+| intent_timeout_ms | int ms | 500 (proposed) | data file | No intent for this long → input released, hold cancelled (Edge Cases) |
 | move_input | float | 0–1 | calculated | Length of the stick or key input, capped at 1, multiplied into the speed |
 
 **Output Range:** 0–5.75 m/s in normal play: crawl 1.0, crouch 2.0, walk and strafe 4.0, survivor sprint 5.0, true-form sprint 5.75. Safe-range edges:
 - `walk_speed` below about 3.7 (3.68) drops the dodge margin under 1.15 and stretches the map's 20 s room-to-room target by 4.0/walk. Above 4.5 shrinks the map and needs the chase limit rechecked.
 - `sprint_mult` below 1.15 makes sprint not worth its noise. Above it, the joint cap below decides.
-- **Joint cap (designer decision, 2026-10-12, design review):** the ranges above are safe one at a time, not together. Survivor sprint `walk_speed × sprint_mult` must stay ≤ `max_survivor_sprint_mps` = 5.4, because above about 5.44 m/s `catch_gap` < 2 × `player_radius_m` (at r 0.3) and an open-ground chase becomes lunge-proof; at walk 4.0 that is `sprint_mult` ≤ 1.35. True-form sprint must also exceed survivor sprint (`monster_sprint_mult` > 1). Both are asserted when the data loads, like the `interact_ray_max_m` check. Example: walk 4.5 × 1.25 = 5.63 is inside both ranges but fails the cap.
+- **Joint cap (designer decision, 2026-10-12, design review):** the ranges above are safe one at a time, not together. Survivor sprint `walk_speed × sprint_mult` must stay ≤ `max_survivor_sprint_mps` = 5.4, because above about 5.44 m/s `catch_gap` < 2 × `player_radius_m` (at r 0.3) and an open-ground chase becomes lunge-proof; at walk 4.0 that is `sprint_mult` ≤ 1.35. The exact limit depends on the radius, `v_s` ≤ (`lunge_distance_m` + `lunge_hit_radius_m` − `player_radius_m`) / (`lunge_windup_s` + `lunge_dash_s`): 5.44 at r 0.3, 5.39 at r 0.35. So the load-time check asserts both the 5.4 cap and `catch_gap` ≥ 2 × `player_radius_m` from the live data (design re-review, 2026-10-12). True-form sprint must also exceed survivor sprint (`monster_sprint_mult` > 1). All are asserted when the data loads, like the `interact_ray_max_m` check. Example: walk 4.5 × 1.25 = 5.63 is inside both ranges but fails the cap.
 - `crouch_speed_mult` above 0.6 competes with walk while staying quiet. Below 0.4 makes crouch a trap.
 - `monster_sprint_mult` below 1.1 makes a 10 m chase take more than 18 s. Above 1.2 gives tasers and doors under 9 s to break it.
 
@@ -308,7 +311,7 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 
 - [ ] **[U]** **GIVEN** any player (survivor, disguised shapeshifter, true-form shapeshifter, Downed survivor), **WHEN** its capsule is read, **THEN** radius = 0.30 m in every form; height = 1.8 m standing and 1.2 m crouched or Downed. (Rule 1)
 - [ ] **[U]** **GIVEN** `walk_speed` 4.0 and full input on flat ground, **WHEN** each gait is held for 1 s of simulated ticks, **THEN** measured speeds are within ±0.05 m/s of: crawl 1.0, crouch 2.0, walk 4.0, survivor sprint 5.0, true-form sprint 5.75. (Rule 2, gait_speed)
-- [ ] **[U]** **GIVEN** sprint held, **WHEN** move input is 30°, 45°, 46° and 180° off facing, **THEN** speed is 5.0, 5.0, 4.0 and 4.0 m/s. **WHEN** the player is crouched, Downed, Transforming or Holding with sprint held, **THEN** the gait is not sprint (crouch 2.0, crawl 1.0, walk 4.0, walk 4.0). (Rules 3, 4, gait order)
+- [ ] **[U]** **GIVEN** sprint held, **WHEN** move input is 30°, 45° (≤ 45° + 1e-4 counts as inside), 46° and 180° off facing, **THEN** speed is 5.0, 5.0, 4.0 and 4.0 m/s. **WHEN** the player is crouched, Downed, Transforming or Holding with sprint held, **THEN** the gait is not sprint (crouch 2.0, crawl 1.0, walk 4.0, walk 4.0). (Rules 3, 4, gait order)
 - [ ] **[U]** **GIVEN** a diagonal key input of length 1.41, **WHEN** the player walks, **THEN** speed is 4.0 m/s, not 5.66. (move_input cap)
 - [ ] **[I]** **GIVEN** a crouched player under a 1.5 m ceiling, **WHEN** crouch is released, **THEN** the capsule stays 1.2 m until the player reaches open floor, then stands within 1 tick. (Rule 4, edge case)
 - [ ] **[I]** **GIVEN** test geometry with steps of 0.18, 0.35 and 0.40 m and ramps of 40° and 41°, **WHEN** a player walks into each, **THEN** it climbs the 0.18 and 0.35 m steps and the 40° ramp, and is blocked by the 0.40 m step and the 41° ramp. No jump action exists in the input map. (Rule 5)
@@ -341,7 +344,7 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 - [ ] **[I]** **GIVEN** a Start, **WHEN** the actor is ineligible (shocked, hidden, Downed, wrong role), line of sight is blocked, or another actor holds the exclusive lock, **THEN** it is rejected and the client bar cancels. **GIVEN** two Starts on the same exclusive target in one tick, **THEN** the first to arrive is accepted and the second rejected. **GIVEN** Stop arriving before acceptance, **THEN** the hold is accepted and cancelled on that tick with progress 0. (Rule 13, edge cases)
 - [ ] **[I]** **GIVEN** an accepted hold, **WHEN** the actor turns 180°, **THEN** it continues. **WHEN** the actor walks to `range_m` + 0.2, **THEN** it continues; **WHEN** the actor walks beyond `range_m` + 0.25, loses line of sight, releases input, receives an owner interrupt (`SurvivorHit`, `PlayerShocked`), starts another hold, uses an item, hides or disconnects, **THEN** it cancels on that tick with the owner's reset, keep or decay rule applied. While Holding, sprint input gives 4.0 m/s; with `roots_actor` it gives 0. While Holding, crouch input leaves posture and capsule height unchanged. (Rules 14, 16)
 - [ ] **[U]** **GIVEN** an out-of-range interactable 1.0 m along the view ray and an in-range one 1.8 m along it, **WHEN** the player aims, **THEN** the prompt shows for the 1.8 m one. **GIVEN** a wall between the player and an in-range interactable, **THEN** no prompt shows. (Rule 12)
-- [ ] **[U]** **GIVEN** data with `walk_speed` 4.5 and `sprint_mult` 1.25 (5.63 m/s), or `monster_sprint_mult` 1.0, **WHEN** the data loads, **THEN** the load-time check fails and names the joint cap. 4.0 × 1.35 = 5.4 passes. (Gait speed joint cap)
+- [ ] **[U]** **GIVEN** data with `walk_speed` 4.5 and `sprint_mult` 1.25 (5.63 m/s), or `monster_sprint_mult` 1.0, **WHEN** the data loads, **THEN** the load-time check fails and names the joint cap. 4.0 × 1.35 = 5.4 passes (compared with a 1e-4 m/s epsilon). With `player_radius_m` 0.35 and v_s 5.4, the `catch_gap` assertion fails. (Gait speed joint cap)
 - [ ] **[I]** **GIVEN** players moving and Holding, **WHEN** `RoundEnded` arrives, **THEN** on that tick all movement stops, every hold cancels, and further intent is ignored. **GIVEN** a player who becomes Eliminated, Escaped or disconnected, **THEN** their body is removed (Out) and they get the Match Flow spectator view. (States table, Dependencies)
 - [ ] **[I]** **GIVEN** a hidden survivor, **WHEN** they look, **THEN** look is limited to the Survivor Defense peek view and restored to free look on exit. (Rule 7 exception)
 - [ ] **[I]** **GIVEN** a hold with `duration_s` D, **WHEN** input is held continuously, **THEN** completion fires once, on the first server tick where elapsed ≥ D (±1 tick), and the owner emits its event. `duration_s` 0 completes on the Start tick. (Rule 15)
@@ -376,7 +379,7 @@ Not covered here: reconciliation smoothness (waits on the Network Authority ADR)
 | False Signal footsteps need a gait for their audible range. Proposed: walk (6 m) | SneakKestrel16 | Before Monster Abilities' next review | — |
 | Does `accel_time_s` up to 0.1 s keep the dodge? Rerun the pursuit simulation with the strafe starting at 0.40 + `accel_time_s` / 2 | SneakKestrel16 | Before Milestone 3 | — |
 | Prediction and reconciliation method, and the controller's server performance budget | technical-director | Network Authority ADR | — |
-| `match-flow.md` does not list this system as a dependent (one-directional dependency) | SneakKestrel16 | Phase 5 of this authoring session | — |
+| `match-flow.md` does not list this system as a dependent (one-directional dependency) | SneakKestrel16 | Phase 5 of this authoring session | Resolved 2026-10-12: row added to `match-flow.md` Dependencies |
 | Crouch as toggle or hold: offer both as a setting? | SneakKestrel16 | Accessibility Options GDD | — |
 | Is a 1.0 m/s sprint gain over walk worth its noise? | SneakKestrel16 | Milestone 5 closed playtest | — |
 | Solid capsules let a player (or a disguised shapeshifter) plug a doorway. Watch for griefing and body-blocking | SneakKestrel16 | Milestone 5 closed playtest | — |

@@ -287,9 +287,10 @@ formulas:
 # Required fields: name, status, source, referenced_by, value, unit, added
 
 constants:
-  # 1 shapeshifter + 4 survivors (source)
+  # Deprecated 2026-10-12: replaced by min_players / max_players (4-6 players,
+  # 1 shapeshifter; designer decision, lobby-role-assignment.md)
   - name: players_per_match
-    status: active
+    status: deprecated
     source: design/gdd/match-flow.md
     referenced_by:
       - design/gdd/match-flow.md
@@ -297,15 +298,16 @@ constants:
     value: 5
     unit: players
     added: 2026-10-12
-    revised: ""
+    revised: 2026-10-12
 
-  # 1 shapeshifter + 3 survivors; lobby waits below this. Conflicts with
-  # players_per_match = 5 until propagation (lobby-role-assignment.md Open Questions)
+  # 1 shapeshifter + 3 survivors; lobby waits below this
   - name: min_players
     status: active
     source: design/gdd/lobby-role-assignment.md
     referenced_by:
       - design/gdd/lobby-role-assignment.md
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
     value: 4
     unit: players
     added: 2026-10-12
@@ -317,6 +319,8 @@ constants:
     source: design/gdd/lobby-role-assignment.md
     referenced_by:
       - design/gdd/lobby-role-assignment.md
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
     value: 6
     unit: players
     added: 2026-10-12

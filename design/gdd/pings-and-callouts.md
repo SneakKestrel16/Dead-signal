@@ -45,7 +45,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 **Callouts**
 
 9. Authored callout set **(proposed: 8 lines)**: "Drive here", "Fuse here", "Need rescue", "I'm with you", "Follow me", "Wait", "Danger", "That wasn't me".
-10. A callout plays an authored voice line from the speaker's position using the voice set of the speaker's displayed identity **(proposed: one voice set per survivor slot)**, and adds a feed line `[Name]: [text]` with a direction indicator to every recipient.
+10. A callout plays an authored voice line from the speaker's position using the voice set of the speaker's displayed identity (one voice set per survivor character C1–C5, `lobby-role-assignment.md` rule 5), and adds a feed line `[Name]: [text]` with a direction indicator to every recipient.
 11. Recipients: every living player within that callout's audible range (`callout_range_m`; "Need rescue" uses `rescue_callout_range_m`) **(proposed)**. Players out of range get neither the audio nor the feed line. **The monster gets the audio only** (positional, wall-attenuated): no feed line, no name and no direction arrow (designer decision, 2026-10-12, design review), so a "Need rescue" within 40 m gives the monster no name, arrow or marker. The wall-attenuated positional audio is still a rough directional cue; Downing rule 6 accepts that explicitly. Survivors get audio, feed line and arrow.
 12. A real callout also plays a short visible gesture on the speaker's body **(proposed)**, so a survivor with line of sight can confirm who spoke.
 13. "Drive here" and "Fuse here" may optionally attach an item ping if the sender is looking at a valid item; the attached ping is validated like any item ping and counts against the ping rate limit. If the attached ping is rejected (no token, invalid target), the callout is still accepted on its own limits and plays without it.
@@ -60,7 +60,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 **Proximity voice (optional)**
 
-18. Proximity voice is a lobby setting, Off by default **(proposed)**. When On, it applies to all five players under the same rule, so voice availability is never itself a role tell **(proposed)**.
+18. Proximity voice is a lobby setting, Off by default **(proposed)**. When On, it applies to every player under the same rule, so voice availability is never itself a role tell **(proposed)**.
 19. Voice is positional, with range `voice_range_m` **(proposed)**. Downed survivors can speak. Eliminated and Escaped players are muted to living players for the rest of the round **(proposed)**, so they cannot relay information they gained.
 20. No game rule, objective or counter may require voice. Voice only adds to what pings and callouts already carry.
 
@@ -186,6 +186,7 @@ spectator (Eliminated / Escaped) receives iff the survivor they watch is a recip
 | System | Direction | Nature of Dependency |
 |---|---|---|
 | Network Authority & Replication | This depends on it | Server validation, broadcast, positions, line of sight |
+| Lobby & Role Assignment | This depends on it | Survivor character (voice set, colour) per player; the proximity voice setting (rule 18) |
 | First-Person Controller & Interaction | This depends on it | View ray, input |
 | Borrowed Face | This depends on it | Displayed identity, form state (`FormChanged`) |
 | Match Flow & Win Conditions | This depends on it | `SurvivorEscaped` (Escaped state; Match Flow rule 10) |
@@ -318,7 +319,7 @@ Light and instant. The player keeps full movement control while pinging or using
 |---|---|---|---|
 | Monster voice: proximity voice, preset lines only, or both? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: both** (rule 25). The true-form distortion filter is proposed |
 | Does the monster receive survivor pings, or only those it could see in-world? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: only pings whose target is in its line of sight** (rule 7) |
-| Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate, and relied on by rules 10 and 21)? Rules 10, 21 and 26 stay **(proposed)** until this is decided | SneakKestrel16 | Before Milestone 4 | |
+| Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate, and relied on by rules 10 and 21)? Rules 10, 21 and 26 stay **(proposed)** until this is decided | SneakKestrel16 | Before Milestone 4 | Resolved 2026-10-12: yes, one voice set per survivor character C1–C5; a survivor keeps their lobby-picked character between rounds (`lobby-role-assignment.md` rules 5–7) |
 | Should a fake callout carry any authored tell beyond rule 28 (e.g. faint signal distortion), or rely only on position and verification? | SneakKestrel16 | Before Milestone 3 | |
 | Are callouts positional only (proposed) or also carried over a facility radio? | SneakKestrel16 | Before Milestone 4 | |
 | Is the 8-line callout set right, and is "That wasn't me" too strong a counter? | SneakKestrel16 | Before Milestone 5 | |

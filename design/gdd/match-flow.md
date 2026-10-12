@@ -8,13 +8,13 @@
 
 ## Summary
 
-Match Flow runs one ~9-minute round of Dead Signal: it takes five players from the lobby, runs the round clock through Infiltration, Investigation and Evacuation, decides on the server who won, and hands the result to the results screen. It owns the round timer, the phase windows, the evacuation deadline, win/loss evaluation, results screen contents and the mid-match disconnect rule.
+Match Flow runs one ~9-minute round of Dead Signal: it takes 4–6 players from the lobby, runs the round clock through Infiltration, Investigation and Evacuation, decides on the server who won, and hands the result to the results screen. It owns the round timer, the phase windows, the evacuation deadline, win/loss evaluation, results screen contents and the mid-match disconnect rule.
 
 > **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination`
 
 ## Overview
 
-Every round has the same shape. Lobby & Role Assignment hands over five connected players (1 shapeshifter, 4 survivors). The server starts a 540-second clock. The first two minutes are Infiltration, the middle five are Investigation, and the final two are Evacuation. Survivors win if, after recovering two data drives, installing two fuses and activating the evacuation terminal, they carry both drives out through the exit. The shapeshifter wins if all survivors are eliminated or the evacuation deadline expires. The server alone decides phase changes and the outcome; clients only display what the server tells them. When the round ends, every player sees the same results screen.
+Every round has the same shape. Lobby & Role Assignment hands over 4–6 connected players (1 shapeshifter, 3–5 survivors). The server starts a 540-second clock. The first two minutes are Infiltration, the middle five are Investigation, and the final two are Evacuation. Survivors win if, after recovering two data drives, installing two fuses and activating the evacuation terminal, they carry both drives out through the exit. The shapeshifter wins if all survivors are eliminated or the evacuation deadline expires. The server alone decides phase changes and the outcome; clients only display what the server tells them. When the round ends, every player sees the same results screen.
 
 ## Player Fantasy
 
@@ -25,9 +25,9 @@ Survivors should feel a clock closing in: an orientation window that turns into 
 ### Core Rules
 
 **Round start**
-1. Lobby & Role Assignment delivers exactly `players_per_match` = 5 players with roles fixed (1 shapeshifter, 4 survivors). Match Flow does not assign roles.
-2. The server waits until all 5 clients report the map loaded, up to `load_timeout_s` = 60 **(proposed)**. If any client fails to load in time, the round is cancelled and all players return to the lobby; no result is recorded **(proposed)**.
-3. When all 5 are loaded, the server spawns players at Facility Map spawn points, sets `elapsed_s = 0`, enters Infiltration and broadcasts `RoundPhaseChanged`.
+1. Lobby & Role Assignment delivers a locked roster of `player_count` players, `min_players` = 4 to `max_players` = 6, with roles fixed (1 shapeshifter, `player_count` − 1 survivors) (designer decision, 2026-10-12: plan for 1 vs 3 and up to 6 players; `lobby-role-assignment.md` rule 14). Match Flow does not assign roles. Balance is tuned for 4 survivors; 3 and 5 are playable but untuned (`lobby-role-assignment.md` Open Questions).
+2. The server waits until all `player_count` clients report the map loaded, up to `load_timeout_s` = 60 **(proposed)**. If any client fails to load in time, the round is cancelled and all players return to the lobby; no result is recorded **(proposed)**.
+3. When all are loaded, the server spawns players at Facility Map spawn points, sets `elapsed_s = 0`, enters Infiltration and broadcasts `RoundPhaseChanged`.
 
 **Round timer and phases**
 4. The round clock runs on the server only. Clients display a replicated value and never advance phase or end the round themselves.
@@ -57,12 +57,14 @@ Survivors should feel a clock closing in: an orientation window that turns into 
 **Disconnect and reconnect (source M1 asks for handling; whole subsection proposed)**
 19. *Survivor disconnects* **(proposed)**: the server immediately drops any data drive or fuse they carry at their position (see `survivor-objectives.md`), removes their character from the world, and shows all players "[name]: connection lost". They have `reconnect_grace_s` = 60 to return. On reconnect they respawn at the position where they disconnected, in the same Healthy/Downed state and with the same down count. A Downed survivor's bleed-out timer keeps running while they are disconnected (designer decision, 2026-10-12); if it expires during grace they are Eliminated ("Bled out") at that moment, so disconnecting can never stall the round. If grace expires, they count as eliminated for win evaluation and are listed as "Disconnected" in results. No reconnect is accepted after grace expires.
 20. *Shapeshifter disconnects* **(proposed)**: its character is removed from the world, all ability cooldowns and its stun and immunity timers (Survivor Defense) keep counting down (designer decision, 2026-10-12, cross-review W11), the round clock keeps running, and all players see "The shapeshifter lost connection". If it reconnects within `reconnect_grace_s`, it respawns at its disconnect position in its true form; any disguise is lost **(proposed)**, and its observed-survivor list is kept (`borrowed-face.md`). If grace expires, the shapeshifter **forfeits and the survivors win** (designer decision, 2026-10-11): rage-quitting can never void a loss, and results show the reason "Shapeshifter forfeited". The other win checks keep running during its grace: if the deadline is reached while it is away, the monster still wins (rule 16) **(proposed)**. There is no AI or bot replacement, ever.
-21. *Everyone on one side disconnects*: the same rules apply per player. If all four survivors are past grace, the monster wins (rule 12).
+21. *Everyone on one side disconnects*: the same rules apply per player. If all survivors are past grace, the monster wins (rule 12).
 22. Every disconnect and reconnect is logged for Match Telemetry.
+
+*Host leaves* (`lobby-role-assignment.md` rule 19): on a listen server the host's process is the server, so rules 19–21 cannot apply to the host. If the host leaves, the session closes for every player, the round ends with no result recorded and no forfeit, and nobody returns to the lobby.
 
 **Results screen contents (Match Flow owns the data; HUD & Results Screen owns presentation)**
 23. *Outcome*: Survivors Win / Shapeshifter Wins, plus a reason: "Evidence escaped", "All survivors eliminated", "Evidence lost", "Evacuation deadline expired" or "Shapeshifter forfeited".
-24. *Survival*: for each survivor, one of Escaped (with drives carried, if any) / Eliminated (incl. "Bled out") / Did not escape / Disconnected, with downs taken and rescues performed. The shapeshifter's player name is revealed **(proposed)**.
+24. *Survival*: for each survivor, one of Escaped (with drives carried, if any) / Eliminated (incl. "Bled out") / Did not escape / Disconnected, with downs taken and rescues performed. The shapeshifter's player name is shown; roles are already public in the lobby (`lobby-role-assignment.md` rule 11).
 25. *Objective progress*: drives recovered (x/2), drives docked (x/2), fuses installed (x/2), evacuation activated (yes/no), drives extracted (x/2), and the round time of each completion.
 26. *Basic match stats*: match duration; monster takedowns, eliminations, lunges landed/missed, times stunned, form changes, False Signals and Blackouts used; survivor stuns landed and rescues completed.
 27. Results stay up for `results_duration_s` = 20 **(proposed)**, then everyone returns to the lobby.
@@ -71,7 +73,7 @@ Survivors should feel a clock closing in: an orientation window that turns into 
 
 | State | Entry Condition | Exit Condition | Behavior |
 |-------|----------------|----------------|----------|
-| Loading | Lobby hands off 5 players with roles | All 5 loaded → Infiltration; `load_timeout_s` exceeded → Cancelled | No clock; players frozen |
+| Loading | Lobby hands off the roster (4–6 players with roles) | All loaded → Infiltration; `load_timeout_s` exceeded → Cancelled | No clock; players frozen |
 | Infiltration | All loaded; `elapsed_s = 0` | `elapsed_s >= infiltration_end_s` → Investigation; terminal armed → Evacuation | Clock runs; all systems live |
 | Investigation | `elapsed_s >= infiltration_end_s` | `elapsed_s >= evac_start_s` OR terminal armed → Evacuation | Clock runs |
 | Evacuation | `elapsed_s >= evac_start_s` OR terminal armed **(proposed)** | Outcome final → Ended | Emergency mode signal to Scare Events |
@@ -85,7 +87,7 @@ Win checks run in Infiltration, Investigation and Evacuation. If the terminal is
 
 | System | Data in | Data out | Responsibility |
 |--------|---------|----------|----------------|
-| Lobby & Role Assignment | 5 players + roles | Return-to-lobby on Results/Cancelled | Lobby assigns roles; Match Flow never does |
+| Lobby & Role Assignment | Locked roster (4–6 players, roles, characters) | Return-to-lobby on Results/Cancelled | Lobby assigns roles; Match Flow never does |
 | Survivor Objectives | `ObjectiveProgressChanged` (terminal armed, evacuation activated, drives extracted, per-objective completion times) | `RoundPhaseChanged`; `SurvivorEscaped`; round end (objectives freeze) | Objectives owns "required evidence"; Match Flow owns the outcome |
 | Downing, Rescue & Elimination | `SurvivorDowned`, `SurvivorRescued`, `SurvivorEliminated` (incl. bleed-out), per-survivor down counts | Round end (freezes downs/rescues/bleed-out) | Downing owns survivor states; Match Flow counts eliminations |
 | Facility Map | Spawn points, exit volume | — | Map authors where the exit is |
@@ -143,7 +145,7 @@ Example: the second drive is Extracted at 500 s → the round ends no later than
 | Only Downed survivors left inside, drives not out | No "Evidence lost"; the round waits for bleed-out, then ends "All survivors eliminated" | Rule 13: Downed counts as inside |
 | Deadline reached while the shapeshifter is in reconnect grace | Monster wins, reason "Evacuation deadline expired" | Rule 20 (proposed) |
 | A drive carrier disconnects | Drive dropped at their position immediately | Team is not blocked for 60 s |
-| All four survivors disconnected inside grace | Round continues; monster wins when the last grace expires unless one returns | Rules 19, 21 |
+| All survivors disconnected inside grace | Round continues; monster wins when the last grace expires unless one returns | Rules 19, 21 |
 | A client's clock drifts | Client display corrects to the server value; the phase changes only on `RoundPhaseChanged` | Server authority |
 | Terminal armed during Infiltration | Phase goes straight to Evacuation | Phase rule 6 |
 | A Downed survivor's bleed-out expires at the deadline tick | Events in the tick are processed first, then the win check; either way the monster wins | Rule 16 |
@@ -153,10 +155,11 @@ Example: the second drive is Extracted at 500 s → the round ends no later than
 
 | System | Direction | Nature of Dependency |
 |--------|-----------|---------------------|
-| Lobby & Role Assignment | This depends on it | Needs 5 players with roles; returns players to it |
+| Lobby & Role Assignment | Bidirectional | Needs the locked roster (4–6 players, roles, characters); returns players to it tagged Ended or Cancelled (Cancelled does not advance the rotation) |
 | Survivor Objectives | Bidirectional | Reads terminal armed / evacuation activated / drives extracted / evidence rule; Objectives reads phase, escapes and round end |
 | Downing, Rescue & Elimination | Bidirectional | Reads eliminations (incl. bleed-outs) and down counts; Downing stops at round end |
 | Facility Map | This depends on it | Spawn points, exit volume |
+| First-Person Controller & Interaction | It depends on this | `RoundEnded` freezes movement and holds; `PlayerConnectionChanged` cancels holds; the Out state uses the spectator view (rule 10) |
 | Network Authority & Replication | This depends on it | Server clock, authority, disconnect detection |
 | Monster Abilities | It depends on this | Reads `RoundPhaseChanged` (Infiltration attack question); supplies stats |
 | Borrowed Face | Bidirectional | Supplies form-change stats; owns disguise restore on monster reconnect |
@@ -260,7 +263,7 @@ Not applicable: Match Flow has no character animation.
 - [ ] With the drives not out and only Downed survivors inside, the round does not end until the last bleeds out, then ends "All survivors eliminated".
 - [ ] Disconnecting the shapeshifter for more than 60 s ends the round as a survivor win, reason "Shapeshifter forfeited", on all clients; one that reconnects within 60 s appears in true form.
 - [ ] Disconnecting the shapeshifter at 8:30 with no drives out ends the round at 9:00 as a monster win, reason "Evacuation deadline expired", not a forfeit.
-- [ ] If one client fails to load within `load_timeout_s`, the round is cancelled, all 5 return to the lobby and no result is recorded.
+- [ ] If one client fails to load within `load_timeout_s`, the round is cancelled, all players return to the lobby and no result is recorded.
 - [ ] Arming the terminal at 1:00 moves all clients from Infiltration straight to Evacuation with one `RoundPhaseChanged`.
 - [ ] After both drives are Extracted at 8:00, eliminating every survivor still inside does not change the outcome, and the round ends no later than 8:45 (`post_escape_window_s`).
 - [ ] When the second drive is Extracted in the same tick as the deadline, the survivors win.

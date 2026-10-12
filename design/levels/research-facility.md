@@ -12,7 +12,7 @@
 - **Type**: Mixed: asymmetric 1v4 objective map (exploration, ambush, holdout). No combat in the conventional sense; no AI enemies of any kind.
 - **Estimated Play Time**: one round, `round_duration_s` = 540 (~9 min), owned by Match Flow.
 - **Difficulty**: N/A. Difficulty comes from the other humans.
-- **Prerequisite**: Lobby & Role Assignment has placed 4 survivors and 1 shapeshifter in the match.
+- **Prerequisite**: Lobby & Role Assignment has placed 3–5 survivors and 1 shapeshifter in the match (`lobby-role-assignment.md`).
 - **Status**: Layout (greybox spec for Milestone 1; untextured blockout, no art).
 - **Footprint**: 60 m x 40 m, single floor **(proposed)**.
 
@@ -84,7 +84,7 @@ Structure:
 +---------+-------------------------------------------------+
 ```
 
-Placement overlay (same grid). `S1-S4` survivor spawns · `M1-M3` shapeshifter spawn candidates · `d1-d6` data drive candidates · `f1-f7` fuse candidates · `P1-P3` fuse box candidates · `T1-T3` evacuation terminal candidates · `h1-h6` hiding spots · `c1-c4` cameras (`c-monitors` = viewing station) · `s` backup light switch.
+Placement overlay (same grid). `S1-S5` survivor spawns · `M1-M3` shapeshifter spawn candidates · `d1-d6` data drive candidates · `f1-f7` fuse candidates · `P1-P3` fuse box candidates · `T1-T3` evacuation terminal candidates · `h1-h6` hiding spots · `c1-c4` cameras (`c-monitors` = viewing station) · `s` backup light switch.
 
 ```
 +-----------------------------------------------+-----------+
@@ -149,7 +149,7 @@ Map rules (all **(proposed)** unless noted):
 
 Survivor objective flow. Selection and rules are owned by Survivor Objectives; this is the spatial route.
 
-1. Survivors spawn in A1 (S1-S4) and orient during Infiltration (0:00-2:00).
+1. Survivors spawn in A1 (S1-S5) and orient during Infiltration (0:00-2:00).
 2. Recover 2 data drives from active `d` points (mostly Zone A, possibly C3).
 3. Find 2 fuses at active `f` points and install them at the 2 active `P` fuse boxes in Zone B. Each install is noisy and alerts the shapeshifter to the general area (source).
 4. Carry drives to the active `T` terminal in Zone C and hold the area through the 15 s activation (`evac_activation_s`).
@@ -189,7 +189,7 @@ Combinations: 15 drive pairs x up to 21 fuse pairs x 3 fuse box pairs x 3 termin
 
 | ID | Role | Location | Notes |
 |----|------|----------|-------|
-| S1-S4 | Survivors | A1 Entry / Decon | One fixed group spawn **(proposed)**. A1 has three exits (A2, A3, H-S). |
+| S1-S5 | Survivors | A1 Entry / Decon | One fixed group spawn **(proposed)**; S5 is used only in 5-survivor rounds (designer decision, 2026-10-12: up to 6 players). Unused spawns stay empty. A1 has three exits (A2, A3, H-S). |
 | M1 | Shapeshifter | C3 Records Archive | One of M1-M3 chosen by the server per round **(proposed)** |
 | M2 | Shapeshifter | C5 Backup Control | |
 | M3 | Shapeshifter | B2 Power Room | |
@@ -432,6 +432,6 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | What do C5's "backup controls" do beyond per-room switches (zone light reset, camera power, nothing)? | SneakKestrel16 | Before Milestone 3 |
 | Does the shapeshifter spawn disguised, or must it observe someone first? (Borrowed Face) | SneakKestrel16 | Before Milestone 3 |
 | Can the shapeshifter use the C1 monitors? (Scare Events rule 2a already assumes any player, including the shapeshifter, can view one.) How does a disguised shapeshifter appear on a feed? | SneakKestrel16 | Before Milestone 3 |
-| Is a 60 x 40 m single floor the right size for 5 players, or too tight for hiding and deception? | SneakKestrel16 | Before Milestone 5 |
+| Is a 60 x 40 m single floor the right size for 4–6 players, or too tight for hiding and deception? | SneakKestrel16 | Before Milestone 5 |
 | Should survivors have more than one spawn group to vary the openings? | SneakKestrel16 | Before Milestone 5 |
 | Is 6 hiding spots the right density? | SneakKestrel16 | Before Milestone 5 |

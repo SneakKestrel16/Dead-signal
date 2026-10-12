@@ -21,3 +21,19 @@ Findings:
 - [ADVISORY] Player Fantasy and Tuning Knobs sections absent (advisory at `standard`; knob ranges live in Formulas).
 Reviewed-Content-Hash: design/gdd/first-person-controller.md 6c82d88e2342f7bbeb43187c18967e54f3069295
 Reviewed-Content-Hash: design/registry/entities.yaml ed63d1fc163b57e5d837b843b54f13b041c4bbcd
+
+## Review — 2026-10-12 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 5
+Summary: Re-review of the revision in 80114dd. Both prior blockers are resolved: the joint cap (max_survivor_sprint_mps 5.4, load-time asserted, with an AC) and the Holding rules (crouch input ignored while Holding, hold_range_tolerance_m 0.25). All prior recommended items about dodge variables, targeting, range hysteresis and missing ACs are also addressed; arithmetic in gait, chase-closing, chase-breaker and dodge formulas re-checked and correct. Remaining items are polish and sibling-GDD follow-ups.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Formulas, Gait speed joint cap: 5.4 is derived at r 0.3 only; never-caught threshold is (5.2 - r)/0.9, which is 5.39 at r 0.35 (inside the allowed radius range), so the cap should be derived from player_radius_m or lowered to 5.3.
+- [RECOMMENDED] Formulas variables tables: max_survivor_sprint_mps, hold_range_tolerance_m and intent_timeout_ms live in prose/registry but have no variable rows (range, source, description).
+- [RECOMMENDED] Dependencies: match-flow.md still does not name this system (one-directional); Network Authority & Replication and Accessibility Options GDDs do not exist; Facility Map is design/levels/research-facility.md, not a GDD.
+- [RECOMMENDED] Monster Abilities lines 138 and 298 still use a 4.5 m/s strafe and radius 0 (already an Open Question; rerun there).
+- [RECOMMENDED] Acceptance Criteria: sprint-cone AC at exactly 45 degrees and the cap AC at exactly 5.4 need an explicit epsilon/float tolerance; performance AC remains a placeholder budget.
+- [ADVISORY] Player Fantasy and Tuning Knobs sections absent (advisory at standard; knob ranges live in Formulas).
+Reviewed-Content-Hash: design/gdd/first-person-controller.md a48c79e03e581064281cf3ed4e4448a75b1aa274
+Reviewed-Content-Hash: design/registry/entities.yaml fa7c9a6cc3b62f60c70fc89463f1b5be66d749b3
