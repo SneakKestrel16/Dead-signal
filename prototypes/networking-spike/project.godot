@@ -1,0 +1,14 @@
+; Throwaway networking spike. Separate Godot project; prototypes/.gdignore hides it
+; from the main project.
+
+config_version=5
+
+[application]
+
+config/name="Dead Signal Networking Spike"
+run/main_scene="res://main.tscn"
+config/features=PackedStringArray("4.7")
+
+[physics]
+
+3d/physics_engine="Jolt Physics"

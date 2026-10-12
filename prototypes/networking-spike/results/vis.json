@@ -1,0 +1,63 @@
+{
+  "engine": "4.7.2-stable (official)",
+  "jitter_ms": 0.0,
+  "lat_ms_one_way": 0.0,
+  "loss": 0.0,
+  "mode": "vis",
+  "physics_engine": "Jolt Physics",
+  "tag": "vis",
+  "tick_hz": 60,
+  "vis": [
+    {
+      "label": "A visible only",
+      "phase": 1,
+      "server_x": 2.2
+    },
+    {
+      "client_x": 2.2,
+      "has_node": true,
+      "peer": "A",
+      "phase": 1
+    },
+    {
+      "client_x": -1.0,
+      "has_node": false,
+      "peer": "B",
+      "phase": 1
+    },
+    {
+      "label": "A and B visible",
+      "phase": 2,
+      "server_x": 4.0
+    },
+    {
+      "client_x": 4.0,
+      "has_node": true,
+      "peer": "A",
+      "phase": 2
+    },
+    {
+      "client_x": 4.0,
+      "has_node": true,
+      "peer": "B",
+      "phase": 2
+    },
+    {
+      "label": "B visible only (A revoked)",
+      "phase": 3,
+      "server_x": 5.81
+    },
+    {
+      "client_x": -1.0,
+      "has_node": false,
+      "peer": "A",
+      "phase": 3
+    },
+    {
+      "client_x": 5.81,
+      "has_node": true,
+      "peer": "B",
+      "phase": 3
+    }
+  ]
+}
