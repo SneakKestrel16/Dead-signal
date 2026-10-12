@@ -1,9 +1,26 @@
 # Godot — Current Best Practices
 
-Last verified: 2026-02-12 | Engine: Godot 4.6
+Last verified: 2026-10-11 (4.7 section); 2026-02-12 (rest) | Engine: Godot 4.7.2
 
 Practices that are **new or changed** since the model's training data (~4.3).
 This supplements (not replaces) the agent's built-in knowledge.
+
+## 4.6 → 4.7
+
+Source: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.7.html
+(fetched 2026-10-11). Only practice changes are listed here; the full table is
+in `breaking-changes.md`. New 4.7 *features* (as opposed to migration changes)
+are NOT SOURCEABLE yet — not stated in the migration guide; the 4.7 release
+notes would settle them.
+
+- **Typed-return overrides**: end every branch of an override of a typed method
+  with an explicit `return`; 4.7 inherits the return type.
+- **Packed-array properties**: do not rely on `prop[i] = x` firing the property
+  setter; reassign the whole array (`prop = arr`) when the setter must run.
+- **Input device checks**: test the event type (`event is InputEventMouse`) or
+  compare to `InputEvent.DEVICE_ID_MOUSE` / `DEVICE_ID_KEYBOARD`, never `0`.
+- **Area audio overrides**: set `AudioStreamPlayer` `area_mask` explicitly when
+  using `audio_bus_override` on `Area3D`; the default is now `0`.
 
 ## GDScript (4.5+)
 

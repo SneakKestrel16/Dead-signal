@@ -1,6 +1,6 @@
 # Godot — Deprecated APIs
 
-Last verified: 2026-02-12
+Last verified: 2026-10-11 (4.7 rows); 2026-02-12 (older rows)
 
 If an agent suggests any API in the "Deprecated" column, it MUST be replaced
 with the "Use Instead" column.
@@ -30,6 +30,9 @@ with the "Use Instead" column.
 | `Skeleton3D` signal `bone_pose_updated` | `skeleton_updated` | 4.3 | Renamed |
 | `AnimationPlayer.method_call_mode` | `AnimationMixer.callback_mode_method` | 4.3 | Moved to base class |
 | `AnimationPlayer.playback_active` | `AnimationMixer.active` | 4.3 | Moved to base class |
+| `RichTextLabel.UPDATE_WIDTH_IN_PERCENT` | `RichTextLabel.UPDATE_WIDTH_UNIT` | 4.7 | Renamed; `width_in_percent`/`height_in_percent` args became `width_unit`/`height_unit` |
+| `AudioEffectSpectrumAnalyzer.tap_back_pos` | — (removed) | 4.7 | No replacement listed in the migration guide |
+| `DisplayServer.AccessibilityLiveMode` | `AccessibilityServer.AccessibilityLiveMode` | 4.7 | Type of `Control.accessibility_live` |
 
 ## Patterns (Not Just APIs)
 
@@ -41,3 +44,4 @@ with the "Use Instead" column.
 | `Texture2D` in `Shader.set_default_texture_parameter()` / `get_default_texture_parameter()` | `Texture` base type | Changed in 4.4; the shading language's `sampler2D` / `texture()` did not change |
 | Manual post-process viewport chains | `Compositor` + `CompositorEffect` | Structured post-processing (4.3+) |
 | GodotPhysics3D for new projects | Jolt Physics 3D | Default since 4.6; better stability |
+| `event.device == 0` to detect mouse/keyboard | `InputEvent.DEVICE_ID_MOUSE` / `DEVICE_ID_KEYBOARD`, or the event type | Device IDs changed in 4.7 |

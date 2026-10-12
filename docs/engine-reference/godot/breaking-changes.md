@@ -1,8 +1,34 @@
 # Godot — Breaking Changes
 
-Last verified: 2026-02-12
+Last verified: 2026-10-11 (4.6 → 4.7 span); 2026-02-12 (older spans)
 
 Changes between Godot versions, focused on post-LLM-cutoff changes (4.4+).
+
+## 4.6 → 4.7 (~Jun 2026 — POST-CUTOFF, HIGH RISK)
+
+Source: https://docs.godotengine.org/en/stable/tutorials/migrating/upgrading_to_godot_4.7.html
+(fetched 2026-10-11). The guide lists no networking/multiplayer changes. Additive
+optional parameters are omitted here; see the guide.
+
+| Subsystem | Change | Details |
+|-----------|--------|---------|
+| GDScript | Overrides inherit the parent's typed return | An override of a method with a typed return now needs an explicit `return` (e.g. `return null`). Compile error until fixed. |
+| GDScript | Setting a packed-array element no longer calls the property setter | `arr_prop[i] = x` used to fire the whole property's setter; it no longer does. Behaviour change. |
+| Input | Mouse/keyboard device IDs no longer `0` | Compare `InputEvent.device` to `InputEvent.DEVICE_ID_MOUSE` / `InputEvent.DEVICE_ID_KEYBOARD`, or check the event type. |
+| Audio | `AudioStreamPlayer` `area_mask` default is `0` (was layer 1) | Projects using `audio_bus_override` on `Area3D` must set the mask back to layer 1. |
+| Audio | `AudioEffectSpectrumAnalyzer.tap_back_pos` removed | Source break. |
+| Physics (Jolt) | `WorldBoundaryShape3D.plane.d` sign inverted | Flip the sign to match 4.6 behaviour. |
+| Physics (Jolt) | `SoftBody3D` mass default 1 kg for whole body; `linear_stiffness` applied like Godot Physics | Retune `linear_stiffness` and `damping_coefficient`. |
+| Physics (Jolt) | `Area3D` now reports `SoftBody3D` overlaps | Adjust layers/masks to exclude unwanted overlaps. |
+| Physics 2D | `PhysicsServer2DExtension._body_set_shape_as_one_way_collision` gains `direction` | Breaks extension overrides. |
+| Rendering | `CanvasItem` lines drop the antialiasing feather | Lines look thinner; increase width. |
+| Rendering | `LinearToSRGB` visual shader no longer clamps to [0, 1] (Forward+/Mobile) | Behaviour change. |
+| Rendering | `rendering/reflections/sky_reflections/roughness_layers` default 7 → 8 | Behaviour change if left at default. |
+| Animation | `LookAtModifier3D.relative` default `true` → `false` | Behaviour change if left at default. |
+| UI | `RichTextLabel.ImageUpdateMask.UPDATE_WIDTH_IN_PERCENT` → `UPDATE_WIDTH_UNIT` | GDScript source break. `add_image`/`update_image` `width_in_percent`/`height_in_percent` become `width_unit`/`height_unit` (`RichTextLabel.ImageUnit`). |
+| UI | `Control.accessibility_live` type moves to `AccessibilityServer.AccessibilityLiveMode` | GDScript OK; C# break. |
+| Editor | `ResourceImporterDynamicFont.hinting` default 1 → 3; `EditorVCSInterface._commit` gains `amend` | |
+| Project | New projects default stretch mode `canvas_items`, aspect `expand` | Was `disabled` / `keep`. Existing projects keep their value. |
 
 ## 4.5 → 4.6 (Jan 2026 — POST-CUTOFF, HIGH RISK)
 

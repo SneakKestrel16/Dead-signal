@@ -1,0 +1,13 @@
+; Engine configuration file.
+; run/main_scene is unset until a scene exists; /dev-story or the developer sets it.
+
+config_version=5
+
+[application]
+
+config/name="Dead Signal"
+config/features=PackedStringArray("4.7", "Forward Plus")
+
+[rendering]
+
+renderer/rendering_method="forward_plus"
