@@ -202,7 +202,7 @@ The dodge_margin formula is defined as:
 
 **Example:** 4.0 / 3.2 = 1.25, so a walking strafe dodges. A crouched strafe at 2.0 does not: crouch trades the dodge for quiet.
 
-**Acceleration limit (inference):** the critical moment is about 0.37 s into the strafe, and 4.0 m/s leaves about 0.07 s of slack, so `accel_time_s` should stay at or below 0.1. To settle it, rerun the simulation with the strafe starting at 0.40 + `accel_time_s` / 2. The simulation differs from Monster Abilities' straight-line model; that GDD still has to rerun its own check (Open Questions).
+**Acceleration limit (inference):** the critical moment is about 0.37 s into the strafe, and 4.0 m/s leaves about 0.07 s of slack, so `accel_time_s` should stay at or below 0.1. To settle it, rerun the simulation with the strafe starting at 0.40 + `accel_time_s` / 2. Monster Abilities now uses this same steering model (designer decision, 2026-10-12).
 
 ### Interaction targeting and body geometry
 
@@ -363,7 +363,7 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 
 **Performance (proposed)**
 
-- [ ] **[I]** **GIVEN** 5 players moving, 2 Holding and 1 slowed, on the target server hardware, **WHEN** 600 server ticks are profiled, **THEN** the controller's server cost (movement, hold checks, ray casts) is ≤ 0.5 ms per tick at p95. Placeholder: no performance budget exists yet; technical-director pins it with the Network Authority ADR's tick rate.
+- [ ] **[I]** **GIVEN** 6 players moving (the `max_players` worst case, `lobby-role-assignment.md`), 2 Holding and 1 slowed, on the target server hardware, **WHEN** 600 server ticks are profiled, **THEN** the controller's server cost (movement, hold checks, ray casts) is ≤ 0.5 ms per tick at p95. Placeholder: no performance budget exists yet; technical-director pins it with the Network Authority ADR's tick rate.
 
 **Feel**
 
@@ -375,7 +375,7 @@ Not covered here: reconciliation smoothness (waits on the Network Authority ADR)
 
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
-| Monster Abilities' dodge example (lines 138, 142; AC at line 298) uses a 4.5 m/s strafe and zero radius. Update it to the 4.0 m/s walk strafe and `player_radius_m` 0.3, and rerun its straight-line check | SneakKestrel16 | Before Monster Abilities' next review | — |
+| Monster Abilities' dodge example (lines 138, 142; AC at line 298) uses a 4.5 m/s strafe and zero radius. Update it to the 4.0 m/s walk strafe and `player_radius_m` 0.3, and rerun its straight-line check | SneakKestrel16 | Before Monster Abilities' next review | Resolved 2026-10-12: updated; the straight-line model catches the strafe, so Monster Abilities adopts this GDD's steering pursuit model, which dodges (designer decision) |
 | False Signal footsteps need a gait for their audible range. Proposed: walk (6 m) | SneakKestrel16 | Before Monster Abilities' next review | — |
 | Does `accel_time_s` up to 0.1 s keep the dodge? Rerun the pursuit simulation with the strafe starting at 0.40 + `accel_time_s` / 2 | SneakKestrel16 | Before Milestone 3 | — |
 | Prediction and reconciliation method, and the controller's server performance budget | technical-director | Network Authority ADR | — |
