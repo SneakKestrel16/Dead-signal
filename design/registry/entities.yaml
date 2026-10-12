@@ -136,12 +136,14 @@ items:
       - design/gdd/monster-abilities.md
       - design/gdd/pings-and-callouts.md
       - design/levels/research-facility.md
-    required: 2
-    max_carried_per_survivor: 1   # (proposed)
+    required: 2   # both must be Extracted (carried out the exit) for a survivor win; decided 2026-10-12
+    # old value: 1 (changed by design/gdd/survivor-objectives.md: evidence is carried out, so one survivor must be able to carry both)
+    max_carried_per_survivor: 2   # (proposed)
     drops_on: [Downed, Eliminated, Disconnected]   # (proposed)
+    ejected_on: evacuation_activated   # (proposed) docked drives return as Dropped items at the terminal
     category: objective
     added: 2026-10-12
-    revised: ""
+    revised: 2026-10-12
 
   - name: fuse
     status: active
@@ -159,8 +161,9 @@ items:
     added: 2026-10-12
     revised: ""
 
+  # Deprecated 2026-10-12: replaced by `taser` (designer decision; fits indoors better).
   - name: arc_flare
-    status: active
+    status: deprecated
     source: design/gdd/survivor-defense.md
     referenced_by:
       - design/gdd/survivor-defense.md
@@ -172,6 +175,23 @@ items:
     charges: 2   # (proposed)
     stun_range_m: 5   # (proposed)
     stun_cone_deg: 40   # (proposed)
+    added: 2026-10-12
+    revised: 2026-10-12
+
+  - name: taser
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/scare-events.md
+    category: stun_item   # item type decided 2026-10-12; values (proposed)
+    charges: 2   # cartridges (proposed)
+    stun_range_m: 5   # (proposed)
+    stun_aim_tolerance_deg: 10   # (proposed) aimed single shot; hits the first body in its path
+    friendly_shock_s: 1.0   # (proposed)
     added: 2026-10-12
     revised: ""
 
@@ -432,6 +452,17 @@ constants:
     revised: ""
 
   # source
+  - name: bleedout_s
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/match-flow.md
+    value: 60   # (proposed) bleed-out itself decided 2026-10-12; pauses during an active rescue
+    unit: seconds
+    added: 2026-10-12
+    revised: ""
+
   - name: rescue_duration_s
     status: active
     source: design/gdd/downing-and-rescue.md

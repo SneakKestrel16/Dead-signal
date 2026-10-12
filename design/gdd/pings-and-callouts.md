@@ -68,7 +68,10 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 22. **True form**: the monster cannot ping or call out **(proposed)**. It has no teammate identity to speak as.
 23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**.
 24. Duplicate identity is a fair clue: if the monster and the real survivor it is copying both ping or call out, both appear with the same name. The server does not hide or merge them **(proposed)**.
-25. Monster voice: open question from the source brief (proximity voice, preset lines only, or both). Options and the proposed prototype default are in Open Questions; until decided, the monster has preset lines (rule 21) and follows rule 18 for voice.
+25. **Monster voice: both** (designer decision, 2026-10-12). The monster has (a) **preset lines**: while Disguised, the authored callouts in the borrowed survivor's voice set (rule 21); and (b) **proximity voice**: its own real voice, under the same lobby setting and range as survivors (rules 18–19), so voice availability is never a role tell.
+    - While Disguised, its proximity voice is its own, unaltered **(proposed)**. The game never changes it to sound like the borrowed survivor (the source rules out voice-imitation software). A voice that does not match the face is a fair tell, and a quiet monster leaning on preset lines is a fair bluff.
+    - In True Form or while Transforming, its proximity voice still works but passes through a distortion filter **(proposed)**, so a monster that speaks gives its position away.
+    - With proximity voice Off in the lobby, the monster has preset lines only (while Disguised), like survivors.
 
 **False Signal fake callout** (False Signal itself is owned by Monster Abilities; this section defines only how its fake callout relates to a real one) **(proposed)**
 
@@ -155,7 +158,8 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Survivor is rescued mid-callout | Line finishes playing | Presentation only |
 | Two callouts overlap at one listener | Both play; feed shows both in arrival order | No information silently dropped |
 | Survivor warning-pings a teammate who is real | Allowed; marker follows them | Distrust is part of play |
-| Proximity voice On, monster player speaks in own voice while disguised | Governed by the open monster-voice decision | Source brief leaves it open |
+| Proximity voice On, monster player speaks in own voice while disguised | Heard as the player's real voice, coming from the disguised body | Rule 25 (decided 2026-10-12); the mismatch is the tell |
+| Monster speaks in true form | Heard through the distortion filter from its position | Rule 25 (proposed filter) |
 | Player disconnects with active markers | Markers expire normally | No state to clean up beyond timers |
 
 ## Dependencies
@@ -273,7 +277,7 @@ Light and instant. The player keeps full movement control while pinging or using
 
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
-| Monster voice: proximity voice, preset lines only, or both? Proposed prototype default: preset lines while disguised; proximity voice follows the same lobby setting as survivors; muted in true form. Test all three in closed playtest. | SneakKestrel16 | Before Milestone 4 | |
+| Monster voice: proximity voice, preset lines only, or both? | SneakKestrel16 | Before Milestone 4 | **Decided 2026-10-12: both** (rule 25). The true-form distortion filter is proposed |
 | Does the monster receive survivor pings (proposed yes, as a member of the group), or only those it could see in-world? | SneakKestrel16 | Before Milestone 4 | |
 | Does each survivor slot have its own voice set (needed for fake callouts to imitate a specific teammate)? | SneakKestrel16 | Before Milestone 4 | |
 | Should a fake callout carry any authored tell beyond rule 28 (e.g. faint signal distortion), or rely only on position and verification? | SneakKestrel16 | Before Milestone 3 | |

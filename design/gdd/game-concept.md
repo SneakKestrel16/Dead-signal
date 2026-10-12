@@ -127,7 +127,8 @@ face, plants a false signal, or waits for someone to be alone.
 
 One round: infiltration (0:00–2:00), investigation (2:00–7:00), evacuation
 (final two minutes). Survivors recover 2 data drives, install 2 fuses, then hold
-the evacuation terminal for 15 seconds and escape.
+the evacuation terminal for 15 seconds, then carry both drives out through
+the exit.
 
 ### Session-Level (30-120 minutes)
 
@@ -260,8 +261,8 @@ human; abandoned research-facility horror.
 
 - Engine and networking stack.
 - Dedicated servers vs. listen-server hosting.
-- Exact defensive item types and starting charges.
-- Whether the monster can use proximity voice, preset lines only, or both.
+- Exact defensive item types and starting charges. *Item decided 2026-10-12: a Taser; cartridge count still to tune.*
+- ~~Whether the monster can use proximity voice, preset lines only, or both.~~ *Decided 2026-10-12: both.*
 - Final tuning for round length, attack recovery and cooldowns.
 - Target platform, accessibility scope and visual performance budget.
 

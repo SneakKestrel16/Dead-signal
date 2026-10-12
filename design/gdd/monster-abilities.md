@@ -153,7 +153,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | Stun lands during wind-up | No dash, no hit; cooldown starts | Stun interrupts attacks (source) |
 | Client shows a hit, server says miss | Server wins; logged as dispute | Never trust client damage |
 | Survivor becomes Downed by another cause mid-dash | Not a valid target | Hit checks current state |
-| Lunge while Disguised | Rejected | Requires True Form (proposed) |
+| Lunge while Disguised | Rejected | Requires True Form (kept for now; playtest) |
 | False Signal aimed through a wall | Allowed if within range; sound plays there | Sound travels; sight verifies |
 | False Signal callout as an unobserved survivor | Rejected | Uses observed list |
 | Blackout on the evacuation zone | Allowed unless Facility Map flags it not blackout-able | Map owns zone flags |
@@ -283,7 +283,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 | Are the Lunge values (0.6 s wind-up, 4 m dash, 1.2 m radius, 60° cone, 0.5×/1.5 s miss slow) right? | SneakKestrel16 | Before Milestone 3 | — |
 | Does a fake callout look exactly like a real one (HUD text, marker)? | SneakKestrel16 | Before Milestone 3 | Owned by Pings & Callouts (rules 26–29); this doc follows it |
 | Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | Open |
-| Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 3 | See Borrowed Face |
+| Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12); test in the M5 playtest.** Test plan lives in Borrowed Face's Open Questions |
 | Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map |
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | — |
 | Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | Network Authority ADR |

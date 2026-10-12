@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-12 (bleed-out decided)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -12,7 +12,8 @@ This system decides what happens to a survivor when the shapeshifter lands a
 takedown: the first completed takedown downs them, a second eliminates them.
 Between the hit and the down sits a short "takedown commit" that teammates can
 interrupt, and a downed survivor can crawl, call for help and be rescued with a
-risky six-second interaction, so no single mistake decides the match.
+risky six-second interaction before they bleed out, so no single mistake decides
+the match.
 
 > **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Monster Abilities, First-Person Controller & Interaction, Survivor Defense, Survivor Objectives, Match Flow & Win Conditions`
 
@@ -26,7 +27,8 @@ cancel the takedown entirely. If the commit completes, a survivor who has never
 been downed becomes Downed; a survivor who has already been downed and rescued
 is Eliminated (`downs_to_eliminate` = 2). A Downed survivor crawls slowly and can
 call for help; a teammate who holds a six-second rescue brings them back to their
-feet, one down closer to elimination. The server owns every state change.
+feet, one down closer to elimination. A Downed survivor nobody reaches in time
+bleeds out and is Eliminated. The server owns every state change.
 
 ## Player Fantasy
 
@@ -94,7 +96,14 @@ someone is truly alone.
      `callout_repeat_block_s` = 8 s **(proposed; values owned by Pings & Callouts)**;
    - is shown to living survivors with a "Downed" marker at their position on the
      HUD **(proposed)**. The monster gets no HUD marker; it must hear or see them.
-   - has no bleed-out timer **(proposed; see Open Questions)**.
+   - has a **bleed-out timer** (designer decision, 2026-10-12): a Downed survivor
+     who is not rescued within `bleedout_s` = 60 s **(proposed value)** is
+     Eliminated, with reason "Bled out", and `SurvivorEliminated` is emitted.
+     `downs_taken` becomes `downs_to_eliminate`. The timer **pauses** while a
+     rescue is actively being held on them and resumes when the hold stops; it
+     never resets during the same Downed state **(proposed)**. Bleed-out only
+     applies to a first down, because a second down eliminates directly
+     (rule 5).
 7. **Rescue.** A Healthy survivor within `rescue_range_m` = 1.5 m **(proposed)**
    of a Downed survivor, with line of sight, may hold Rescue.
    - Completing `rescue_duration_s` = 6 s of held progress rescues them.
@@ -123,10 +132,11 @@ someone is truly alone.
    marker **(proposed)**. Their unused defensive item is lost (Survivor Defense).
 10. **All living survivors Downed.** Downed is not Eliminated (source: the
     monster wins only when all survivors are eliminated). If every
-    non-eliminated, non-escaped survivor is Downed at once, the round continues:
-    nobody can rescue, and the monster must still eliminate each one, which it
-    cannot do by lunging a Downed survivor (rule 3), or wait for the evacuation
-    deadline (Match Flow). An automatic "team wipe" is an Open Question, not a rule.
+    non-eliminated, non-escaped survivor is Downed at once, nobody can rescue,
+    so each one bleeds out (rule 6) and is Eliminated. When the last survivor is
+    Eliminated, Match Flow ends the round at once as a monster win (designer
+    decision, 2026-10-12). There is no separate team-wipe rule; bleed-out
+    replaces it, so the round can no longer stall until the deadline.
 
 ### States and Transitions
 
@@ -134,8 +144,8 @@ someone is truly alone.
 |-------|----------------|----------------|----------|
 | Healthy (`downs_taken` 0 or 1) | Round start; rescue complete; commit cancelled | Valid `SurvivorHit` → Seized | Full movement and interaction. Ineligible for takedown while in grace |
 | Seized | Valid `SurvivorHit` on an eligible Healthy survivor | Commit completes → Downed or Eliminated; `MonsterStunned` on monster → Healthy | Rooted, no input except camera; lasts `takedown_commit_s` |
-| Downed | Commit completes with `downs_taken` becoming 1 | Rescue completes → Healthy | Crawl, Call for Help, pings. Cannot be hit |
-| Eliminated | Commit completes with `downs_taken` becoming 2 | None (end of round) | Spectator |
+| Downed | Commit completes with `downs_taken` becoming 1 | Rescue completes → Healthy; `bleedout_s` elapses → Eliminated | Crawl, Call for Help, pings. Cannot be hit. Bleed-out timer runs (pauses during an active rescue) |
+| Eliminated | Commit completes with `downs_taken` becoming 2; or bleed-out | None (end of round) | Spectator |
 
 Monster-side state owned here: **Committing** (entry: valid `SurvivorHit`; exit:
 commit complete or `MonsterStunned`). `MonsterStunned` itself is owned by
@@ -192,6 +202,23 @@ Example: a rescue is interrupted at 4.0 s; a teammate resumes 3 s later →
 4.0 − 1.5 = 2.5 s stored, 3.5 s left to hold. Expected total rescue time: 6 s
 uninterrupted; never more than 6 s of held progress from zero.
 
+### Bleed-out
+
+```
+while Downed and not being actively rescued:  bleed_elapsed_s = bleed_elapsed_s + dt
+while Downed and being actively rescued:      bleed_elapsed_s unchanged
+Eliminated when bleed_elapsed_s >= bleedout_s
+```
+
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| bleed_elapsed_s | float s | 0–bleedout_s | server state | Starts at 0 on entering Downed |
+| bleedout_s | float s | 30–120 | proposed 60 | Time a Downed survivor survives unrescued |
+
+Example: downed at 200 s, a teammate holds a rescue from 230 s to 233 s (interrupted),
+nobody else comes → bleed_elapsed reaches 60 s at 263 s → Eliminated at 263 s.
+Worst-case stall with everyone Downed: `bleedout_s` (60 s), down from "until the deadline".
+
 ### Crawl speed
 
 ```
@@ -224,6 +251,10 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | All living survivors Downed, one has escaped | Escaped survivors are not counted; Match Flow evaluates win | Escape state is Match Flow's |
 | Round timer expires mid-commit or mid-rescue | All timers freeze; Match Flow decides the outcome | Round end overrides |
 | Monster attempts a lunge on a survivor in grace | Not a valid target; Monster Abilities treats it as no hit | Grace prevents instant re-takedown |
+| Bleed-out would expire while a rescue is being held | Cannot happen: the timer is paused during an active hold | Rescue in progress always gets its chance |
+| Rescue completes on the same tick the bleed-out expires | Bleed-out is paused during the hold, so the rescue wins | Rule 6 |
+| Every living survivor is Downed | Each bleeds out on their own timer; the round ends when the last is Eliminated | Rule 10; decided 2026-10-12 |
+| Downed survivor bleeds out while carrying nothing near the exit | Eliminated; Downed survivors cannot escape | Match Flow escape rule |
 
 ## Dependencies
 
@@ -252,6 +283,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | rescue_decay_rate | 0.5 (proposed) | 0–1 | Interruptions hurt more | Partial rescues nearly free to resume |
 | rescue_range_m | 1.5 (proposed) | 1–2.5 | Easier, sloppier rescues | Fiddly positioning |
 | crawl_speed_mult | 0.25 (proposed) | 0.15–0.4 | Downed can reach safety | Downed nearly static |
+| bleedout_s | 60 (proposed; bleed-out itself decided) | 30–120 | More time to organise rescues; slower stalls | Downs become near-eliminations; rescues rushed |
 
 ## Visual/Audio Requirements
 
@@ -261,6 +293,8 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | Commit cancelled by stun | Victim released, stumbles free | Stun crack + release gasp | MVP |
 | Downed | Victim drops; desaturated, low camera for victim | Collapse + heartbeat for victim | MVP |
 | Call for Help | Brief directional marker for survivors | Directional voice cry | MVP |
+| Bleed-out running | Draining ring on the Downed marker; victim's vignette darkens as it runs out | Heartbeat slows toward the end | MVP |
+| Bled out | Same as Eliminated | Same final sting | MVP |
 | Rescue in progress | Kneel animation; progress ring for both | Low, quiet effort loop | MVP |
 | Rescued | Stand-up animation; roster shows "Wounded" | Short relief cue | MVP |
 | Eliminated | Body collapses; spectator transition | Distinct final sting (respects reduced volume) | MVP |
@@ -313,6 +347,7 @@ instant kill. Anti-reference: one-hit deaths with no window.
 |-------------|-----------------|-----------------|-----------|
 | Teammate state (Healthy / Wounded / Downed / Eliminated) | Survivor roster | On change | Survivors only |
 | Downed teammate marker | World marker | Continuous | Living survivors only |
+| Bleed-out remaining | Ring on the Downed marker; victim's own HUD | Per tick | Living survivors and the victim; not the monster **(proposed)** |
 | Rescue progress | Centre ring, both players | Per tick | During rescue |
 | Own Seized/Downed state | Full-screen vignette | On change | Victim |
 
@@ -336,7 +371,9 @@ instant kill. Anti-reference: one-hit deaths with no window.
 - [ ] Holding Rescue for 6.0 s (±1 tick) uninterrupted rescues; releasing at 4.0 s and resuming 3.0 s later needs 3.5 s more.
 - [ ] A client sending a forged "rescue complete" or "survivor downed" message causes no state change.
 - [ ] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
-- [ ] When all living survivors are Downed at once, none is Eliminated automatically and the round continues until the deadline or another rule ends it.
+- [ ] A Downed survivor left alone is Eliminated after 60 s (±1 tick) with reason "Bled out", on all 5 clients.
+- [ ] Holding a rescue pauses the bleed-out timer; releasing resumes it from the same value.
+- [ ] When all living survivors are Downed and nobody is rescued, each is Eliminated on their own bleed-out timer, and the round ends with "All survivors eliminated" the moment the last one is.
 - [ ] After a hit whose commit completes or is cancelled at time T, Monster Abilities accepts the next lunge no earlier than T + `lunge_cooldown_s` (10 s).
 - [ ] Every value in Tuning Knobs is loaded from data, not hardcoded.
 
@@ -345,9 +382,9 @@ instant kill. Anti-reference: one-hit deaths with no window.
 | Question | Owner | Deadline | Resolution |
 |----------|-------|----------|-----------|
 | Is `takedown_commit_s` 1.5 s and victim-cannot-act the right shape for the "commit" the source describes? | SneakKestrel16 | Before Milestone 2 | |
-| Should Downed survivors bleed out after a time limit? | SneakKestrel16 | Before Milestone 2 | Proposed: no bleed-out |
-| Should the team-wipe rule exist here, or should Match Flow handle it? | SneakKestrel16 | Before Milestone 2 | |
-| Suggestion (not adopted; conflicts with source "all survivors eliminated"): a team wipe, where if every living survivor is Downed at once, all are Eliminated after `wipe_delay_s` = 3 s (proposed). Without it, or a bleed-out, an all-Downed team stalls until the deadline because Downed survivors cannot be hit. | SneakKestrel16 | Before Milestone 2 | Match Flow has the matching question |
+| Should Downed survivors bleed out after a time limit? | SneakKestrel16 | Before Milestone 2 | **Decided 2026-10-12: yes.** Duration `bleedout_s` = 60 s is proposed; tune in playtest |
+| Is a team-wipe rule needed when everyone is Downed? | SneakKestrel16 | Before Milestone 2 | **Resolved 2026-10-12:** no; bleed-out eliminates them and the round ends when everyone is eliminated |
+| Should the bleed-out timer pause during an active rescue, and should the monster see it? | SneakKestrel16 | Before Milestone 2 | Proposed: pauses; monster does not see it |
 | Can the disguised monster fake a rescue animation (deception) without progress? | SneakKestrel16 | Before Milestone 3 | Proposed: no |
 | Does the commit force the monster's true form, or does the disguise drop earlier at lunge wind-up? | SneakKestrel16 | Before Milestone 3 | Coordinate with Borrowed Face |
 | Should "Wounded" (one down) be visible on the survivor model, or only on the roster? | SneakKestrel16 | Before Milestone 4 | |

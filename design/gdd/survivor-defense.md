@@ -32,7 +32,7 @@ them makes a survivor permanently safe. The server validates every use.
 ## Player Fantasy
 
 **Survivor:** "I'm not helpless." You can't fight it, but you can buy seconds:
-the flare that saves a friend mid-grab, the locker you slip into as footsteps
+the taser shot that saves a friend mid-grab, the locker you slip into as footsteps
 pass, the barricade that holds just long enough.
 
 **Shapeshifter:** survivors' tools are real but finite. You bait out stuns,
@@ -65,23 +65,28 @@ tools, they're yours.
 6. A disguised monster carries a flashlight cosmetically like the survivor it
    copies **(proposed; Borrowed Face owns appearance)**.
 
-#### Stun item (prototype: Arc Flare) — all values (proposed)
+#### Stun item (prototype: Taser) — item type decided 2026-10-12; values (proposed)
 
-7. **Arc Flare** **(proposed)**: a handheld flash-discharge device, the single
-   prototype stun item. `stun_item_charges` = 2 per survivor **(proposed)**;
-   no pickups or refills in the prototype **(proposed)**.
-8. **Use:** press to fire. After `stun_use_delay_s` = 0.2 s **(proposed)** the
-   server checks for the monster within a cone of `stun_range_m` = 5 m and
-   `stun_cone_deg` = 40° **(proposed)** with line of sight. Each use consumes one
-   charge whether or not it hits **(proposed)**. Reuse delay
-   `stun_item_reuse_s` = 1 s **(proposed)**.
+7. **Taser** (designer decision, 2026-10-12: a taser fits an indoor research
+   facility better than a flare): a dart-firing stun gun, the single prototype
+   stun item. Each charge is one cartridge. `stun_item_charges` = 2 cartridges
+   per survivor **(proposed)**; no pickups or refills in the prototype
+   **(proposed)**.
+8. **Use:** press to fire one cartridge. After `stun_use_delay_s` = 0.2 s
+   **(proposed)** the server traces the shot from the survivor's view: range
+   `stun_range_m` = 5 m **(proposed)**, with a small aim tolerance of
+   `stun_aim_tolerance_deg` = 10° **(proposed)** so latency does not punish a
+   fair aim. The shot hits the **first** body in its path (monster or survivor)
+   with line of sight **(proposed)**; a body in front shields anyone behind it.
+   Each use consumes one cartridge whether or not it hits **(proposed)**. Reuse
+   delay `stun_item_reuse_s` = 1 s **(proposed)**.
 9. **Valid target:** the monster in any form (disguised or true form) **(proposed)**. If the
-   monster is in the cone, unstunned and not immune, the server applies
+   shot's first hit is the monster, unstunned and not immune, the server applies
    MonsterStunned and emits `MonsterStunned`.
-10. **Immune target:** if the monster is immune, the charge is still consumed
+10. **Immune target:** if the monster is immune, the cartridge is still consumed
     and every client shows a "resisted" spark **(proposed)**.
-11. **Survivor in the cone (friendly fire):** a real survivor caught in the cone
-    is dazzled for `dazzle_s` = 1 s (vision whiteout, 30% slow, no root)
+11. **Survivor hit (friendly fire):** a real survivor hit by the shot is shocked
+    for `friendly_shock_s` = 1 s (30% slow, camera jitter, no root, no whiteout)
     **(proposed)**. It never downs, damages or interrupts a rescue. The firer's
     local feedback is identical whether they hit a survivor or a disguised
     monster **(proposed)**, so a stun is not a free identity test; what the
@@ -155,7 +160,7 @@ tools, they're yours.
 
 #### Starting kit
 
-29. Each survivor starts with 1 flashlight + 1 Arc Flare with 2 charges
+29. Each survivor starts with 1 flashlight + 1 Taser with 2 cartridges
     **(proposed)**. The monster has no items. No other items exist in the
     prototype **(proposed)**.
 
@@ -166,7 +171,7 @@ tools, they're yours.
 | State | Entry Condition | Exit Condition | Behavior |
 |-------|----------------|----------------|----------|
 | Normal | Round start; immunity ends | Valid stun → Stunned | Full kit |
-| Stunned | Valid Arc Flare hit while Normal | `stun_duration_s` elapses → Immune | Rooted then slowed; no attacks, abilities, transform, interact |
+| Stunned | Valid Taser hit while Normal | `stun_duration_s` elapses → Immune | Rooted then slowed; no attacks, abilities, transform, interact |
 | Immune | Stun ends | `stun_immunity_s` elapses or lunge wind-up starts → Normal | Full kit; stun hits are "resisted" |
 
 **Hiding spot:** Empty → Entering (1 s) → Occupied → Exiting (1 s) → Empty;
@@ -185,10 +190,10 @@ Closed.
 | Borrowed Face | — | `MonsterStunned` (cancels transform; stun-while-disguised presentation owned there) |
 | Facility Map | Hiding spot and barricadable door placement, backup switches | — |
 | Survivor Objectives | — | Hidden/item-using survivors cannot interact with objectives |
-| First-Person Controller & Interaction | Hold-to-interact pattern | Movement lock/slow for dazzle and stun |
+| First-Person Controller & Interaction | Hold-to-interact pattern | Movement lock/slow for friendly shock and stun |
 | Scare Events | — | Door bursts on barricade break may trigger a scare (owned there) |
 | HUD & Results Screen | — | Charges, stun feedback, barricade/hide progress, stun stats |
-| Match Telemetry | — | Stun attempts, hits, resists, friendly dazzles, searches, barricade breaks |
+| Match Telemetry | — | Stun attempts, hits, resists, friendly shocks, searches, barricade breaks |
 
 ## Formulas
 
@@ -228,15 +233,15 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 |----------|------------------|-----------|
 | Two survivors stun on the same tick | First processed applies the stun; second is "resisted"; both charges consumed | Immunity applies from the first stun |
 | Stun fired while the monster is mid-transformation | Transformation cancelled; monster stunned | Source: transform cannot escape a stun |
-| Stun hits monster and a survivor in the same cone | Monster stunned, survivor dazzled | Each target resolved independently |
+| A survivor stands between the shooter and the monster | The survivor is shocked; the monster is not stunned | The shot hits the first body in its path |
 | Monster Searches the spot a survivor is entering | Entry completes first, then the search ejects | Search resolves on completion |
 | Survivor hides while being lunged at | Entry takes 1 s; the survivor is targetable until hidden | No instant escape |
 | Downed survivor inside a hiding spot | Cannot happen; hiding requires Healthy. A hidden survivor cannot be hit | Downing owns state |
 | Barricade completes while monster is in the doorway | Barricade fails; door must be closed and clear | No trapping the monster |
-| Arc Flare used at 0 charges | Input ignored, empty click | Server checks charges |
+| Taser used with 0 cartridges | Input ignored, empty click | Server checks charges |
 | Monster stunned during Blackout | Blackout continues | Placed effects are independent |
 | Monster immune and a lunge wind-up starts | Immunity ends; next stun applies | Re-engaging is punishable |
-| Client reports a stun hit | Ignored; server runs its own cone check | Server authority |
+| Client reports a stun hit | Ignored; server runs its own shot trace | Server authority |
 
 ## Dependencies
 
@@ -263,9 +268,9 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | stun_root_s | 1.0 (proposed) | 0.5–2.0 | Harder chase after stun | Monster recovers fast |
 | stun_immunity_s | 6 (proposed) | 4–10 | Less stun-lock; double stuns wasted | Chain-stun risk |
 | stun_range_m | 5 (proposed) | 3–7 | Easier stuns, safer rescues | Must be very close |
-| stun_cone_deg | 40 (proposed) | 20–60 | Forgiving aim; more friendly fire | Precise aim needed |
+| stun_aim_tolerance_deg | 10 (proposed) | 0–20 | Forgiving aim under latency | Pure aim; more misses |
 | stun_use_delay_s | 0.2 (proposed) | 0–0.5 | Harder to react to lunges | Instant reaction |
-| dazzle_s | 1.0 (proposed) | 0.5–1.5 | Misfires punished more | Misfires near free |
+| friendly_shock_s | 1.0 (proposed) | 0.5–1.5 | Misfires punished more | Misfires near free |
 | hide_transition_s | 1.0 (proposed) | 0.5–2.0 | Hiding needs planning | Panic-hide too easy |
 | hide_quiet_s | 20 (proposed) | 10–40 | Longer safe hides | Hiding barely useful |
 | search_duration_s | 1.5 (proposed) | 0.5–3.0 | Searches costly for monster | Spots near useless |
@@ -278,10 +283,10 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Event | Visual Feedback | Audio Feedback | Priority |
 |-------|----------------|---------------|----------|
 | Flashlight on/off | Visible beam to all | Click | MVP |
-| Arc Flare fire | Bright burst (reduced-flash variant required) | Electric crack | MVP |
+| Taser fire | Darts and wires, short blue arc at the target (reduced-flash variant required) | Pop of the cartridge, then electric crackle | MVP |
 | Monster stunned | Stagger animation; true-form treatment owned by Borrowed Face | Monster pain cry | MVP |
 | Stun resisted | Small spark, no stagger | Dull fizz | MVP |
-| Survivor dazzled | Whiteout fade (reduced-flash variant) | Ringing | MVP |
+| Survivor shocked | Camera jitter, brief blue edge (reduced-motion/flash variant) | Crackle and grunt | MVP |
 | Hide enter/exit | Door motion | Soft creak | MVP |
 | Long-hide cue | — | Breathing/creak every 5 s | Vertical Slice |
 | Search | Monster opens spot | Door rattle | MVP |
@@ -291,7 +296,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 
 ### Feel Reference
 
-The Arc Flare should feel like Dead by Daylight's flashlight save: a
+The Taser should feel like Dead by Daylight's flashlight save: a
 high-skill, high-reward timing play. Anti-reference: a spammable weapon that
 keeps the monster permanently stuck.
 
@@ -299,7 +304,7 @@ keeps the monster permanently stuck.
 
 | Action | Max Input-to-Response Latency (ms) | Frame Budget (at 60fps) | Notes |
 |--------|-----------------------------------|------------------------|-------|
-| Arc Flare fire (local burst) | 50 | 3 | Local effect immediate; stun confirmed by server |
+| Taser fire (local shot) | 50 | 3 | Local effect immediate; stun confirmed by server |
 | Flashlight toggle | 50 | 3 | Predicted locally |
 | Hide / barricade start | 100 | 6 | Progress predicted, server confirms |
 
@@ -307,21 +312,21 @@ keeps the monster permanently stuck.
 
 | Animation | Startup Frames | Active Frames | Recovery Frames | Feel Goal | Notes |
 |-----------|---------------|--------------|----------------|-----------|-------|
-| Arc Flare | 12 (0.2 s) | 3 | 30 | Snappy, punchy | |
+| Taser | 12 (0.2 s) | 3 | 30 | Snappy, punchy | |
 | Monster stagger | 0 | 60 root | 60 slowed | Clear, short | Totals `stun_duration_s` |
 
 ### Impact Moments
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |-------------|--------------|-------------------|---------------|
-| Flash bloom | 150 | Burst at flare origin | Yes (reduced flash) |
+| Arc flash | 150 | Brief arc at the target | Yes (reduced flash) |
 | Camera impact (monster) | 200 | Jolt on stun | Yes |
 
 ### Weight and Responsiveness Profile
 
-- **Weight**: flare is light and instant; hide and barricade are deliberate holds.
+- **Weight**: the taser is light and instant; hide and barricade are deliberate holds.
 - **Player control**: survivors keep full control; the monster loses it for 1 s.
-- **Failure texture**: a missed or resisted stun must clearly show why (out of cone, immune).
+- **Failure texture**: a missed or resisted stun must clearly show why (missed, blocked by a body, out of range, immune).
 
 ### Feel Acceptance Criteria
 
@@ -332,7 +337,7 @@ keeps the monster permanently stuck.
 
 | Information | Display Location | Update Frequency | Condition |
 |-------------|-----------------|-----------------|-----------|
-| Arc Flare charges | Survivor HUD item slot | On change | Survivors |
+| Taser cartridges | Survivor HUD item slot | On change | Survivors |
 | Stun/immunity remaining | Monster HUD | Per tick | Monster while stunned/immune |
 | Hide/barricade/break progress | Centre ring | Per tick | During hold |
 | Stun hits/resists per player | Results screen | End of round | All |
@@ -352,7 +357,7 @@ keeps the monster permanently stuck.
 
 ## Acceptance Criteria
 
-- [ ] An Arc Flare fired at the monster in range, in cone and with line of sight applies a 2.0 s stun and emits `MonsterStunned`; out of range or blocked, nothing happens and one charge is consumed.
+- [ ] A Taser shot whose first hit is the monster within 5 m applies a 2.0 s stun and emits `MonsterStunned`; out of range, missed, or blocked by a survivor, the monster is not stunned and one cartridge is consumed.
 - [ ] A stun during lunge wind-up produces no `SurvivorHit`; a stun during a takedown commit frees the victim.
 - [ ] A second stun within `stun_immunity_s` after a stun ends is "resisted" and does not stun.
 - [ ] Each survivor starts with exactly 2 charges; a third fire attempt does nothing.
@@ -366,10 +371,10 @@ keeps the monster permanently stuck.
 
 | Question | Owner | Deadline | Resolution |
 |----------|-------|----------|-----------|
-| Exact defensive item types and starting charges (source open decision). Is the single Arc Flare with 2 charges right, or 1 charge, or several item types? | SneakKestrel16 | Before Milestone 3 | Proposed: Arc Flare, 2 charges |
+| Exact defensive item types and starting charges (source open decision). | SneakKestrel16 | Before Milestone 3 | **Item type decided 2026-10-12: Taser.** Cartridges (2), range (5 m) and aim tolerance (10°) proposed; playtest |
 | Should stun items be refillable or found in the map? | SneakKestrel16 | Before Milestone 5 | Proposed: no |
 | Does stunning a disguised monster reveal it? | SneakKestrel16 | Before Milestone 3 | Owned by Borrowed Face |
-| Should friendly fire dazzle real survivors? | SneakKestrel16 | Before Milestone 3 | Proposed: 1 s dazzle |
+| Should a taser shot that hits a real survivor shock them? | SneakKestrel16 | Before Milestone 3 | Proposed: 1 s shock (slow, no root) |
 | Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | Owned by Monster Abilities |
 | Does the flashlight need a battery limit? | SneakKestrel16 | Before Milestone 4 | Proposed: no |
 | Should the long-hide cue exist, or is Search enough? | SneakKestrel16 | Before Milestone 5 | |

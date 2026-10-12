@@ -14,7 +14,7 @@ Match Flow runs one ~9-minute round of Dead Signal: it takes five players from t
 
 ## Overview
 
-Every round has the same shape. Lobby & Role Assignment hands over five connected players (1 shapeshifter, 4 survivors). The server starts a 540-second clock. The first two minutes are Infiltration, the middle five are Investigation, and the final two are Evacuation. Survivors win if, after recovering two data drives, installing two fuses and activating the evacuation terminal, at least one survivor escapes with the required evidence. The shapeshifter wins if all survivors are eliminated or the evacuation deadline expires. The server alone decides phase changes and the outcome; clients only display what the server tells them. When the round ends, every player sees the same results screen.
+Every round has the same shape. Lobby & Role Assignment hands over five connected players (1 shapeshifter, 4 survivors). The server starts a 540-second clock. The first two minutes are Infiltration, the middle five are Investigation, and the final two are Evacuation. Survivors win if, after recovering two data drives, installing two fuses and activating the evacuation terminal, they carry both drives out through the exit. The shapeshifter wins if all survivors are eliminated or the evacuation deadline expires. The server alone decides phase changes and the outcome; clients only display what the server tells them. When the round ends, every player sees the same results screen.
 
 ## Player Fantasy
 
@@ -37,33 +37,35 @@ Survivors should feel a clock closing in: an orientation window that turns into 
 
 **Evacuation deadline**
 8. The evacuation deadline is the end of the round clock: `elapsed_s >= round_duration_s` **(proposed reading of "evacuation deadline")**.
-9. The deadline is hard: there is no overtime **(proposed)**. If the 15-second terminal activation, or a survivor's run to the exit, is still in progress when the deadline is reached, it does not finish, and the shapeshifter wins (unless a qualifying escape already happened; see rule 12).
+9. The deadline is hard: there is no overtime **(proposed)**. If the 15-second terminal activation, or a survivor's run to the exit, is still in progress when the deadline is reached, it does not finish, and the shapeshifter wins (unless the evidence already escaped; see rule 14).
 
 **Win conditions (source text, verbatim)**
 - *Survivors win* by recovering two data drives, restoring power with two fuses, activating evacuation, and having at least one survivor escape with the required evidence.
 - *The monster wins* if all survivors are eliminated or the evacuation deadline expires.
 
 **How the server evaluates them**
-10. *Qualifying escape*: a survivor in the Healthy state (not Downed, not Eliminated) enters the exit volume after Survivor Objectives has reported evacuation activated. Survivor Objectives owns what "with the required evidence" means (see `survivor-objectives.md`); under its recommended reading, every escape after activation qualifies. The server records the survivor as Escaped, removes them from play (they become a spectator) and broadcasts `SurvivorEscaped` **(proposed event name)**.
-11. *All eliminated*: every survivor is Eliminated, or treated as eliminated by the disconnect rule (rule 17). Escaped survivors are never counted as eliminated, so this cannot be true once anyone has escaped.
-12. *Outcome lock*: the first qualifying escape locks the outcome as a survivor win. Later events (eliminations, deadline) cannot flip it.
-13. *After the lock*, the round continues so remaining survivors can try to escape. It ends when every survivor is Escaped or Eliminated, when the deadline is reached, or `post_escape_window_s` = 45 after the first escape **(proposed)**, whichever comes first. Survivors still inside at that point are recorded as "Did not escape". The team still wins.
-14. *Check timing*: the server runs the win check (a) whenever it processes `SurvivorEliminated`, `SurvivorEscaped`, a disconnect-grace expiry, or a clock update that crosses the deadline, and (b) once at the end of every server tick as a safety net. Within one tick, the server processes all gameplay events (hits, downs, eliminations, objective completions, escapes) in the order it received them, then the win check runs in this order: (1) qualifying escape → survivor win; (2) all eliminated → monster win; (3) deadline reached → monster win **(proposed ordering)**.
-15. When an outcome is final, the server freezes gameplay input, broadcasts `RoundEnded` **(proposed event name)** with the outcome, reason and results payload, and moves to Results. A client never declares a result; a client that disagrees with the server is wrong by definition.
-16. Downed is not eliminated. If every remaining survivor is Downed at once, the round continues until the deadline: Downed survivors cannot be hit (see `downing-and-rescue.md`), so the shapeshifter cannot eliminate them. Ending early on "all downed" (a team wipe) is an Open Question in both docs, not a rule.
+10. *Escape*: a survivor in the Healthy state (not Downed, not Eliminated) enters the exit volume after Survivor Objectives has reported evacuation activated. The server records them as Escaped, removes them from play (they become a spectator) and broadcasts `SurvivorEscaped` **(proposed event name)**. Any drives they carry become Extracted (Survivor Objectives).
+11. *Evidence escaped* (designer decision, 2026-10-12: evidence is carried to the extract): the survivor win condition is met when Survivor Objectives reports **both drives Extracted**. Survivor Objectives owns what "the required evidence" means (`survivor-objectives.md` rule 22). An escape without drives does not meet it.
+12. *All eliminated*: every survivor is Eliminated, or treated as eliminated by the disconnect rule (rule 19). The round ends **at that moment** as a monster win (designer decision, 2026-10-12). Bleed-out (`downing-and-rescue.md`) guarantees an all-Downed team reaches this state instead of stalling.
+13. *Evidence lost* **(proposed)**: if no Healthy or Downed survivor remains inside the facility (everyone is Escaped or Eliminated) and the evidence has not escaped, nobody can complete the win, so the round ends at once as a monster win.
+14. *Outcome lock*: the moment both drives are Extracted, the outcome locks as a survivor win. Later events (eliminations, deadline) cannot flip it.
+15. *After the lock*, the round continues so remaining survivors can try to escape. It ends when every survivor is Escaped or Eliminated, when the deadline is reached, or `post_escape_window_s` = 45 after the lock **(proposed)**, whichever comes first. Survivors still inside at that point are recorded as "Did not escape". The team still wins.
+16. *Check timing*: the server runs the win check (a) whenever it processes `SurvivorEliminated`, `SurvivorEscaped`, a drive Extracted, a disconnect-grace expiry, or a clock update that crosses the deadline, and (b) once at the end of every server tick as a safety net. Within one tick, the server processes all gameplay events (hits, downs, eliminations, bleed-outs, objective completions, escapes) in the order it received them, then the win check runs in this order: (1) evidence escaped → survivor win; (2) all eliminated → monster win; (3) evidence lost → monster win; (4) deadline reached → monster win **(proposed ordering)**.
+17. When an outcome is final, the server freezes gameplay input, broadcasts `RoundEnded` **(proposed event name)** with the outcome, reason and results payload, and moves to Results. A client never declares a result; a client that disagrees with the server is wrong by definition.
+18. Downed is not eliminated. If every remaining survivor is Downed at once, each bleeds out on their own timer (`bleedout_s`, owned by `downing-and-rescue.md`), and the round ends when the last is Eliminated (rule 12). There is no separate team-wipe rule.
 
 **Disconnect and reconnect (source M1 asks for handling; whole subsection proposed)**
-17. *Survivor disconnects* **(proposed)**: the server immediately drops any data drive or fuse they carry at their position (see `survivor-objectives.md`), removes their character from the world, and shows all players "[name]: connection lost". They have `reconnect_grace_s` = 60 to return. On reconnect they respawn at the position where they disconnected, in the same Healthy/Downed state and with the same down count. If grace expires, they count as eliminated for win evaluation and are listed as "Disconnected" in results. No reconnect is accepted after grace expires.
-18. *Shapeshifter disconnects* **(proposed)**: its character is removed from the world, all ability cooldowns keep counting down, the round clock keeps running, and all players see "The shapeshifter lost connection". If it reconnects within `reconnect_grace_s`, it respawns at its disconnect position in its true form. Borrowed Face may restrict whether the disguise is restored. If grace expires, the round ends as **No Contest**: no win is recorded for either side, and results show the reason. There is no AI or bot replacement, ever.
-19. *Everyone on one side disconnects*: the same rules apply per player. If all four survivors are past grace, the monster wins (rule 11).
-20. Every disconnect and reconnect is logged for Match Telemetry.
+19. *Survivor disconnects* **(proposed)**: the server immediately drops any data drive or fuse they carry at their position (see `survivor-objectives.md`), removes their character from the world, and shows all players "[name]: connection lost". They have `reconnect_grace_s` = 60 to return. On reconnect they respawn at the position where they disconnected, in the same Healthy/Downed state and with the same down count. If grace expires, they count as eliminated for win evaluation and are listed as "Disconnected" in results. No reconnect is accepted after grace expires.
+20. *Shapeshifter disconnects* **(proposed)**: its character is removed from the world, all ability cooldowns keep counting down, the round clock keeps running, and all players see "The shapeshifter lost connection". If it reconnects within `reconnect_grace_s`, it respawns at its disconnect position in its true form. Borrowed Face may restrict whether the disguise is restored. If grace expires, the round ends as **No Contest**: no win is recorded for either side, and results show the reason. There is no AI or bot replacement, ever.
+21. *Everyone on one side disconnects*: the same rules apply per player. If all four survivors are past grace, the monster wins (rule 12).
+22. Every disconnect and reconnect is logged for Match Telemetry.
 
 **Results screen contents (Match Flow owns the data; HUD & Results Screen owns presentation)**
-21. *Outcome*: Survivors Win / Shapeshifter Wins / No Contest, plus a reason: "Evidence escaped", "All survivors eliminated", "Evacuation deadline expired" or "Shapeshifter disconnected".
-22. *Survival*: for each survivor, one of Escaped / Eliminated / Did not escape / Disconnected, with downs taken and rescues performed. The shapeshifter's player name is revealed **(proposed)**.
-23. *Objective progress*: drives recovered (x/2), drives docked (x/2), fuses installed (x/2), evacuation activated (yes/no), and the round time of each completion.
-24. *Basic match stats*: match duration; monster takedowns, eliminations, lunges landed/missed, times stunned, form changes, False Signals and Blackouts used; survivor stuns landed and rescues completed.
-25. Results stay up for `results_duration_s` = 20 **(proposed)**, then everyone returns to the lobby.
+23. *Outcome*: Survivors Win / Shapeshifter Wins / No Contest, plus a reason: "Evidence escaped", "All survivors eliminated", "Evidence lost", "Evacuation deadline expired" or "Shapeshifter disconnected".
+24. *Survival*: for each survivor, one of Escaped (with drives carried, if any) / Eliminated (incl. "Bled out") / Did not escape / Disconnected, with downs taken and rescues performed. The shapeshifter's player name is revealed **(proposed)**.
+25. *Objective progress*: drives recovered (x/2), drives docked (x/2), fuses installed (x/2), evacuation activated (yes/no), drives extracted (x/2), and the round time of each completion.
+26. *Basic match stats*: match duration; monster takedowns, eliminations, lunges landed/missed, times stunned, form changes, False Signals and Blackouts used; survivor stuns landed and rescues completed.
+27. Results stay up for `results_duration_s` = 20 **(proposed)**, then everyone returns to the lobby.
 
 ### States and Transitions
 
@@ -73,7 +75,7 @@ Survivors should feel a clock closing in: an orientation window that turns into 
 | Infiltration | All loaded; `elapsed_s = 0` | `elapsed_s >= 120` → Investigation | Clock runs; all systems live |
 | Investigation | `elapsed_s >= 120` | Evacuation start reached OR terminal armed → Evacuation | Clock runs |
 | Evacuation | `elapsed_s >= round_duration_s − 120` OR terminal armed **(proposed)** | Outcome final → Ended | Emergency mode signal to Scare Events |
-| Ended | Outcome final (rules 12–14, 18) | Immediate → Results | Gameplay input frozen; `RoundEnded` sent |
+| Ended | Outcome final (rules 11–16, 20) | Immediate → Results | Gameplay input frozen; `RoundEnded` sent |
 | Results | Ended | `results_duration_s` elapsed → back to lobby | Results shown on all clients |
 | Cancelled | Load timeout | Immediate → back to lobby | No result recorded |
 
@@ -84,8 +86,8 @@ Win checks run in Infiltration, Investigation and Evacuation. If the terminal is
 | System | Data in | Data out | Responsibility |
 |--------|---------|----------|----------------|
 | Lobby & Role Assignment | 5 players + roles | Return-to-lobby on Results/Cancelled | Lobby assigns roles; Match Flow never does |
-| Survivor Objectives | `ObjectiveProgressChanged` (terminal armed, evacuation activated, per-objective completion times) | `RoundPhaseChanged`; round end (objectives freeze) | Objectives owns "required evidence"; Match Flow owns the outcome |
-| Downing, Rescue & Elimination | `SurvivorDowned`, `SurvivorRescued`, `SurvivorEliminated`, per-survivor down counts | Round end (freezes downs/rescues) | Downing owns survivor states; Match Flow counts eliminations |
+| Survivor Objectives | `ObjectiveProgressChanged` (terminal armed, evacuation activated, drives extracted, per-objective completion times) | `RoundPhaseChanged`; `SurvivorEscaped`; round end (objectives freeze) | Objectives owns "required evidence"; Match Flow owns the outcome |
+| Downing, Rescue & Elimination | `SurvivorDowned`, `SurvivorRescued`, `SurvivorEliminated` (incl. bleed-out), per-survivor down counts | Round end (freezes downs/rescues/bleed-out) | Downing owns survivor states; Match Flow counts eliminations |
 | Facility Map | Spawn points, exit volume | — | Map authors where the exit is |
 | Monster Abilities, Survivor Defense, Borrowed Face | Stats for results (lunges, stuns, form changes, abilities used) | `RoundPhaseChanged` | Each owns its own validation |
 | Scare Events | — | `RoundPhaseChanged` (Evacuation = emergency mode) | Scare Events decides presentation |
@@ -119,26 +121,29 @@ time_remaining_s = max(0, round_duration_s − elapsed_s)
 ### Post-escape end time
 
 ```
-round_end_s = min(round_duration_s, first_escape_s + post_escape_window_s, time all survivors are Escaped/Eliminated)
+round_end_s = min(round_duration_s, evidence_escaped_s + post_escape_window_s, time all survivors are Escaped/Eliminated)
 ```
-Example: first escape at 500 s → the round ends no later than min(540, 545) = 540.
+Example: the second drive is Extracted at 500 s → the round ends no later than min(540, 545) = 540.
 
 ## Edge Cases
 
 | Scenario | Expected Behavior | Rationale |
 |----------|------------------|-----------|
-| The last non-downed survivor is downed while rescuing the only other survivor | The rescue is interrupted (Downing owns this). Both are Downed and none are Eliminated, so no win fires. Downed survivors cannot be hit (`downing-and-rescue.md` rule 3), so under current rules the round continues until the deadline (monster win) | Source: the monster wins only when all are *eliminated*; see Open Questions |
+| The last non-downed survivor is downed while rescuing the only other survivor | The rescue is interrupted (Downing owns this). Both bleed out on their own timers; when the second is Eliminated, the round ends at once as a monster win | Bleed-out and immediate end (decided 2026-10-12) |
 | Deadline reached during the 15 s activation | Activation does not finish. Monster wins, reason "Evacuation deadline expired" | Hard deadline (rule 9, proposed) |
-| Activation completes but no one reaches the exit before the deadline | Monster wins | The escape is part of the survivor win condition |
-| Last survivor eliminated in the same tick that another survivor escapes | The escaped survivor is not eliminated, so "all eliminated" is false. Survivors win | Rule 11; escape is checked first (rule 14) |
-| Escape and deadline in the same tick | An escape processed in a tick at or before the deadline counts. Survivors win | Rule 14 ordering (proposed) |
-| Shapeshifter disconnects | Character removed; 60 s grace; clock runs; No Contest if it does not return | Rule 18 (proposed); no AI substitute |
-| Shapeshifter disconnects at the same time as a qualifying escape | The escape locks the survivor win first; the disconnect does not change it | Outcome lock (rule 12) |
+| Activation completes but the drives don't reach the exit before the deadline | Monster wins | The evidence must escape |
+| One drive Extracted; the last survivor inside is eliminated holding the other | Evidence lost: monster wins at once | Rule 13 (proposed) |
+| A survivor escapes without drives | Escaped; no win progress; the round continues | Rule 11 |
+| The second drive is Extracted in the same tick the last survivor inside is eliminated | Survivors win | Evidence escaped is checked first (rule 16) |
+| Second drive Extracted and deadline in the same tick | An extraction processed in a tick at or before the deadline counts. Survivors win | Rule 16 ordering (proposed) |
+| Shapeshifter disconnects | Character removed; 60 s grace; clock runs; No Contest if it does not return | Rule 20 (proposed); no AI substitute |
+| Shapeshifter disconnects at the same time as the evidence escapes | The extraction locks the survivor win first; the disconnect does not change it | Outcome lock (rule 14) |
 | A Downed survivor disconnects | Removed; returns Downed with the same down count if back within grace; otherwise counted eliminated | Disconnecting must not let a player avoid an elimination |
 | A drive carrier disconnects | Drive dropped at their position immediately | Team is not blocked for 60 s |
-| All four survivors disconnected inside grace | Round continues; monster wins when the last grace expires unless one returns | Rules 17, 19 |
+| All four survivors disconnected inside grace | Round continues; monster wins when the last grace expires unless one returns | Rules 19, 21 |
 | A client's clock drifts | Client display corrects to the server value; the phase changes only on `RoundPhaseChanged` | Server authority |
 | Terminal armed during Infiltration | Phase goes straight to Evacuation | Phase rule 6 |
+| A Downed survivor's bleed-out expires at the deadline tick | Events in the tick are processed first, then the win check; either way the monster wins | Rule 16 |
 | Downed survivor crawls into the exit volume | Not an escape; only Healthy survivors escape **(proposed)** | Keeps rescue meaningful |
 
 ## Dependencies
@@ -146,8 +151,8 @@ Example: first escape at 500 s → the round ends no later than min(540, 545) = 
 | System | Direction | Nature of Dependency |
 |--------|-----------|---------------------|
 | Lobby & Role Assignment | This depends on it | Needs 5 players with roles; returns players to it |
-| Survivor Objectives | Bidirectional | Reads terminal armed / evacuation activated / evidence rule; Objectives reads phase and round end |
-| Downing, Rescue & Elimination | Bidirectional | Reads eliminations and down counts; Downing stops at round end |
+| Survivor Objectives | Bidirectional | Reads terminal armed / evacuation activated / drives extracted / evidence rule; Objectives reads phase, escapes and round end |
+| Downing, Rescue & Elimination | Bidirectional | Reads eliminations (incl. bleed-outs) and down counts; Downing stops at round end |
 | Facility Map | This depends on it | Spawn points, exit volume |
 | Network Authority & Replication | This depends on it | Server clock, authority, disconnect detection |
 | Monster Abilities | It depends on this | Reads `RoundPhaseChanged` (Infiltration attack question); supplies stats |
@@ -218,7 +223,7 @@ Not applicable: Match Flow has no character animation.
 | Time remaining | HUD, top centre | 1 Hz (server-corrected) | Infiltration–Evacuation |
 | Current phase | HUD, under clock | On `RoundPhaseChanged` | Always in round |
 | Escape / disconnect feed | HUD feed | On event | Always in round |
-| Results payload (rules 21–24) | Results screen | Once | Results |
+| Results payload (rules 23–26) | Results screen | Once | Results |
 
 ## Cross-References
 
@@ -239,14 +244,16 @@ Not applicable: Match Flow has no character animation.
 - [ ] With 5 clients connected, a round starts, passes through Infiltration (0:00), Investigation (2:00) and Evacuation (7:00), and ends at 9:00 with "Shapeshifter Wins — Evacuation deadline expired" if no objectives are done.
 - [ ] All 5 clients show the same phase within 200 ms of each `RoundPhaseChanged`, and the same outcome, reason and results payload at round end.
 - [ ] Arming the terminal at 5:00 switches all 5 clients to Evacuation at 5:00; the deadline remains 9:00.
-- [ ] When all 4 survivors are eliminated, the round ends at that moment with "All survivors eliminated".
-- [ ] A Healthy survivor entering the exit after activation ends the round as Survivors Win within `post_escape_window_s` or when the others resolve.
+- [ ] When all 4 survivors are eliminated (including by bleed-out), the round ends at that moment with "All survivors eliminated".
+- [ ] Survivors win only when both drives have been carried through the open exit; one drive out is not a win.
+- [ ] A survivor escaping without drives is recorded as Escaped and the round continues.
+- [ ] If nobody is left inside and a drive was not extracted, the round ends at once with "Evidence lost".
 - [ ] A Downed survivor in the exit volume is not recorded as escaped.
 - [ ] Starting the 15 s activation at 8:50 results in a monster win at 9:00.
 - [ ] A modified client that sends a fake "round won" or "phase change" message has no effect on any client's state.
 - [ ] Disconnecting a survivor drops their carried items at once. Reconnecting within 60 s restores their position, state and down count. Staying away 60 s counts them as eliminated.
 - [ ] Disconnecting the shapeshifter for more than 60 s ends the round as No Contest on all clients.
-- [ ] The results screen lists outcome, reason, every survivor's status, objective progress (x/2 drives, x/2 fuses, activation) and the stats in rule 24.
+- [ ] The results screen lists outcome, reason, every survivor's status, objective progress (x/2 drives, x/2 fuses, activation, x/2 extracted) and the stats in rule 26.
 - [ ] All values in Tuning Knobs are read from data, not hardcoded.
 
 ## Open Questions
@@ -255,7 +262,8 @@ Not applicable: Match Flow has no character animation.
 |----------|-------|----------|-----------|
 | Should Evacuation start early when the terminal is armed (rule 6), or only at 7:00? | SneakKestrel16 | Before Milestone 2 | Recommended: early (proposed) |
 | Is the hard deadline (no overtime, activation can be cut off) too harsh? Alternative: freeze the clock once activation completes, with an escape window | SneakKestrel16 | Before Milestone 5 | Playtest |
-| Should "all remaining survivors Downed with no one able to rescue" end the round early as a monster win? Source says only "all eliminated" | SneakKestrel16 | Before Milestone 2 | Not adopted; source rule kept |
+| Should "all remaining survivors Downed with no one able to rescue" end the round early as a monster win? | SneakKestrel16 | Before Milestone 2 | **Resolved 2026-10-12:** bleed-out eliminates them; the round ends when everyone is eliminated |
+| Should "Evidence lost" (nobody left inside, drives not out) end the round immediately? | SneakKestrel16 | Before Milestone 2 | Proposed: yes |
 | Should the shapeshifter be prevented from attacking during Infiltration? | SneakKestrel16 | Before Milestone 3 | Open |
 | Confirm the disconnect rule (60 s grace, survivor counted as eliminated, monster → No Contest) | SneakKestrel16 | Before Milestone 1 | Proposed |
 | Should the results screen reveal the shapeshifter player's name? | SneakKestrel16 | Before Milestone 2 | Proposed: yes |

@@ -244,6 +244,7 @@ Targets **(proposed)**:
 - Any room to any other room in 20 s or less at walk speed.
 - Every drive and fuse candidate is within 5 s of a hiding spot, a door that can be closed, or a second exit.
 - Every active terminal is within 25 s of every other objective room, so the Evacuation phase (final 2:00) leaves time for at least one rescue (`rescue_duration_s` = 6) and a retreat around L8 or L9.
+- Every terminal candidate is within 15 s of exit E at walk speed **(proposed)**. Since 2026-10-12 the drives eject at the terminal and must be carried out through E (`survivor-objectives.md` rule 22), so the terminal-to-exit run is the final, contested carry. It should be short enough to finish and long enough to contest; the route should offer two paths (for example via C2 or C1).
 - Total minimum survivor walking for a split team is about 2-3 min of the 5-min Investigation window. This leaves room for verification, hiding and rescues. Confirm in M2 playtests.
 
 ## Encounters

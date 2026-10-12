@@ -51,7 +51,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
    - the shapeshifter can move at walking speed but cannot sprint, interact, or use abilities **(proposed)**.
 9. At the end of the 2 s, the server switches the form, emits `FormChanged` (shapeshifter, previous form, new form, server time), and starts the 12 s cooldown (source value; starting it at *completion* is **(proposed)**).
 10. A stun that lands during a transformation interrupts it: the form does not change and the full 12 s cooldown starts **(proposed)**. Transformation cannot be started while Stunned, so it can never be used to escape a stun (source).
-11. Transformation can never cancel an attack (source). Predatory Lunge requires true form **(proposed)**; a disguised shapeshifter must transform first (see `design/gdd/monster-abilities.md`).
+11. Transformation can never cancel an attack (source). Predatory Lunge requires true form (designer decision for now, 2026-10-12; **test in playtest**, see Open Questions); a disguised shapeshifter must transform first (see `design/gdd/monster-abilities.md`).
 
 **What the disguise copies** (source: "appearance and basic movement presentation")
 
@@ -152,7 +152,7 @@ Example: transform completes at 60.0 s → next request accepted at 72.0 s → n
 | Target becomes Eliminated mid-transformation | Transformation completes into X | Target was valid at request time; becomes tell T2 |
 | Target disconnects while worn | Disguise stays; no new transforms into them | Mid-match disconnect rule owned by Match Flow |
 | Stunned during transformation | Interrupted; previous form kept; 12 s cooldown starts | Stun is the counter; no free retry |
-| Lunge requested while Disguised | Rejected; must transform first | Lunge requires True Form (proposed) |
+| Lunge requested while Disguised | Rejected; must transform first | Lunge requires True Form (kept for now; playtest) |
 | Transform requested during a Lunge takedown commit | Rejected | Transformation cannot cancel an attack (source) |
 | Disguised monster tries to pick up a drive | Server rejects; no item, no progress | Readable Objectives; tell T3/T4 |
 | Round ends mid-transformation | Transformation discarded; results use final state | Match Flow owns end |
@@ -278,9 +278,9 @@ Survivors get no disguise UI.
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
 | Is the observation rule (15 m, 90°, 3 s cumulative, no decay) right, or should observation require a continuous look? | SneakKestrel16 | Before Milestone 3 | — |
-| Should Lunge be usable from disguise (instant reveal at wind-up) instead of requiring true form? | SneakKestrel16 | Before Milestone 3 | — |
+| Should Lunge be usable from disguise (instant reveal at wind-up) instead of requiring true form? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12). Playtest note:** in the M5 closed playtest, compare monster win rate, average time from disguise to attack, and whether survivors call the 2 s transform cue a fair warning or too much of a giveaway. Revisit if disguised monsters rarely convert trust into takedowns. |
 | Where does the shapeshifter spawn, and is starting in true form right for Infiltration? | SneakKestrel16 | Before Milestone 1 | — |
-| Can the monster use proximity voice, preset lines, or both while disguised? (source open decision) | SneakKestrel16 | Before Milestone 3 | Owned by Pings & Callouts |
+| Can the monster use proximity voice, preset lines, or both while disguised? (source open decision) | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-12: both.** Rules in `pings-and-callouts.md` rule 25; the disguise does not copy voice |
 | Can survivor clients be kept from learning which entity is the monster? Needs a Network Authority ADR. | SneakKestrel16 | Before Milestone 1 | — |
 | What non-audio indicator represents the distortion cue for deaf or hard-of-hearing players? | SneakKestrel16 | Before Milestone 4 | — |
 | Does a stun item used on a real survivor do anything (a "stun test")? | SneakKestrel16 | Before Milestone 3 | Owned by Survivor Defense |
