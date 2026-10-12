@@ -920,6 +920,18 @@ constants:
     added: 2026-10-12
     revised: ""
 
+  # (proposed placeholder, inferred; safe range to be set in the M5 playtest) flinch target cap and total rotation of a replacing flinch
+  - name: flinch_max_angle_deg
+    status: active
+    source: design/gdd/scare-events.md
+    referenced_by:
+      - design/gdd/scare-events.md
+      - design/gdd/first-person-controller.md
+    value: 10
+    unit: deg
+    added: 2026-10-12
+    revised: ""
+
   # (proposed)
   - name: major_scare_cooldown_s
     status: active
@@ -1029,7 +1041,7 @@ constants:
     added: 2026-10-12
     revised: ""
 
-  # (proposed) Start range for objective holds; Holding keep-range adds hold_range_tolerance_m 0.25
+  # (proposed) Start range for objective holds; Holding keep-range adds hold_range_tolerance_m 0.25; safe range 1.5-2.3 m
   - name: interact_range_m
     status: active
     source: design/gdd/survivor-objectives.md
