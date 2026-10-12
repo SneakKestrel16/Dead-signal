@@ -43,4 +43,17 @@ Findings:
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md a1f5a15c7daeb622426dda4e411ff91b02a25e0c
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
+## Review — 2026-10-11 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 2
+Summary: Re-review after the cross-GDD rounds edited rules 2 and 19 and the dependency table. The shock-cancels-hold rule, the Survivor Defense direction, the Extracted hand-off with Match Flow rule 10 and the False Signal direction now agree on both sides. The index still listed the system as Needs Revision; that status was stale.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] systems-index.md: `SurvivorEscaped` consumers omitted Survivor Objectives, which reads it for rule 22. Applied.
+- [RECOMMENDED] systems-index.md row 5: Depends On lists 3 systems; the GDD's Dependencies table also names Network Authority, Downing, Rescue & Elimination and Survivor Defense. Not applied.
+- [NICE-TO-HAVE] Dependencies: Objectives calls Borrowed Face "Bidirectional"; borrowed-face.md gives only "Depends on this". Settle when Borrowed Face is revised.
+Reviewed-Content-Hash: design/gdd/survivor-objectives.md 20cc0fc671a6ef950cf00e5b8f43f2c4a71e0431
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.

@@ -33,7 +33,7 @@ through an event.
 |-------|-----------|-------------|---------|
 | `RoundPhaseChanged` | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map (lighting), HUD | Phase moved (Infiltration, Investigation, Evacuation) |
 | `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
-| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
+| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Survivor Objectives (carried drives become Extracted, rule 22), Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
 | `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination | A validated Predatory Lunge hit; starts the takedown commit |
 | `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
 | `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
@@ -72,7 +72,7 @@ event. Only the owner writes it. Readers never change it.
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
-| 5 | Survivor Objectives | Gameplay | MVP | Needs Revision | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
+| 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
 | 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Approved | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Needs Revision | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map |
@@ -199,8 +199,8 @@ engine choice first; it must be settled before any gameplay code is written.
 | Total systems identified | 15 |
 | Design docs started | 9 |
 | Design docs reviewed | 5 |
-| Design docs approved | 3 |
-| MVP systems with a GDD | 7/11, 3 approved (Monster Abilities counted as MVP) |
+| Design docs approved | 4 |
+| MVP systems with a GDD | 7/11, 4 approved (Monster Abilities counted as MVP) |
 | Vertical Slice systems with a Draft GDD (none approved) | 2/3 |
 
 ---
