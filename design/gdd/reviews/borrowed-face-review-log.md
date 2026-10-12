@@ -53,3 +53,21 @@ Findings:
 - [NICE-TO-HAVE] Rule 11 and Open Questions: the 2026-10-12 decision dates are later than this review. Left as written.
 Reviewed-Content-Hash: design/gdd/borrowed-face.md f62b3a15e16021633b43d6365def2243e6b0d812
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 6
+Summary: Fourth review. The prior blocker held: an immune hit during a transformation agrees with Survivor Defense rules 1, 10 and 14, and the stun and shock rules agree with Monster Abilities, Pings & Callouts and Scare Events. No new blockers. Five recommended items were revised in the same session; the sixth (dates) is project-wide and left for a separate pass.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Acceptance Criteria: rule 12's rejection of a disguised hide, barricade and barricade removal had no AC. Resolved: AC added.
+- [RECOMMENDED] Acceptance Criteria: "hears the distortion from the correct direction" was not measurable. Resolved: bearing within ±15° (proposed tolerance).
+- [RECOMMENDED] Rule 2, Formulas: the view-cone angle had no reference point and no vertical rule. Resolved: horizontal angle to the chest point, no vertical limit (proposed); AC added.
+- [RECOMMENDED] Rule 9, Edge Cases: the cooldown at round start and a stun on the completion tick were undefined. Resolved: no cooldown at round start; the stun is processed first (proposed). Edge case and AC added.
+- [RECOMMENDED] Open Questions: the spawn question was partly settled by the level's M1–M3 candidates. Resolved: marked; true-form start stays open, tied to the level doc's own question.
+- [RECOMMENDED] Rule 11, Open Questions: decisions dated 2026-10-12, after this review. Not changed: 36 lines across 12 design docs carry that date, and the cross-review already flagged it. Needs one project-wide pass.
+- [NICE-TO-HAVE] Edge Cases: target disconnecting mid-transformation. Resolved: completes into X, like the Eliminated row.
+- [NICE-TO-HAVE] Fair Fear: the non-audio cue for T1 is still open (Milestone 4).
+Reviewed-Content-Hash: design/gdd/borrowed-face.md 10fc4ef4f6de434e207ea2507510b5db3c1c2a3c
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
