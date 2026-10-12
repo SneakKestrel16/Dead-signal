@@ -31,12 +31,12 @@ Values marked **(proposed)** are pinned in Formulas.
 4. **Crouch** lowers eye height, moves at `crouch_speed_mult` × walk, and makes the quietest footsteps. It has no traversal use: the prototype map has no crouch-only spaces. If something blocks the head, standing up waits until there is room.
 5. **No jump** **(designer decision, 2026-10-12)**. The body auto-climbs steps up to `step_height_m` and slopes up to 40°. No fall damage; the map has no drops that need it.
 6. **Speed modifiers** come from their owning systems: root (speed 0), slow (multiplier with a duration), lock (no movement). The controller applies only the **most restrictive** active modifier (lock > root > lowest slow); modifiers never multiply together. Each owner adds and removes only its own modifier. A slow scales the current gait's speed.
-7. **Look is never taken.** Mouse look is free in every state (yaw 360°, pitch ±85°), except the restricted peek view of a hidden survivor (Survivor Defense rule 20). The **one sanctioned exception** is the Scare Events camera flinch (Scare Events rules 13-14): a server-applied view nudge of at most `scare_max_control_loss_s` = 0.3 s, accessibility-toggleable, never during a lunge wind-up. The server's view direction (rule 10) follows the flinch, so aim and the client's view stay consistent. Every other camera effect (downing and rescue camera impact and screen shake, survivor-defense camera jitter and stun jolt) is a **visual offset only** that never changes the server's view direction or aim ray. No other system rotates or locks a player's camera (pillar: Fair Fear) **(designer decision, 2026-10-12, cross-review 12d)**.
+7. **Look is never taken.** Mouse look is free in every state (yaw 360°, pitch ±85°), except the restricted peek view of a hidden survivor (Survivor Defense rule 20). The **one sanctioned exception** is the Scare Events camera flinch (Scare Events rules 13-14): a view nudge of at most `scare_max_control_loss_s` = 0.3 s, never during a lunge wind-up. It is a server-held yaw/pitch offset added to the yaw and pitch the client sends (rule 9); it ramps in within 0.3 s and stays, and the client applies the same offset, so the server's view direction (rule 10) and the client's view agree. The accessibility flinch toggle is a per-player flag the server knows (the client sends it on join and on change); with it off the server applies no offset at all and the player's server view direction never changes during a scare (designer decision, 2026-10-12, cross-review 12e). Every other camera effect (downing and rescue camera impact and screen shake, survivor-defense camera jitter and stun jolt) is a **visual offset only** that never changes the server's view direction or aim ray. No other system rotates or locks a player's camera (pillar: Fair Fear) **(designer decision, 2026-10-12, cross-review 12d)**.
 8. **Footstep noise** follows gait: sprint is loudest, then walk, then crouch and crawl (radii in Formulas). Clients play footsteps from each player's replicated gait. A disguised shapeshifter uses its target's footstep set (Borrowed Face). Only real movement makes footsteps; False Signal fakes are separate (Monster Abilities).
 
 **Authority**
 
-9. Each tick the client sends intent only: move vector, sprint and crouch flags, view yaw and pitch, interaction start/stop. The server simulates movement and owns every position; the owning client predicts and reconciles. The client never sets its own position, speed or interaction progress. The prediction and reconciliation method → becomes a Network Authority ADR.
+9. Each tick the client sends intent only: move vector, sprint and crouch flags, view yaw and pitch, interaction start/stop. The server's view direction is that yaw/pitch plus any Scare Events flinch offset (rule 7); pitch stays clamped to ±85° after the offset is added. The server simulates movement and owns every position; the owning client predicts and reconciles. The client never sets its own position, speed or interaction progress. The prediction and reconciliation method → becomes a Network Authority ADR.
 
 **View ray**
 
@@ -215,7 +215,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 **Variables:**
 | Variable | Type | Range | Source | Description |
 |----------|------|-------|--------|-------------|
-| max_owner_range_m | float m | 1.5–3 | owned by Survivor Objectives (`interact_range_m` 2.0), Downing, Rescue & Elimination (`rescue_range_m` 1.5) | Largest owner `range_m` |
+| max_owner_range_m | float m | 1.5–3 | owned by Survivor Objectives (`interact_range_m` 2.0, also the Survivor Defense range, rule 28a there), Downing, Rescue & Elimination (`rescue_range_m` 1.5), Monster Abilities (`backup_switch_range_m` 2.0, safe range capped at 2.3 so range + 0.7 ≤ `interact_ray_max_m` 3.0) | Largest owner `range_m` |
 | eye_height_m | float m | standing 1.5–1.7, crouched 0.9–1.1 | data file | **1.6 / 1.0**: about 0.2 m below the capsule top |
 | capsule_height_m | float m | 1.8 / 1.2 | data file (Core Rule 1) | Standing / crouched |
 | interact_ray_max_m | float m | 2.7–3.5 | data file | **3.0**: covers 2.0 + 0.7 with 0.3 spare |
@@ -261,7 +261,7 @@ Range is measured in 3D from the capsule centre to the interaction point. The ra
 | Monster Abilities | Depends on this | Hard | True-form speeds, `player_radius_m` (dodge window), root and slow, doors |
 | Pings & Callouts | Depends on this | Soft | View ray, input bindings |
 | Facility Map (`design/levels/research-facility.md`) | Depends on this | Hard | `walk_speed` (traversal times), step and slope limits, capsule (doorways ≥ 0.8 m clear) |
-| Scare Events | Soft | The camera flinch is the single sanctioned view rotation (Core Rule 7; Scare Events rules 13-14): a server-applied nudge, so the server's view direction follows it. Every other camera effect is a visual offset only |
+| Scare Events | This depends on it | Soft | The camera flinch is the single sanctioned view rotation (Core Rule 7; Scare Events rules 13-14): a server-held offset added to client yaw/pitch, received as the `ViewNudge` event (systems-index) and absent for a player with the toggle off. Every other camera effect is a visual offset only |
 
 ## Visual/Audio Requirements
 
@@ -323,7 +323,7 @@ Drafted by `qa-lead`. Defaults are the **(proposed)** values in Formulas. **[U]*
 
 **Look and view ray**
 
-- [ ] **[U]** **GIVEN** any state except Hidden, **WHEN** the player looks, **THEN** yaw covers 360°, pitch clamps at ±85°, and no system call changes camera orientation, except the Scare Events flinch (a server-applied nudge of at most 0.3 s, never during a lunge wind-up) **(designer decision, 2026-10-12, cross-review 12d)**. Test: apply every root, slow, lock, Downed, Seized, Transforming and Holding state and assert the view direction follows input only; then play the downing camera impact and shake and the survivor-defense jitter and jolt and assert the view direction and aim ray are unchanged, and play a flinch and assert the server view direction moves with it for at most 0.3 s. (Rule 7)
+- [ ] **[U]** **GIVEN** any state except Hidden, **WHEN** the player looks, **THEN** yaw covers 360°, pitch clamps at ±85°, and no system call changes camera orientation, except the Scare Events flinch (a server-held offset added to client yaw/pitch, ramped in within 0.3 s and then held, never during a lunge wind-up, none for a player with the flinch toggle off) **(designer decision, 2026-10-12, cross-review 12d and 12e)**. Test: apply every root, slow, lock, Downed, Seized, Transforming and Holding state and assert the view direction follows input only; then play the downing camera impact and shake and the survivor-defense jitter and jolt and assert the view direction and aim ray are unchanged, and play a flinch for a toggled-on player and assert the server view direction equals client yaw/pitch plus the offset within 0.3 s and keeps it afterwards. Then play the same scare for a toggled-off player and assert that player's server view direction and aim ray never change. (Rule 7)
 - [ ] **[I]** **GIVEN** the server's yaw and pitch differ from a client-claimed value, **WHEN** a taser shot, a ping and an interaction Start are made, **THEN** all three resolve against the server's ray from the eye position. (Rule 10)
 
 **Footsteps**

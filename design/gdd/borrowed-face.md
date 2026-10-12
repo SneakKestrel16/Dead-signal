@@ -240,7 +240,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |---|---|---|---|
-| Camera impact (viewers of reveal) | ≤ 300 | Small flinch, no input lock | Yes (reduced flash) |
+| Camera impact (viewers of reveal) | ≤ 300 | The Scare Events transformation-reveal camera flinch (Scare Events rules 13-14), not a second rotation; it inherits the lunge wind-up suppression (rule 14) and the player's flinch toggle (designer decision, 2026-10-12, cross-review 12e); no input lock | Yes (reduced flash) |
 
 ### Weight and Responsiveness Profile
 

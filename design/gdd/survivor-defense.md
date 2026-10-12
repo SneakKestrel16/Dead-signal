@@ -218,7 +218,7 @@ tools, they're yours.
 28. A broken barricade cannot be rebuilt on that door for
     `rebarricade_lockout_s` = 30 s **(proposed)**.
 
-28a. **Interactable contract** (`first-person-controller.md` rule 11; every field below is **(proposed)**, cross-review 12d W2). `range_m` for all of them is `survivor_interact_range_m` = 2.0 m, the Objectives `interact_range_m` value, measured to the object's interaction point:
+28a. **Interactable contract** (`first-person-controller.md` rule 11; every field below is **(proposed)**, cross-review 12d W2). `range_m` for all of them is `interact_range_m` = 2.0 m, owned by Survivor Objectives (no second name; tune it there), measured to the object's interaction point. Barricade, Remove barricade and Break on one door share that door's single exclusive lock, so only one of the three runs at a time (designer decision, 2026-10-12, cross-review 12e):
 
 | Interactable | Who | `duration_s` | `roots_actor` | Progress on cancel | Exclusive lock | Shapeshifter may fake |
 |---|---|---|---|---|---|---|
@@ -229,7 +229,7 @@ tools, they're yours.
 | Break | Monster, any form | `barricade_break_s` 5 total | Yes | Keep (rule 27) | One actor per door | n/a (a real, visible monster action) |
 | Door toggle (open / close) | Anyone | 0 (instant) | No | n/a | None | n/a (a real action in any form) |
 
-The Controller's load-time check (`interact_ray_max_m` >= largest owner range + 0.7) therefore sees 2.0 m from this system.
+The Controller's load-time check (`interact_ray_max_m` >= largest owner range + 0.7) therefore sees 2.0 m from this system, the same value Objectives owns.
 
 #### Starting kit
 

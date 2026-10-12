@@ -66,7 +66,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 **Control-loss limit**
 
-13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge, **the single view rotation `first-person-controller.md` rule 7 sanctions**; it is server-applied, so the server's view direction and aim ray follow the nudge and stay consistent with the client's view; every other camera effect in the game is a visual offset only) of at most `scare_max_control_loss_s` = 0.3 s **(proposed)**, during which the player can still move and use a stun item.
+13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge, **the single view rotation `first-person-controller.md` rule 7 sanctions**; every other camera effect in the game is a visual offset only). The flinch works as follows (designer decision, 2026-10-12, cross-review 12e): the camera flinch toggle (rule 27) is a per-player flag the server knows (Accessibility Options owns the setting; the client sends it on join and on change). With the toggle off the server applies **no** rotation and only the screen-edge pulse plays. With it on, the nudge is a server-held yaw/pitch offset added to the yaw and pitch the client sends (Controller rule 9); it ramps in over at most `scare_max_control_loss_s` = 0.3 s **(proposed)** and then stays, so the view does not return. The client applies the same offset to its own view, so the server's view direction and aim ray agree with what the player sees. During the ramp the player can still move and use a stun item.
 14. Flinch never fires on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active (Monster Abilities rules 5–6); any Major scare reaching that survivor then plays without its flinch, and a flinch already running ends when such a wind-up starts (fourth cross-review W3). The ambush lunge scare is therefore stinger only, so a forced view nudge never spoils a dodge (design review 2026-10-12, **proposed**). The flinch duration must also stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
 15. No scare plays a non-skippable animation, forced camera move or full-screen overlay that hides the monster.
 
@@ -102,7 +102,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 24. **Flash intensity scale** (0–1) applied to all scare flashes and light flicker; at the lowest setting, flashes are replaced by a non-flashing light change.
 25. **Flash rate cap**: no scare may produce more than 3 luminance flashes per second at any setting **(proposed)**.
 26. **Stinger volume scale** and **scare master volume scale** (0–1), separate from game master volume, so gameplay cues stay audible.
-27. **Camera flinch toggle**: when off, rule 13's flinch is replaced by a screen-edge pulse.
+27. **Camera flinch toggle**: when off, rule 13's flinch is replaced by a screen-edge pulse and the server applies no rotation: that player's server view direction never changes during a scare. The flag is held per player by the server (rule 13) (designer decision, 2026-10-12, cross-review 12e).
 28. **Information parity**: reduced settings change intensity, never information. Direction, origin and timing of every scare stay the same.
 29. All hooks are client-side presentation settings; they never change server timing, cooldowns or recipients.
 
@@ -123,7 +123,7 @@ Per-client scare cooldown state: Ready → Major cooldown (`major_scare_cooldown
 - **Monster Abilities**: Blackout and Predatory Lunge send scare triggers (source Monster) through `AbilityUsed` after the server validates the ability; False Signal sends none (rule 4a); lunge wind-up timing bounds the flinch rule.
 - **Borrowed Face**: `FormChanged` into true form triggers the reveal scare for survivors within `reveal_radius_m` (10 m, owned by Borrowed Face rule 15) with line of sight.
 - **Survivor Defense**: barricade breaks trigger door burst; stun use is never blocked by scares.
-- **First-Person Controller & Interaction**: the camera flinch (rules 13-14) is the single sanctioned view rotation in Controller rule 7; the server applies it, so the server's view direction follows it (designer decision, 2026-10-12, cross-review 12d). Scares otherwise never move or lock movement or look.
+- **First-Person Controller & Interaction**: the camera flinch (rules 13-14) is the single sanctioned view rotation in Controller rule 7; the server holds it as a yaw/pitch offset added to the client's view angles, so the server's view direction follows it, and only for players whose flinch toggle is on (designer decision, 2026-10-12, cross-review 12d and 12e). The Controller depends on Scare Events for the `ViewNudge` event (systems-index), soft: it works without it. Scares otherwise never move or lock movement or look.
 - **Survivor Objectives**: fuse install triggers an alarm; both fuses installed triggers Power Restored.
 - **Facility Map**: owns per-volume lighting state (rule 22); scare anchors (doors, glass), recording speakers, surveillance monitors, emergency lights.
 - **Pings & Callouts**: callouts and pings outrank scare audio.
@@ -191,7 +191,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | Monster Abilities | This depends on it | Blackout and Lunge triggers and wind-up timing |
 | Borrowed Face | This depends on it | Reveal trigger, `FormChanged` |
 | Survivor Defense | This depends on it | `BarricadeBroken` trigger; stun input never blocked |
-| First-Person Controller & Interaction | Bidirectional | The camera flinch is the single sanctioned view rotation (Controller rule 7); server-applied, so the server view direction follows it |
+| First-Person Controller & Interaction | Depends on this | Soft. The camera flinch is the single sanctioned view rotation (Controller rule 7): a server-held offset added to client yaw/pitch, none for a player with the toggle off. The Controller depends on this for the nudge; this does not depend on the Controller |
 | Survivor Objectives | This depends on it | Fuse install alarm, power restored |
 | Facility Map | This depends on it | Lighting states (owner), lighting volumes for the ambush test, scare anchors, emergency lights, monitors |
 | Network Authority & Replication | This depends on it | `ScareTriggered` replication and scoping |
@@ -249,7 +249,7 @@ Alien: Isolation's vent and alarm sounds: frightening because they tell you wher
 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |---|---|---|---|
-| Camera flinch | ≤300 | View nudge toward origin; the single sanctioned view rotation, server-applied (the server view direction follows it) | Yes (toggle) |
+| Camera flinch | ≤300 | View nudge toward origin; the single sanctioned view rotation, a server-held offset that stays after the ramp (the server view direction follows it); none for a player with the toggle off | Yes (toggle) |
 | Screen flash | ≤150 per flash | Brightness pulse, rate-capped | Yes (scale) |
 
 ### Weight and Responsiveness Profile
@@ -290,6 +290,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 - [ ] A lunge wind-up started in a blacked-out volume, or by a monster that a survivor within `lunge_cue_radius_m` has had no line of sight to for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume by a monster that survivor saw within `ambush_unseen_s` sends them none (cross-review B1).
 - [ ] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush lunge scare or any other Major scare; a reveal flinch running when a wind-up starts 0.1 s after the form change ends on that tick.
 - [ ] No scare changes health, down state, objective progress, cooldowns or position on the server.
+- [ ] With the camera flinch toggle off, a Major scare plays the screen-edge pulse only: the player's server view direction and aim ray are identical before and after the scare, and a taser shot fired during the 0.3 s window resolves against the client's unrotated view. With the toggle on, the server view direction equals client yaw/pitch plus the flinch offset, reached within 0.3 s and held afterwards, and the client view matches it (designer decision, 2026-10-12, cross-review 12e).
 - [ ] Maximum measured input loss from any scare is ≤ 0.3 s; movement and stun input work during a flinch.
 - [ ] A RoundScript scare within 45 s of a Major scare on the same client is blocked; a Monster scare in the same window plays as Minor.
 - [ ] The same scare_id at the same location does not fire twice within 120 s.

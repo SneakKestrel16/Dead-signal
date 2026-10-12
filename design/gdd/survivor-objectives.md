@@ -26,7 +26,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 
 **Shared rules for all objective interactions**
 1. Every objective interaction is a timed hold-to-interact (pattern owned by First-Person Controller & Interaction). The client only asks to start or stop. The server checks range, line of sight to the object, the actor's role and state, and the elapsed time. Only the server completes the interaction and broadcasts `ObjectiveProgressChanged`. A client message saying "done" is ignored.
-2. Only a survivor in the Healthy state can start or continue an objective interaction. Being Downed, being hit (a monster hit or a taser shock, Survivor Defense rule 11), moving out of range, or releasing input cancels it. Range, line of sight and one-hold-per-actor follow the Controller hold pattern (`first-person-controller.md` rules 13-16): Start needs `interact_range_m` = 2.0 **(proposed)**; once Holding, the keep-range is `interact_range_m` + `hold_range_tolerance_m` (0.25) = 2.25 m; the hold also cancels on lost line of sight or on starting another hold or using an item (designer decision, 2026-10-12, cross-review 12d).
+2. Only a survivor in the Healthy state can start or continue an objective interaction. Being Downed, being hit (a monster hit or a taser shock, Survivor Defense rule 11), moving out of range, or releasing input cancels it. Range, line of sight and one-hold-per-actor follow the Controller hold pattern (`first-person-controller.md` rules 13-16): Start needs `interact_range_m` = 2.0 **(proposed)**; once Holding, the keep-range is `interact_range_m` + `hold_range_tolerance_m` (0.25) = 2.25 m; the hold also cancels on lost line of sight or on starting another hold, using an item or hiding (hiding is already excluded for a hidden survivor by the Hidden-state rule; named here to match Controller rule 16) (designer decision, 2026-10-12, cross-review 12d).
 3. Cancelled hold interactions lose their progress (they reset) **(proposed)**. The evacuation activation is the exception (rule 19).
 4. When Match Flow ends the round, all objective state freezes.
 
@@ -246,7 +246,7 @@ Dead by Daylight generator repair: committed, exposed, and audible. Anti-referen
 - **Player control**: The player can cancel at any time by releasing.
 - **Snap quality**: Progress is smooth; completion is a crisp event.
 - **Acceleration model**: Linear progress.
-- **Failure texture**: A reset bar always has a visible cause (hit, moved out of range, released, lost line of sight, started another hold or used an item; the causes are those of the Controller hold pattern).
+- **Failure texture**: A reset bar always has a visible cause (hit, moved out of range, released, lost line of sight, started another hold, used an item or hid; the causes are those of the Controller hold pattern).
 
 ### Feel Acceptance Criteria
 - [ ] Across ≥10 playtest rounds, at least half of post-round survey answers to "Which word best describes installing a fuse? (safe / risky / boring / loud)" are "risky" or "loud".

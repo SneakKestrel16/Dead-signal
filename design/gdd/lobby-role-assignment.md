@@ -222,11 +222,13 @@ Lobby screen, to be specified with `/ux-design`:
 
 ## Cross-References
 
-- `design/gdd/match-flow.md`: rules 1, 2, 19–21, 24, 27 (roster in, return out, disconnect grace, results)
-- `design/gdd/pings-and-callouts.md`: rules 10, 18, 21 and the voice-set Open Question (one voice set per character, settled here)
-- `design/gdd/borrowed-face.md`: "What the disguise copies" (body, outfit, colour identity are the target's character)
-- `design/levels/research-facility.md`: Spawn Points (S1–S5)
-- `design/gdd/game-concept.md`: Session-Level loop (rotating who plays the shapeshifter)
+| This Document References | Target GDD | Specific Element Referenced | Nature |
+|--------------------------|-----------|----------------------------|--------|
+| Roster in, return out, disconnect grace, results | `design/gdd/match-flow.md` | Rules 1, 2, 19–21, 24, 27 | Rule dependency |
+| One voice set per character | `design/gdd/pings-and-callouts.md` | Rules 10, 18, 21 and the voice-set Open Question (settled here) | Rule dependency |
+| Disguise copies the target's character | `design/gdd/borrowed-face.md` | "What the disguise copies" (body, outfit, colour identity) | Data dependency |
+| Spawn points | `design/levels/research-facility.md` | Spawn Points (S1–S5) | Data dependency |
+| Rotating who plays the shapeshifter | `design/gdd/game-concept.md` | Session-Level loop | Rule dependency |
 
 ## Acceptance Criteria
 
@@ -238,20 +240,20 @@ Lobby screen, to be specified with `/ux-design`:
 - [ ] **AC-LB-04** [unit] Given three joins named "Ann", when they are registered, then they appear as "Ann", "Ann (2)" and "Ann (3)". A name of 0 or 17 characters is rejected.
 - [ ] **AC-LB-05** [unit] Given 3 connected players who are all Ready, when the lobby ticks, then it stays in Waiting, no countdown starts, and the roster holds only the 3 human tokens (no bot or AI seat).
 - [ ] **AC-LB-06** [unit] Given the character data file, when it is loaded, then it defines exactly 5 survivor characters C1–C5, each with a distinct look, colour and voice-set ID. The shapeshifter's true-form model is none of the five.
-- [ ] **AC-LB-07** [unit] Given a new player and a seeded RNG, when they join, then their preference is one of C1–C5 chosen from the RNG. That preference is unchanged after 3 rounds.
-- [ ] **AC-LB-08** [unit] Given survivors whose preferences are all distinct, when characters are assigned, then every survivor gets their pick.
-- [ ] **AC-LB-09** [unit] Given survivor preferences C1, C1, C2, C4, C4 and a fixed seed, when characters are assigned, then the C2 survivor keeps C2, one C1 claimant keeps C1, one C4 claimant keeps C4, and the two losers get {C3, C5}. All five characters are distinct.
-- [ ] **AC-LB-10** [unit] Given 1,000 seeded random preference sets at each of 3, 4 and 5 survivors (including "all prefer C1"), when characters are assigned, then every result is distinct, a sole claimant always keeps their pick, and every survivor holds exactly one character.
-- [ ] **AC-LB-11** [unit] Given k = 2, 3 and 5 survivors sharing one preference over 10,000 fixed-seed trials, when characters are assigned, then each claimant keeps the shared character in 1/k ± 0.02 of trials, and, over the trials in which a given survivor loses the clash, each free character is dealt to them in 1/|free| ± 0.02 of those trials (±0.02 is over 4σ at these trial counts).
-- [ ] **AC-LB-12** [unit] Given a shapeshifter whose preference is C3, when characters are assigned, then the shapeshifter has no character and a survivor may receive C3. The shapeshifter's preference is still C3 next round.
-- [ ] **AC-LB-13** [unit] Given N connected tokens and a seeded RNG before the session's first round, when the queue is built, then Q_1 holds each token exactly once, its order is reproducible from the seed, and its head is the shapeshifter.
-- [ ] **AC-LB-14** [integration/playtest] Given a client that sends a role request RPC, when the server receives it, then the request is ignored and the assigned roles are unchanged.
-- [ ] **AC-LB-15** [unit] Given a stable roster of N = 4, 5 and 6, when 2N rounds reach Ended (including a round ended by forfeit), then `shapeshifter(r) = Q_1[(r − 1) mod N]` and every token is the shapeshifter exactly twice.
-- [ ] **AC-LB-16** [unit] Given a round that is Cancelled, when the next round starts, then the queue is unchanged, the same token is the shapeshifter, and character assignment runs again.
-- [ ] **AC-LB-17** [unit] Given Q_1 = [A, B, C, D, E], A in round 1, then B absent for round 2 and present again for round 3, when the rounds resolve, then C is the shapeshifter in round 2 with the queue becoming [B, D, E, A, C], and B is the shapeshifter in round 3.
-- [ ] **AC-LB-18** [unit] Given a player who reconnects with the same session token under a new peer ID, then their queue position is unchanged. Given a player who rejoins with a new token (lost token), or joins for the first time after round 1, then they are appended at the back of the queue.
-- [ ] **AC-LB-19** [integration/playtest] Given a lobby with an absent token at the queue head, when the lobby screen is shown, then every client displays the server's queue order and names the first present token as the next shapeshifter. A screenshot is retained in `production/qa/evidence/`.
-- [ ] **AC-LB-20** [unit] Given a Ready player, when they change their preference, then the change is rejected. After they un-ready, the change is accepted.
+- [ ] **AC-LB-07** **(post-M1)** [unit] Given a new player and a seeded RNG, when they join, then their preference is one of C1–C5 chosen from the RNG. That preference is unchanged after 3 rounds.
+- [ ] **AC-LB-08** **(post-M1)** [unit] Given survivors whose preferences are all distinct, when characters are assigned, then every survivor gets their pick.
+- [ ] **AC-LB-09** **(post-M1)** [unit] Given survivor preferences C1, C1, C2, C4, C4 and a fixed seed, when characters are assigned, then the C2 survivor keeps C2, one C1 claimant keeps C1, one C4 claimant keeps C4, and the two losers get {C3, C5}. All five characters are distinct.
+- [ ] **AC-LB-10** **(post-M1)** [unit] Given 1,000 seeded random preference sets at each of 3, 4 and 5 survivors (including "all prefer C1"), when characters are assigned, then every result is distinct, a sole claimant always keeps their pick, and every survivor holds exactly one character.
+- [ ] **AC-LB-11** **(post-M1)** [unit] Given k = 2, 3 and 5 survivors sharing one preference over 10,000 fixed-seed trials, when characters are assigned, then each claimant keeps the shared character in 1/k ± 0.02 of trials, and, over the trials in which a given survivor loses the clash, each free character is dealt to them in 1/|free| ± 0.02 of those trials (±0.02 is over 4σ at these trial counts).
+- [ ] **AC-LB-12** **(post-M1)** [unit] Given a shapeshifter whose preference is C3, when characters are assigned, then the shapeshifter has no character and a survivor may receive C3. The shapeshifter's preference is still C3 next round.
+- [ ] **AC-LB-13** **(post-M1)** [unit] Given N connected tokens and a seeded RNG before the session's first round, when the queue is built, then Q_1 holds each token exactly once, its order is reproducible from the seed, and its head is the shapeshifter.
+- [ ] **AC-LB-14** **(post-M1)** [integration/playtest] Given a client that sends a role request RPC, when the server receives it, then the request is ignored and the assigned roles are unchanged.
+- [ ] **AC-LB-15** **(post-M1)** [unit] Given a stable roster of N = 4, 5 and 6, when 2N rounds reach Ended (including a round ended by forfeit), then `shapeshifter(r) = Q_1[(r − 1) mod N]` and every token is the shapeshifter exactly twice.
+- [ ] **AC-LB-16** **(post-M1)** [unit] Given a round that is Cancelled, when the next round starts, then the queue is unchanged, the same token is the shapeshifter, and character assignment runs again.
+- [ ] **AC-LB-17** **(post-M1)** [unit] Given Q_1 = [A, B, C, D, E], A in round 1, then B absent for round 2 and present again for round 3, when the rounds resolve, then C is the shapeshifter in round 2 with the queue becoming [B, D, E, A, C], and B is the shapeshifter in round 3.
+- [ ] **AC-LB-18** **(post-M1)** [unit] Given a player who reconnects with the same session token under a new peer ID, then their queue position is unchanged. Given a player who rejoins with a new token (lost token), or joins for the first time after round 1, then they are appended at the back of the queue.
+- [ ] **AC-LB-19** **(post-M1)** [integration/playtest] Given a lobby with an absent token at the queue head, when the lobby screen is shown, then every client displays the server's queue order and names the first present token as the next shapeshifter. A screenshot is retained in `production/qa/evidence/`.
+- [ ] **AC-LB-20** **(post-M1)** [unit] Given a Ready player, when they change their preference, then the change is rejected. After they un-ready, the change is accepted.
 - [ ] **AC-LB-21** [unit] Given an injected clock with 5 players all Ready at t = 100.0, when time advances, then remaining = 1.8 at t = 103.2, the roster locks at t = 105.0, and remaining stays within [0, 5] throughout. The countdown does not start while `ready_count < connected`.
 - [ ] **AC-LB-22** [unit] Given a running countdown, when a player un-readies, leaves or joins, then each trigger alone returns the lobby to Waiting. When all players are Ready again, the countdown restarts at the full `lobby_countdown_s`.
 - [ ] **AC-LB-23** [unit] Given a disconnect processed in the same tick that remaining reaches 0, when the server locks, then it re-checks rule 13, returns to Waiting, and hands no roster to Match Flow.
@@ -261,7 +263,7 @@ Lobby screen, to be specified with `/ux-design`:
 - [ ] **AC-LB-27** [integration/playtest] Given a round that ends in Results, and separately one that is Cancelled, when it ends, then every connected peer is back in Waiting with Ready cleared and with preferences and queue unchanged. A survivor whose grace expired mid-round is absent from the lobby, but their token keeps its queue position.
 - [ ] **AC-LB-28** [integration/playtest] Given a non-host peer that disconnects in Waiting or Countdown, when the server sees the disconnect, then that player is removed from the lobby on the same tick, with no grace period.
 - [ ] **AC-LB-29** [integration/playtest] Given the host leaves in Waiting, in Countdown and in In Match (including while the host is the shapeshifter), then every client returns to the main menu with "Host left", and no round result or forfeit is recorded.
-- [ ] **AC-LB-30** [unit] Given a lobby in Waiting, when the host kicks a player, then that player is removed, their queue position is kept, and they can rejoin. A kick from a non-host, or by the host outside Waiting, is rejected.
+- [ ] **AC-LB-30** **(post-M1)** [unit] Given a lobby in Waiting, when the host kicks a player, then that player is removed, their queue position is kept, and they can rejoin. A kick from a non-host, or by the host outside Waiting, is rejected.
 - [ ] **AC-LB-31** [integration/playtest] Given a running round, when any player looks at another body, then no name tag or role indicator is shown; only character look and colour identify it. A screenshot is retained in `production/qa/evidence/`.
 
 Not covered by a criterion: rule 1's dedicated-server support (Network Authority ADR); rule 11's "deduced at spawn" and the Overview's "fair turns" are experience claims for playtest.

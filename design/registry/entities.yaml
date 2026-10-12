@@ -1036,6 +1036,7 @@ constants:
     referenced_by:
       - design/gdd/survivor-objectives.md
       - design/gdd/first-person-controller.md
+      - design/gdd/survivor-defense.md
     value: 2.0
     unit: m
     added: 2026-10-12
@@ -1073,6 +1074,44 @@ constants:
       - design/gdd/survivor-defense.md
       - design/gdd/first-person-controller.md
     value: 8
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) seconds of fake footsteps; path length derives from walk_speed x this (12 m at walk 4.0), not registered
+  - name: false_signal_footstep_duration_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+    value: 3
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) hold time of a room backup switch
+  - name: backup_switch_hold_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+      - design/levels/research-facility.md
+    value: 1
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) switch Start range; safe range 1.5-2.3 so range + 0.7 <= interact_ray_max_m 3.0
+  - name: backup_switch_range_m
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/first-person-controller.md
+      - design/levels/research-facility.md
+    value: 2.0
     unit: m
     added: 2026-10-12
     revised: ""
