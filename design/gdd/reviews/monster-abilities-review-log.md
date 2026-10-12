@@ -106,3 +106,19 @@ Findings:
 - [NICE-TO-HAVE] Header date 2026-10-12 left for the date pass. Rule 7 stun bullet redundant with rule 12. Blackout reveals the monster within ~15 m; not noted in the doc.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md 74af479140e2a2a4188f301293beb05d888fb42e
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 5
+Summary: Seventh review. All prior fixes held and cross-document references (shock lock rule 14, Borrowed Face rules 7 and 11, Pings rules 26-29, Facility Map blackout_able, per-room switches, Downing eligibility) match. No blocking defects; remaining items are implementability notes for the Network Authority and Controller GDDs.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Rule 7 / Formulas: server tick rate is undefined; the dodge proof is continuous (0.5 ms steps) while hits are per tick. Fix: state the tick rate or sweep the dash path between ticks.
+- [RECOMMENDED] Rule 6: dash body-block uses current or rewound positions is unstated, and order between a body block and an eligible hit on the same tick is undefined; a hidden survivor's body inside a hiding prop is ambiguous.
+- [RECOMMENDED] Rule 15: fake footsteps and interaction sounds need the same replication channel and format as real ones (Pings rule 27 covers callouts only); add an AC like the packet-capture one.
+- [RECOMMENDED] Rule 20 / AC: "Blackout on an already-dark zone is rejected" is unreachable in play (6 s duration < 45 s cooldown, one monster); drop it or test by forced state.
+- [RECOMMENDED] Formulas: "Fastest lunge cycle after a miss" 10.9 s is not the fastest; a dash blocked at once or a wind-up stun resolves earlier.
+- [NICE-TO-HAVE] Header Last Updated 2026-10-12 is later than today; Blackout reveals the monster within ~15 m, not noted.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md 09b9230cb70e2a1c3b3623b34b5f58eaab6631c5
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
