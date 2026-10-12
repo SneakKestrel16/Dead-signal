@@ -51,7 +51,7 @@ Summary: Re-review after the cross-GDD rounds edited rules 2 and 19 and the depe
 Prior verdict resolved: Yes
 Findings:
 - [RECOMMENDED] systems-index.md: `SurvivorEscaped` consumers omitted Survivor Objectives, which reads it for rule 22. Applied.
-- [RECOMMENDED] systems-index.md row 5: Depends On lists 3 systems; the GDD's Dependencies table also names Network Authority, Downing, Rescue & Elimination and Survivor Defense. Not applied.
+- [RECOMMENDED] systems-index.md row 5: Depends On lists 3 systems; the GDD's Dependencies table also names Network Authority, Downing, Rescue & Elimination and Survivor Defense. Applied.
 - [NICE-TO-HAVE] Dependencies: Objectives calls Borrowed Face "Bidirectional"; borrowed-face.md gives only "Depends on this". Settle when Borrowed Face is revised.
 Reviewed-Content-Hash: design/gdd/survivor-objectives.md 20cc0fc671a6ef950cf00e5b8f43f2c4a71e0431
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

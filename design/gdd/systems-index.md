@@ -72,7 +72,7 @@ event. Only the owner writes it. Readers never change it.
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
-| 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
+| 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Network Authority, Controller & Interaction, Match Flow, Facility Map, Downing, Rescue & Elimination, Survivor Defense |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Approved | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
 | 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Approved | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Needs Revision | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map |
