@@ -32,3 +32,18 @@ Findings:
 - [RECOMMENDED] Detailed Design rule 7: does not say whether stored rescue progress resets on re-down (likely moot).
 Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 5c57ba75acefc0097acbb36e98a22140f6231e09
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+## Review — 2026-10-11 (re-review after cross-review blockers) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 4
+Summary: Re-review after the cross-review blocker fixes in efbdd84 (camp pause, PlayerConnectionChanged). Values and events agree with the systems-index event table. The new camp pause had contradicted rule 10's no-stall claim. Revised in the same session by designer decision, together with the other recommended items.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Rule 6 / rule 10: with every survivor Downed, the camp pause let the monster freeze bleed-out until the deadline, contradicting "can no longer stall". Resolved: the pause applies only while at least one survivor is Healthy; formula, variable and acceptance criterion added.
+- [RECOMMENDED] Open Questions: the bleed-out pause row was stale after rule 6 decided it. Updated.
+- [RECOMMENDED] Formulas: `monster_distance_m` basis was unstated. Now straight-line through walls and floors (proposed).
+- [RECOMMENDED] Interactions/Dependencies: no `PlayerConnectionChanged` input row; Pings & Callouts listed the dependency as one-way. Both fixed.
+- [NICE-TO-HAVE] Formulas: the monster exposure window ignores `stun_use_delay_s` (0.2 s). Not applied.
+Reviewed-Content-Hash: design/gdd/downing-and-rescue.md e808f38bd6f5076b081e78f90fe77d427419a97f
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae

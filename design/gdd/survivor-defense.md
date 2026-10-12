@@ -1,8 +1,8 @@
 # Survivor Defense
 
-> **Status**: Draft
+> **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-11 (design review: friendly shock mirrors a disguised stun)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -84,13 +84,20 @@ tools, they're yours.
    shot's first hit is the monster, unstunned and not immune, the server applies
    MonsterStunned and emits `MonsterStunned`.
 10. **Immune target:** if the monster is immune, the cartridge is still consumed
-    and every client shows a "resisted" spark **(proposed)**.
+    and no stun state is applied. In true form every client shows a "resisted"
+    spark **(proposed)**. While disguised, the hit plays the full shock
+    presentation and applies the same root and slow as a stun, with no action
+    cancelled and no new immunity (designer decision, 2026-10-11), so immunity
+    is never visible on a borrowed body.
 11. **Survivor hit (friendly fire):** a real survivor hit by the shot is shocked
-    for `friendly_shock_s` = 1 s (30% slow, camera jitter, no root, no whiteout)
-    **(proposed)**. It never downs, damages or interrupts a rescue. The firer's
-    local feedback is identical whether they hit a survivor or a disguised
-    monster **(proposed)**, so a stun is not a free identity test. A stunned disguised
-    monster stays disguised (`borrowed-face.md` rule 10).
+    exactly as a disguised monster is stunned, as every observer sees it
+    (designer decision, 2026-10-11): the same stagger on their body, rooted for
+    `stun_root_s`, then `stun_slow_mult` until `stun_duration_s` ends, with the
+    shocked grunt and no whiteout. It never downs, damages or interrupts a
+    rescue. The firer's feedback is identical whether they hit a survivor or a
+    disguised monster, so a stun is not an identity test: Borrowed Face rule 10
+    keeps the stunned monster disguised, and this rule makes the survivor look
+    the same. The cost is that a misfire roots a teammate for a full second.
 12. Survivors cannot kill or permanently disable the monster by any means.
 13. Downed, Seized or hidden survivors cannot use the item **(proposed)**. Charges persist
     through a down and rescue **(proposed)** and are lost on elimination.
@@ -118,7 +125,10 @@ tools, they're yours.
     punished again, but one that disengages cannot be locked.
 17. **Anti-stun-lock (source risk):** limited charges, a short stun and the
     immunity window together keep the monster stunned at most 25% of any
-    sustained stun chain (see Formulas), and always give it a window to retreat.
+    sustained stun chain (see Formulas) while it disengages after each stun, and
+    always give it a window to retreat. A monster that winds up a lunge inside
+    immunity ends it early (rule 16) and can be stunned again: that share is its
+    own choice.
 
 #### Hiding spots
 
@@ -136,8 +146,8 @@ tools, they're yours.
     for `search_duration_s` = 1.5 s **(proposed)** in any form. If empty, nothing
     happens. If occupied, the survivor is ejected in front of the spot; the
     monster gets no automatic hit. It must still lunge with its normal wind-up,
-    which the survivor can dodge or stun. A disguised monster's search may look
-    like a survivor checking a cabinet **(proposed)**.
+    which the survivor can dodge or stun. Survivors cannot search, so a search
+    is a visible monster action even while disguised **(proposed)**.
 23. Hidden survivors keep their charges and flashlight; carried objective items
     are handled by Survivor Objectives.
 
@@ -172,7 +182,7 @@ tools, they're yours.
 |-------|----------------|----------------|----------|
 | Normal | Round start; immunity ends | Valid stun → Stunned | Full kit |
 | Stunned | Valid Taser hit while Normal | `stun_duration_s` elapses → Immune | Rooted then slowed; no attacks, abilities, transform, interact |
-| Immune | Stun ends | `stun_immunity_s` elapses or lunge wind-up starts → Normal | Full kit; stun hits are "resisted" |
+| Immune | Stun ends | `stun_immunity_s` elapses or lunge wind-up starts → Normal | Full kit; stun hits are "resisted" in true form, a root-and-slow shock while disguised (rule 10) |
 
 **Hiding spot:** Empty → Entering (1 s) → Occupied → Exiting (1 s) → Empty;
 Occupied → (Search completes) → Empty with survivor ejected.
@@ -190,7 +200,7 @@ Closed.
 | Borrowed Face | — | `MonsterStunned` (cancels transform; stun-while-disguised presentation owned there) |
 | Facility Map | Hiding spot and barricadable door placement, backup switches | — |
 | Survivor Objectives | — | Hidden/item-using survivors cannot interact with objectives |
-| First-Person Controller & Interaction | Hold-to-interact pattern | Movement lock/slow for friendly shock and stun |
+| First-Person Controller & Interaction | Hold-to-interact pattern | Root and slow for friendly shock and stun |
 | Scare Events | — | Door bursts on barricade break may trigger a scare (owned there) |
 | HUD & Results Screen | — | Charges, stun feedback, barricade/hide progress, stun stats |
 | Match Telemetry | — | Stun attempts, hits, resists, friendly shocks, searches, barricade breaks |
@@ -224,6 +234,11 @@ max_stunned_time = team_stuns * stun_duration_s = 16 s of a 540 s round (~3%)
 ```
 delay_bought = barricade_break_s + monster_travel_to_alternate_route
 ```
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| barricade_break_s | float s | 3–10 | proposed 5 | Total break time |
+| monster_travel_to_alternate_route | float s | 0+ | Facility Map layout | Extra time for the monster to go around instead of breaking |
+
 With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 5 s, plus whatever alternate routes (Facility Map) cost the monster.
 
@@ -270,7 +285,6 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | stun_range_m | 5 (proposed) | 3–7 | Easier stuns, safer rescues | Must be very close |
 | stun_aim_tolerance_deg | 10 (proposed) | 0–20 | Forgiving aim under latency | Pure aim; more misses |
 | stun_use_delay_s | 0.2 (proposed) | 0–0.5 | Harder to react to lunges | Instant reaction |
-| friendly_shock_s | 1.0 (proposed) | 0.5–1.5 | Misfires punished more | Misfires near free |
 | hide_transition_s | 1.0 (proposed) | 0.5–2.0 | Hiding needs planning | Panic-hide too easy |
 | hide_quiet_s | 20 (proposed) | 10–40 | Longer safe hides | Hiding barely useful |
 | search_duration_s | 1.5 (proposed) | 0.5–3.0 | Searches costly for monster | Spots near useless |
@@ -285,8 +299,9 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Flashlight on/off | Visible beam to all | Click | MVP |
 | Taser fire | Darts and wires, short blue arc at the target (reduced-flash variant required) | Pop of the cartridge, then electric crackle | MVP |
 | Monster stunned | Stagger animation; while disguised it plays on the borrowed body (Borrowed Face rule 10) | Monster pain cry in true form; survivor grunt while disguised | MVP |
-| Stun resisted | Small spark, no stagger | Dull fizz | MVP |
-| Survivor shocked | Camera jitter, brief blue edge (reduced-motion/flash variant) | Crackle and grunt | MVP |
+| Stun resisted (true form) | Small spark, no stagger | Dull fizz | MVP |
+| Stun resisted (disguised) | Identical to Survivor shocked | Identical to Survivor shocked | MVP |
+| Survivor shocked | Same stagger as a stunned disguised monster for observers; camera jitter and brief blue edge for the victim (reduced-motion/flash variant) | Crackle and shocked grunt | MVP |
 | Hide enter/exit | Door motion | Soft creak | MVP |
 | Long-hide cue | — | Breathing/creak every 5 s | Vertical Slice |
 | Search | Monster opens spot | Door rattle | MVP |
@@ -330,8 +345,8 @@ keeps the monster permanently stuck.
 
 ### Feel Acceptance Criteria
 
-- [ ] Monster players do not describe being stun-locked in post-round surveys.
-- [ ] Survivors can tell from feedback whether a stun hit, missed or was resisted.
+- [ ] Across ≥10 playtest rounds, at most 1 monster player answers "yes" to the post-round question "Did you feel stun-locked?".
+- [ ] In a playtest of ≥20 shots on the true-form monster, firers correctly name hit, miss, blocked or resisted for ≥90% of them.
 
 ## UI Requirements
 
@@ -365,6 +380,11 @@ keeps the monster permanently stuck.
 - [ ] Searching an occupied hiding spot ejects the survivor without a down.
 - [ ] A barricade breaks after exactly 5 s of total monster break time, with progress kept across interruptions.
 - [ ] With 5 clients connected, all 5 agree on stun state, charges remaining, hiding-spot occupancy (as visible to their role) and barricade state after each event.
+- [ ] A survivor hit by a taser is rooted for `stun_root_s` and slowed until `stun_duration_s`; a recording of it is indistinguishable from a recording of a stunned disguised monster, and from a disguised monster hit while immune.
+- [ ] A stun on a true-form monster, then a lunge wind-up 2 s into immunity, ends immunity; a stun on that wind-up applies.
+- [ ] A lunge whose path crosses a closed door stops at the door and resolves as a miss.
+- [ ] After a barricade breaks, a survivor cannot start a barricade on that door for 30 s.
+- [ ] A survivor hidden for 20 s makes the long-hide cue, then again every 5 s.
 - [ ] Every value in Tuning Knobs is loaded from data, not hardcoded.
 
 ## Open Questions
@@ -374,7 +394,7 @@ keeps the monster permanently stuck.
 | Exact defensive item types and starting charges (source open decision). | SneakKestrel16 | Before Milestone 3 | **Item type decided 2026-10-12: Taser.** Cartridges (2), range (5 m) and aim tolerance (10°) proposed; playtest |
 | Should stun items be refillable or found in the map? | SneakKestrel16 | Before Milestone 5 | Proposed: no |
 | Does stunning a disguised monster reveal it? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11: no.** Borrowed Face rule 10 |
-| Should a taser shot that hits a real survivor shock them? | SneakKestrel16 | Before Milestone 3 | Proposed: 1 s shock (slow, no root) |
+| Should a taser shot that hits a real survivor shock them? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11:** yes, identical to a disguised stun as observers see it (rule 11) |
 | Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | Owned by Monster Abilities |
 | Does the flashlight need a battery limit? | SneakKestrel16 | Before Milestone 4 | Proposed: no |
 | Should the long-hide cue exist, or is Search enough? | SneakKestrel16 | Before Milestone 5 | |

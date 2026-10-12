@@ -191,9 +191,8 @@ items:
     charges: 2   # cartridges (proposed)
     stun_range_m: 5   # (proposed)
     stun_aim_tolerance_deg: 10   # (proposed) aimed single shot; hits the first body in its path
-    friendly_shock_s: 1.0   # (proposed)
     added: 2026-10-12
-    revised: ""
+    revised: 2026-10-11   # friendly_shock_s removed: shock now mirrors the stun timings
 
   - name: flashlight
     status: active

@@ -91,9 +91,9 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 | Survivor: Healthy | Round start; `SurvivorRescued` | `SurvivorDowned` | All pings and callouts |
 | Survivor: Downed | `SurvivorDowned` | `SurvivorRescued` or `SurvivorEliminated` | Pings, "Need rescue", "Danger"; voice if enabled |
 | Survivor: Eliminated | `SurvivorEliminated` | Round end | No pings, callouts or voice to living players **(proposed)** |
-| Monster: Disguised | `FormChanged` to a survivor form completes | `FormChanged` begins | All pings and callouts as the borrowed identity |
-| Monster: Transforming | `FormChanged` begins | Transformation completes | Blocked **(proposed)** |
-| Monster: True form | Reveal / round start undisguised | `FormChanged` to a survivor form completes | Blocked **(proposed)** |
+| Monster: Disguised | `FormChanged` to a survivor form completes | A transformation starts (replicated transforming flag, Borrowed Face rule 8) | All pings and callouts as the borrowed identity |
+| Monster: Transforming | A transformation starts (replicated transforming flag) | `FormChanged` on completion, or a stun interrupts it (back to the previous form) | Blocked **(proposed)** |
+| Monster: True form | `FormChanged` into true form; round start | A transformation starts | Blocked **(proposed)** |
 
 Existing markers persist with the identity they were sent under until they expire, even if the sender's form changes **(proposed)**.
 
@@ -169,7 +169,7 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Network Authority & Replication | This depends on it | Server validation, broadcast, positions, line of sight |
 | First-Person Controller & Interaction | This depends on it | View ray, input |
 | Borrowed Face | This depends on it | Displayed identity, form state (`FormChanged`) |
-| Downing, Rescue & Elimination | This depends on it | Survivor state gates sending |
+| Downing, Rescue & Elimination | Bidirectional | Survivor state gates sending; Downing uses the "Need rescue" callout as its Call for Help |
 | Survivor Objectives | This depends on it | Pingable object types |
 | Survivor Defense | This depends on it | Pingable hiding spots, barricadable doors, stun items |
 | Facility Map | This depends on it | Room IDs and names as callout locations; pingable backup switches |

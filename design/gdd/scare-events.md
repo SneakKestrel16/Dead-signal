@@ -119,7 +119,7 @@ Per-client scare cooldown state: Ready → Major cooldown (`major_scare_cooldown
 
 - **Match Flow & Win Conditions**: `RoundPhaseChanged` drives the facility scare state.
 - **Monster Abilities**: Blackout, False Signal and Predatory Lunge send scare triggers (source Monster) through `AbilityUsed` after the server validates the ability; lunge wind-up timing bounds the flinch rule.
-- **Borrowed Face**: `FormChanged` into true form triggers the reveal scare.
+- **Borrowed Face**: `FormChanged` into true form triggers the reveal scare for survivors within `reveal_radius_m` (10 m, owned by Borrowed Face rule 15) with line of sight.
 - **Survivor Defense**: barricade breaks trigger door burst; stun use is never blocked by scares.
 - **Survivor Objectives**: fuse install triggers an alarm; both fuses installed triggers Power Restored.
 - **Facility Map**: authored scare points, recording speakers, glass partitions, surveillance monitors, emergency lights.

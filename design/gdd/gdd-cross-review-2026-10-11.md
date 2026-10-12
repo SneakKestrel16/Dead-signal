@@ -163,3 +163,186 @@ There are four blocking issues. Two of them (1, 2) are clean-up edits. The other
 | 4. Monster rage-quit | Grace expiry is a monster forfeit: the survivors win. The No Contest outcome is removed. | match-flow rules 14, 16, 20 and 23, Edge Cases, Acceptance Criteria, Open Questions |
 
 The flagged GDDs stay Needs Revision until each passes `/design-review`. The warnings are still open.
+
+---
+
+## Re-review after blocker fixes (2026-10-11, since-last-review)
+
+GDDs reviewed: 8 of 8 present (borrowed-face, downing-and-rescue, match-flow, pings-and-callouts, scare-events, survivor-defense changed; monster-abilities, survivor-objectives as dependencies). Not read: none. `design/levels/research-facility.md` was read only where a GDD cites it. Phases 2 (consistency) and 3 (design theory) ran as parallel `game-designer` agents. They were given file paths rather than pasted content, which deviates from the skill. Phase 4 scenarios were walked by the design-theory agent.
+
+The two design fixes were checked. The forfeit fix is sound: deadline is checked before forfeit, and the outcome lock prevents a flip. The camp-pause fix removes the bleed-out kill at the body, but it creates blocker R1 below and does not remove camping (R5).
+
+### Prior warnings
+
+| # | Status |
+|---|--------|
+| W1 Disconnect dodges a hit | Still open. Monster Abilities has no rule that consumes `PlayerConnectionChanged`, though the index lists it as a consumer. |
+| W2 Observation trivial; disguised strikes telegraph | Still open. Deferred to the M5 playtest. Lunge now needs True Form, which narrows what deception can achieve (see R-W6). |
+| W3 Monster stalls Evacuation | Still open. The camp pause can also keep a guarded Downed survivor alive while the deadline runs. |
+| W4 Taser attrition snowballs | Partly resolved by survivor-defense rule 13 (charges persist through a down). A contested rescue now costs about 1–2 cartridges. |
+| W5 Monster attention budget | Still open. |
+| W6 Infiltration dead time | Still open. |
+| W7 Early escape removes a player | Still open. |
+| W8 Blackout over the terminal | Still open. Now part of R4. |
+
+### Blocking
+
+🔴 **R1. The bleed-out ring is a proximity radar for the monster** (downing-and-rescue, borrowed-face). Rule 6 pauses bleed-out while the shapeshifter, in any form, is within 10 m, measured through walls. The UI shows the ring "Per tick" to all living survivors. A frozen ring therefore reveals a disguised monster near the body, and walking a suspect past a body becomes a free identity test. This contradicts survivor-defense rule 11, whose aim is that a stun is not an identity test. The Open Question about whether the ring shows the pause is still unanswered.
+- Options:
+  - (a) Show only coarse states (bleeding, critical, being rescued).
+  - (b) Keep the displayed timer draining while the server pauses, with an explicit rule that the displayed time is not the actual time.
+  - (c) Any player within 10 m pauses bleed-out, so a pause carries no identity information.
+  - (d) Pause only for a true-form monster, or only with line of sight.
+  - (e) Accept the radar as a deliberate clue and record it in Borrowed Face.
+
+🔴 **R2. A shocked survivor, a stunned disguised monster and an immune disguised monster can do different things afterwards** (survivor-defense, borrowed-face, survivor-objectives, pings-and-callouts).
+- The three cases:
+  - A stunned monster cannot attack, use abilities, transform, interact or use doors for 2 s (survivor-defense rule 14).
+  - An immune disguised hit cancels nothing (rule 10).
+  - A shocked survivor's restrictions are unspecified (rule 11): doors, interact, pings, firing its own taser, and whether the shock counts as "being hit", which cancels a hold under objectives rule 2.
+- The presentation matches, but the actions differ, so "shock, then ask them to ping or open a door" is a test. This breaks survivor-defense AC line 383 and the borrowed-face stun ACs.
+- Immune-hit presentation while Transforming is undefined.
+- Survivor clients also receive `MonsterStunned` over the network. Pings rule 27 sets the precedent for hiding identity in packets.
+- Options:
+  - (a) One action lock for all three cases for `stun_duration_s`, with the shock counting as a hit for holds.
+  - (b) No action lock while disguised, so the stun is presentation only.
+  - (c) Accept a behavioural tell and narrow the ACs to visual and audio.
+- In every option, survivor clients should receive one "shocked" event and never `MonsterStunned` or immunity data while the monster is disguised.
+
+🔴 **R3. The index rule "events only" contradicts reads of replicated state** (systems-index, borrowed-face, monster-abilities, downing-and-rescue, survivor-objectives). Index line 25 says systems talk "through these server events only". Several GDDs read replicated state instead:
+- Borrowed Face rule 8 (today's decision) and the Pings state table read the transforming flag.
+- Monster Abilities rule 7 reads Downing eligibility.
+- The Downing formula reads `monster_distance_m`.
+- Objectives reads the hidden state.
+- Options:
+  - (a) Amend the rule to "events, plus read-only replicated state listed in a state table", and add the table.
+  - (b) Add `TransformStarted` and other events, and revert Borrowed Face rule 8.
+
+🔴 **R4. References to mechanics that do not exist** (monster-abilities, match-flow, research-facility, scare-events).
+- The Monster Abilities edge case "Lights state reset by Match Flow" has no matching Match Flow rule. The index gives lighting to Facility Map, and scare-events rule 22 sets the lighting states.
+- Monster Abilities rule 17 relies on a "blackout-able" zone flag that `research-facility.md` does not define.
+- Options:
+  - (a) Move the reset to Scare Events or Facility Map on `RoundPhaseChanged`, and add a per-volume `blackout_able` flag, deciding the terminal volume (W8).
+  - (b) Add a Match Flow lighting rule, and treat every volume as blackout-able.
+
+🔴 **R5. Camping moved outward, not removed** (downing-and-rescue). Downing's own Tuning row says the monster "can wait just outside and still bleed the victim out". At 10.5 m behind a wall, the rescuer is still rooted for 6 s and within lunge reach. Camping also still keeps a survivor out of play and denies a downed carrier's drives. The rule's claim that "camping gains nothing" is false beyond 10 m. Monster speed is not assessed (there is no Controller GDD).
+- Options:
+  - Protect the rescuer (grace, or a faster rescue while the monster is near).
+  - Playtest-gate the radius with an AC (median rescue success under camping).
+  - Accept, and rewrite the claim to state what camping still gains.
+
+The design-theory agent rated R5 a warning. It is listed here as blocking because it is the original blocker 3 only partly fixed. The designer may downgrade it.
+
+### Warnings
+
+⚠️ **R-W1. Index dependencies are stale.**
+- Missing "Depends On" entries:
+  - Downing lacks Survivor Defense.
+  - Survivor Defense lacks Downing and Borrowed Face.
+  - Monster Abilities lacks Survivor Defense.
+  - Pings lacks Downing, Objectives, Defense, Facility Map and Monster Abilities.
+- The Dependency Map still lists Borrowed Face as depending only on Network Authority and Controller.
+- Borrowed Face sits in the Core layer but depends on Feature-layer systems.
+
+⚠️ **R-W2. Event table gaps.**
+- Objectives consumes `SurvivorEscaped`, but it is not listed as a consumer.
+- `AbilityUsed` names Monster Abilities as emitter, but monster-abilities.md never names it.
+- Monster Abilities is listed as a consumer of `PlayerConnectionChanged`, but no rule uses it.
+
+⚠️ **R-W3. Dependency directions disagree.**
+- Objectives and Defense each say the other depends on it.
+- Objectives says the Borrowed Face link is bidirectional; Borrowed Face says only that Objectives depends on it.
+- Defense omits Match Flow.
+- Pings labels its Monster Abilities dependency in contradictory directions.
+- match-flow line 162 says Borrowed Face owns disguise restore on reconnect, but match-flow rule 20 defines it.
+
+⚠️ **R-W4. The miss-slow transform gate is only in Monster Abilities.** Borrowed Face rule 7 does not list it.
+
+⚠️ **R-W5. Stale ownership text.**
+- Survivor Defense rule 15 and its Open Question about the lunge cooldown after a stun are already answered by Monster Abilities rule 12.
+- Downing rule 4.3 still says "(disguise handling owned by Borrowed Face)", although Lunge is now True Form only.
+
+⚠️ **R-W6. Lunge requires True Form, so deception gets an approach and not a payoff** (monster-abilities, borrowed-face).
+- Every down needs about 2.6 s of public warning, and a taser at 5 m cancels the transform.
+- In groups this may push the monster toward isolation hunting in true form.
+- Add a playtest AC (share of downs preceded by a disguised approach).
+
+⚠️ **R-W7. The Monster Abilities hit formula** (`survivor.state == Healthy`) omits rule 7's exclusions: Seized, grace and hidden survivors. Its Weight profile still says "survivors keep full control", which conflicts with the friendly-shock root.
+
+⚠️ **R-W8. Survivor Defense text needs updating.**
+- The `lock_share` example ("at most 25% of the time") contradicts rule 17's "while it disengages".
+- The "resisted" AC (line 377) and edge case (line 249) ignore the disguised case, where rule 10 plays the full shock.
+
+⚠️ **R-W9. Camp-pause qualifier missing.**
+- Downing edge row line 273 and the Downed States row omit "while ≥1 Healthy".
+- The registry comment on `bleedout_s` mentions only the rescue pause.
+- Whether a survivor in reconnect grace counts toward `healthy_survivors` is unstated.
+- The pause also lapses for 1.5 s whenever the last Healthy survivor is Seized.
+
+⚠️ **R-W10. Downing's claim that the team has "at least 1.5 s to reach stun range"** assumes a teammate is already within 5 m. This was a prior warning and is still open.
+
+⚠️ **R-W11. Survivor state sets differ.**
+- Registry `life_states` lacks Escaped.
+- The Pings States table lacks Escaped and Seized.
+- The Pings Transforming exit "back to the previous form" has no entry path, because `FormChanged` is not emitted on an interrupt.
+- Monster reconnect is not covered.
+
+⚠️ **R-W12. Scare Events is stale against Match Flow.**
+- The phase table fixes Emergency at "Final 2:00", but Evacuation can start early. The registry comment on `evacuation_window_s` has the same problem.
+- Low exits only to Investigation.
+- The "Transformation reveal" and "Disguised teammate transforms" rows duplicate each other.
+- Lighting ownership is split with Facility Map.
+
+⚠️ **R-W13. No single owner** decides whether False Signal may impersonate an Eliminated survivor. Pings rule 29 and the Monster Abilities Open Question each defer to the other.
+
+⚠️ **R-W14. The 200 ms survivor camera impact** is defined in both Monster Abilities and Downing.
+
+⚠️ **R-W15. Status and date mismatches.**
+- The index says "In Design" while the Monster Abilities, Pings and Scare Events headers say "Draft".
+- Several decisions, the Objectives approval, the index header and the registry `last_updated` are dated 2026-10-12.
+- The registry taser entry has `added` later than `revised`.
+- The index Progress Tracker is fixed in this session.
+
+⚠️ **R-W16. The Seized victim shields the monster** (survivor-defense rule 8, first body hit). A shot from the victim's side shocks the victim and does not cancel the commit. This undercuts the fantasy of "the taser shot that saves a friend mid-grab". Options: shots pass through Seized and Downed survivors, the commit pair shares one hitbox, or accept it as positional skill.
+
+⚠️ **R-W17. A monster disconnect refreshes its kit** (match-flow rule 20). Reconnecting within grace returns every cooldown, at the cost of only the disguise. Whether stun and immunity persist across a disconnect is undefined.
+
+⚠️ **R-W18. Ambush-lunge flinch conflicts with scare rule 14.** That rule forbids a flinch during a wind-up aimed at the survivor's area, but an ambush flinch necessarily falls inside it. A flinch already running when a wind-up starts is not cancelled.
+
+### Cross-System Scenarios
+
+Scenarios walked: 5.
+1. A disguised monster near a Downed survivor gets tased.
+2. The monster disconnects mid-commit.
+3. Transform, reveal, then lunge on a group of three.
+4. False Signal "Need rescue" while the real survivor is Healthy.
+5. Evacuation with one survivor Downed at the terminal.
+
+- 🔴 S1 (Downing, Defense, Borrowed Face): the ring freezes at 8 m (R1). `MonsterStunned` reaches clients, and whether the stunned monster can ping is undefined (R2).
+- ⚠️ S2 (Match Flow, Downing, Defense): reconnect returns full cooldowns and an undefined stun state (R-W17).
+- ⚠️ S3 (Borrowed Face, Scare Events, Monster Abilities): the reveal flinch overlaps the wind-up (R-W18). Group conversion is rare (R-W6).
+- ℹ️ S4 (Monster Abilities, Pings, Downing): a fake "Need rescue" is disproved at once because there is no Downed marker. It is a dead line for False Signal.
+- ℹ️ S5 (Objectives, Downing, Defense): consistent. The hidden survivor C keeps the camp pause alive, and the deadline supplies the pressure (W3).
+
+### GDDs Flagged for Revision
+
+| GDD | Reason | Type | Priority |
+|-----|--------|------|----------|
+| downing-and-rescue.md | R1, R5, R-W5, R-W9, R-W10 | Design + Consistency | Blocking |
+| survivor-defense.md | R2, R-W5, R-W8, R-W16 | Consistency + Design | Blocking |
+| monster-abilities.md | R4, R-W2, R-W4, R-W6, R-W7, R-W13, R-W14, W1 | Consistency | Blocking |
+| systems-index.md | R3, R-W1, R-W2, R-W15 | Consistency | Blocking |
+| borrowed-face.md | R1 and R2 consumer, R-W4 | Consistency | Warning |
+| survivor-objectives.md | R2 (shock as hit), R-W3, W3, W7 | Consistency | Warning |
+| match-flow.md | R-W3, R-W17, W1, W6 | Consistency | Warning |
+| pings-and-callouts.md | R2 (ping while stunned), R-W11, R-W13 | Consistency | Warning |
+| scare-events.md | R4, R-W12, R-W18 | Consistency | Warning |
+| research-facility.md | R4 (no blackout-able flag), W8 | Consistency | Warning |
+
+The systems index marks Downing and Survivor Defense Needs Revision. Monster Abilities, Pings and Scare Events were not yet approved.
+
+### Re-review Verdict: FAIL
+
+The five blockers above must be resolved before architecture begins:
+- R1, R2 and R5 need designer decisions.
+- R3 and R4 need an ownership or rule decision followed by clean-up edits.

@@ -1,0 +1,21 @@
+# Review Log: Survivor Defense
+
+Target: `design/gdd/survivor-defense.md`
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: M
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 5
+Summary: First review, after the cross-review blocker fixes in efbdd84. Rules, formulas and values agree with Monster Abilities, Downing and Borrowed Face. One blocker: a taser hit still revealed a disguised monster. Revised in the same session by designer decision, together with the recommended items.
+Prior verdict resolved: First review
+Findings:
+- [BLOCKING] Rules 10-11: a stunned disguised monster staggered and rooted, while a shocked survivor only slowed 30%; an immune disguised monster showed the "resisted" spark. Any observer could tell them apart, against Borrowed Face rule 10. Resolved: a friendly shock now mirrors the stun (stagger, `stun_root_s`, slow to `stun_duration_s`), and a disguised immune monster shows the same shock. `friendly_shock_s` removed here and in the registry.
+- [RECOMMENDED] Rule 22: survivors cannot search, so "a disguised search looks like a survivor checking a cabinet" was false. Now a visible monster action (proposed).
+- [RECOMMENDED] Feel Acceptance Criteria: both were unmeasurable. Rewritten as playtest thresholds.
+- [RECOMMENDED] Acceptance Criteria: no criterion for the friendly shock, early immunity end, door blocking a lunge, rebarricade lockout or the long-hide cue. Five added.
+- [RECOMMENDED] Rule 17: the 25% cap holds only when the monster disengages. Caveat added.
+- [RECOMMENDED] Formulas: `monster_travel_to_alternate_route` had no variable table; header said Draft. Fixed.
+Reviewed-Content-Hash: design/gdd/survivor-defense.md 20a6b2cb7e5ac5802c292a59012c555a35ec3d47
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.

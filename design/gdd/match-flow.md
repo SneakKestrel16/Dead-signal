@@ -1,8 +1,8 @@
 # Match Flow & Win Conditions
 
-> **Status**: Approved (2026-10-12, lean review)
+> **Status**: Approved (2026-10-11 re-review, lean)
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review revisions)
+> **Last Updated**: 2026-10-11 (re-review after cross-review blockers)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Readable Objectives, Fair Fear, Small Shippable Scope
 
@@ -92,7 +92,7 @@ Win checks run in Infiltration, Investigation and Evacuation. If the terminal is
 | Monster Abilities, Survivor Defense, Borrowed Face | Stats for results (lunges, stuns, form changes, abilities used) | `RoundPhaseChanged` | Each owns its own validation |
 | Scare Events | — | `RoundPhaseChanged` (Evacuation = emergency mode) | Scare Events decides presentation |
 | HUD & Results Screen | — | Clock, phase, `RoundEnded` payload | HUD presents; never computes outcome |
-| Network Authority & Replication | Connection state | Disconnect grace state | Server authority for all of the above |
+| Network Authority & Replication | Connection state | `PlayerConnectionChanged` **(proposed)** (disconnect, reconnect, grace expired) | Server authority for all of the above; Match Flow owns the event |
 | Match Telemetry | — | Duration, completion times, escapes, disconnects | Telemetry logs |
 
 ## Formulas
@@ -258,6 +258,7 @@ Not applicable: Match Flow has no character animation.
 - [ ] A Downed survivor who disconnects with 20 s of bleed-out left is Eliminated ("Bled out") 20 s later, while still disconnected.
 - [ ] With the drives not out and only Downed survivors inside, the round does not end until the last bleeds out, then ends "All survivors eliminated".
 - [ ] Disconnecting the shapeshifter for more than 60 s ends the round as a survivor win, reason "Shapeshifter forfeited", on all clients; one that reconnects within 60 s appears in true form.
+- [ ] Disconnecting the shapeshifter at 8:30 with no drives out ends the round at 9:00 as a monster win, reason "Evacuation deadline expired", not a forfeit.
 - [ ] If one client fails to load within `load_timeout_s`, the round is cancelled, all 5 return to the lobby and no result is recorded.
 - [ ] Arming the terminal at 1:00 moves all clients from Infiltration straight to Evacuation with one `RoundPhaseChanged`.
 - [ ] After both drives are Extracted at 8:00, eliminating every survivor still inside does not change the outcome, and the round ends no later than 8:45 (`post_escape_window_s`).
@@ -277,3 +278,4 @@ Not applicable: Match Flow has no character animation.
 | Confirm the disconnect rule (60 s grace, survivor counted as eliminated, monster → survivor win by forfeit) | SneakKestrel16 | Before Milestone 1 | Monster forfeit **decided 2026-10-11** (was No Contest; cross-review blocker 4); the rest proposed |
 | Should the results screen reveal the shapeshifter player's name? | SneakKestrel16 | Before Milestone 2 | Proposed: yes |
 | Can survivors who are Downed escape by crawling to the exit? | SneakKestrel16 | Before Milestone 2 | Proposed: no |
+| Cooldowns keep counting down while the shapeshifter is disconnected (rule 20), so a mid-chase disconnect and reconnect within grace refreshes its abilities at the cost of its disguise. Should cooldowns pause instead? | SneakKestrel16 | Before Milestone 3 | Open (design review 2026-10-11) |

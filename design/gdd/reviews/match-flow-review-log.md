@@ -32,3 +32,17 @@ Reviewed-Content-Hash: design/gdd/match-flow.md f288b2a8c33616bb170eece48cb2b060
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
 The first entry's hash is for the document as it was reviewed, before the revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-11 (re-review after cross-review blockers) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 3
+Summary: Re-review after the shapeshifter forfeit decision in efbdd84 (cross-review blocker 4). No Contest is gone everywhere; rules 14, 16, 20 and 23, the edge cases and the acceptance criteria agree. Recommended items applied in the same session.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Interactions: the systems-index lists Match Flow as owner of `PlayerConnectionChanged`, but this doc never named it. Network row updated.
+- [RECOMMENDED] Acceptance Criteria: the deadline-during-shapeshifter-grace edge case had no criterion. Added.
+- [RECOMMENDED] Header: status said Approved 2026-10-12 while the index said Needs Revision. Updated.
+- [NICE-TO-HAVE] Rule 20: cooldowns tick while the shapeshifter is disconnected, so a disconnect refreshes abilities at the cost of the disguise. Added as an Open Question.
+Reviewed-Content-Hash: design/gdd/match-flow.md d30469144b4cee85a7d6e8a43dae00890cb334a1
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
