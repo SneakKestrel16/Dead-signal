@@ -223,7 +223,7 @@ human; abandoned research-facility horror.
 
 | Consideration | Assessment |
 | ---- | ---- |
-| **Recommended Engine** | Not chosen yet — run `/setup-engine`. Choose by developer familiarity and target platforms. |
+| **Recommended Engine** | Godot 4.7.2, GDScript (pinned in `project.yaml` on 2026-10-11 via `/setup-engine`). Networking stack still open: Network Authority ADRs |
 | **Key Technical Challenges** | Server-authoritative validation of attacks, stuns, cooldowns and objectives; replicating disguise state; synchronizing shared scares while scoping individual hallucinations to one client |
 | **Art Style** | 3D first-person; greybox first |
 | **Art Pipeline Complexity** | Medium; greybox until the round loop is proven |

@@ -35,7 +35,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 5. Three ping types **(proposed)**:
    - **Location ping**: marks a world point the sender is looking at ("go here / look here").
-   - **Item ping**: marks a specific interactable object the sender can see (data drive, fuse, fuse box, evacuation terminal, hiding spot, barricadable door, backup light switch, stun item). The marker shows the object type.
+   - **Item ping**: marks a specific interactable object the sender can see (data drive, fuse, fuse box, evacuation terminal, hiding spot, barricadable door, backup light switch). The marker shows the object type. Tasers are never world objects, so they are not pingable (designer decision, 2026-10-12, cross-review W8).
    - **Warning ping**: marks a point ("danger here") or a player ("suspicious"). A warning ping on a player is a static marker at the position the player stood when pinged, labelled with their displayed identity; it never follows the player (designer decision, 2026-10-11, design review). A warning ping on a monster in True Form is allowed and is labelled "Monster", since a True Form body has no displayed identity (designer decision, 2026-10-12, design review). A following marker would have to choose a body when two share a name (rule 24) and would either track a transforming monster into its new disguise or vanish when it transforms; either is an identity tell no survivor earned.
 6. Server validation for a ping: sender is in play (not Eliminated or Escaped); sender is not in a state that blocks pinging (see States); rate limit not exceeded (Formulas); target is within `ping_max_range_m` and in line of sight from the sender's view; for an item ping, the object exists and is pingable; for a player warning ping, the target player is visible to the sender (a survivor inside a hiding spot is never a valid target, rule 7a).
 7. Recipients: all living survivors, plus the monster **only if the pinged point or object is in the monster's line of sight at the moment the server accepts the ping**. "Line of sight" here means an unobstructed server ray from the monster's eye to the target, within `ping_max_range_m`, with the monster's facing ignored (designer decision, 2026-10-12, design review), so turning around is never a tell. A warning ping on the monster's own body always reaches it. Eliminated and Escaped spectators watch a living survivor (Downing rule 9; Match Flow rule 10) and receive exactly the pings and callouts that survivor's client receives, and send nothing (designer decision, 2026-10-12, design review). The monster rule is a designer decision (2026-10-12, design review; a Downed survivor's ping therefore never gives the monster a through-wall marker, consistent with Downing rule 6). A monster that cannot see the target receives nothing and no rejection signal reaches the sender. Markers are visible to survivors through walls with direction and distance for `ping_lifetime_s`, then fade; the monster's marker, once received, follows the same display rule.
@@ -112,7 +112,7 @@ Existing markers persist with the identity they were sent under until they expir
 - **Monster Abilities**: False Signal requests a fake callout through `AbilityUsed`; this system presents it per rules 26–29.
 - **Downing, Rescue & Elimination**: `SurvivorDowned` / `SurvivorRescued` / `SurvivorEliminated` gate what a survivor can send.
 - **Survivor Objectives**: defines which objects are item-pingable and their type labels.
-- **Survivor Defense**: hiding spots, barricadable doors and stun items are item-pingable.
+- **Survivor Defense**: hiding spots and barricadable doors are item-pingable.
 - **Facility Map**: room IDs/names for callout vocabulary; backup switch placement.
 - **Scare Events**: scare audio must not mask callouts or ping sounds (Scare Events owns the ducking rule).
 - **HUD & Results Screen**: draws markers, the callout wheel and the feed.
@@ -191,7 +191,7 @@ spectator (Eliminated / Escaped) receives iff the survivor they watch is a recip
 | Match Flow & Win Conditions | This depends on it | `SurvivorEscaped` (Escaped state; Match Flow rule 10) |
 | Downing, Rescue & Elimination | Bidirectional | Survivor state gates sending; Downing uses the "Need rescue" callout as its Call for Help |
 | Survivor Objectives | This depends on it | Pingable object types |
-| Survivor Defense | This depends on it | Pingable hiding spots, barricadable doors, stun items; the shock lock (Survivor Defense rule 14) blocks pings and callouts (rule 23) |
+| Survivor Defense | This depends on it | Pingable hiding spots and barricadable doors; the shock lock (Survivor Defense rule 14) blocks pings and callouts (rule 23) |
 | Facility Map | This depends on it | Room IDs and names as callout locations; pingable backup switches |
 | Monster Abilities | Bidirectional | False Signal's fake callout is presented by this system; consumes `AbilityUsed` |
 | Scare Events | Scare Events depends on this | Must not mask callouts |
@@ -274,7 +274,7 @@ Light and instant. The player keeps full movement control while pinging or using
 | Fake teammate callout | `design/gdd/monster-abilities.md` | False Signal, `false_signal_cooldown_s`, which identities can be faked | Rule dependency |
 | Sending allowed by survivor state | `design/gdd/downing-and-rescue.md` | `SurvivorDowned`, `SurvivorRescued`, `SurvivorEliminated` | State trigger |
 | Pingable objects | `design/gdd/survivor-objectives.md` | Drives, fuses, evacuation terminal | Data dependency |
-| Pingable defenses | `design/gdd/survivor-defense.md` | Hiding spots, barricadable doors, stun items | Data dependency |
+| Pingable defenses | `design/gdd/survivor-defense.md` | Hiding spots, barricadable doors | Data dependency |
 | Backup switches as pingable | `design/levels/research-facility.md` | Backup light switch placement | Data dependency |
 | Callouts not masked by scares | `design/gdd/scare-events.md` | Audio ducking priority | Rule dependency |
 

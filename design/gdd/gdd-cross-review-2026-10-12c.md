@@ -90,3 +90,27 @@ None. ### Warnings: none beyond W1. ### Info: none.
 ## Verdict: CONCERNS
 
 Nothing blocks. Two warnings are 30-second edits. Older open warnings (W1–W5, W8, W9 camera impact, W10, W11, W13, D1, D2 from `gdd-cross-review-2026-10-12.md`) remain open and should be cleared or accepted before `/create-architecture`.
+
+---
+
+## Resolution (2026-10-12)
+
+Designer decisions (asked in session):
+- W13 (earlier report): a RoundScript slammed door is presentation only and never changes the door's state (Scare Events rule 7 and AC, Facility Map scare anchors).
+- W8 (earlier report): stun items removed from item pings, since tasers are never world objects (Pings rule 5, Interactions, Dependencies, Cross-References; Survivor Defense Dependencies).
+- W11 (earlier report): stun and immunity timers keep running through a monster disconnect (Match Flow rule 20, Survivor Defense Edge Cases and Dependencies).
+- D1 (earlier report): a worst-case grouped route estimate (inference, ~2–3 min against 420 s) and a grouping playtest AC added to the Facility Map (AC 11). Redesign only if never-split teams win more often.
+
+Mechanical fixes:
+- This report's W1 (`FormChanged` consumer and Dependencies rows) and W2 (registry comment).
+- Earlier W1: index Progress Tracker and the `game-concept.md` engine row.
+- Earlier W2: index Depends On column; Borrowed Face rows for Match Flow and Survivor Objectives made Bidirectional; Survivor Defense gains a Match Flow row.
+- Earlier W3: index event and state tables now list every read the GDDs make, including the new Lunge state and Committing rows.
+- Earlier W4: Escaped added to Borrowed Face rules 6 and 13, plus an edge row.
+- Earlier W5: Facility Map candidate replication and AC 4 now follow Objectives' discovery rule.
+- Earlier W9: the 200 ms victim camera impact is owned by Downing; Monster Abilities points to it.
+- Earlier W10: Downing's 1.5 s stun window now states it assumes a teammate within 5 m.
+
+Still open: D2 (monster attention load; advisory, track in the M5 playtest).
+
+The affected GDDs stay Approved. Every change is either a designer decision taken here or a table and wording alignment. Their review receipts no longer match, so the next `/design-review` of any of them runs a full review.

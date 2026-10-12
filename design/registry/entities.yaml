@@ -552,7 +552,8 @@ constants:
     added: 2026-10-12
     revised: ""
 
-  # (proposed) ends early if the monster starts a lunge wind-up
+  # (proposed) monster immunity after a stun and every player's post-lock window (Survivor Defense rule 14);
+  # the monster's ends early on a lunge wind-up or when a transformation into a disguise completes (rule 16)
   - name: stun_immunity_s
     status: active
     source: design/gdd/survivor-defense.md

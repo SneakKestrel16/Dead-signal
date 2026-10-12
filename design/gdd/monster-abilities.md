@@ -249,7 +249,8 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 | Impact Type | Duration (ms) | Effect Description | Configurable? |
 |---|---|---|---|
 | Hit-stop | 80 | Brief visual freeze on server-confirmed hit only; presentation-only, no simulation pause and no input lock | Yes |
-| Camera impact (survivor hit) | 200 | Jolt, no input lock beyond downing rules | Yes |
+
+The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimination (Impact Moments) (cross-review W9, 2026-10-12).
 
 ### Weight and Responsiveness Profile
 

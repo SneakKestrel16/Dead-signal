@@ -43,7 +43,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 
 **Transformation**
 
-6. The shapeshifter may request a form change to (a) any observed survivor who is Healthy or Downed, or (b) its true form. It cannot transform into an Eliminated or disconnected survivor **(proposed)**.
+6. The shapeshifter may request a form change to (a) any observed survivor who is Healthy or Downed, or (b) its true form. It cannot transform into an Eliminated, Escaped or disconnected survivor **(proposed; Escaped added 2026-10-12, cross-review W4)**.
 7. The server accepts the request only if: the form-change cooldown is not running; the shapeshifter is not Stunned and not under the shock lock (Survivor Defense rule 14); it is not in Predatory Lunge wind-up, active or takedown commit (`takedown_commit_s`, Downing, Rescue & Elimination); and it is not already transforming. Otherwise the request is rejected with no effect and no cooldown cost.
 8. Transformation takes `transform_duration_s` = 2 s (source). When the server accepts the request it sets the replicated transforming state (transforming flag, target form, start time); systems that react to a transformation *starting* (Pings & Callouts, client audio and visuals) read that state, because no event is emitted at the start. During it:
    - a distortion sound plays at the shapeshifter's position, audible to every client within `distortion_radius_m` = 15 m **(proposed)**, spatialised so its direction can be found (source: "nearby audio distortion");
@@ -69,7 +69,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 | Pings and authored callouts as that survivor | Not by this system | Owned by Pings & Callouts |
 
 12. A disguised shapeshifter cannot pick up or carry drives or fuses, cannot add progress to any objective, and cannot rescue a downed survivor **(proposed)**. It cannot enter a hiding spot, barricade a door or remove a barricade, because those are Healthy-survivor actions (Survivor Defense rules 19, 25 and 26); searching a hiding spot and breaking a barricade stay visible monster actions in any form (Survivor Defense rules 22 and 27). It may stand at a station and play the hold-to-interact pose, but the server grants no progress; objective state shown to survivors is never altered by a disguise (pillar: Readable Objectives).
-13. If the copied survivor is downed or eliminated while the disguise is worn, the disguise stays on **(proposed)**. Walking around as a survivor everyone knows is down is the shapeshifter's risk to take.
+13. If the copied survivor is downed, eliminated or escapes while the disguise is worn, the disguise stays on **(proposed; Escaped added 2026-10-12, cross-review W4)**. Walking around as a survivor everyone knows is down is the shapeshifter's risk to take.
 
 **True form and the transformation reveal**
 
@@ -159,6 +159,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 |---|---|---|
 | Two copies of survivor X are visible at once | Allowed; both render as X | Core deduction moment (T2) |
 | Target becomes Eliminated mid-transformation | Transformation completes into X | Target was valid at request time; becomes tell T2 |
+| Target escapes while worn, or before a new request | Disguise stays; no new transforms into them | Rules 6 and 13; walking around as someone who left is a tell (T2) |
 | Target disconnects while worn | Disguise stays; no new transforms into them | Mid-match disconnect rule owned by Match Flow |
 | Target disconnects mid-transformation | Transformation completes into X **(proposed)** | Same as the Eliminated row: target was valid at request time |
 | Stun lands on the tick the transformation would complete | Stun processed first; interrupted, previous form kept, 12 s cooldown starts **(proposed)** | Rule 9; the counter wins ties |
@@ -182,14 +183,14 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 |---|---|---|
 | Network Authority & Replication | This depends on it | Server-owned disguise state, `FormChanged` replication |
 | First-Person Controller & Interaction | This depends on it | Movement speeds, animation set, interaction rejection |
-| Survivor Defense | Bidirectional | `MonsterStunned` and the shock lock (Survivor Defense rule 14) block or interrupt transformation; Survivor Defense reads disguised form and the Transforming flag to pick the shock presentation |
+| Survivor Defense | Bidirectional | `MonsterStunned` and the shock lock (Survivor Defense rule 14) block or interrupt transformation; Survivor Defense reads disguised form and the Transforming flag to pick the shock presentation, and ends immunity on `FormChanged` into a disguise (its rule 16) |
 | Downing, Rescue & Elimination | This depends on it | Survivor status for valid targets |
 | Facility Map | This depends on it | Monster spawn point; line-of-sight blockers |
 | Monster Abilities | Bidirectional | Form gates Lunge; observed list for False Signal; rule 7 reads Lunge wind-up, active and commit state |
 | Scare Events | Depends on this | Transformation reveal (`FormChanged`) |
 | Pings & Callouts | Depends on this | Disguise state for monster voice/ping rules |
-| Survivor Objectives | Depends on this | Rejects carry/progress from the shapeshifter |
-| Match Flow & Win Conditions | Depends on this | Round reset of observation and form |
+| Survivor Objectives | Bidirectional | Rejects carry/progress from the shapeshifter; this decides that a disguise shows no carried drive or fuse (tell T3) and allows the fake-interaction pose (rule 12) |
+| Match Flow & Win Conditions | Bidirectional | Round reset of observation and form; this owns the disguise loss and observed-list keep on monster reconnect (Match Flow rule 20) |
 | HUD & Results Screen | Depends on this | Shapeshifter disguise HUD |
 | Accessibility Options | Depends on this | Non-audio alternative for the distortion cue |
 

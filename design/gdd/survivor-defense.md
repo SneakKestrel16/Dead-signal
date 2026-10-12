@@ -315,6 +315,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Monster stunned during Blackout | Blackout continues | Placed effects are independent |
 | Monster immune and a lunge wind-up starts | Immunity ends; next stun applies | Re-engaging is punishable |
 | Client reports a stun hit | Ignored; server runs its own shot trace | Server authority |
+| Monster disconnects while Stunned, Immune or locked | Stun and immunity timers keep running on the server; on reconnect within grace it returns in whatever state remains, in true form (Match Flow rule 20) | A disconnect never escapes a stun (designer decision, 2026-10-12, cross-review W11) |
 
 ## Dependencies
 
@@ -322,11 +323,12 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 |--------|-----------|---------------------|
 | Monster Abilities | Bidirectional | Reads lunge and Blackout state; Monster Abilities consumes `MonsterStunned` and door blocking |
 | Downing, Rescue & Elimination | Bidirectional | Reads Committing/Seized/Downed; Downing consumes `MonsterStunned` |
-| Borrowed Face | Bidirectional | Borrowed Face reads `MonsterStunned` to cancel/block transformation; this reads disguised and Transforming state to pick the shock presentation |
+| Borrowed Face | Bidirectional | Borrowed Face reads `MonsterStunned` to cancel/block transformation; this reads disguised and Transforming state to pick the shock presentation, and `FormChanged` into a disguise to end immunity (rule 16) |
+| Match Flow & Win Conditions | Bidirectional | Supplies stun stats for results; stun and immunity timers keep running through a monster disconnect (Match Flow rule 20) |
 | First-Person Controller & Interaction | This depends on it | Hold-to-interact, movement modifiers |
 | Facility Map | This depends on it | Hiding spot, door, backup switch placement |
 | Survivor Objectives | Objectives depends on this | Hidden survivors cannot interact; a shock cancels a hold and the shock lock blocks interaction |
-| Pings & Callouts | Pings depends on this | Hiding spots, barricadable doors and stun items are item-pingable; the shock lock blocks pings and callouts |
+| Pings & Callouts | Pings depends on this | Hiding spots and barricadable doors are item-pingable (tasers are never world objects, so they are not; designer decision, 2026-10-12, cross-review W8); the shock lock blocks pings and callouts |
 | Scare Events | Scare Events depends on this | Barricade break (`BarricadeBroken`) as a scare trigger; `PlayerShocked` ducks scare audio |
 | Network Authority & Replication | This depends on it | Validation and replication |
 | HUD & Results Screen | HUD depends on this | Charges, progress, stun results |

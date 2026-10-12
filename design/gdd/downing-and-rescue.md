@@ -270,7 +270,7 @@ crawl_speed = walk_speed * crawl_speed_mult
 monster_exposed_s = lunge_windup_s + takedown_commit_s
 ```
 Lunge wind-up is owned by Monster Abilities. With `takedown_commit_s` 1.5 s, the
-team has at least 1.5 s to reach stun range after a hit lands.
+team has at least 1.5 s to stun the monster after a hit lands, if a teammate is already within `stun_range_m` (5 m). A teammate further away must close the gap in that 1.5 s; a lone victim has no stun window (cross-review W10, 2026-10-12).
 
 ## Edge Cases
 

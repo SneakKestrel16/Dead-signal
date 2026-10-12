@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (re-review: reveal rows merged, Low → Emergency transition; fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
+> **Last Updated**: 2026-10-12 (cross-review W13: slammed door presentation only; re-review: reveal rows merged, Low → Emergency transition; fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Fair Fear, Human Deception
 
@@ -54,7 +54,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 5. Player-triggered scares are a presentation layer on top of the gameplay cue. The gameplay cue itself (transformation audio distortion, lunge wind-up and audible cue, barricade break sound) is owned by its system and is **never** suppressed, delayed or reduced by any rule here.
 5a. **Ambush test** (cross-review B1): when a Predatory Lunge wind-up starts (`AbilityUsed`), the server runs the test for each survivor within `lunge_cue_radius_m` (Monster Abilities). It passes for that survivor if the monster stands in a lighting volume (Facility Map) that is blacked out, or if that survivor has had no line of sight to the monster's chest (the same unobstructed chest-to-chest test as Monster Abilities rule 7, view direction ignored) for at least `ambush_unseen_s` **(proposed)**. The server keeps one last-seen time per survivor for the monster, not a history per volume (design review 2026-10-12). The ambush lunge scare goes only to survivors for whom it passes; otherwise the lunge plays only its own gameplay cue.
 6. RoundScript environment scares are drawn from authored lists per phase and zone, fire only at authored trigger points, and are limited by the phase budget in Formulas **(proposed)**. They exist to raise tension between human encounters, not to imitate the monster: a RoundScript scare may not produce footsteps, a teammate voice, a ping or a callout **(proposed)**. Those are only produced by humans, so a survivor who hears a teammate voice knows a human (teammate or monster) caused it.
-7. Slammed doors from RoundScript close a door that is open but never lock or barricade it; any player can reopen it immediately **(proposed)**.
+7. A RoundScript slammed door is presentation only: the door plays a slam sound and a shudder at its anchor, but its real open or closed state never changes, so it never blocks a lunge, line of sight, a ping or a route (designer decision, 2026-10-12, cross-review W13; rule 4).
 
 **Cooldowns and repeats** (server-side, per recipient client unless noted)
 
@@ -299,7 +299,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 - [ ] A disguised shapeshifter entering an authored room or viewing a monitor fires the same scare a survivor would; server logs show identical gating for both.
 - [ ] A RoundScript scare within 10 s of any scare on the same client is blocked; no client receives more RoundScript scares in a phase than that phase's budget (2/6/4).
 - [ ] No client receives more than `hallucination_max_per_client` (2) hallucinations in a round.
-- [ ] A RoundScript slammed door never locks or barricades its door; a player can reopen it on the next interaction.
+- [ ] A RoundScript slammed door leaves its door's server open or closed state unchanged; a lunge, an observation line of sight and a ping through an open anchor door behave the same before and after the slam.
 - [ ] A client that reconnects mid-round shows the current facility scare state within one network round trip and replays no missed scare.
 
 ## Open Questions

@@ -167,7 +167,7 @@ Survivor objective flow. Selection and rules are owned by Survivor Objectives; t
 
 ## Authored Candidate Points
 
-The server picks the active subset at round start, replicates it to all clients, and never lets a client choose or move a point. Selection rules and counts belong to Survivor Objectives (rules 5–6 there, which adopt the counts and constraints below); this map owns the placements.
+The server picks the active subset at round start and never lets a client choose or move a point. It replicates every point to the monster at once and each point to survivor clients only once discovered (Survivor Objectives rule 5) (cross-review W5, 2026-10-12). Selection rules and counts belong to Survivor Objectives (rules 5–6 there, which adopt the counts and constraints below); this map owns the placements.
 
 | Set | Required (canon) | Candidates | Active per round | Locations |
 |-----|------------------|-----------|------------------|-----------|
@@ -224,7 +224,7 @@ Four of the six are in Zone A (the source places hiding cabinets in the labs). N
 
 Feeds can be watched only at the C1 monitor station, one feed at a time **(proposed)**. Zone A rooms, A1 spawn and H-N are uncovered on purpose. The feeds are the only place an "impossible surveillance image" scare (Scare Events) can appear. What a disguised shapeshifter looks like on a feed is decided by Borrowed Face (Open Question).
 
-**Scare anchors** (cross-review B1). The only places a door or glass scare from Scare Events can play. Scare Events owns which scare fires and when (RoundScript only); this map owns placement. Every anchor is presentation only: a door anchor never locks or barricades its door, and a glass anchor's pane cracks but stays see-through and not passable **(proposed)**.
+**Scare anchors** (cross-review B1). The only places a door or glass scare from Scare Events can play. Scare Events owns which scare fires and when (RoundScript only); this map owns placement. Every anchor is presentation only: a door anchor never changes its door's open or closed state (Scare Events rule 7), and a glass anchor's pane cracks but stays see-through and not passable **(proposed)**.
 
 | ID | Type | Location | Scare (Scare Events) |
 |----|------|----------|----------------------|
@@ -264,6 +264,7 @@ Targets **(proposed)**:
 - Every active terminal is within 25 s of every other objective room, so the Evacuation phase (final 2:00) leaves time for at least one rescue (`rescue_duration_s` = 6) and a retreat around L8 or L9.
 - Every terminal candidate is within 15 s of exit E at walk speed **(proposed)**. Since 2026-10-12 the drives eject at the terminal and must be carried out through E (`survivor-objectives.md` rule 22), so the terminal-to-exit run is the final, contested carry. It should be short enough to finish and long enough to contest; the route should offer two paths (for example via C2 or C1).
 - Total minimum survivor walking for a split team is about 2-3 min of the 5-min Investigation window. This leaves room for verification, hiding and rescues. Confirm in M2 playtests.
+- **Grouped worst case** (cross-review D1, 2026-10-12): one group of four touring every active point walks roughly the L1 loop (~42 s) plus room spurs, about 1-2 min, and does the objective work in series (`min_work_s` 50 s, Survivor Objectives): about 2-3 min in total. That is well inside the 420 s from Investigation start to the deadline, so the clock alone does not force a split. This is inference from the route table; time a grouped greybox run in M2 to settle it.
 
 ## Encounters
 
@@ -393,13 +394,14 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 1. **Exits**: In the greybox, every room in the Zones and Rooms table has at least two traversable exits. Pass: a walk-through confirms each room; zero rooms fail.
 2. **No sealed rooms**: With all five barricadable doors barricaded, a player can still walk from H-N to C4 and to every other room. Pass: route walked successfully.
 3. **No single choke**: Block each single edge into Zone B in turn (A4-B1, B2-H-N, B3-H-S, B1-C2). B1 stays reachable from A1 every time. Pass: all four tests succeed.
-4. **Candidate agreement (5 clients)**: In 10 consecutive rounds with 5 connected clients, all 5 clients show the same active drive, fuse, fuse box and terminal points, matching the server log. Pass: 10/10 rounds agree.
+4. **Candidate agreement (5 clients)**: In 10 consecutive rounds with 5 connected clients, every client that has discovered a point shows it where the server log has it, the monster's client shows every active point, and no survivor client holds data for an undiscovered point (cross-review W5, 2026-10-12). Pass: 10/10 rounds agree.
 5. **Candidate variety**: Over 20 rounds, at least 4 different drive pairs and all 3 terminal candidates appear, and no round breaks a placement constraint. Pass: log review.
 6. **No runtime geometry**: Wall, door and room layout is identical across 10 rounds; only candidate activation differs. Pass: visual and log comparison.
 7. **Traversal budget**: At the controller's walk speed, A1 to C4 exit takes 25 s or less and A6 to C3 takes 25 s or less. Pass: stopwatch in greybox.
 8. **Lighting states (5 clients)**: On the Evacuation phase change and on power restored, all 5 clients enter the new lighting state within 1 s of each other **(proposed tolerance)**. Pass: recorded on all clients.
 9. **Blackout scope**: A Blackout darkens exactly one lighting volume, and emergency strips stay visible in it. Pass: verified in each room and each corridor segment.
 10. **Exit gating**: Exit E stays closed until the server reports activation complete. A client cannot open it by interacting early. Pass: attempted on 5 clients, 0 openings.
+11. **Grouping (playtest)** (cross-review D1, 2026-10-12): across at least 10 M2 rounds, Match Telemetry records whether the survivors ever split (any two Healthy survivors more than 20 m apart for 30 s or more) and the win rate of teams that never split. Pass: the designer reviews both before Milestone 3; if never-split teams win more often than split ones, revisit D1 (an objective that rewards parallel work, or a shorter clock).
 
 ## Open Questions
 
