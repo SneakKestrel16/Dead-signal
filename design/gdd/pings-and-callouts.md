@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (sixth design review: disguised monster cannot send as an Eliminated or Escaped survivor; formula, AC and wording fixes)
+> **Last Updated**: 2026-10-12 (seventh design review: monster's own state governs sending, Shocked state row, item-ping AC fixed for monster line of sight)
 > **Last Verified**: 2026-10-12
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 
@@ -66,7 +66,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 **Monster communication**
 
-21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**. If the borrowed survivor is Eliminated or Escaped, the disguised monster's pings and callouts are rejected (Borrowed Face rule 13 keeps the disguise on); a dead voice is a free tell, the same reason Monster Abilities rejects a fake callout as that survivor (designer decision, 2026-10-12, design review). A disguise as a Downed survivor may still send, since the mismatch with the real survivor is a fair clue.
+21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**. If the borrowed survivor is Eliminated or Escaped, the disguised monster's pings and callouts are rejected (Borrowed Face rule 13 keeps the disguise on); a dead voice is a free tell, the same reason Monster Abilities rejects a fake callout as that survivor (designer decision, 2026-10-12, design review). A disguise as a Downed survivor may still send, since the mismatch with the real survivor is a fair clue. Apart from that Eliminated or Escaped rejection, the monster's own state alone decides what it can send (Disguised, Transforming, stunned): the borrowed survivor's Downed, Seized or Hidden state does not restrict it, so a disguise as a Downed survivor may send any ping or callout, not only the Downed subset of rule 14 (designer decision, 2026-10-12, design review; the mismatch is a fair clue).
 22. **True form**: the monster cannot ping or call out **(proposed)**. It has no teammate identity to speak as.
 23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**. **Shocked or stunned**: for `stun_duration_s` after a taser hit, pings and callouts are blocked for a shocked survivor and for the disguised monster, stunned or immune, alike (Survivor Defense rule 14; designer decision, 2026-10-11, cross-review re-review R2). Proximity voice is not blocked.
 24. Duplicate identity is a fair clue: if the monster and the real survivor it is copying both ping or call out, both appear with the same name. The server does not hide or merge them **(proposed)**.
@@ -96,7 +96,8 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 | Survivor: Seized | Valid `SurvivorHit` (Downing rule 4) | Commit completes (`SurvivorDowned` / `SurvivorEliminated`) or is cancelled (`MonsterStunned`, monster disconnect) | Blocked: no input except camera (Downing States table); voice if enabled |
 | Survivor: Eliminated | `SurvivorEliminated` | Round end | No pings, callouts or voice to living players **(proposed)** |
 | Survivor: Escaped | `SurvivorEscaped` | Round end | No pings, callouts or voice to living players (Match Flow rule 10) |
-| Monster: Disguised | `FormChanged` to a survivor form completes | A transformation starts (replicated transforming flag, Borrowed Face rule 8) | All pings and callouts as the borrowed identity, unless that survivor is Eliminated or Escaped (rule 21: rejected) |
+| Survivor: Shocked | Taser hit (`PlayerShocked`) | `stun_duration_s` elapses | Pings and callouts blocked (rule 23); voice if enabled; returns to the prior state |
+| Monster: Disguised | `FormChanged` to a survivor form completes | A transformation starts (replicated transforming flag, Borrowed Face rule 8) | All pings and callouts as the borrowed identity, except while stunned (rule 23) or when that survivor is Eliminated or Escaped (rule 21: rejected); the borrowed survivor's other states do not restrict it |
 | Monster: Transforming | A transformation starts (replicated transforming flag) | `FormChanged` on completion, or a stun interrupts it (back to the previous form) | Blocked **(proposed)** |
 | Monster: True form | `FormChanged` into true form; round start | A transformation starts | Blocked **(proposed)** |
 
@@ -125,7 +126,7 @@ tokens = min(ping_bucket_size, tokens + elapsed_s / ping_refill_s)
 accept ping if tokens >= 1, then tokens -= 1
 ```
 
-Initial state: `tokens = ping_bucket_size` at round start and on reconnect; `last_callout_any` and every `last_callout[line]` start at minus infinity, so the first callout is always accepted.
+Initial state: `tokens = ping_bucket_size` at round start; a reconnecting player keeps the token and timestamp state they had (so a reconnect never refills the bucket); `last_callout_any` and every `last_callout[line]` start at minus infinity, so the first callout is always accepted.
 
 | Variable | Type | Range | Source | Description |
 |---|---|---|---|---|
@@ -278,7 +279,7 @@ Light and instant. The player keeps full movement control while pinging or using
 
 ## Acceptance Criteria
 
-- [ ] With 5 clients, a survivor's item ping appears on all 4 other clients at the same object with the same sender name within 250 ms of the server accepting it, measured on a LAN or with a simulated 100 ms round trip.
+- [ ] With 5 clients, a survivor's item ping appears on the 3 other survivor clients, and on the monster's client only when the object is in the monster's line of sight, at the same object with the same sender name within 250 ms of the server accepting it, measured on a LAN or with a simulated 100 ms round trip.
 - [ ] A survivor's player warning ping appears at the target's position at ping time and does not move for its lifetime, even if the target moves or transforms.
 - [ ] A ping or callout request from a Seized or Escaped survivor is rejected.
 - [ ] A client that sends a ping at a point outside its line of sight is rejected by the server; no other client receives it.
@@ -291,7 +292,8 @@ Light and instant. The player keeps full movement control while pinging or using
 - [ ] "Drive here" with an attached item ping spends one ping token in addition to the callout; with 0 tokens the callout plays without the attached ping.
 - [ ] An Eliminated or Escaped player's proximity voice is not delivered to any living player; their client receives exactly the pings and callouts delivered to the survivor they are watching.
 - [ ] A warning ping on a survivor inside a hiding spot is rejected.
-- [ ] A disguised monster's ping and callout show the borrowed survivor's name (and, for callouts, voice) on every other survivor client in range; the copied survivor's client shows "(not you)" on a ping only when the sender is within `callout_range_m`, and always on an in-range callout.
+- [ ] A disguised monster's ping shows the borrowed survivor's name on every other living survivor client, and its callout shows the name and voice on every survivor client within `callout_range_m`. The copied survivor's client shows "(not you)" on a ping only when the sender is within `callout_range_m`, and always on a callout it receives.
+- [ ] A disguised monster whose borrowed survivor is Downed or Seized can send any callout (for example "Drive here") when the monster itself is not stunned or transforming.
 - [ ] A survivor's callout within range reaches the monster's client as audio only: the monster's client receives no feed line, name or direction field, including for "Need rescue" at 40 m through a wall.
 - [ ] A hidden survivor's callout plays from the hiding spot and shows no speaker gesture; its ping is validated from the peek view.
 - [ ] An item ping on an occupied hiding spot contains no occupant identity on any client.

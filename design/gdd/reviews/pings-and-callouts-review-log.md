@@ -116,3 +116,21 @@ Findings:
 - [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Not applied.
 Reviewed-Content-Hash: design/gdd/pings-and-callouts.md cc8a5f1e2c38debf3a991921983fc433b1043167
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (seventh) — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 2 | Recommended: 4
+Summary: Earlier fixes hold and cross-document facts agree with Monster Abilities, Borrowed Face and Downing. Two specification gaps: an acceptance criterion contradicted the monster line-of-sight rule, and rule 21 left open what a disguised monster may send when its borrowed survivor is Downed, Seized or Hidden. Both resolved in the same session (designer accepted: the monster's own state governs sending); re-review needed to confirm.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Acceptance Criteria: item-ping AC required delivery to "all 4 other clients", including the monster, contradicting rule 7. Rewritten.
+- [BLOCKING] Core Rules 21 / States: scope of disguised sending undefined for a Downed, Seized or Hidden borrowed survivor. Resolved: monster's own state governs; only Eliminated or Escaped borrowed survivors reject. New AC added.
+- [RECOMMENDED] States: no Shocked row for survivors; Disguised row lacked the rule 23 stun exception. Added.
+- [RECOMMENDED] Acceptance Criteria: disguised-monster criterion mixed ping and callout range. Rewritten.
+- [RECOMMENDED] Formulas: reconnect could refill the bucket. Reconnect now keeps token and timestamp state.
+- [RECOMMENDED] Open Questions: voice set per survivor slot still undecided; rules 10, 21, 26 stay proposed. Not applied.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md 4ba56315055864670ac90497616da7dda525e4e1
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
