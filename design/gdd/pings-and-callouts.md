@@ -153,7 +153,7 @@ recipient if distance(origin, listener) <= range(line) and listener is living
 | Monster pings an objective, then reveals | Marker keeps the borrowed name until expiry | No retroactive rewrite; survivors can reason about it |
 | Client sends a ping at a point outside line of sight | Server rejects; pending marker removed | Prevents wallhack-style pinging via modified clients |
 | Client spoofs a sender name | Ignored; server always attaches identity from its own state | Identity is server-owned |
-| Fake callout impersonates a survivor who is eliminated | Allowed or blocked per Monster Abilities; if allowed, it plays as normal | It is a strong clue for survivors; owner decides |
+| Fake callout impersonates a survivor who is eliminated | Cannot happen: Monster Abilities rejects it (designer decision, 2026-10-11) | Owner decided |
 | Downed survivor spams "Need rescue" | Repeat block applies (8 s) | One clear call is enough; no audio spam |
 | Survivor is rescued mid-callout | Line finishes playing | Presentation only |
 | Two callouts overlap at one listener | Both play; feed shows both in arrival order | No information silently dropped |

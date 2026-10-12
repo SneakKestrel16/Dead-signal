@@ -64,7 +64,7 @@ Counters (pillar: Counterplay): **dodge sideways** (the narrow cone and short re
 
 13. Activation: cooldown ready; aim point chosen within `false_signal_range_m` = 20 m of the monster **(proposed)**; the server snaps it to the nearest walkable floor point and rejects points inside walls or outside the range.
 14. Choose one signal type (source list):
-    - **Teammate callout**: an authored callout in the voice set of a survivor the monster has *observed* (Borrowed Face) **(proposed)**. Its presentation is owned by Pings & Callouts (rules 26–29 there) and is not redefined here: it uses the same authored line, voice set and `[Name]: [text]` feed line as a real callout from that survivor, reaches listeners by the same range rule measured from the chosen point, and differs only in that it has no speaker gesture, cannot attach an item ping, and the impersonated survivor sees it marked "(not you)" **(proposed, per Pings & Callouts)**.
+    - **Teammate callout**: an authored callout in the voice set of a survivor the monster has *observed* (Borrowed Face) and who is not Eliminated (designer decision, 2026-10-11) **(proposed)**. Its presentation is owned by Pings & Callouts (rules 26–29 there) and is not redefined here: it uses the same authored line, voice set and `[Name]: [text]` feed line as a real callout from that survivor, reaches listeners by the same range rule measured from the chosen point, and differs only in that it has no speaker gesture, cannot attach an item ping, and the impersonated survivor sees it marked "(not you)" **(proposed, per Pings & Callouts)**.
     - **Footsteps**: 3 s of survivor footsteps at the point, moving up to 3 m along a direction chosen by the monster **(proposed)**.
     - **Familiar interaction sound**: an objective interaction sound (e.g. drive extraction, fuse handling) or door sound **(proposed)**. It never changes objective state or alerts.
 15. The sound is spatialised from the chosen point and replicated to every survivor client in hearing range as a shared event **(proposed)**. Fake sounds use the same audio assets as real ones; they carry no visual source (no body, no light, no ping marker) **(proposed)**. A fake teammate callout additionally shows its feed line as defined by Pings & Callouts.
@@ -156,6 +156,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | Lunge while Disguised | Rejected | Requires True Form (kept for now; playtest) |
 | False Signal aimed through a wall | Allowed if within range; sound plays there | Sound travels; sight verifies |
 | False Signal callout as an unobserved survivor | Rejected | Uses observed list |
+| False Signal callout as an Eliminated survivor | Rejected | Designer decision, 2026-10-11: a dead voice is a free tell, and survivors gain nothing from it |
 | Blackout on the evacuation zone | Rejected for the active terminal room during Evacuation; allowed before it (`blackout_able`, Facility Map) | Map owns zone flags |
 | Backup switch used then monster recasts | Cannot until 45 s cooldown ends | Counter must matter |
 | Round ends during Blackout | Facility Map ends the Blackout and resets lighting on `RoundEnded` (`research-facility.md` Lighting States, Reset row) | Clean results; the map owns lighting state |
@@ -274,7 +275,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
-- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved survivor is rejected; objective state is never changed by a fake interaction sound.
+- [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved or Eliminated survivor is rejected; objective state is never changed by a fake interaction sound.
 - [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch restores it on all clients.
 - [ ] All values are read from data, not hardcoded.
 
@@ -284,7 +285,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 |---|---|---|---|
 | Are the Lunge values (0.6 s wind-up, 4 m dash, 1.2 m radius, 60° cone, 0.5×/1.5 s miss slow) right? | SneakKestrel16 | Before Milestone 3 | — |
 | Does a fake callout look exactly like a real one (HUD text, marker)? | SneakKestrel16 | Before Milestone 3 | Owned by Pings & Callouts (rules 26–29); this doc follows it |
-| Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | Open |
+| Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | **Settled:** no (designer decision, 2026-10-11); rule 14, edge case and AC |
 | Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12); test in the M5 playtest.** Test plan lives in Borrowed Face's Open Questions |
 | Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map. **Proposed 2026-10-11 (re-review R4):** every volume except the active terminal room during Evacuation |
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | — |
