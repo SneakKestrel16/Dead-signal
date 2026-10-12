@@ -294,6 +294,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | Monster stays within 10 m of a Downed survivor while a survivor is Healthy | Bleed-out runs at `camp_slow_mult` (0.25) for as long as it stays: 240 s from a fresh down, which costs the monster the round clock | Rule 6; anti-camping, decided 2026-10-11; slow instead of freeze, W5 |
 | A survivor (not the monster) stands within 10 m of a Downed survivor | Bleed-out slows exactly as it would for the monster; the ring shows the same slow | Rule 6; a slow carries no identity information (re-review R1) |
 | Teammates hold an objective within 10 m of a Downed survivor | Bleed-out runs at 0.25 rate; the victim still bleeds out if nobody rescues them before it expires | Rule 6; rescue cannot be deferred indefinitely (second re-review W5) |
+| A Healthy survivor disconnects within 10 m of a Downed teammate, or is the only Healthy survivor left | They stop counting at once (no body in the world, not Healthy): bleed-out returns to full speed for every Downed teammate they were slowing, and if no Healthy survivor remains it stays at full speed until they reconnect Healthy | Rule 6; disconnecting must not stall the round (Match Flow rule 19); accepted, cross-review second re-review S4 |
 | Monster waits 11 m from a Downed survivor | Bleed-out runs; this is accepted camping, countered by rescue, release-and-dodge and tasers | Rule 6; accepted 2026-10-11 (re-review R5), playtest-gated |
 | Every living survivor is Downed | Each bleeds out on their own timer; the round ends when the last is Eliminated | Rule 10; decided 2026-10-12 |
 | Downed survivor bleeds out while carrying nothing near the exit | Eliminated; Downed survivors cannot escape | Match Flow escape rule |
@@ -303,7 +304,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | System | Direction | Nature of Dependency |
 |--------|-----------|---------------------|
 | Monster Abilities | Bidirectional | Consumes `SurvivorHit`; Monster Abilities depends on this for target eligibility and lunge-resolved timing |
-| Survivor Defense | Bidirectional | Consumes `MonsterStunned`; Survivor Defense reads Committing and Downed states |
+| Survivor Defense | Bidirectional | Consumes `MonsterStunned`; a taser shock interrupts a rescue (rule 7, Survivor Defense rules 11 and 14); Survivor Defense reads Committing, Seized and Downed states (its rules 8 and 13) |
 | First-Person Controller & Interaction | This depends on it | Hold-to-interact, movement lock, crawl |
 | Survivor Objectives | Objectives depends on this | Reacts to `SurvivorDowned`/`SurvivorEliminated` for item drops |
 | Match Flow & Win Conditions | Bidirectional | Match Flow consumes `SurvivorEliminated`; this system obeys round end and Match Flow's disconnect rule |

@@ -49,7 +49,7 @@ tools, they're yours.
    barricade, start/stop break). The server validates range, line of sight,
    charges, timers and interaction durations, then broadcasts results. A client
    can never report a stun, a charge, or a completed barricade. While the
-   monster is disguised, survivor clients receive one "shocked" event for a
+   monster is disguised, survivor clients receive one `PlayerShocked` event for a
    taser hit on it (stunned or immune) and on a survivor alike, and never
    receive `MonsterStunned` or any immunity data (designer decision,
    2026-10-11, cross-review re-review R2; same precedent as Pings rule 27).
@@ -301,9 +301,9 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Borrowed Face | Bidirectional | Borrowed Face reads `MonsterStunned` to cancel/block transformation; this reads disguised and Transforming state to pick the shock presentation |
 | First-Person Controller & Interaction | This depends on it | Hold-to-interact, movement modifiers |
 | Facility Map | This depends on it | Hiding spot, door, backup switch placement |
-| Survivor Objectives | Objectives depends on this | Hidden survivors cannot interact |
-| Pings & Callouts | Pings depends on this | Hiding spots, barricadable doors and stun items are item-pingable |
-| Scare Events | Scare Events depends on this | Barricade break (`BarricadeBroken`) as a scare trigger |
+| Survivor Objectives | Objectives depends on this | Hidden survivors cannot interact; a shock cancels a hold and the shock lock blocks interaction |
+| Pings & Callouts | Pings depends on this | Hiding spots, barricadable doors and stun items are item-pingable; the shock lock blocks pings and callouts |
+| Scare Events | Scare Events depends on this | Barricade break (`BarricadeBroken`) as a scare trigger; `PlayerShocked` ducks scare audio |
 | Network Authority & Replication | This depends on it | Validation and replication |
 | HUD & Results Screen | HUD depends on this | Charges, progress, stun results |
 | Match Telemetry | Telemetry depends on this | Stun success rate etc. |
@@ -424,7 +424,7 @@ keeps the monster permanently stuck.
 - [ ] For `stun_duration_s` after a taser hit, a shocked survivor, a stunned disguised monster and an immune disguised monster each fail every attempt to open a door, interact, use an item, ping or call out; all three succeed on the first attempt after it ends.
 - [ ] Four taser hits 0.5 s apart on a disguised monster leave it locked for exactly `stun_duration_s` from the first hit; four charges are spent. The same holds for a shocked survivor.
 - [ ] A taser hit on a survivor holding a rescue, an objective hold or a barricade cancels that hold; an immune hit on a disguised monster mid-transformation does not cancel the transformation.
-- [ ] While the monster is disguised, a packet capture on a survivor client shows one identical "shocked" event for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` or immunity data.
+- [ ] While the monster is disguised, a packet capture on a survivor client shows one identical `PlayerShocked` event for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` or immunity data.
 - [ ] A stun on a true-form monster, then a lunge wind-up 2 s into immunity, ends immunity; a stun on that wind-up applies.
 - [ ] A lunge whose path crosses a closed door stops at the door and resolves as a miss.
 - [ ] After a barricade breaks, a survivor cannot start a barricade on that door for 30 s.

@@ -72,7 +72,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 16. Every diegetic scare sound plays from its true origin in the world (the door that slammed, the room that went dark, the speaker that played). Its direction and distance must be correct for the listener.
 17. Non-diegetic stingers are allowed only on Major scares, play at most `stinger_max_db_rel` above the ambient bed **(proposed)**, and never cover the origin sound.
-18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**.
+18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**. Stun ducking triggers on `PlayerShocked` on survivor clients and on `MonsterStunned` on the monster's client, because survivor clients never receive `MonsterStunned` while the monster is disguised (Survivor Defense rule 1).
 
 **Shared vs. individual scope**
 
@@ -263,7 +263,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 | Phase windows and phase change | `design/gdd/match-flow.md` | `RoundPhaseChanged`, phase windows | State trigger |
 | Blackout, False Signal, Lunge | `design/gdd/monster-abilities.md` | `blackout_duration_s`, lunge wind-up, False Signal audience | Data dependency |
 | Transformation reveal | `design/gdd/borrowed-face.md` | `FormChanged`, `transform_duration_s` distortion cue | State trigger |
-| Barricade break; stun never blocked | `design/gdd/survivor-defense.md` | `BarricadeBroken`, `MonsterStunned` | Rule dependency |
+| Barricade break; stun never blocked; stun ducking | `design/gdd/survivor-defense.md` | `BarricadeBroken`, `MonsterStunned`, `PlayerShocked` | Rule dependency |
 | Fuse alarm, power restored | `design/gdd/survivor-objectives.md` | `ObjectiveProgressChanged` | State trigger |
 | Scare points, emergency lights, monitors | `design/levels/research-facility.md` | Authored placements | Data dependency |
 | Callout ducking priority | `design/gdd/pings-and-callouts.md` | Callouts and pings | Rule dependency |

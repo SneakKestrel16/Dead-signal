@@ -228,7 +228,7 @@ Feeds can be watched only at the C1 monitor station, one feed at a time **(propo
 
 **Lighting volumes**: Blackout affects "a nearby room or short corridor" (source). Each room is one lighting volume. H-N and H-S are each split into four ~12 m segments and A2 into three ~11 m segments, so a blackout never darkens a whole corridor **(proposed)**.
 
-Each lighting volume carries a **`blackout_able`** flag that Monster Abilities rule 17 reads (cross-review re-review R4, 2026-10-11). Every volume is `blackout_able` except the room holding the active evacuation terminal (T1 C4, T2 C2 or T3 C3), which is not `blackout_able` once the Evacuation phase starts **(proposed; settles W8)**. This keeps the rule below that lighting never fully darkens the route to the active terminal during Evacuation. Before Evacuation the terminal room can be blacked out like any other.
+Each lighting volume carries a **`blackout_able`** flag that Monster Abilities rule 17 reads (cross-review re-review R4, 2026-10-11). Every volume is `blackout_able` except the room holding the active evacuation terminal (T1 C4, T2 C2 or T3 C3), which is not `blackout_able` once the Evacuation phase starts **(proposed; settles W8)**. This keeps the rule below that lighting never fully darkens the route to the active terminal during Evacuation. Before Evacuation the terminal room can be blacked out like any other. A Blackout already active in that room when Evacuation starts ends at that moment and the room returns to its normal Evacuation lighting **(proposed; settles cross-review second re-review S2; costs the monster at most 6 s of darkness)**.
 
 ## Dimensions and Traversal
 

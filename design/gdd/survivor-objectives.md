@@ -181,7 +181,7 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | Borrowed Face | Bidirectional | Fake-interaction rule while disguised; Borrowed Face decides whether carried items show on a disguise |
 | Monster Abilities | It depends on this | False Signal may imitate objective interaction sounds |
 | Pings & Callouts | It depends on this | Objective points as ping targets |
-| Survivor Defense | It depends on this | Hidden survivors and survivors using items cannot interact with objectives; hiding does not drop carried items |
+| Survivor Defense | This depends on it | Hidden survivors and survivors using items cannot interact with objectives; hiding does not drop carried items; a taser shock cancels a hold and the shock lock blocks interaction (rule 2, Survivor Defense rules 11 and 14) |
 | Scare Events | It depends on this | Fuse install alarm and power restored (`ObjectiveProgressChanged`) drive scare and lighting states |
 | HUD & Results Screen | It depends on this | Displays checklist and progress |
 | Match Telemetry | It depends on this | Completion times |

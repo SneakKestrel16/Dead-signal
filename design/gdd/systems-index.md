@@ -33,12 +33,13 @@ through an event.
 |-------|-----------|-------------|---------|
 | `RoundPhaseChanged` | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map (lighting), HUD | Phase moved (Infiltration, Investigation, Evacuation) |
 | `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
-| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
+| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (Escaped players never slow bleed-out or count as Healthy, rule 6), HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
 | `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination | A validated Predatory Lunge hit; starts the takedown commit |
 | `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
 | `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
 | `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Monster Abilities (lunge resolved), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
-| `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation. While the monster is disguised, survivor clients get a "shocked" event instead (Survivor Defense rule 1) |
+| `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation. While the monster is disguised, survivor clients get `PlayerShocked` instead (Survivor Defense rule 1) |
+| `PlayerShocked` | Survivor Defense | All clients (presentation), Scare Events (audio ducking, rule 18) | A taser hit a survivor, or hit the monster while it is disguised (stunned or immune); identical in every case so it carries no identity information (Survivor Defense rules 1, 10, 11) |
 | `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events (transformation reveal on change into true form), all clients (rendering) | Shapeshifter form changed |
 | `ObjectiveProgressChanged` | Survivor Objectives | Match Flow, Scare Events, Facility Map (lighting), HUD | Any objective state change (carry, drop, dock, install, power restored, armed, activated, drives ejected, drive extracted) |
 | `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
@@ -53,11 +54,13 @@ event. Only the owner writes it. Readers never change it.
 
 | State | Owner | Read by | Meaning |
 |-------|-------|---------|---------|
+| Shapeshifter form (true form or disguised, and whose body) | Borrowed Face | Survivor Defense (rules 1 and 10: which shock presentation and which events survivor clients receive), all clients (rendering) | The form the shapeshifter currently shows; `FormChanged` announces each change |
 | Transforming flag (target form, start time) | Borrowed Face (rule 8) | Pings & Callouts, Survivor Defense, all clients (rendering) | A transformation is in progress |
-| Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation) | Whether a survivor can be lunged |
+| Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation), Survivor Defense (rule 8 shot pass-through, rule 13 item use) | Whether a survivor can be lunged |
 | Player positions and life states | Network Authority & Replication; life state from Downing, Rescue & Elimination | Downing, Rescue & Elimination (camping slow, rule 6), Survivor Objectives (zone counts) | Where each player is and whether they are Healthy, Seized, Downed or Eliminated |
+| `blackout_able` per lighting volume | Facility Map (`research-facility.md`); flips to false for the active terminal room on `RoundPhaseChanged` to Evacuation | Monster Abilities (rule 17 Blackout target validation) | Whether a lighting volume may be blacked out |
 | Hidden and item-use state | Survivor Defense | Survivor Objectives (hidden survivors cannot interact or hold the zone) | Whether a survivor is hidden or using an item |
-| Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities | A player is under the taser action lock |
+| Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face, Monster Abilities, Downing, Rescue & Elimination (rule 7 rescue interrupt), First-Person Controller & Interaction (root, slow, doors) | A player is under the taser action lock |
 
 ---
 
@@ -71,7 +74,7 @@ event. Only the owner writes it. Readers never change it.
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
 | 5 | Survivor Objectives | Gameplay | MVP | Needs Revision | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | Needs Revision | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
-| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Needs Revision | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities |
+| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Needs Revision | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities, Borrowed Face, Downing, Rescue & Elimination |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | Needs Revision | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction, Survivor Defense, Downing, Rescue & Elimination, Facility Map |
 | 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | Needs Revision | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | Needs Revision | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face |

@@ -175,7 +175,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 |---|---|---|
 | Network Authority & Replication | This depends on it | Server-owned disguise state, `FormChanged` replication |
 | First-Person Controller & Interaction | This depends on it | Movement speeds, animation set, interaction rejection |
-| Survivor Defense | This depends on it | Stunned state blocks/interrupts transformation |
+| Survivor Defense | Bidirectional | `MonsterStunned` and the shock lock (Survivor Defense rule 14) block or interrupt transformation; Survivor Defense reads disguised form and the Transforming flag to pick the shock presentation |
 | Downing, Rescue & Elimination | This depends on it | Survivor status for valid targets |
 | Facility Map | This depends on it | Monster spawn point; line-of-sight blockers |
 | Monster Abilities | Depends on this | Form gates Lunge; observed list for False Signal |
