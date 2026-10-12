@@ -154,7 +154,7 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | Carrier downed between the terminal and the exit | Drives drop where they fell; any Healthy survivor can pick them up and continue | Rule 12; recoverable |
 | One drive Extracted, the other carrier eliminated | The second drive lies where it dropped; the team needs a Healthy survivor to carry it out before the deadline | Win needs both drives (rule 22) |
 | A survivor escapes empty-handed while both drives are still inside | Recorded as Escaped; no progress toward the win | Rule 23 |
-| No Healthy survivor left inside and a drive is not Extracted | The evidence is lost; Match Flow ends the round as a monster win | Owned by Match Flow |
+| No Healthy or Downed survivor left inside and a drive is not Extracted | The evidence is lost; Match Flow ends the round as a monster win. If only Downed survivors remain, the round waits for rescue or bleed-out | Owned by Match Flow (rule 13) |
 | Last Healthy survivor in the terminal zone is downed mid-countdown | Countdown pauses with progress kept | Rule 19 |
 | Round deadline hits during activation | Activation never completes; Match Flow ends the round as a monster win | Owned by Match Flow (hard deadline) |
 | Disguised shapeshifter "installs" a fuse | Animation and quiet interact sound only; no progress, no install noise, no alert | Rules 25–26 |

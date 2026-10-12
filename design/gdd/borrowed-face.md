@@ -151,6 +151,7 @@ Example: transform completes at 60.0 s → next request accepted at 72.0 s → n
 | Two copies of survivor X are visible at once | Allowed; both render as X | Core deduction moment (T2) |
 | Target becomes Eliminated mid-transformation | Transformation completes into X | Target was valid at request time; becomes tell T2 |
 | Target disconnects while worn | Disguise stays; no new transforms into them | Mid-match disconnect rule owned by Match Flow |
+| Shapeshifter disconnects while disguised | Disguise lost; on reconnect within grace it returns in true form with its observed list kept **(proposed)** | Match Flow rule 20 |
 | Stunned during transformation | Interrupted; previous form kept; 12 s cooldown starts | Stun is the counter; no free retry |
 | Lunge requested while Disguised | Rejected; must transform first | Lunge requires True Form (kept for now; playtest) |
 | Transform requested during a Lunge takedown commit | Rejected | Transformation cannot cancel an attack (source) |

@@ -243,7 +243,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | `MonsterStunned` and commit completion land on the same server tick | Stun wins; commit cancelled | Favor the interrupt; counterplay pillar |
 | Victim's teammate stuns the monster during wind-up (before hit) | No `SurvivorHit`; this system does nothing | Wind-up interrupts are owned by Survivor Defense / Monster Abilities |
 | Monster disconnects during a commit | Commit cancelled; victim returns to Healthy with grace | No down without a completed commit |
-| Victim disconnects while Seized or Downed | Handled by Match Flow's disconnect rule; this system freezes their state until told | Match Flow owns disconnects |
+| Victim disconnects while Seized or Downed | Handled by Match Flow's disconnect rule. The bleed-out timer keeps running during reconnect grace; if it expires, the survivor is Eliminated ("Bled out") while still disconnected | Disconnecting must not stall the round (Match Flow rule 19) |
 | Downed survivor crawls into a hiding spot | Not allowed; hiding requires Healthy | Hiding a downed body would stall the round |
 | Two survivors try to rescue the same person | First valid starter is the rescuer; second gets "already being rescued" | One rescuer counts |
 | Rescue completes on the same tick the rescuer is hit | Hit processed first; rescue interrupted | Server orders hit resolution before interactions **(proposed)** |
