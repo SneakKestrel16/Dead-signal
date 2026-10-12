@@ -1,6 +1,6 @@
 # Downing, Rescue & Elimination
 
-> **Status**: In Review
+> **Status**: Needs Revision
 > **Author**: SneakKestrel16
 > **Last Updated**: 2026-10-12 (design review revisions)
 > **Last Verified**: 2026-10-11

@@ -19,3 +19,16 @@ Reviewed-Content-Hash: design/gdd/downing-and-rescue.md ad9dd887ea96472dc05f690e
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-11 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 3
+Summary: Prior blocker (Seized disconnect) is resolved and mirrored in match-flow.md. Formula examples check out, and values agree with match-flow, monster-abilities and survivor-defense. Remaining items are acceptance-criteria gaps.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Acceptance Criteria: no criterion for crawl speed, Call for Help range/repeat block, or monster disconnect during a commit.
+- [RECOMMENDED] Acceptance Criteria: same-tick orderings (stun vs commit completion, hit vs rescue completion) are edge cases with no criterion.
+- [RECOMMENDED] Detailed Design rule 7: does not say whether stored rescue progress resets on re-down (likely moot).
+Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 5c57ba75acefc0097acbb36e98a22140f6231e09
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae

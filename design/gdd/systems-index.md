@@ -48,11 +48,11 @@ them after validation; clients never emit them. Every GDD uses these exact names
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
-| 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
+| 4 | Match Flow & Win Conditions | Gameplay | MVP | Needs Revision | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
 | 5 | Survivor Objectives | Gameplay | MVP | Approved | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
-| 6 | Downing, Rescue & Elimination | Gameplay | MVP | In Review | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
-| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | In Design | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities |
-| 8 | Borrowed Face (disguise) | Gameplay | MVP | In Design | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction |
+| 6 | Downing, Rescue & Elimination | Gameplay | MVP | Needs Revision | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
+| 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | Needs Revision | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities |
+| 8 | Borrowed Face (disguise) | Gameplay | MVP | Needs Revision | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction |
 | 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | In Design | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | In Design | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face |
 | 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Design | design/levels/research-facility.md | Controller & Interaction |
