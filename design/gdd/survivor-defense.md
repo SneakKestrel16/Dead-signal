@@ -54,6 +54,8 @@ tools, they're yours.
    taser hit on it (stunned or immune) and on a survivor alike, and never
    receive `MonsterStunned` or any immunity data (designer decision,
    2026-10-11, cross-review re-review R2; same precedent as Pings rule 27).
+   While the monster is Transforming, the event follows the body shown at that
+   moment (Borrowed Face rule 10): out of a disguise it counts as disguised.
    `MonsterStunned` still reaches the server-side systems that consume it and
    the monster's own client. A stun on the true-form monster is sent to all
    clients as `MonsterStunned`.

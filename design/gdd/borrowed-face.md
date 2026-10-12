@@ -1,8 +1,8 @@
 # Borrowed Face
 
-> **Status**: Approved
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (design review: transform-start state, stun ACs)
+> **Last Updated**: 2026-10-11 (re-review: stun mid-transformation, shock lock blocks observation)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Human Deception (primary), Fair Fear, Counterplay
 
@@ -33,7 +33,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
    - the survivor is within `observe_range_m` = 15 m of the shapeshifter's eye position;
    - the survivor is within the shapeshifter's view cone, `observe_fov_deg` = 90° horizontal, centred on its look direction;
    - an unobstructed line of sight exists from the shapeshifter's eye to any of the survivor's body points (head, chest, pelvis); walls, closed doors and closed hiding spots block it; glass partitions do not;
-   - the shapeshifter is not Stunned.
+   - the shapeshifter is not Stunned and not under the shock lock (Survivor Defense rule 14; designer decision, 2026-10-11: one lock for all, so a locked monster observes no more than a stunned one).
 3. When `obs_time[survivor]` reaches `observe_time_s` = 3 s cumulative **(proposed)**, that survivor becomes *observed* for the rest of the round. Progress does not decay **(proposed)**. The shapeshifter may observe in any form, including while disguised.
 4. Only the server decides observation; the shapeshifter's client never reports it. The shapeshifter's HUD shows observation progress and which faces are available; survivors receive no indication that they were observed **(proposed)**.
 
@@ -50,7 +50,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
    - the body shows a subtle visual warp over its current appearance **(proposed)**;
    - the shapeshifter can move at walking speed but cannot sprint, interact, or use abilities **(proposed)**.
 9. At the end of the 2 s, the server switches the form, emits `FormChanged` (shapeshifter, previous form, new form, server time), and starts the 12 s cooldown (source value; starting it at *completion* is **(proposed)**).
-10. A stun that lands during a transformation interrupts it: the form does not change and the full 12 s cooldown starts **(proposed)**. Transformation cannot be started while Stunned, so it can never be used to escape a stun (source). A stun on a disguised shapeshifter never reveals it (designer decision, 2026-10-11): the stagger plays on the borrowed survivor body with that survivor's shocked grunt, and there is no monster pain cry. In true form the stagger uses the monster body and pain cry.
+10. A stun that lands during a transformation interrupts it: the form does not change and the full 12 s cooldown starts **(proposed)**. Transformation cannot be started while Stunned, so it can never be used to escape a stun (source). A stun on a disguised shapeshifter never reveals it (designer decision, 2026-10-11): the stagger plays on the borrowed survivor body with that survivor's shocked grunt, and there is no monster pain cry. In true form the stagger uses the monster body and pain cry. While Transforming, the stun's presentation and the event survivor clients receive follow the body shown at that moment, which is the previous form because the interrupt keeps it: changing out of a disguise, survivor clients get `PlayerShocked` and the borrowed-body stagger; changing out of true form, they get `MonsterStunned` and the monster stagger (re-review 2026-10-11; same rule as an immune hit, Survivor Defense rule 10).
 11. Transformation can never cancel an attack (source). Predatory Lunge requires true form (designer decision for now, 2026-10-12; **test in playtest**, see Open Questions); a disguised shapeshifter must transform first (see `design/gdd/monster-abilities.md`).
 
 **What the disguise copies** (source: "appearance and basic movement presentation")
@@ -103,7 +103,7 @@ Form-change cooldown runs independently of these states from each completed or i
 ### Interactions with Other Systems
 
 - **Network Authority & Replication**: the server owns the disguise state (current form, transforming flag, target, start time, cooldown end). Every client renders the shapeshifter only from that replicated state; clients never decide form. `FormChanged` is sent to all clients; a reconnecting client receives the current form on join. Survivor clients should receive only what is needed to render the presented form, with no marker identifying the entity as the monster, as far as the network layer allows **(proposed)**.
-- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. All three cases share one action lock for `stun_duration_s` (Survivor Defense rule 14, re-review R2). The immune-hit lock is not the Stunned state: it does not interrupt a transformation already in progress, but like the Stunned state it blocks starting one until it ends.
+- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. All three cases share one action lock for `stun_duration_s` (Survivor Defense rule 14, re-review R2). The immune-hit lock is not the Stunned state: it does not interrupt a transformation already in progress, but like the Stunned state it blocks starting one, and blocks observation (rule 2), until it ends.
 - **Monster Abilities**: Lunge requires True Form; False Signal and Blackout are allowed while Disguised and do not break it. False Signal's fake callout voice uses observed survivors (this system supplies the observed list).
 - **Downing, Rescue & Elimination**: supplies Healthy/Downed/Eliminated status for rule 6 and 13.
 - **Survivor Objectives**: rejects carry, install and progress requests from the shapeshifter in any form (rule 12).
@@ -121,7 +121,8 @@ each server tick:
   if dist(monster_eye, survivor) <= observe_range_m
      and angle(look_dir, to_survivor) <= observe_fov_deg / 2
      and line_of_sight(monster_eye, survivor_body_points)
-     and not monster_stunned:
+     and not monster_stunned
+     and not monster_shock_locked:
        obs_time[survivor] += tick_dt
   observed[survivor] = obs_time[survivor] >= observe_time_s
 ```
@@ -161,6 +162,8 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 | Target disconnects while worn | Disguise stays; no new transforms into them | Mid-match disconnect rule owned by Match Flow |
 | Shapeshifter disconnects while disguised | Disguise lost; on reconnect within grace it returns in true form with its observed list kept **(proposed)** | Match Flow rule 20 |
 | Stunned during transformation | Interrupted; previous form kept; 12 s cooldown starts | Stun is the counter; no free retry |
+| Stunned while transforming out of a disguise | Survivor clients get `PlayerShocked`, stagger on the borrowed body; form stays disguised | Event follows the body shown (rule 10) |
+| Immune taser hit during transformation | Transformation continues and completes on time; the lock's root and slow override the walk allowed by rule 8; the shapeshifter may finish the change still locked | Survivor Defense rule 10: an immune hit does not cancel a transformation |
 | Lunge requested while Disguised | Rejected; must transform first | Lunge requires True Form (kept for now; playtest) |
 | Transform requested during a Lunge takedown commit | Rejected | Transformation cannot cancel an attack (source) |
 | Disguised monster tries to pick up a drive | Server rejects; no item, no progress | Readable Objectives; tell T3/T4 |
@@ -280,7 +283,13 @@ Survivors get no disguise UI.
 - [ ] **Multi-client**: with 5 clients connected, after each of 10 form changes, all 5 clients render the shapeshifter in the same form within 250 ms of `FormChanged`, including a client that reconnects mid-disguise.
 - [ ] A disguised copy of a drive carrier shows no drive; a pickup or install request from the shapeshifter is rejected and objective state is unchanged on all clients.
 - [ ] The copied name label (where labels exist) and footstep set match the target exactly.
-- [ ] While Stunned, the shapeshifter accumulates no observation time on a survivor that otherwise meets every rule 2 condition.
+- [ ] While Stunned, and during the shock lock after an immune hit, the shapeshifter accumulates no observation time on a survivor that otherwise meets every rule 2 condition.
+- [ ] A survivor 46° off the shapeshifter's look direction, otherwise meeting every rule 2 condition, accumulates no observation time; at 44° it does.
+- [ ] A form-change request into an observed Downed survivor is accepted; one into an observed disconnected survivor is rejected.
+- [ ] While the shapeshifter is disguised as survivor X, X being downed or eliminated leaves the disguise unchanged on every client.
+- [ ] Each completed form change emits exactly one `FormChanged` carrying the previous form, new form and server time; one into true form triggers Scare Events' reveal evaluation.
+- [ ] A stun during a transformation out of a disguise sends survivor clients `PlayerShocked` and no `MonsterStunned`, and plays the borrowed-body stagger; during a transformation out of true form, survivor clients get `MonsterStunned`.
+- [ ] An immune taser hit during a transformation roots the shapeshifter for `stun_root_s` and the transformation still completes 2 s after acceptance.
 - [ ] A disguised shapeshifter that is stunned stays in the borrowed form on every client, plays the stagger on the borrowed body with that survivor's shocked grunt, and plays no monster pain cry; a true-form stun plays the monster stagger and pain cry.
 - [ ] A stun item hit on an immune disguised shapeshifter shows the same shock as a stun, does not interrupt a transformation in progress, and does not change the form; a transformation request during the following `stun_duration_s` is rejected.
 - [ ] While Transforming, the shapeshifter can walk but sprint, interact and ability requests are rejected; every client receives the transforming state within 250 ms of acceptance.
@@ -296,6 +305,6 @@ Survivors get no disguise UI.
 | Should Lunge be usable from disguise (instant reveal at wind-up) instead of requiring true form? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12). Playtest note:** in the M5 closed playtest, compare monster win rate, average time from disguise to attack, and whether survivors call the 2 s transform cue a fair warning or too much of a giveaway. Revisit if disguised monsters rarely convert trust into takedowns. |
 | Where does the shapeshifter spawn, and is starting in true form right for Infiltration? | SneakKestrel16 | Before Milestone 1 | — |
 | Can the monster use proximity voice, preset lines, or both while disguised? (source open decision) | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-12: both.** Rules in `pings-and-callouts.md` rule 25; the disguise does not copy voice |
-| Can survivor clients be kept from learning which entity is the monster? Needs a Network Authority ADR. | SneakKestrel16 | Before Milestone 1 | — |
+| Can survivor clients be kept from learning which entity is the monster? Needs a Network Authority ADR. Two known markers to resolve there: `FormChanged` names the shapeshifter, and the replicated transforming state sits on its entity. | SneakKestrel16 | Before Milestone 1 | — |
 | What non-audio indicator represents the distortion cue for deaf or hard-of-hearing players? | SneakKestrel16 | Before Milestone 4 | — |
 | Does a stun item used on a real survivor do anything (a "stun test")? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11 in Survivor Defense rule 11:** the survivor is shocked exactly as a disguised monster is stunned, so a stun is not an identity test |

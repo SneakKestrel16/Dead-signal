@@ -22,3 +22,20 @@ Reviewed-Content-Hash: design/gdd/borrowed-face.md b3589907f1289546744f4d11adf4c
 Reviewed-Content-Hash: design/registry/entities.yaml 9a53d370b099be924f289e01bdf96338801d7883
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 1 | Recommended: 5
+Summary: Re-review. All three prior blockers held. The one new blocker is a cross-document gap. Survivor Defense rule 1 says which stun event survivor clients get only for the Disguised state. Transforming is a separate state, so a stun while changing out of a disguise had no defined event. The blocker and the recommended items were revised in the same session.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Rule 10: a stun during a transformation had no defined survivor-client event or presentation. Resolved: both follow the body shown, which is the previous form. Mirrored in Survivor Defense rule 1, with an AC added.
+- [RECOMMENDED] Header: the header read Approved while the index and the log read Needs Revision. Set to In Review.
+- [RECOMMENDED] Edge Cases: an immune hit during a transformation roots the shapeshifter, but rule 8 allows walking. Resolved: the root wins and the change still completes. Edge case and AC added.
+- [RECOMMENDED] Rule 2: was observation blocked under the shock lock? Designer decision: yes (one lock for all). Rule 2, the formula and the Interactions row were updated.
+- [RECOMMENDED] Acceptance Criteria: added ACs for the edge of the view cone, Downed and disconnected targets, the disguise surviving a target down, and the `FormChanged` payload and reveal trigger.
+- [RECOMMENDED] Open Questions: `FormChanged` and the replicated transforming state mark the monster entity. Both were added to the Network ADR question.
+- [NICE-TO-HAVE] Dependencies: `design/accessibility-requirements.md` and the Network Authority, Controller and HUD GDDs do not exist yet. These are forward references in design order.
+Reviewed-Content-Hash: design/gdd/borrowed-face.md 4920f56b6d26875a3b80148f77b650f0b4cd4810
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
