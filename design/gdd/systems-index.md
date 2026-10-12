@@ -79,7 +79,7 @@ event. Only the owner writes it. Readers never change it.
 | 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | In Review | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
 | 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | Approved | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face, Match Flow, Downing & Rescue, Monster Abilities, Survivor Defense, Survivor Objectives |
 | 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Design | design/levels/research-facility.md | Controller & Interaction |
-| 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Design | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority |
+| 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Review | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority |
 | 13 | HUD & Results Screen | UI | MVP | Not Started | — (`/ux-design`) | Match Flow, Survivor Objectives, Downing, Rescue & Elimination |
 | 14 | Accessibility Options (reduced flash, reduced volume) | Meta | Vertical Slice | Not Started | — (`design/accessibility-requirements.md`) | Scare Events |
 | 15 | Match Telemetry (balancing logs) | Meta | Alpha | Not Started | — | Match Flow, all gameplay systems |

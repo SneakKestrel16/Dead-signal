@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (cross-review B1–B3: ambush test, undefined triggers cut; Facility Map owns lighting; False Signal gets no scare; source and identity server-only)
+> **Last Updated**: 2026-10-12 (design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Fair Fear, Human Deception
 
@@ -30,29 +30,30 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 1a. `source` and any player identity (the player whose action caused the scare) are server-only fields. The server uses them for gating (Formulas) and telemetry and strips them from every `ScareTriggered` sent to a survivor client, so a scare never names or locates the shapeshifter player (designer decision, 2026-10-12, cross-review B3).
 2. Every scare has a **source** field, one of **(proposed)**:
    - `Monster` — caused by the shapeshifter player's action (Blackout, reveal, door burst, lunge).
-   - `Survivor` — caused by a survivor's action (installing a fuse, entering an authored room, viewing a surveillance monitor) (cross-review B1: "running through a glass partition area" and "opening a sealed room" cut; neither exists on the map).
+   - `Survivor` — caused by a player's action at an authored trigger (installing a fuse, entering an authored room, viewing a surveillance monitor) (cross-review B1: "running through a glass partition area" and "opening a sealed room" cut; neither exists on the map).
    - `RoundScript` — fired by the authored round script on a phase change or objective event.
+2a. **Location triggers ignore who the player is.** Entering an authored room and viewing a surveillance monitor fire for any player, including the shapeshifter in any form, and are always gated as `Survivor` source. A disguised shapeshifter therefore triggers exactly what a survivor would, so a missing or extra scare is never a tell (design review 2026-10-12, **proposed**). Fuse install differs only because a disguised shapeshifter cannot really install (Survivor Objectives rules 25–26).
 3. Nothing else may fire a scare. There is no free-running ambient timer, no creature, no AI.
 4. **No scare is a threat by itself.** Scares never deal damage, down, stun, slow, block a route permanently, change objective state or move a player. Environment scares are presentation; the only thing that can hurt a survivor is the monster player, validated by the server through Monster Abilities.
 4a. **False Signal never produces a scare.** It has no scare entry and never emits `ScareTriggered`, so its fake callouts and sounds reach survivor clients exactly as a real callout or sound does (Pings & Callouts rule 27, Monster Abilities rule 15) (designer decision, 2026-10-12, cross-review B3).
 
 **The three sources**
 
-| Scare | Category | Source | Scope | Owner of the trigger |
-|---|---|---|---|---|
-| Transformation reveal (monster drops disguise) | Player-triggered | Monster | Shared | Borrowed Face |
-| Door burst (monster breaks a barricade) | Player-triggered | Monster | Shared | Survivor Defense (barricade break) |
-| Ambush lunge (wind-up passes the ambush test, rule 5a) | Player-triggered | Monster | Shared | Monster Abilities (Predatory Lunge) |
-| Blackout (lights die) | Environment | Monster | Shared | Monster Abilities (Blackout) |
-| Slammed door | Environment | RoundScript or Survivor **(proposed)** | Shared | This system |
-| Glass break | Environment | RoundScript, at a Facility Map glass scare anchor **(proposed)** (cross-review B1: trip-point and monster-through-glass triggers cut) | Shared | This system |
-| Alarm | Environment | Survivor (fuse install) or RoundScript (Evacuation) | Shared | Survivor Objectives / Match Flow |
-| Unsettling recording | Environment | Survivor (enters authored room) or RoundScript **(proposed)** | Shared | This system |
-| Disguised teammate transforms | Deception | Monster | Shared | Borrowed Face |
-| Impossible surveillance image | Deception | Survivor (views a monitor) + RoundScript selects **(proposed)** | Single-client | This system |
+| Scare | Category | Source | Scope | Intensity **(proposed)** | Owner of the trigger |
+|---|---|---|---|---|---|
+| Transformation reveal (monster drops disguise) | Player-triggered | Monster | Shared | Major | Borrowed Face |
+| Door burst (monster breaks a barricade) | Player-triggered | Monster | Shared | Major | Survivor Defense (barricade break) |
+| Ambush lunge (wind-up passes the ambush test, rule 5a) | Player-triggered | Monster | Shared | Major, never a flinch (rule 14) | Monster Abilities (Predatory Lunge) |
+| Blackout (lights die) | Environment | Monster | Shared | Major | Monster Abilities (Blackout) |
+| Slammed door | Environment | RoundScript, at a Facility Map door scare anchor (design review 2026-10-12: Survivor trigger cut; none was defined and the Facility Map anchors are RoundScript only) | Shared | Minor | This system |
+| Glass break | Environment | RoundScript, at a Facility Map glass scare anchor **(proposed)** (cross-review B1: trip-point and monster-through-glass triggers cut) | Shared | Major | This system |
+| Alarm | Environment | Survivor (fuse install) or RoundScript (Evacuation) | Shared | Minor | Survivor Objectives / Match Flow |
+| Unsettling recording | Environment | Survivor (any player enters authored room, rule 2a) or RoundScript **(proposed)** | Shared | Minor | This system |
+| Disguised teammate transforms | Deception | Monster | Shared | Major | Borrowed Face |
+| Impossible surveillance image | Deception | Survivor (any player views a monitor, rule 2a) + RoundScript selects **(proposed)** | Single-client | Minor | This system |
 
 5. Player-triggered scares are a presentation layer on top of the gameplay cue. The gameplay cue itself (transformation audio distortion, lunge wind-up and audible cue, barricade break sound) is owned by its system and is **never** suppressed, delayed or reduced by any rule here.
-5a. **Ambush test** (cross-review B1): when a Predatory Lunge wind-up starts (`AbilityUsed`), the server runs the test for each survivor within `lunge_cue_radius_m` (Monster Abilities). It passes for that survivor if the monster stands in a lighting volume (Facility Map) that is blacked out, or in one that survivor has had no line of sight into for at least `ambush_unseen_s` **(proposed)**. The ambush lunge scare goes only to survivors for whom it passes; otherwise the lunge plays only its own gameplay cue.
+5a. **Ambush test** (cross-review B1): when a Predatory Lunge wind-up starts (`AbilityUsed`), the server runs the test for each survivor within `lunge_cue_radius_m` (Monster Abilities). It passes for that survivor if the monster stands in a lighting volume (Facility Map) that is blacked out, or if that survivor has had no line of sight to the monster's chest (the same unobstructed chest-to-chest test as Monster Abilities rule 7, view direction ignored) for at least `ambush_unseen_s` **(proposed)**. The server keeps one last-seen time per survivor for the monster, not a history per volume (design review 2026-10-12). The ambush lunge scare goes only to survivors for whom it passes; otherwise the lunge plays only its own gameplay cue.
 6. RoundScript environment scares are drawn from authored lists per phase and zone, fire only at authored trigger points, and are limited by the phase budget in Formulas **(proposed)**. They exist to raise tension between human encounters, not to imitate the monster: a RoundScript scare may not produce footsteps, a teammate voice, a ping or a callout **(proposed)**. Those are only produced by humans, so a survivor who hears a teammate voice knows a human (teammate or monster) caused it.
 7. Slammed doors from RoundScript close a door that is open but never lock or barricade it; any player can reopen it immediately **(proposed)**.
 
@@ -67,18 +68,18 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 **Control-loss limit**
 
 13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge) of at most `scare_max_control_loss_s` = 0.3 s **(proposed)**, during which the player can still move and use a stun item.
-14. Flinch never fires on a survivor while the monster is in a lunge wind-up targeting that survivor's area **(proposed)**, and the flinch duration must stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
+14. Flinch never fires on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active (Monster Abilities rules 5–6); any Major scare reaching that survivor then plays without its flinch. The ambush lunge scare is therefore stinger only, so a forced view nudge never spoils a dodge (design review 2026-10-12, **proposed**). The flinch duration must also stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
 15. No scare plays a non-skippable animation, forced camera move or full-screen overlay that hides the monster.
 
 **Directional, informative audio**
 
 16. Every diegetic scare sound plays from its true origin in the world (the door that slammed, the room that went dark, the speaker that played). Its direction and distance must be correct for the listener.
 17. Non-diegetic stingers are allowed only on Major scares, play at most `stinger_max_db_rel` above the ambient bed **(proposed)**, and never cover the origin sound.
-18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**. Stun ducking triggers on `PlayerShocked` or `MonsterStunned` (true-form stun) on survivor clients and on `MonsterStunned` on the monster's client, because survivor clients never receive `MonsterStunned` while the monster is disguised (Survivor Defense rule 1).
+18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, fuse install noise (Survivor Objectives rule 16), barricade break, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**. Stun ducking triggers on `PlayerShocked` or `MonsterStunned` (true-form stun) on survivor clients and on `MonsterStunned` on the monster's client, because survivor clients never receive `MonsterStunned` while the monster is disguised (Survivor Defense rule 1).
 
 **Shared vs. individual scope**
 
-19. **Shared** scares go to every client that is relevant: inside the affected room/zone, within the sound's audible range, or with line of sight to the effect **(proposed: relevance = audible range or line of sight)**. All recipients see the same scare_id at the same origin.
+19. **Shared** scares go to every client that is relevant: inside the affected room/zone, within the sound's audible range, or with line of sight to the effect **(proposed: relevance = audible range or line of sight)**. Each scare entry carries its own authored audible range (data). All recipients see the same scare_id at the same origin.
 20. **Single-client** scares (hallucinations) are sent only to the intended client. No other client receives any data about them, including the monster.
 21. Hallucinations are presentation only and must not: show a fake teammate, ping, callout or pickup; misrepresent objective state or the round timer; or show the monster's real position **(proposed)**. They unsettle; they do not inform or misinform about gameplay state.
 
@@ -88,10 +89,10 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 | State | When | Lighting | Audio bed | Scare budget |
 |---|---|---|---|---|
-| Infiltration – Low | 0:00–2:00 | Facility starts in the Facility Map's **Low Power** lighting state: dim, stable work lights, Zone B dimmest, fuse boxes and terminal dark **(proposed; matches `research-facility.md`)** | Quiet hum, distant facility noise | Low (few RoundScript scares) **(proposed)** |
-| Investigation – Rising | 2:00–7:00 | Facility Map's current state; this system adds flicker whose frequency rises over the phase **(proposed)** | Bed intensity rises with time | Medium, increasing |
+| Infiltration – Low | Round start until `RoundPhaseChanged` (normally 0:00–2:00) | Facility starts in the Facility Map's **Low Power** lighting state: dim, stable work lights, Zone B dimmest, fuse boxes and terminal dark **(proposed; matches `research-facility.md`)** | Quiet hum, distant facility noise | Low (few RoundScript scares) **(proposed)** |
+| Investigation – Rising | Until `RoundPhaseChanged` to Evacuation (normally 2:00–7:00) | Facility Map's current state; this system adds flicker whose frequency rises over the phase **(proposed)** | Bed intensity rises with time | Medium, increasing |
 | Power Restored (overlay) | Both fuses installed (`ObjectiveProgressChanged`) **(proposed)** | Leaves Low Power: main lights up in Zones B and C (Facility Map's Power Restored state) | Machinery up; alarm on install | Unchanged |
-| Evacuation – Emergency | Final 2:00 | Facility Map's Evacuation state: overheads ~50%, rotating amber beacons, faint emergency floor lights (designer decision, 2026-10-12, cross-review B2) | Alarm loop, PA countdown | High, but per-client cooldowns still apply |
+| Evacuation – Emergency | `RoundPhaseChanged` to Evacuation: 7:00, or earlier when the terminal is armed (Match Flow rule 6) | Facility Map's Evacuation state: overheads ~50%, rotating amber beacons, faint emergency floor lights (designer decision, 2026-10-12, cross-review B2) | Alarm loop, PA countdown | High, but per-client cooldowns still apply |
 | Blackout (local overlay) | Monster Blackout, `blackout_duration_s` | Facility Map's Blackout (local) state: local lights off; emergency lights faintly visible | Power-down sound at origin | n/a |
 | Results | Round end | Facility Map's Reset state: every volume back to round-start Low Power (designer decision, 2026-10-12, cross-review B2) | Music | None |
 
@@ -141,7 +142,14 @@ else:
     block if now - last_major < major_scare_cooldown_s
     block if now - last_any   < minor_scare_cooldown_s
     block if now - last_fire[scare_id, location] < same_scare_repeat_block_s
-    block if phase_budget_used >= phase_budget[phase]
+    block if source == RoundScript and phase_budget_used >= phase_budget[phase]
+    block if source == RoundScript and the scare's volume is under Blackout
+
+on delivery (any source):
+    last_any = now
+    if delivered as Major: last_major = now     // a reduced Minor does not reset it
+    last_fire[scare_id, location] = now
+    if source == RoundScript: phase_budget_used += 1   // reset on RoundPhaseChanged
 ```
 
 | Variable | Type | Range | Source | Description |
@@ -149,7 +157,7 @@ else:
 | major_scare_cooldown_s | float | 30–90 | data | Proposed 45 |
 | minor_scare_cooldown_s | float | 5–20 | data | Proposed 10 |
 | same_scare_repeat_block_s | float | 60–540 | data | Proposed 120 |
-| phase_budget | int per phase | 0–12 | data | RoundScript scares per client: Low 2, Rising 6, Emergency 4 (proposed) |
+| phase_budget | int per phase | 0–12 | data | RoundScript scares per client: Low 2, Rising 6, Emergency 4 (proposed). Survivor-source scares are not budgeted; once-per-round and repeat blocks bound them |
 
 **Expected output**: at most one Major scare per client per 45 s from non-monster sources, so at most ~12 per 540 s round in the worst case; the budget caps RoundScript scares at 12 per client. **Example**: a survivor gets a door burst (Monster, Major) at 3:00; a RoundScript recording at 3:20 is blocked; the monster reveals at 3:30 and it plays as Minor (distortion and sound, no stinger); at 3:46 a RoundScript glass break is allowed.
 
@@ -168,7 +176,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | Blackout and a RoundScript flicker in the same room | Blackout wins; RoundScript scare blocked for that room for the duration | Avoids stacking; human action is the clearer signal |
 | Survivor triggers an alarm while another is mid-flinch | Each client gated independently | Cooldowns are per client |
 | Hallucination target is downed | Hallucination still allowed but no flinch | Downed players already have reduced control |
-| Hallucination scheduled while monster within lunge range of target | Delayed until not applicable or dropped **(proposed)** | Must never assist an attack |
+| Hallucination scheduled while the shapeshifter, in any form, is within `lunge_cue_radius_m` of the target | Dropped **(proposed)** | Must never assist an attack; checking any form keeps the drop from becoming a tell |
 | Two Major scares from the monster in quick succession (burst then lunge) | Both delivered; second reduced to Minor | Monster scares are never blocked |
 | Client with reduced flash set to 0 | Light change without flashing; same timing and origin | Information parity |
 | Client reconnects mid-round | Receives current facility scare state; missed scares not replayed | Avoids stale scares |
@@ -209,7 +217,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 |---|---|---|---|
 | Transformation reveal | True form, light flare (scaled) | Distortion at origin + stinger | High |
 | Door burst | Door debris, dust | Impact at door | High |
-| Ambush lunge | Flinch (≤0.3 s) | Stinger layered on lunge cue | High |
+| Ambush lunge | No flinch (rule 14) | Stinger layered on lunge cue | High |
 | Blackout | Lights off, emergency lights faint | Power-down at origin | High |
 | Slammed door / glass break | Door swing / shards | At origin | Medium |
 | Alarm | Strobe (rate-capped) | Positional alarm | Medium |
@@ -249,7 +257,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 
 ### Feel Acceptance Criteria
 
-- [ ] Playtesters can point toward the origin of a scare they just heard.
+- [ ] In a closed playtest, at least 8 of 10 testers point within 45° of the origin of a scare they just heard.
 - [ ] No playtester attributes a down to "the game froze me".
 
 ## UI Requirements
@@ -270,7 +278,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 | Fuse alarm, power restored | `design/gdd/survivor-objectives.md` | `ObjectiveProgressChanged` | State trigger |
 | Lighting states, scare anchors, emergency lights, monitors | `design/levels/research-facility.md` | Lighting States (owner), Scare anchors table, authored placements | Data dependency |
 | Callout ducking priority | `design/gdd/pings-and-callouts.md` | Callouts and pings | Rule dependency |
-| Reduced flash/volume settings | `design/accessibility-requirements.md` | Settings consuming rules 24–29 | Ownership handoff |
+| Reduced flash/volume settings | `design/accessibility-requirements.md` (not yet authored) | Settings consuming rules 24–29 | Ownership handoff |
 
 ## Acceptance Criteria
 
@@ -278,7 +286,8 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 - [ ] A hallucination is received only by its target; network capture on the other 4 clients shows no data for it.
 - [ ] Every `ScareTriggered` in a full-round server log has a source of Monster, Survivor or RoundScript, and every Monster/Survivor source names a player; a packet capture on a survivor client shows no source or player identity in any `ScareTriggered` (designer decision, 2026-10-12, cross-review B3).
 - [ ] Across 20 False Signals of every type, no `ScareTriggered` is emitted, and a survivor client's packet capture of a fake callout or sound matches that of the real one except the absent gesture event (designer decision, 2026-10-12, cross-review B3).
-- [ ] A lunge wind-up started in a blacked-out volume, or in a volume a survivor within `lunge_cue_radius_m` has not seen into for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume that survivor saw into within `ambush_unseen_s` sends them none (cross-review B1).
+- [ ] A lunge wind-up started in a blacked-out volume, or by a monster that a survivor within `lunge_cue_radius_m` has had no line of sight to for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume by a monster that survivor saw within `ambush_unseen_s` sends them none (cross-review B1).
+- [ ] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush lunge scare or any other Major scare.
 - [ ] No scare changes health, down state, objective progress, cooldowns or position on the server.
 - [ ] Maximum measured input loss from any scare is ≤ 0.3 s; movement and stun input work during a flinch.
 - [ ] A RoundScript scare within 45 s of a Major scare on the same client is blocked; a Monster scare in the same window plays as Minor.
@@ -288,6 +297,11 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 - [ ] No scare produces more than 3 flashes per second.
 - [ ] All 5 clients enter Emergency state within one network round trip of `RoundPhaseChanged` to Evacuation.
 - [ ] RoundScript never produces footsteps, a teammate voice, a ping or a callout.
+- [ ] A disguised shapeshifter entering an authored room or viewing a monitor fires the same scare a survivor would; server logs show identical gating for both.
+- [ ] A RoundScript scare within 10 s of any scare on the same client is blocked; no client receives more RoundScript scares in a phase than that phase's budget (2/6/4).
+- [ ] No client receives more than `hallucination_max_per_client` (2) hallucinations in a round.
+- [ ] A RoundScript slammed door never locks or barricades its door; a player can reopen it on the next interaction.
+- [ ] A client that reconnects mid-round shows the current facility scare state within one network round trip and replays no missed scare.
 
 ## Open Questions
 
