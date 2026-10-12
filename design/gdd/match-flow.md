@@ -139,6 +139,7 @@ Example: the second drive is Extracted at 500 s → the round ends no later than
 | Shapeshifter disconnects | Character removed; 60 s grace; clock runs; No Contest if it does not return | Rule 20 (proposed); no AI substitute |
 | Shapeshifter disconnects at the same time as the evidence escapes | The extraction locks the survivor win first; the disconnect does not change it | Outcome lock (rule 14) |
 | A Downed survivor disconnects | Removed; bleed-out keeps running. Returns Downed with the same down count and remaining bleed-out if back in time; Eliminated ("Bled out") if the timer expires first; counted eliminated if grace expires first | Disconnecting must not let a player avoid an elimination or stall the round (rule 19) |
+| A Seized survivor disconnects mid-commit | The takedown commit resolves on schedule (Downing owns this); they return Downed or are Eliminated | A disconnect must not dodge a takedown (rule 19) |
 | Only Downed survivors left inside, drives not out | No "Evidence lost"; the round waits for bleed-out, then ends "All survivors eliminated" | Rule 13: Downed counts as inside |
 | Deadline reached while the shapeshifter is in reconnect grace | Monster wins, reason "Evacuation deadline expired" | Rule 20 (proposed) |
 | A drive carrier disconnects | Drive dropped at their position immediately | Team is not blocked for 60 s |

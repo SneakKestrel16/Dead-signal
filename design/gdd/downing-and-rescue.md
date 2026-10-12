@@ -1,8 +1,8 @@
 # Downing, Rescue & Elimination
 
-> **Status**: Draft
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (bleed-out decided)
+> **Last Updated**: 2026-10-12 (design review revisions)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -52,7 +52,8 @@ someone is truly alone.
 2. **Down count.** Each survivor has `downs_taken`, starting at 0 each round. It
    increases only when a takedown commit completes. It never decreases.
 3. **Takedown eligibility.** A survivor is a valid takedown target only when
-   Healthy and not inside post-rescue grace or an active commit. Monster
+   Healthy, not hidden (Survivor Defense), and not inside post-rescue grace,
+   post-release grace or an active commit. Monster
    Abilities reads this eligibility before producing `SurvivorHit`; a
    `SurvivorHit` for an ineligible survivor is ignored. Downed survivors cannot
    be hit, so there is no "execute" on a downed survivor **(proposed)**.
@@ -89,7 +90,8 @@ someone is truly alone.
    - crawls at `crawl_speed_mult` = 0.25 × normal walk speed **(proposed)**;
    - cannot sprint, interact with objectives, barricade, hide, use items or
      carry objective items (drop handling is owned by Survivor Objectives);
-   - can ping normally through Pings & Callouts and can use **Call for Help**,
+   - can use pings, the "Danger" callout and voice (Pings & Callouts rules 14
+     and 19), and can use **Call for Help**,
      which is the "Need rescue" authored callout owned by Pings & Callouts: a
      directional cry heard by every living player, including the monster, within
      `rescue_callout_range_m` = 40 m, limited by that system's
@@ -104,7 +106,7 @@ someone is truly alone.
      never resets during the same Downed state **(proposed)**. Bleed-out only
      applies to a first down, because a second down eliminates directly
      (rule 5).
-7. **Rescue.** A Healthy survivor within `rescue_range_m` = 1.5 m **(proposed)**
+7. **Rescue.** A Healthy survivor who is not hidden (Survivor Defense), within `rescue_range_m` = 1.5 m **(proposed)**
    of a Downed survivor, with line of sight, may hold Rescue.
    - Completing `rescue_duration_s` = 6 s of held progress rescues them.
    - While a rescue is active, both rescuer and Downed survivor are rooted
@@ -230,7 +232,7 @@ crawl_speed = walk_speed * crawl_speed_mult
 ### Monster exposure per takedown
 
 ```
-monster_exposed_s = lunge_windup + takedown_commit_s
+monster_exposed_s = lunge_windup_s + takedown_commit_s
 ```
 Lunge wind-up is owned by Monster Abilities. With `takedown_commit_s` 1.5 s, the
 team has at least 1.5 s to reach stun range after a hit lands.
@@ -242,8 +244,9 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | Rescuer is hit mid-rescue | Rescue interrupts (progress kept, decaying); rescuer enters Seized | Rescue is risky by design |
 | `MonsterStunned` and commit completion land on the same server tick | Stun wins; commit cancelled | Favor the interrupt; counterplay pillar |
 | Victim's teammate stuns the monster during wind-up (before hit) | No `SurvivorHit`; this system does nothing | Wind-up interrupts are owned by Survivor Defense / Monster Abilities |
-| Monster disconnects during a commit | Commit cancelled; victim returns to Healthy with grace | No down without a completed commit |
-| Victim disconnects while Seized or Downed | Handled by Match Flow's disconnect rule. The bleed-out timer keeps running during reconnect grace; if it expires, the survivor is Eliminated ("Bled out") while still disconnected | Disconnecting must not stall the round (Match Flow rule 19) |
+| Monster disconnects during a commit | Commit cancelled; victim returns to Healthy with `post_release_grace_s` | No down without a completed commit |
+| Victim disconnects while Seized | The commit keeps running and resolves on schedule: Downed (bleed-out starts) or Eliminated, recorded while they are disconnected. A stun still cancels it. On reconnect they return in the resulting state (designer decision, 2026-10-12) | Disconnecting must not dodge a takedown (Match Flow rule 19) |
+| Victim disconnects while Downed | Handled by Match Flow's disconnect rule. The bleed-out timer keeps running during reconnect grace; if it expires, the survivor is Eliminated ("Bled out") while still disconnected | Disconnecting must not stall the round (Match Flow rule 19) |
 | Downed survivor crawls into a hiding spot | Not allowed; hiding requires Healthy | Hiding a downed body would stall the round |
 | Two survivors try to rescue the same person | First valid starter is the rescuer; second gets "already being rescued" | One rescuer counts |
 | Rescue completes on the same tick the rescuer is hit | Hit processed first; rescue interrupted | Server orders hit resolution before interactions **(proposed)** |
@@ -338,8 +341,8 @@ instant kill. Anti-reference: one-hit deaths with no window.
 
 ### Feel Acceptance Criteria
 
-- [ ] In playtests, players can describe why each down happened.
-- [ ] Teammates within 10 m of a hit report noticing the commit in time to act in most cases.
+- [ ] Across ≥10 playtest rounds, at least 80% of downed players answer "yes" to the post-round survey question "Did you understand why you were downed?".
+- [ ] Across ≥10 playtest rounds, at least 60% of answers from teammates within 10 m of a hit are "yes" to "Did you notice the takedown in time to act?".
 
 ## UI Requirements
 
@@ -368,6 +371,10 @@ instant kill. Anti-reference: one-hit deaths with no window.
 - [ ] A Healthy survivor whose takedown commit completes becomes Downed; a survivor with `downs_taken` 1 whose commit completes becomes Eliminated without entering Downed.
 - [ ] A `MonsterStunned` received during Committing cancels the commit; `downs_taken` is unchanged.
 - [ ] A `SurvivorHit` on a Downed survivor or a survivor in grace changes nothing.
+- [ ] A rescued survivor cannot be taken down for 3 s (±1 tick) after standing up; a survivor freed by a stun cannot for 2 s (±1 tick).
+- [ ] With two survivors holding Rescue on the same Downed survivor, the second gets "already being rescued", and the rescue still takes 6 s.
+- [ ] A hidden survivor cannot start a rescue.
+- [ ] A victim who disconnects while Seized is Downed (or Eliminated, with `downs_taken` 1) when the commit timer ends, and returns in that state on reconnect.
 - [ ] Holding Rescue for 6.0 s (±1 tick) uninterrupted rescues; releasing at 4.0 s and resuming 3.0 s later needs 3.5 s more.
 - [ ] A client sending a forged "rescue complete" or "survivor downed" message causes no state change.
 - [ ] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
