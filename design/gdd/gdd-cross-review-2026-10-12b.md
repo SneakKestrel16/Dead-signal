@@ -114,3 +114,13 @@ Scenarios walked: 4
 1. Designer decides B1, option (a) or (b). Then edit Survivor Defense rule 16 and the States table, Borrowed Face Edge Cases and ACs, and the Survivor Defense ACs.
 2. Reword Survivor Defense rule 11 (W1). Add the running-flinch clause to Scare Events rule 14 (W3). Settle the alarm trigger event (W2).
 3. Re-run `/design-review` on survivor-defense, monster-abilities and scare-events (all In Review), then `/review-all-gdds since-last-review`.
+
+---
+
+## Resolution (2026-10-12)
+
+- B1: designer chose option (a). Completing a transformation into a disguise ends immunity (Survivor Defense rule 16 and States table, Borrowed Face Edge Cases, ACs in both).
+- W1: Survivor Defense rule 11 reworded. Inside the post-lock window the hit still plays the stagger and still cancels holds; only root, slow and lock are skipped.
+- W2: designer chose install completion. The alarm fires on the existing `ObjectiveProgressChanged` install event, so the index needs no change.
+- W3: Scare Events rule 14 now ends a running flinch when a wind-up starts nearby.
+- Borrowed Face goes back to In Review. Next: `/design-review` on survivor-defense, borrowed-face, monster-abilities and scare-events.

@@ -1,8 +1,8 @@
 # Borrowed Face
 
-> **Status**: Approved (2026-10-11, solo review)
+> **Status**: In Review
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (cross-review B4: an immune taser hit no longer locks; post-lock window in Survivor Defense rule 14)
+> **Last Updated**: 2026-10-12 (fourth cross-review B1: completing a change into a disguise ends immunity; earlier cross-review B4)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Human Deception (primary), Fair Fear, Counterplay
 
@@ -167,6 +167,7 @@ Example: transformation accepted at 60.0 s, stunned at 61.0 s → form unchanged
 | Stunned while transforming out of a disguise | Survivor clients get `PlayerShocked`, stagger on the borrowed body; form stays disguised | Event follows the body shown (rule 10) |
 | Immune taser hit during transformation out of a disguise | Transformation continues and completes on time; no root, slow or lock, so the rule 8 walk continues | Survivor Defense rule 10: an immune hit does not cancel a transformation; the borrowed body shows the full shock. Rule 14 post-lock window (designer decision, 2026-10-12, cross-review B4) |
 | Immune taser hit during transformation out of true form | "Resisted" spark; no root, slow or lock; the walk continues and the change completes on time | Survivor Defense rule 10: presentation follows the body shown, and an immune true form has its full kit |
+| Transformation into a disguise completes while Immune (after a true-form stun) | Immunity ends at completion; the next taser hit stuns and locks the disguise like a survivor | Survivor Defense rule 16: a disguise never carries immunity from a stun observers did not see on that body (designer decision, 2026-10-12, cross-review B1 (2026-10-12b)) |
 | Lunge requested while Disguised | Rejected; must transform first | Lunge requires True Form (kept for now; playtest) |
 | Transform requested during a Lunge takedown commit | Rejected | Transformation cannot cancel an attack (source) |
 | Disguised monster tries to pick up a drive | Server rejects; no item, no progress | Readable Objectives; tell T3/T4 |
@@ -295,6 +296,7 @@ Survivors get no disguise UI.
 - [ ] An immune taser hit during a transformation out of a disguise plays the full shock, applies no root, slow or lock, and the transformation still completes 2 s after acceptance (cross-review B4); during a transformation out of true form it shows the "resisted" spark, applies no root, slow or lock, and the transformation completes 2 s after acceptance.
 - [ ] A disguised shapeshifter that is stunned stays in the borrowed form on every client, plays the stagger on the borrowed body with that survivor's shocked grunt, and plays no monster pain cry; a true-form stun plays the monster stagger and pain cry.
 - [ ] A stun item hit on an immune disguised shapeshifter shows the same shock as a stun, does not interrupt a transformation in progress, and does not change the form; it applies no lock, so a transformation request during the following `stun_duration_s` is not rejected on that account (designer decision, 2026-10-12, cross-review B4).
+- [ ] A shapeshifter stunned in true form that completes a transformation into a disguise during `stun_immunity_s` is no longer immune: the next taser hit sends survivor clients `PlayerShocked`, stuns it and applies the Survivor Defense rule 14 lock (designer decision, 2026-10-12, cross-review B1 (2026-10-12b)).
 - [ ] While Transforming, the shapeshifter can walk but sprint, interact and ability requests are rejected; every client receives the transforming state within 250 ms of acceptance.
 - [ ] A disguised shapeshifter's rescue request on a Downed survivor is rejected and the bleed-out timer is unchanged.
 - [ ] A disguised shapeshifter's requests to enter a hiding spot, barricade a door or remove a barricade are rejected, and the hiding spot and door state are unchanged on all clients; its search of a hiding spot plays the monster search on every client.

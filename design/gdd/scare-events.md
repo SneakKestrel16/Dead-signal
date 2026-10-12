@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
+> **Last Updated**: 2026-10-12 (fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Fair Fear, Human Deception
 
@@ -47,7 +47,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 | Blackout (lights die) | Environment | Monster | Shared | Major | Monster Abilities (Blackout) |
 | Slammed door | Environment | RoundScript, at a Facility Map door scare anchor (design review 2026-10-12: Survivor trigger cut; none was defined and the Facility Map anchors are RoundScript only) | Shared | Minor | This system |
 | Glass break | Environment | RoundScript, at a Facility Map glass scare anchor **(proposed)** (cross-review B1: trip-point and monster-through-glass triggers cut) | Shared | Major | This system |
-| Alarm | Environment | Survivor (fuse install) or RoundScript (Evacuation) | Shared | Minor | Survivor Objectives / Match Flow |
+| Alarm | Environment | Survivor (fuse install completed, `ObjectiveProgressChanged`; the install-start noise is Survivor Objectives rule 16's own cue) or RoundScript (Evacuation) (designer decision, 2026-10-12, cross-review W2 (2026-10-12b)) | Shared | Minor | Survivor Objectives / Match Flow |
 | Unsettling recording | Environment | Survivor (any player enters authored room, rule 2a) or RoundScript **(proposed)** | Shared | Minor | This system |
 | Disguised teammate transforms | Deception | Monster | Shared | Major | Borrowed Face |
 | Impossible surveillance image | Deception | Survivor (any player views a monitor, rule 2a) + RoundScript selects **(proposed)** | Single-client | Minor | This system |
@@ -68,7 +68,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 **Control-loss limit**
 
 13. Scares never take away movement, look, interaction or stun-item input, with one exception: a Major scare may apply a camera flinch (involuntary view nudge) of at most `scare_max_control_loss_s` = 0.3 s **(proposed)**, during which the player can still move and use a stun item.
-14. Flinch never fires on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active (Monster Abilities rules 5–6); any Major scare reaching that survivor then plays without its flinch. The ambush lunge scare is therefore stinger only, so a forced view nudge never spoils a dodge (design review 2026-10-12, **proposed**). The flinch duration must also stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
+14. Flinch never fires on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active (Monster Abilities rules 5–6); any Major scare reaching that survivor then plays without its flinch, and a flinch already running ends when such a wind-up starts (fourth cross-review W3). The ambush lunge scare is therefore stinger only, so a forced view nudge never spoils a dodge (design review 2026-10-12, **proposed**). The flinch duration must also stay shorter than the lunge wind-up owned by Monster Abilities. If a future scare needs longer control loss, it must be cut (Fair Fear design test).
 15. No scare plays a non-skippable animation, forced camera move or full-screen overlay that hides the monster.
 
 **Directional, informative audio**
@@ -287,7 +287,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 - [ ] Every `ScareTriggered` in a full-round server log has a source of Monster, Survivor or RoundScript, and every Monster/Survivor source names a player; a packet capture on a survivor client shows no source or player identity in any `ScareTriggered` (designer decision, 2026-10-12, cross-review B3).
 - [ ] Across 20 False Signals of every type, no `ScareTriggered` is emitted, and a survivor client's packet capture of a fake callout or sound matches that of the real one except the absent gesture event (designer decision, 2026-10-12, cross-review B3).
 - [ ] A lunge wind-up started in a blacked-out volume, or by a monster that a survivor within `lunge_cue_radius_m` has had no line of sight to for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume by a monster that survivor saw within `ambush_unseen_s` sends them none (cross-review B1).
-- [ ] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush lunge scare or any other Major scare.
+- [ ] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush lunge scare or any other Major scare; a reveal flinch running when a wind-up starts 0.1 s after the form change ends on that tick.
 - [ ] No scare changes health, down state, objective progress, cooldowns or position on the server.
 - [ ] Maximum measured input loss from any scare is ≤ 0.3 s; movement and stun input work during a flinch.
 - [ ] A RoundScript scare within 45 s of a Major scare on the same client is blocked; a Monster scare in the same window plays as Minor.
