@@ -134,3 +134,14 @@ Findings:
 - [INFO] Open from cross-reviews: the 200 ms survivor camera impact is defined here and in Downing (W9).
 Reviewed-Content-Hash: design/gdd/monster-abilities.md bee9a9cbf03c659ef4f41b5a640cf0c8bfa91c79
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 1
+Summary: The victim camera impact is now owned by Downing (W9); nothing else changed. The dodge window and B1–B4 interactions still hold.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Header: Last Updated not bumped. Resolved.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md 16b89141b4cd133e69cd1d8a3b264b880103e537
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

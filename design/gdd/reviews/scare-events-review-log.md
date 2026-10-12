@@ -34,3 +34,15 @@ Findings:
 - [INFO] Accessibility Options, Network Authority and Match Telemetry have no GDD yet (Not Started).
 Reviewed-Content-Hash: design/gdd/scare-events.md 036e78077dbd8c7a8aee0dee81abf9e4405e2746
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 2
+Summary: A slammed door is now presentation only (W13), consistent with rule 4 and the Facility Map scare anchors. The Visual/Audio table still described a door swing.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Visual/Audio: 'Door swing' would show a closed-looking door the server treats as open, which is a false sightline cue. Resolved: shudder in place, no swing.
+- [RECOMMENDED] Header: Last Updated not bumped. Resolved.
+Reviewed-Content-Hash: design/gdd/scare-events.md 6afbf24940be33bd1d6b746961c4084ae9d269c0
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

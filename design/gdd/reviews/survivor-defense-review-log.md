@@ -59,3 +59,14 @@ Findings:
 - [INFO] Open from cross-reviews: stun items as item-ping targets have no world object (W8); stun and immunity state across a monster disconnect (W11).
 Reviewed-Content-Hash: design/gdd/survivor-defense.md 88ced870a0699abc5285e39fc559b1d474fc9e1f
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 1
+Summary: The monster-disconnect edge case (W11) and the removal of taser pings (W8) agree with Match Flow rule 20 and Pings rule 5.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Header: Last Updated not bumped. Resolved.
+Reviewed-Content-Hash: design/gdd/survivor-defense.md 10a935730dc94ed0900358047e002264f781982d
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (second re-review: nearby players slow bleed-out instead of freezing it, W5; monster never sees the ring, S1)
+> **Last Updated**: 2026-10-12 (cross-review W10: stun window assumes a teammate within 5 m; earlier: second re-review: nearby players slow bleed-out instead of freezing it, W5; monster never sees the ring, S1)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 

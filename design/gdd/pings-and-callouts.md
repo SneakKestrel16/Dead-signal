@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (cross-review B4: an immune taser hit no longer blocks pings and callouts; previously eighth design review, approved)
+> **Last Updated**: 2026-10-12 (cross-review W8: tasers are not item-pingable; earlier: cross-review B4: an immune taser hit no longer blocks pings and callouts; previously eighth design review, approved)
 > **Last Verified**: 2026-10-12
 > **Implements Pillar**: Counterplay (communication), Human Deception, Readable Objectives
 

@@ -72,3 +72,14 @@ Findings:
 - [RECOMMENDED] Rule 6 and Open Questions: some text still described a proximity "pause" after W5 ("lets bleed-out run"; the ring-visibility and presence-leak rows). Fixed in the same session; the presence-leak residual now applies to a slowed ring.
 Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 1bb081ba257d1d05e4a1a2ff81c1884de33cd095
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 1
+Summary: The W10 stun-window clarification is correct against Survivor Defense stun_range_m, and the W9 camera-impact ownership matches Monster Abilities. Rescue interruption by a shock (including inside the post-lock window) agrees with Survivor Defense rule 11.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Header: Last Updated not bumped for W10. Resolved.
+Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 7e77fbef790b3d9a8a68c05d95dcb609d4e54161
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

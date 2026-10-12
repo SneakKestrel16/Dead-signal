@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review: rule 17 and Formulas name the disguise early end; break in any form; fourth cross-review B1: a change into a disguise ends immunity; W1: rule 11 post-lock wording; earlier cross-review B4 post-lock window)
+> **Last Updated**: 2026-10-12 (cross-review W8, W11: no taser pings; timers run through disconnect; earlier: design review: rule 17 and Formulas name the disguise early end; break in any form; fourth cross-review B1: a change into a disguise ends immunity; W1: rule 11 post-lock wording; earlier cross-review B4 post-lock window)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 

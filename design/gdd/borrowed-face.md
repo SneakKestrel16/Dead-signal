@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (design review: barricade break is a visible monster action, tell T4; fourth cross-review B1: completing a change into a disguise ends immunity; earlier cross-review B4)
+> **Last Updated**: 2026-10-12 (cross-review W4: Escaped survivors are not disguise targets; earlier: design review: barricade break is a visible monster action, tell T4; fourth cross-review B1: completing a change into a disguise ends immunity; earlier cross-review B4)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Human Deception (primary), Fair Fear, Counterplay
 
@@ -280,7 +280,7 @@ Survivors get no disguise UI.
 ## Acceptance Criteria
 
 - [ ] Server marks a survivor observed only after 3 s cumulative valid observation within 15 m and the view cone; a survivor behind a wall or closed door accumulates nothing.
-- [ ] A form-change request into an unobserved or Eliminated survivor is rejected by the server.
+- [ ] A form-change request into an unobserved, Eliminated or Escaped survivor is rejected by the server.
 - [ ] A form change completes exactly 2 s (±1 server tick) after acceptance; the next request is rejected until 12 s after completion.
 - [ ] A survivor client within 15 m hears the distortion with its panned bearing within ±15° of the true bearing to the shapeshifter **(proposed tolerance)**; one at 20 m does not hear it.
 - [ ] A stun during transformation leaves the previous form and starts the 12 s cooldown; transformation cannot start while Stunned.

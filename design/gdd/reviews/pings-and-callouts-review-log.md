@@ -150,3 +150,14 @@ Reviewed-Content-Hash: design/gdd/pings-and-callouts.md c261d7b1fad1dec5f5e3366e
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
 
 Each hash is for the document as it was reviewed, before that entry's revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 1
+Summary: Removing tasers from item pings (W8) is consistent across rule 5, Interactions, Dependencies and Cross-References, and with Survivor Defense. No other change.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Header: Last Updated not bumped for W8. Resolved.
+Reviewed-Content-Hash: design/gdd/pings-and-callouts.md 780dc2c26c52b6aead6ba3bb3c12b82dc091b558
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

@@ -2,7 +2,7 @@
 
 > **Status**: Approved (2026-10-11 re-review, lean)
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (re-review after cross-review blockers)
+> **Last Updated**: 2026-10-12 (cross-review W11: stun and immunity timers run through a monster disconnect, with AC; earlier: re-review after cross-review blockers)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Readable Objectives, Fair Fear, Small Shippable Scope
 
@@ -160,7 +160,7 @@ Example: the second drive is Extracted at 500 s → the round ends no later than
 | Network Authority & Replication | This depends on it | Server clock, authority, disconnect detection |
 | Monster Abilities | It depends on this | Reads `RoundPhaseChanged` (Infiltration attack question); supplies stats |
 | Borrowed Face | Bidirectional | Supplies form-change stats; owns disguise restore on monster reconnect |
-| Survivor Defense | It depends on this | Supplies stun stats; stops at round end |
+| Survivor Defense | Bidirectional | Supplies stun stats; stops at round end; its stun and immunity timers keep running through a monster disconnect (rule 20) |
 | Scare Events | It depends on this | Uses `RoundPhaseChanged` for emergency mode |
 | Pings & Callouts | It depends on this | Reads `SurvivorEscaped` (Escaped survivors send nothing, rule 10) |
 | HUD & Results Screen | It depends on this | Displays clock, phase, results payload |
@@ -265,6 +265,7 @@ Not applicable: Match Flow has no character animation.
 - [ ] After both drives are Extracted at 8:00, eliminating every survivor still inside does not change the outcome, and the round ends no later than 8:45 (`post_escape_window_s`).
 - [ ] When the second drive is Extracted in the same tick as the deadline, the survivors win.
 - [ ] The results screen lists outcome, reason, every survivor's status, objective progress (x/2 drives, x/2 fuses, activation, x/2 extracted) and the stats in rule 26.
+- [ ] A shapeshifter stunned at 8:00.0 that disconnects at 8:00.5 and reconnects at 8:10 returns in true form with no stun and no immunity left (2 s stun and 6 s immunity elapsed while away).
 - [ ] All values in Tuning Knobs are read from data, not hardcoded.
 
 ## Open Questions

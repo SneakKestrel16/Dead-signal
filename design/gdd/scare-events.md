@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-12 (cross-review W13: slammed door presentation only; re-review: reveal rows merged, Low → Emergency transition; fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
+> **Last Updated**: 2026-10-12 (cross-review W13: slammed door presentation only; earlier: re-review: reveal rows merged, Low → Emergency transition; fourth cross-review W2: alarm on install completion; W3: a running flinch ends at a wind-up; design review: any player fires location triggers, no flinch near a wind-up, intensity per scare, gating state updates; earlier same day cross-review B1–B3)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Fair Fear, Human Deception
 
@@ -218,7 +218,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | Door burst | Door debris, dust | Impact at door | High |
 | Ambush lunge | No flinch (rule 14) | Stinger layered on lunge cue | High |
 | Blackout | Lights off, emergency lights faint | Power-down at origin | High |
-| Slammed door / glass break | Door swing / shards | At origin | Medium |
+| Slammed door / glass break | Door shudder in place, no swing (rule 7) / shards | At origin | Medium |
 | Alarm | Strobe (rate-capped) | Positional alarm | Medium |
 | Recording | Speaker light | Distorted voice from speaker | Medium |
 | Impossible surveillance image | Brief frame on monitor (single client) | Static at monitor | Medium |

@@ -84,3 +84,15 @@ Findings:
 - [NICE-TO-HAVE] Formulas: not monster_shock_locked is now redundant with not monster_stunned (only a stun locks the monster); harmless.
 Reviewed-Content-Hash: design/gdd/borrowed-face.md 056a645e9c94b98e4aa38ce423f394c3a7a554a3
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 2
+Summary: Escaped survivors are now excluded as disguise targets and keep the disguise on (W4), which makes Pings rule 21's citation of rule 13 correct. The Dependencies rows match the index.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Acceptance Criteria: the rejected-target AC did not include Escaped. Resolved.
+- [RECOMMENDED] Header: Last Updated not bumped. Resolved.
+Reviewed-Content-Hash: design/gdd/borrowed-face.md 908348f0231b0e423ec1edc857e52041ff10568d
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa

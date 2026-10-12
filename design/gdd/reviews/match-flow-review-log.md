@@ -46,3 +46,17 @@ Findings:
 - [NICE-TO-HAVE] Rule 20: cooldowns tick while the shapeshifter is disconnected, so a disconnect refreshes abilities at the cost of the disguise. Added as an Open Question.
 Reviewed-Content-Hash: design/gdd/match-flow.md d30469144b4cee85a7d6e8a43dae00890cb334a1
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+## Review — 2026-10-12 (after open cross-review warnings resolved, 30af36a) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review, headless)
+Blocking items: 0 | Recommended: 3
+Summary: Rule 20 now runs stun and immunity timers through a monster disconnect (W11), consistent with Survivor Defense Edge Cases. The Survivor Defense dependency became two-way and gained an AC.
+Prior verdict resolved: Yes (cross-review changes reviewed)
+Findings:
+- [RECOMMENDED] Dependencies: Survivor Defense row said one-way while Survivor Defense lists Match Flow as Bidirectional. Resolved.
+- [RECOMMENDED] Acceptance Criteria: no AC for stun timers across a monster disconnect. Resolved.
+- [RECOMMENDED] Header: Last Updated not bumped. Resolved.
+- [INFO] Open Question on cooldowns running through a disconnect is still open; W11 applies the same rule to stun timers.
+Reviewed-Content-Hash: design/gdd/match-flow.md 14670175a261dd3b66d2acc157a77c5c85ec8824
+Reviewed-Content-Hash: design/registry/entities.yaml 15702c72e53b21b1b20bc82bc9c8fe2a5de821fa
