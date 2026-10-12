@@ -81,7 +81,9 @@ someone is truly alone.
       emitting `SurvivorDowned` or `SurvivorEliminated`, or is cancelled, e.g. by
       `MonsterStunned`) → **`lunge_cooldown_s` = 10 s cooldown** (source; owned by
       Monster Abilities) starts at resolution. There is no separate post-hit
-      recovery; the commit is the monster's post-hit commitment.
+      recovery; the commit is the monster's post-hit commitment. Monster
+      Abilities reads resolution from `SurvivorDowned`, `SurvivorEliminated`,
+      `MonsterStunned` or `PlayerConnectionChanged` (monster disconnect).
 5. **What counts as the second down.** The second *completed takedown commit*
    on the same survivor in a round. A cancelled commit, an ignored hit, or a hit
    absorbed by grace is not a down. A second down skips the Downed state and
@@ -103,7 +105,11 @@ someone is truly alone.
      Eliminated, with reason "Bled out", and `SurvivorEliminated` is emitted.
      `downs_taken` becomes `downs_to_eliminate`. The timer **pauses** while a
      rescue is actively being held on them and resumes when the hold stops; it
-     never resets during the same Downed state **(proposed)**. Bleed-out only
+     never resets during the same Downed state **(proposed)**. It also
+     **pauses while the shapeshifter, in any form, is within
+     `camp_pause_radius_m` = 10 m** of the Downed survivor (designer decision,
+     2026-10-11, against rescue camping; radius **proposed**). Waiting at the
+     body then never finishes the victim, so camping gains nothing. Bleed-out only
      applies to a first down, because a second down eliminates directly
      (rule 5).
 7. **Rescue.** A Healthy survivor who is not hidden (Survivor Defense), within `rescue_range_m` = 1.5 m **(proposed)**
@@ -207,8 +213,9 @@ uninterrupted; never more than 6 s of held progress from zero.
 ### Bleed-out
 
 ```
-while Downed and not being actively rescued:  bleed_elapsed_s = bleed_elapsed_s + dt
-while Downed and being actively rescued:      bleed_elapsed_s unchanged
+paused = being actively rescued or monster_distance_m <= camp_pause_radius_m
+while Downed and not paused:  bleed_elapsed_s = bleed_elapsed_s + dt
+while Downed and paused:      bleed_elapsed_s unchanged
 Eliminated when bleed_elapsed_s >= bleedout_s
 ```
 
@@ -216,6 +223,8 @@ Eliminated when bleed_elapsed_s >= bleedout_s
 |----------|------|-------|--------|-------------|
 | bleed_elapsed_s | float s | 0–bleedout_s | server state | Starts at 0 on entering Downed |
 | bleedout_s | float s | 30–120 | proposed 60 | Time a Downed survivor survives unrescued |
+| monster_distance_m | float m | 0+ | server state | Straight-line distance from the shapeshifter (any form) to the Downed survivor |
+| camp_pause_radius_m | float m | 5–20 | proposed 10 | Monster closer than this pauses bleed-out |
 
 Example: downed at 200 s, a teammate holds a rescue from 230 s to 233 s (interrupted),
 nobody else comes → bleed_elapsed reaches 60 s at 263 s → Eliminated at 263 s.
@@ -244,7 +253,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | Rescuer is hit mid-rescue | Rescue interrupts (progress kept, decaying); rescuer enters Seized | Rescue is risky by design |
 | `MonsterStunned` and commit completion land on the same server tick | Stun wins; commit cancelled | Favor the interrupt; counterplay pillar |
 | Victim's teammate stuns the monster during wind-up (before hit) | No `SurvivorHit`; this system does nothing | Wind-up interrupts are owned by Survivor Defense / Monster Abilities |
-| Monster disconnects during a commit | Commit cancelled; victim returns to Healthy with `post_release_grace_s` | No down without a completed commit |
+| Monster disconnects during a commit (`PlayerConnectionChanged`) | Commit cancelled; victim returns to Healthy with `post_release_grace_s` | No down without a completed commit |
 | Victim disconnects while Seized | The commit keeps running and resolves on schedule: Downed (bleed-out starts) or Eliminated, recorded while they are disconnected. A stun still cancels it. On reconnect they return in the resulting state (designer decision, 2026-10-12) | Disconnecting must not dodge a takedown (Match Flow rule 19) |
 | Victim disconnects while Downed | Handled by Match Flow's disconnect rule. The bleed-out timer keeps running during reconnect grace; if it expires, the survivor is Eliminated ("Bled out") while still disconnected | Disconnecting must not stall the round (Match Flow rule 19) |
 | Downed survivor crawls into a hiding spot | Not allowed; hiding requires Healthy | Hiding a downed body would stall the round |
@@ -256,6 +265,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | Monster attempts a lunge on a survivor in grace | Not a valid target; Monster Abilities treats it as no hit | Grace prevents instant re-takedown |
 | Bleed-out would expire while a rescue is being held | Cannot happen: the timer is paused during an active hold | Rescue in progress always gets its chance |
 | Rescue completes on the same tick the bleed-out expires | Bleed-out is paused during the hold, so the rescue wins | Rule 6 |
+| Monster stays within 10 m of a Downed survivor | Bleed-out stays paused for as long as it stays; the victim is never finished by waiting | Rule 6; anti-camping, decided 2026-10-11 |
 | Every living survivor is Downed | Each bleeds out on their own timer; the round ends when the last is Eliminated | Rule 10; decided 2026-10-12 |
 | Downed survivor bleeds out while carrying nothing near the exit | Eliminated; Downed survivors cannot escape | Match Flow escape rule |
 
@@ -287,6 +297,7 @@ team has at least 1.5 s to reach stun range after a hit lands.
 | rescue_range_m | 1.5 (proposed) | 1–2.5 | Easier, sloppier rescues | Fiddly positioning |
 | crawl_speed_mult | 0.25 (proposed) | 0.15–0.4 | Downed can reach safety | Downed nearly static |
 | bleedout_s | 60 (proposed; bleed-out itself decided) | 30–120 | More time to organise rescues; slower stalls | Downs become near-eliminations; rescues rushed |
+| camp_pause_radius_m | 10 (proposed; pause itself decided) | 5–20 | Monster must leave further before the timer runs; camping costs more | Monster can wait just outside and still bleed the victim out |
 
 ## Visual/Audio Requirements
 
@@ -380,6 +391,7 @@ instant kill. Anti-reference: one-hit deaths with no window.
 - [ ] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
 - [ ] A Downed survivor left alone is Eliminated after 60 s (±1 tick) with reason "Bled out", on all 5 clients.
 - [ ] Holding a rescue pauses the bleed-out timer; releasing resumes it from the same value.
+- [ ] With the shapeshifter (true form or disguised) 9 m from a Downed survivor, the bleed-out timer does not advance; at 11 m it resumes from the same value.
 - [ ] When all living survivors are Downed and nobody is rescued, each is Eliminated on their own bleed-out timer, and the round ends with "All survivors eliminated" the moment the last one is.
 - [ ] After a hit whose commit completes or is cancelled at time T, Monster Abilities accepts the next lunge no earlier than T + `lunge_cooldown_s` (10 s).
 - [ ] Every value in Tuning Knobs is loaded from data, not hardcoded.
@@ -392,6 +404,8 @@ instant kill. Anti-reference: one-hit deaths with no window.
 | Should Downed survivors bleed out after a time limit? | SneakKestrel16 | Before Milestone 2 | **Decided 2026-10-12: yes.** Duration `bleedout_s` = 60 s is proposed; tune in playtest |
 | Is a team-wipe rule needed when everyone is Downed? | SneakKestrel16 | Before Milestone 2 | **Resolved 2026-10-12:** no; bleed-out eliminates them and the round ends when everyone is eliminated |
 | Should the bleed-out timer pause during an active rescue, and should the monster see it? | SneakKestrel16 | Before Milestone 2 | Proposed: pauses; monster does not see it |
+| Rescue camping is the dominant monster strategy (cross-review 2026-10-11, blocker 3) | SneakKestrel16 | Before Milestone 2 | **Decided 2026-10-11:** bleed-out pauses while the shapeshifter is within `camp_pause_radius_m` (rule 6) |
+| Does the bleed-out ring show the camping pause? A visible pause tells survivors a disguised monster is within 10 m. | SneakKestrel16 | Before Milestone 3 | |
 | Can the disguised monster fake a rescue animation (deception) without progress? | SneakKestrel16 | Before Milestone 3 | Proposed: no |
 | Does the commit force the monster's true form, or does the disguise drop earlier at lunge wind-up? | SneakKestrel16 | Before Milestone 3 | Coordinate with Borrowed Face |
 | Should "Wounded" (one down) be visible on the survivor model, or only on the roster? | SneakKestrel16 | Before Milestone 4 | |

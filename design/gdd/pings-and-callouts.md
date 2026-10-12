@@ -102,7 +102,7 @@ Existing markers persist with the identity they were sent under until they expir
 - **Network Authority & Replication**: carries ping/callout requests and server broadcasts; supplies server-side positions and line-of-sight checks.
 - **First-Person Controller & Interaction**: supplies the view ray and input bindings (ping button, callout wheel).
 - **Borrowed Face**: supplies the displayed identity and Disguised/Transforming/True-form state (`FormChanged`).
-- **Monster Abilities**: False Signal requests a fake callout; this system presents it per rules 26–29.
+- **Monster Abilities**: False Signal requests a fake callout through `AbilityUsed`; this system presents it per rules 26–29.
 - **Downing, Rescue & Elimination**: `SurvivorDowned` / `SurvivorRescued` / `SurvivorEliminated` gate what a survivor can send.
 - **Survivor Objectives**: defines which objects are item-pingable and their type labels.
 - **Survivor Defense**: hiding spots, barricadable doors and stun items are item-pingable.

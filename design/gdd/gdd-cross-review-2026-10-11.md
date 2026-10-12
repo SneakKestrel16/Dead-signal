@@ -150,3 +150,16 @@ Network Authority & Replication; Lobby & Role Assignment; First-Person Controlle
 ## Verdict: FAIL
 
 There are four blocking issues. Two of them (1, 2) are clean-up edits. The other two (3 rescue camping, 4 monster forfeit) need designer decisions before architecture begins.
+
+---
+
+## Blocker Resolutions (2026-10-11)
+
+| Blocker | Decision | Applied in |
+|---------|----------|-----------|
+| 1. Stun-while-disguised ownership | A stunned disguised monster stays disguised: stagger on the borrowed body, survivor grunt, no pain cry. Borrowed Face owns it. | borrowed-face rule 10 and States; survivor-defense rule 11, V/A row, Open Questions |
+| 2. Signals outside the event table | Added `AbilityUsed`, `BarricadeBroken` and `PlayerConnectionChanged`. The reveal scare reads `FormChanged`. "Lunge resolved" reads `SurvivorDowned`, `SurvivorEliminated`, `MonsterStunned` or `PlayerConnectionChanged`. | systems-index event table; borrowed-face, scare-events, pings-and-callouts, survivor-defense, downing-and-rescue |
+| 3. Rescue camping | Bleed-out pauses while the shapeshifter, in any form, is within `camp_pause_radius_m` = 10 m (radius proposed). | downing-and-rescue rule 6, Formulas, Edge Cases, Tuning Knobs, Acceptance Criteria, Open Questions |
+| 4. Monster rage-quit | Grace expiry is a monster forfeit: the survivors win. The No Contest outcome is removed. | match-flow rules 14, 16, 20 and 23, Edge Cases, Acceptance Criteria, Open Questions |
+
+The flagged GDDs stay Needs Revision until each passes `/design-review`. The warnings are still open.

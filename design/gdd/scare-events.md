@@ -118,8 +118,8 @@ Per-client scare cooldown state: Ready → Major cooldown (`major_scare_cooldown
 ### Interactions with Other Systems
 
 - **Match Flow & Win Conditions**: `RoundPhaseChanged` drives the facility scare state.
-- **Monster Abilities**: Blackout, False Signal and Predatory Lunge send scare triggers (source Monster) after the server validates the ability; lunge wind-up timing bounds the flinch rule.
-- **Borrowed Face**: transformation reveal triggers the reveal scare; `FormChanged`.
+- **Monster Abilities**: Blackout, False Signal and Predatory Lunge send scare triggers (source Monster) through `AbilityUsed` after the server validates the ability; lunge wind-up timing bounds the flinch rule.
+- **Borrowed Face**: `FormChanged` into true form triggers the reveal scare.
 - **Survivor Defense**: barricade breaks trigger door burst; stun use is never blocked by scares.
 - **Survivor Objectives**: fuse install triggers an alarm; both fuses installed triggers Power Restored.
 - **Facility Map**: authored scare points, recording speakers, glass partitions, surveillance monitors, emergency lights.
@@ -180,7 +180,7 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | Match Flow & Win Conditions | This depends on it | `RoundPhaseChanged`, phase windows |
 | Monster Abilities | This depends on it | Blackout, False Signal, Lunge triggers and wind-up timing |
 | Borrowed Face | This depends on it | Reveal trigger, `FormChanged` |
-| Survivor Defense | This depends on it | Barricade break trigger; stun input never blocked |
+| Survivor Defense | This depends on it | `BarricadeBroken` trigger; stun input never blocked |
 | Survivor Objectives | This depends on it | Fuse install alarm, power restored |
 | Facility Map | This depends on it | Authored scare points, emergency lights, monitors |
 | Network Authority & Replication | This depends on it | `ScareTriggered` replication and scoping |
@@ -263,7 +263,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 | Phase windows and phase change | `design/gdd/match-flow.md` | `RoundPhaseChanged`, phase windows | State trigger |
 | Blackout, False Signal, Lunge | `design/gdd/monster-abilities.md` | `blackout_duration_s`, lunge wind-up, False Signal audience | Data dependency |
 | Transformation reveal | `design/gdd/borrowed-face.md` | `FormChanged`, `transform_duration_s` distortion cue | State trigger |
-| Barricade break; stun never blocked | `design/gdd/survivor-defense.md` | Barricade break event, `MonsterStunned` | Rule dependency |
+| Barricade break; stun never blocked | `design/gdd/survivor-defense.md` | `BarricadeBroken`, `MonsterStunned` | Rule dependency |
 | Fuse alarm, power restored | `design/gdd/survivor-objectives.md` | `ObjectiveProgressChanged` | State trigger |
 | Scare points, emergency lights, monitors | `design/levels/research-facility.md` | Authored placements | Data dependency |
 | Callout ducking priority | `design/gdd/pings-and-callouts.md` | Callouts and pings | Rule dependency |

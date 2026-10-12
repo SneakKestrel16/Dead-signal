@@ -50,7 +50,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
    - the body shows a subtle visual warp over its current appearance **(proposed)**;
    - the shapeshifter can move at walking speed but cannot sprint, interact, or use abilities **(proposed)**.
 9. At the end of the 2 s, the server switches the form, emits `FormChanged` (shapeshifter, previous form, new form, server time), and starts the 12 s cooldown (source value; starting it at *completion* is **(proposed)**).
-10. A stun that lands during a transformation interrupts it: the form does not change and the full 12 s cooldown starts **(proposed)**. Transformation cannot be started while Stunned, so it can never be used to escape a stun (source).
+10. A stun that lands during a transformation interrupts it: the form does not change and the full 12 s cooldown starts **(proposed)**. Transformation cannot be started while Stunned, so it can never be used to escape a stun (source). A stun on a disguised shapeshifter never reveals it (designer decision, 2026-10-11): the stagger plays on the borrowed survivor body with that survivor's shocked grunt, and there is no monster pain cry. In true form the stagger uses the monster body and pain cry.
 11. Transformation can never cancel an attack (source). Predatory Lunge requires true form (designer decision for now, 2026-10-12; **test in playtest**, see Open Questions); a disguised shapeshifter must transform first (see `design/gdd/monster-abilities.md`).
 
 **What the disguise copies** (source: "appearance and basic movement presentation")
@@ -74,7 +74,7 @@ The shapeshifter is a human player. During the round it watches survivors; once 
 **True form and the transformation reveal**
 
 14. Changing from a survivor form to true form is a normal transformation (rule 8: 2 s, distortion, cooldown) **(proposed)**. The 2 s distortion is the fair warning; the reveal lands at its end.
-15. On completion into true form, Borrowed Face asks Scare Events for a *transformation reveal* scare (shared scope) for survivors within `reveal_radius_m` = 10 m with line of sight **(proposed)**. Scare Events decides presentation, emits `ScareTriggered`, and applies scare cooldowns; a suppressed scare never blocks or delays the form change itself.
+15. On completion into true form, Scare Events reads the `FormChanged` event and plays a *transformation reveal* scare (shared scope) for survivors within `reveal_radius_m` = 10 m with line of sight **(proposed)**. Scare Events decides presentation, emits `ScareTriggered`, and applies scare cooldowns; a suppressed scare never blocks or delays the form change itself.
 16. The reveal never locks survivor input (pillar: Fair Fear; owned by Scare Events).
 
 **Learnable tells** (source risk: "never make one random tell the only answer")
@@ -96,7 +96,7 @@ No single tell is always available; together they make a disguise beatable by at
 | True Form | Round start; or transformation into true form completes | Transformation into a survivor form starts | Monster appearance; may use all abilities |
 | Transforming | Valid form-change request accepted (rule 7) | 2 s elapse (→ new form) or stun lands (→ previous form) | Distortion audio, visual warp, walk-only, no abilities |
 | Disguised (as survivor X) | Transformation into X completes | Transformation starts; round ends | Renders as X to every client; may use False Signal and Blackout |
-| Stunned (read from Survivor Defense) | `MonsterStunned` | Stun ends | Form unchanged; cannot start a transformation; interrupts Transforming |
+| Stunned (read from Survivor Defense) | `MonsterStunned` | Stun ends | Form unchanged; disguised stagger uses the borrowed body and survivor grunt (rule 10); cannot start a transformation; interrupts Transforming |
 
 Form-change cooldown runs independently of these states from each completed or interrupted transformation.
 
@@ -107,7 +107,7 @@ Form-change cooldown runs independently of these states from each completed or i
 - **Monster Abilities**: Lunge requires True Form; False Signal and Blackout are allowed while Disguised and do not break it. False Signal's fake callout voice uses observed survivors (this system supplies the observed list).
 - **Downing, Rescue & Elimination**: supplies Healthy/Downed/Eliminated status for rule 6 and 13.
 - **Survivor Objectives**: rejects carry, install and progress requests from the shapeshifter in any form (rule 12).
-- **Scare Events**: receives reveal requests (rule 15).
+- **Scare Events**: reads `FormChanged` into true form for the reveal scare (rule 15).
 - **Pings & Callouts**: owns monster voice rules and whether a disguised monster can ping or call out as the copied survivor.
 - **Match Flow & Win Conditions**: round start resets observation and form; `RoundPhaseChanged` has no effect on disguise.
 - **HUD & Results Screen**: shapeshifter HUD shows available faces, observation progress, current form, cooldown.
@@ -171,7 +171,7 @@ Example: transform completes at 60.0 s → next request accepted at 72.0 s → n
 | Downing, Rescue & Elimination | This depends on it | Survivor status for valid targets |
 | Facility Map | This depends on it | Monster spawn point; line-of-sight blockers |
 | Monster Abilities | Depends on this | Form gates Lunge; observed list for False Signal |
-| Scare Events | Depends on this | Transformation reveal request |
+| Scare Events | Depends on this | Transformation reveal (`FormChanged`) |
 | Pings & Callouts | Depends on this | Disguise state for monster voice/ping rules |
 | Survivor Objectives | Depends on this | Rejects carry/progress from the shapeshifter |
 | Match Flow & Win Conditions | Depends on this | Round reset of observation and form |

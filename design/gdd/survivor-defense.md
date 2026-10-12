@@ -89,8 +89,8 @@ tools, they're yours.
     for `friendly_shock_s` = 1 s (30% slow, camera jitter, no root, no whiteout)
     **(proposed)**. It never downs, damages or interrupts a rescue. The firer's
     local feedback is identical whether they hit a survivor or a disguised
-    monster **(proposed)**, so a stun is not a free identity test; what the
-    monster's stagger looks like while disguised is owned by Borrowed Face.
+    monster **(proposed)**, so a stun is not a free identity test. A stunned disguised
+    monster stays disguised (`borrowed-face.md` rule 10).
 12. Survivors cannot kill or permanently disable the monster by any means.
 13. Downed, Seized or hidden survivors cannot use the item **(proposed)**. Charges persist
     through a down and rescue **(proposed)** and are lost on elimination.
@@ -254,7 +254,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 | Facility Map | This depends on it | Hiding spot, door, backup switch placement |
 | Survivor Objectives | Objectives depends on this | Hidden survivors cannot interact |
 | Pings & Callouts | Pings depends on this | Hiding spots, barricadable doors and stun items are item-pingable |
-| Scare Events | Scare Events depends on this | Barricade break as a scare trigger |
+| Scare Events | Scare Events depends on this | Barricade break (`BarricadeBroken`) as a scare trigger |
 | Network Authority & Replication | This depends on it | Validation and replication |
 | HUD & Results Screen | HUD depends on this | Charges, progress, stun results |
 | Match Telemetry | Telemetry depends on this | Stun success rate etc. |
@@ -284,7 +284,7 @@ With `barricade_break_s` 5 s, a survivor spending 3 s to barricade buys at least
 |-------|----------------|---------------|----------|
 | Flashlight on/off | Visible beam to all | Click | MVP |
 | Taser fire | Darts and wires, short blue arc at the target (reduced-flash variant required) | Pop of the cartridge, then electric crackle | MVP |
-| Monster stunned | Stagger animation; true-form treatment owned by Borrowed Face | Monster pain cry | MVP |
+| Monster stunned | Stagger animation; while disguised it plays on the borrowed body (Borrowed Face rule 10) | Monster pain cry in true form; survivor grunt while disguised | MVP |
 | Stun resisted | Small spark, no stagger | Dull fizz | MVP |
 | Survivor shocked | Camera jitter, brief blue edge (reduced-motion/flash variant) | Crackle and grunt | MVP |
 | Hide enter/exit | Door motion | Soft creak | MVP |
@@ -373,7 +373,7 @@ keeps the monster permanently stuck.
 |----------|-------|----------|-----------|
 | Exact defensive item types and starting charges (source open decision). | SneakKestrel16 | Before Milestone 3 | **Item type decided 2026-10-12: Taser.** Cartridges (2), range (5 m) and aim tolerance (10°) proposed; playtest |
 | Should stun items be refillable or found in the map? | SneakKestrel16 | Before Milestone 5 | Proposed: no |
-| Does stunning a disguised monster reveal it? | SneakKestrel16 | Before Milestone 3 | Owned by Borrowed Face |
+| Does stunning a disguised monster reveal it? | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11: no.** Borrowed Face rule 10 |
 | Should a taser shot that hits a real survivor shock them? | SneakKestrel16 | Before Milestone 3 | Proposed: 1 s shock (slow, no root) |
 | Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | Owned by Monster Abilities |
 | Does the flashlight need a battery limit? | SneakKestrel16 | Before Milestone 4 | Proposed: no |

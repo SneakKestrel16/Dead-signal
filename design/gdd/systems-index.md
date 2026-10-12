@@ -31,13 +31,16 @@ them after validation; clients never emit them. Every GDD uses these exact names
 | `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
 | `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated; any drives they carry are Extracted (survivors win when both are) |
 | `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination | A validated Predatory Lunge hit; starts the takedown commit |
-| `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Pings & Callouts, HUD | Takedown commit completed; first down |
+| `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
 | `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
-| `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
+| `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Monster Abilities (lunge resolved), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
 | `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation |
-| `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events, all clients (rendering) | Shapeshifter form changed |
+| `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events (transformation reveal on change into true form), all clients (rendering) | Shapeshifter form changed |
 | `ObjectiveProgressChanged` | Survivor Objectives | Match Flow, Scare Events, Facility Map (lighting), HUD | Any objective state change (carry, drop, dock, install, power restored, armed, activated, drives ejected, drive extracted) |
 | `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
+| `AbilityUsed` **(proposed)** | Monster Abilities | Scare Events (scare triggers), Pings & Callouts (False Signal fake callout), Match Telemetry | A validated Lunge wind-up, False Signal or Blackout; carries ability, position and, for False Signal, the sound or impersonated callout |
+| `BarricadeBroken` **(proposed)** | Survivor Defense | Scare Events, HUD | A barricade was destroyed |
+| `PlayerConnectionChanged` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (cancel commit on monster disconnect), Monster Abilities, HUD | A player disconnected, reconnected or ran out of reconnect grace |
 
 ---
 
