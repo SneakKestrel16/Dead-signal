@@ -61,3 +61,14 @@ Findings:
 - [NICE-TO-HAVE] Open Questions: a paused ring with no teammate near still leaks the presence of *someone* over voice. Logged as an accepted residual.
 Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 7082888e0fe9326eba9f30782275a25efdee3725
 Reviewed-Content-Hash: design/registry/entities.yaml 2d26b4ae2b547500e777d53de28678ac521730f4
+
+## Review — 2026-10-11 (re-review after second cross-review W5, S1, S4) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 1
+Summary: Re-review after c41f126 and bbf127f. Proximity now slows bleed-out (`camp_slow_mult` 0.25) instead of freezing it. The monster never sees the ring. A disconnecting Healthy survivor stops counting at once. Rule 6, the formula (rescue pause takes precedence over slow), the examples (200 + 60 / 0.25 = 440 s), the edge rows, the ACs, the tuning knobs and the registry all agree. Match Flow rules 12, 18 and 19 still hold.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Rule 6 and Open Questions: some text still described a proximity "pause" after W5 ("lets bleed-out run"; the ring-visibility and presence-leak rows). Fixed in the same session; the presence-leak residual now applies to a slowed ring.
+Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 1bb081ba257d1d05e4a1a2ff81c1884de33cd095
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

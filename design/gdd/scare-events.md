@@ -72,7 +72,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 16. Every diegetic scare sound plays from its true origin in the world (the door that slammed, the room that went dark, the speaker that played). Its direction and distance must be correct for the listener.
 17. Non-diegetic stingers are allowed only on Major scares, play at most `stinger_max_db_rel` above the ambient bed **(proposed)**, and never cover the origin sound.
-18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**. Stun ducking triggers on `PlayerShocked` on survivor clients and on `MonsterStunned` on the monster's client, because survivor clients never receive `MonsterStunned` while the monster is disguised (Survivor Defense rule 1).
+18. Priority (ducking): gameplay cues (lunge wind-up, transform distortion, stun, downed cries, callouts and pings) are never masked by scare audio; scare audio ducks under them **(proposed)**. Stun ducking triggers on `PlayerShocked` or `MonsterStunned` (true-form stun) on survivor clients and on `MonsterStunned` on the monster's client, because survivor clients never receive `MonsterStunned` while the monster is disguised (Survivor Defense rule 1).
 
 **Shared vs. individual scope**
 

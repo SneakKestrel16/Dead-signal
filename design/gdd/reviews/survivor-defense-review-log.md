@@ -34,3 +34,14 @@ Findings:
 - [RECOMMENDED] Header said Approved while the index said Needs Revision. Index now Approved.
 Reviewed-Content-Hash: design/gdd/survivor-defense.md ea8806b2c8819d7f3c1f40ae783f93900f792a50
 Reviewed-Content-Hash: design/registry/entities.yaml 2d26b4ae2b547500e777d53de28678ac521730f4
+
+## Review — 2026-10-11 (re-review after second cross-review B1, B2, W7, W8) — Verdict: APPROVED
+Scope signal: M
+Specialists: none (solo review)
+Blocking items: 0 | Recommended: 1
+Summary: Re-review after e70f9ff, c41f126 and bbf127f. The no-refresh lock (rule 14) keeps `lock_share` valid in every form. The friendly shocks at rescues (W7) and on holds (W8) are accepted, with edge rows and a playtest AC. The `PlayerShocked` name matches the index and Scare Events.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Rule 1: event delivery outside a disguise was undefined. A survivor hit while the monster was in true form had no stated event, and a true-form stun "may" have reached survivor clients. As a result, Scare Events rule 18 never ducked for either case on survivor clients. Fixed: a survivor hit always sends `PlayerShocked`, and a true-form stun is sent to all clients as `MonsterStunned`. Scare Events rule 18 and the index `MonsterStunned` row are updated to match.
+Reviewed-Content-Hash: design/gdd/survivor-defense.md 10d099e3a8c89d4e889c70f3d6cc13a5d89df18e
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97

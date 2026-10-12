@@ -48,13 +48,14 @@ tools, they're yours.
    intent only (use item with aim direction, enter/exit hide, start/stop
    barricade, start/stop break). The server validates range, line of sight,
    charges, timers and interaction durations, then broadcasts results. A client
-   can never report a stun, a charge, or a completed barricade. While the
+   can never report a stun, a charge, or a completed barricade. A taser hit on
+   a survivor always sends survivor clients `PlayerShocked`. While the
    monster is disguised, survivor clients receive one `PlayerShocked` event for a
    taser hit on it (stunned or immune) and on a survivor alike, and never
    receive `MonsterStunned` or any immunity data (designer decision,
    2026-10-11, cross-review re-review R2; same precedent as Pings rule 27).
    `MonsterStunned` still reaches the server-side systems that consume it and
-   the monster's own client. A stun on the true-form monster may be sent to all
+   the monster's own client. A stun on the true-form monster is sent to all
    clients as `MonsterStunned`.
 
 #### Flashlight

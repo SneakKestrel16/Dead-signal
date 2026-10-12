@@ -123,7 +123,7 @@ someone is truly alone.
      teammate buys time, not safety (W5). Waiting at the body takes four times
      as long, `bleedout_s` / `camp_slow_mult` = 240 s from a fresh down, which
      costs the monster the round clock and lets teammates come. Camping from just outside the radius still
-     works: it lets bleed-out run, keeps the victim out of play and guards a
+     works: it lets bleed-out run at full speed, keeps the victim out of play and guards a
      downed carrier's drives. The designer accepts this, because the rescuer can
      release and dodge a lunge and teammates can tase; playtest gates the radius
      (Acceptance Criteria, designer decision 2026-10-11, re-review R5). Bleed-out only
@@ -441,8 +441,8 @@ instant kill. Anti-reference: one-hit deaths with no window.
 | Is a team-wipe rule needed when everyone is Downed? | SneakKestrel16 | Before Milestone 2 | **Resolved 2026-10-12:** no; bleed-out eliminates them and the round ends when everyone is eliminated |
 | Should the bleed-out timer pause during an active rescue, and should the monster see it? | SneakKestrel16 | Before Milestone 2 | Pausing decided (rule 6, rescue; camping slows it, W5). **Decided 2026-10-11 (second re-review S1):** the monster never sees the timer or ring, so a slowed ring is no hider radar |
 | Rescue camping is the dominant monster strategy (cross-review 2026-10-11, blocker 3) | SneakKestrel16 | Before Milestone 2 | **Decided 2026-10-11:** bleed-out pauses while the shapeshifter is within the camping radius (rule 6). **Updated 2026-10-11 (re-review R1, R5):** any other non-Downed player pauses it; camping just outside the radius is accepted and playtest-gated. **Updated 2026-10-11 (second re-review W5):** a nearby player slows bleed-out to `camp_slow_mult` = 0.25 instead of freezing it, renamed `camp_slow_radius_m` |
-| Does the bleed-out ring show the camping pause? A visible pause tells survivors a disguised monster is within 10 m. | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11 (re-review R1):** yes; because any player within the radius pauses it, the pause carries no identity information |
-| A paused ring with no teammate visibly near still tells survivors, over voice, that *someone* is within 10 m. R1 removed the identity leak, not this presence leak | SneakKestrel16 | Before Milestone 2 | **Accepted residual (design review 2026-10-11).** Revisit if the camping playtest AC shows survivors using it as a monster radar |
+| Does the bleed-out ring show the camping pause? A visible pause tells survivors a disguised monster is within 10 m. | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11 (re-review R1):** yes; because any player within the radius pauses it, the pause carries no identity information. Since W5 the ring slows instead of pausing; the same reasoning holds |
+| A slowed (before W5, paused) ring with no teammate visibly near still tells survivors, over voice, that *someone* is within 10 m. R1 removed the identity leak, not this presence leak | SneakKestrel16 | Before Milestone 2 | **Accepted residual (design review 2026-10-11).** Revisit if the camping playtest AC shows survivors using it as a monster radar |
 | Can the disguised monster fake a rescue animation (deception) without progress? | SneakKestrel16 | Before Milestone 3 | Proposed: no |
 | Does the commit force the monster's true form, or does the disguise drop earlier at lunge wind-up? | SneakKestrel16 | Before Milestone 3 | **Settled:** Predatory Lunge requires True Form (Borrowed Face rule 11, Monster Abilities), so the monster is already in true form at wind-up and the commit never needs to force it |
 | Should "Wounded" (one down) be visible on the survivor model, or only on the roster? | SneakKestrel16 | Before Milestone 4 | |
