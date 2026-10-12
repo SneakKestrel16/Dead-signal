@@ -19,4 +19,16 @@ Findings:
 Reviewed-Content-Hash: design/gdd/match-flow.md eae998942ad1a7083acd94a092d73d28a81f5aa6
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
 
-The hash is for the document as it was reviewed, before the revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
+## Review — 2026-10-12 — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 2
+Summary: Both prior blockers are resolved, and the sibling GDDs agree. Two clarifications to the win check were applied after approval. Lobby, Network Authority, HUD and Telemetry have no GDD yet; that is expected at Not Started.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Core Rules 14/16: No Contest was missing from the outcome lock and the check order. Applied: a locked outcome beats it, and it is check (5).
+- [RECOMMENDED] Core Rules 13: a survivor in reconnect grace counts as inside. Applied.
+Reviewed-Content-Hash: design/gdd/match-flow.md f288b2a8c33616bb170eece48cb2b06070dc922e
+Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+The first entry's hash is for the document as it was reviewed, before the revisions. A re-review therefore sees the revised file as CHANGED and runs in full.
