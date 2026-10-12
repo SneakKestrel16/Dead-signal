@@ -29,7 +29,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 **General**
 
 1. The server owns all ability state: cooldowns, wind-up, hit resolution, ability placement and duration. The client sends only an activation request (and an aim point where needed); the server validates and rejects invalid requests with no effect and no cooldown cost. Clients never report hits or damage.
-2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14, which includes an immune hit on a disguised shapeshifter) or Transforming (Borrowed Face) **(proposed)**. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
+2. No ability can be activated while the shapeshifter is Stunned, under the shock lock (Survivor Defense rule 14, which includes an immune hit on a disguised shapeshifter), Transforming (Borrowed Face), or in Lunge wind-up, Active or takedown commit **(proposed)**. A lunge is a committed, telegraphed action; no hidden second action rides on it. A stun interrupts a Lunge in wind-up (owned by Survivor Defense).
 3. Cooldowns are independent of each other and of the form-change cooldown **(proposed)**.
 3a. On every validated activation (Lunge wind-up start, False Signal, Blackout) the server emits `AbilityUsed` (systems-index event table) carrying the ability, the monster's position and facing, the target point or zone, and for False Signal the signal type and, for a callout, the impersonated survivor **(proposed)**. Scare Events and Pings & Callouts consume it; rejected requests emit nothing. `AbilityUsed` is server-internal and is never replicated to survivor clients: it carries the monster's position, which would locate a disguised shapeshifter. Consumers replicate only the effect they present (the sound, the dark zone, the feed line) **(proposed)**.
 
@@ -44,7 +44,7 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 **Predatory Lunge** (MVP)
 
 4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming.
-5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up and turns at no more than `lunge_windup_turn_deg_s` = 45°/s **(proposed)**, so a survivor who strafes on the cue still leaves the dash path (Formulas, Dodge window). Source canon: "clear wind-up and audible cue".
+5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up and turns at no more than `lunge_windup_turn_deg_s` = 15°/s **(proposed, designer decision 2026-10-11)**, so a survivor who strafes within a realistic reaction time still leaves the dash path (Formulas, Dodge window). Source canon: "clear wind-up and audible cue".
 6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to 30°/s **(proposed)**. Blocked by walls and closed or barricaded doors; the dash stops at the obstacle.
 7. **Hit validation** (server, every server tick of Active): a survivor is hit if all of these hold (all **(proposed)**):
    - the survivor is a valid takedown target as defined by Downing, Rescue & Elimination: Healthy, not Seized, and not in post-rescue or post-release grace (Downed survivors cannot be lunged); hidden survivors are also untargetable (Survivor Defense);
@@ -129,10 +129,12 @@ check positions at: server_time - min(attacker_latency, max_rewind_ms)   # eligi
 | lunge_cone_deg | float | 40–90 | data | Forward cone **(proposed 60)** |
 | lunge_distance_m | float | 2–6 | data | Dash length **(proposed 4)** |
 | max_rewind_ms | int | 0–250 | data | Latency compensation cap **(proposed 150)** |
-| lunge_windup_turn_deg_s | float | 0–60 | data | Turn rate during wind-up **(proposed 45)** |
+| lunge_windup_turn_deg_s | float | 0–17 | data | Turn rate during wind-up **(proposed 15)** |
+| survivor_reaction_s | float | — | design target | Strafe delay after the cue the dodge must survive: 0.25 s reaction + `max_rewind_ms` (designer decision 2026-10-11) |
 
 **Effective threat reach** ≈ `lunge_distance_m + lunge_hit_radius_m` = 5.2 m.
-**Dodge window**: a survivor 3 m ahead running at 4.5 m/s (example speed; controller-owned) who strafes on the cue is ~2.7 m sideways at dash start and ~4.05 m at dash end. To pass within `lunge_hit_radius_m` of them, the dash must leave about 48° off the monster's starting facing (worked: at 50° the dash end is 1.08 m from the survivor, at 45° it is 1.23 m). The monster reaches `lunge_windup_turn_deg_s` × `lunge_windup_s` + 30°/s × 0.3 s = 27° + 9° = 36°, so the strafe on the cue dodges. Above ~65°/s the monster tracks it and the dodge counter dies; that sets the 60°/s ceiling of the safe range. A late strafe is still caught: starting 0.3 s into the wind-up, the survivor is ~2.7 m sideways at dash end, and a dash 25° off facing ends 1.19 m from them, well inside the 36° reach.
+**Dodge window** (designer decision 2026-10-11): the dodge must survive a survivor who starts strafing `survivor_reaction_s` = 0.25 s reaction + 0.15 s full rewind = 0.40 s after the cue. A survivor 3 m ahead running at 4.5 m/s (example speed; controller-owned) who strafes from 0.40 s is ~0.9 m sideways at dash start and ~2.25 m at dash end. A dash end passes within `lunge_hit_radius_m` of them only from ~19.5° off the monster's starting facing (worked: at 18° it ends 1.29 m away). The monster reaches `lunge_windup_turn_deg_s` × `lunge_windup_s` + 30°/s × 0.3 s = 9° + 9° = 18°, so that strafe dodges. Above ~17°/s the monster tracks it; that sets the safe-range ceiling. A strafe on the cue needs ~46° to catch, so faster reactions have a wide margin. A strafe starting 0.45 s or later is caught (at 18° the dash ends 1.13 m away).
+Distances are centre to centre. The survivor's collision radius is undefined until the First-Person Controller GDD sets it; a nonzero radius narrows the window (inference: recompute when the radius is set, and lower the turn rate or `lunge_hit_radius_m` if the 0.40 s strafe no longer dodges).
 
 ### Cooldown timing
 
@@ -162,6 +164,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | False Signal callout as an Eliminated survivor | Rejected | Designer decision, 2026-10-11: a dead voice is a free tell, and survivors gain nothing from it |
 | Blackout on the evacuation zone | Rejected for the active terminal room during Evacuation; allowed before it (`blackout_able`, Facility Map) | Map owns zone flags |
 | Backup switch used then monster recasts | Cannot until 45 s cooldown ends | Counter must matter |
+| Monster disconnects mid-lunge | Wind-up or dash ends with no hit; a takedown commit is cancelled by Downing on `PlayerConnectionChanged`. No cooldown matters: Match Flow removes the character | Disconnect rule owned by Match Flow **(proposed)** |
 | Round ends during Blackout | Facility Map ends the Blackout and resets lighting on `RoundEnded` (`research-facility.md` Lighting States, Reset row) | Clean results; the map owns lighting state |
 
 ## Dependencies
@@ -175,7 +178,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | First-Person Controller & Interaction | This depends on it | Movement for dash and slow; backup switch hold |
 | Pings & Callouts | This depends on it | Authored callout set; fake-callout presentation |
 | Downing, Rescue & Elimination | Bidirectional | Consumes `SurvivorHit`; this system reads takedown eligibility and the commit end (lunge resolved) from it |
-| Match Flow & Win Conditions | This depends on it | `RoundPhaseChanged`, round end (resets); supplies ability stats for results |
+| Match Flow & Win Conditions | Bidirectional | `RoundPhaseChanged`, round end (resets); supplies ability stats for results |
 | Survivor Objectives | This depends on it | Objective interaction sounds imitated by False Signal; install alert is sent to the shapeshifter |
 | Scare Events | Depends on this | Lunge and Blackout as scare triggers |
 | Match Telemetry | Depends on this | Attack/stun dispute logs |
@@ -187,7 +190,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 |---|---|---|---|---|
 | lunge_cooldown_s | 10 (source) | 6–20 | Fewer attempts | Pressure spikes |
 | lunge_windup_s | 0.6 (proposed) | 0.4–1.0 | Easier dodge | Unfair, unreadable |
-| lunge_windup_turn_deg_s | 45 (proposed) | 0–60 | Monster tracks strafes; above ~65 the dodge counter dies | Facing locked early; strafing too safe |
+| lunge_windup_turn_deg_s | 15 (proposed) | 0–17 | Monster tracks strafes; above ~17 a 0.40 s strafe is caught | Facing locked early; strafing too safe |
 | lunge_distance_m | 4 (proposed) | 2–6 | More reach | Must get very close |
 | lunge_hit_radius_m | 1.2 (proposed) | 0.8–2.0 | Forgiving for monster | Whiffs feel unfair to monster |
 | lunge_cone_deg | 60 (proposed) | 40–90 | Sideways dodge weaker | Too precise |
@@ -278,7 +281,9 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7's conditions hold.
 - [ ] After a hit whose takedown commit completes at time T (or is cancelled by a stun at time T), the next lunge is rejected before T + 10 s and accepted at T + 10 s.
 - [ ] A stun during wind-up produces no `SurvivorHit`.
-- [ ] During wind-up the monster's facing changes by no more than 45°/s, and during the dash by no more than 30°/s; a survivor 3 m ahead who strafes at `survivor_move_speed` from the cue is not hit (4.5 m/s example until the Controller GDD sets the speed).
+- [ ] During wind-up the monster's facing changes by no more than 15°/s, and during the dash by no more than 30°/s; with the monster at 150 ms latency, a survivor 3 m ahead who strafes at `survivor_move_speed` starting 0.25 s after the cue is not hit (4.5 m/s example until the Controller GDD sets the speed).
+- [ ] With the monster at 150 ms latency, hit checks use survivor positions rewound 150 ms; at 300 ms they use positions rewound 150 ms (the cap). A survivor who became hidden or entered grace after the rewound time is not hit.
+- [ ] While a lunge is in wind-up, Active or takedown commit, False Signal and Blackout requests are rejected with no cooldown cost.
 - [ ] With two valid survivors in the cone, only the closer one receives `SurvivorHit`, and the dash ends on the hit tick.
 - [ ] A survivor in post-rescue or post-release grace, or hidden, inside the cone and radius is not hit.
 - [ ] A stun during the dash ends it with no `SurvivorHit`, and the cooldown starts at the stun.
@@ -288,7 +293,7 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 - [ ] Every accepted Lunge, False Signal and Blackout emits exactly one `AbilityUsed` with its ability, position and target; a rejected request emits none.
 - [ ] **Multi-client**: across 20 lunges with 5 clients connected (including one at 150 ms simulated latency), all 5 clients agree on every hit/miss and the survivor's resulting state; every dispute is logged.
 - [ ] False Signal is rejected within 25 s of the previous one; a callout naming an unobserved or Eliminated survivor is rejected; an aim point beyond 20 m or inside a wall is rejected; objective state is never changed by a fake interaction sound.
-- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch restores it on all clients. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
+- [ ] **Multi-client**: Blackout darkens the same zone on all 5 clients for 6 s (±1 tick) with emergency lights visible; a backup switch held for 1 s restores it on all clients, and releasing it earlier does not. Blackout is rejected on a zone whose `blackout_able` is false or that is already dark. Flashlights in the zone stay lit.
 - [ ] Changing any Tuning Knobs value in the data file changes in-game behavior with no code change, and ability code contains no literal for those parameters.
 
 ## Open Questions
@@ -300,5 +305,6 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 | Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | **Settled:** no (designer decision, 2026-10-11); rule 14, edge case and AC |
 | Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12); test in the M5 playtest.** Test plan lives in Borrowed Face's Open Questions |
 | Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map. **Proposed 2026-10-11 (re-review R4):** every volume except the active terminal room during Evacuation |
-| Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | — |
+| Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | Proposed at activation (rule 21); confirm in playtest |
+| Does the lunge dodge survive a 0.40 s strafe once the survivor collision radius is set? | SneakKestrel16 | With the Controller GDD | Recompute Formulas, Dodge window |
 | Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | Network Authority ADR |

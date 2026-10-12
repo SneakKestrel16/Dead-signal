@@ -54,3 +54,21 @@ Findings:
 - [NICE-TO-HAVE] Formulas: late-strafe claim unworked. Resolved: 0.3 s strafe caught by a 25° dash (1.19 m). Survivor Defense open question on stun-cancelled cooldown marked settled by rule 12. Header date 2026-10-12 left for the date pass.
 Reviewed-Content-Hash: design/gdd/monster-abilities.md a17b1c6ea2f52caae3e0ec22180f3aba1808d69b
 Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
+
+## Review — 2026-10-11 — Verdict: NEEDS REVISION
+Scope signal: L
+Specialists: none (solo review)
+Blocking items: 1 | Recommended: 6
+Summary: Fourth review. All prior blockers held. One new blocker: the dodge window assumed a survivor strafes at the instant of the cue, so at 45°/s only a ~0.1 s reaction dodged, and the doc's own 0.3 s "late strafe" was a realistic reaction that got caught. Designer set the target to 0.25 s reaction plus full 150 ms rewind (0.40 s) and chose the wind-up turn rate as the knob. Revised in the same session; index stays In Review.
+Prior verdict resolved: Yes
+Findings:
+- [BLOCKING] Formulas, Dodge window / rule 5: dodge only survived ~0.1 s reaction at 45°/s (recomputed: 0.2 s needs ≤37°/s, 0.3 s ≤27°/s, 0.4 s ≤17.5°/s). Resolved: `survivor_reaction_s` target 0.40 s; `lunge_windup_turn_deg_s` 15°/s (safe 0–17); window reworked (18° reach vs ~19.5° needed); AC uses 150 ms latency and a 0.25 s strafe delay.
+- [RECOMMENDED] Rule 2: False Signal and Blackout during Lunge wind-up/Active undefined. Resolved: blocked through wind-up, Active and commit (proposed); AC added.
+- [RECOMMENDED] Rule 7: survivor collision radius undefined (Controller GDD). Resolved: Formulas states centre-to-centre and the recompute trigger; Open Question added.
+- [RECOMMENDED] Acceptance Criteria: rewind cap untested. Resolved: AC for 150/300 ms rewind and current-state eligibility.
+- [RECOMMENDED] Edge Cases: monster disconnect mid-lunge missing. Resolved: row added, defers to Match Flow and Downing.
+- [RECOMMENDED] Acceptance Criteria: backup switch hold had no AC. Resolved: added to the Blackout AC. Footsteps duration AC not added.
+- [RECOMMENDED] Dependencies: Match Flow row was one-way while this doc supplies results stats. Resolved: Bidirectional.
+- [NICE-TO-HAVE] Open Questions: Blackout cooldown row marked proposed-at-activation. Dash over ledges or through ineligible survivors not covered. Header date 2026-10-12 left for the date pass.
+Reviewed-Content-Hash: design/gdd/monster-abilities.md fb55fcf42fe6b74d589df056b12c85dd4c8a12e7
+Reviewed-Content-Hash: design/registry/entities.yaml 2e0c9d7193ed0edcec84153a48600cb1f7e69e97
