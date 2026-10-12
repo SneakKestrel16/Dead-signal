@@ -47,7 +47,7 @@
 #   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
 
 version: 1
-last_updated: ""
+last_updated: "2026-10-12"
 
 # ─── ENTITIES ────────────────────────────────────────────────────────────────
 # Named game-world objects: enemies, NPCs, characters, factions, bosses.
@@ -58,7 +58,44 @@ last_updated: ""
 # Attribute fields: any key stats that could appear in another GDD
 #   (health, damage, drops, faction, etc.)
 
-entities: []
+entities:
+  - name: shapeshifter
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    controlled_by: human_player   # never AI (source)
+    count_per_match: 1
+    items: none
+    added: 2026-10-12
+    revised: ""
+
+  - name: survivor
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    controlled_by: human_player
+    count_per_match: 4
+    life_states: [Healthy, Downed, Eliminated]   # Seized is a transient sub-state during a takedown commit
+    added: 2026-10-12
+    revised: ""
 
 # Example (remove when first real entry is added):
 #
@@ -87,7 +124,69 @@ entities: []
 # Attribute fields: value_gold, weight, stackable, category, and any stat
 #   modifiers that another system (e.g., economy, crafting) might reference.
 
-items: []
+items:
+  - name: data_drive
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/match-flow.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/pings-and-callouts.md
+      - design/levels/research-facility.md
+    required: 2
+    max_carried_per_survivor: 1   # (proposed)
+    drops_on: [Downed, Eliminated, Disconnected]   # (proposed)
+    category: objective
+    added: 2026-10-12
+    revised: ""
+
+  - name: fuse
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/match-flow.md
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    required: 2
+    max_carried_per_survivor: 1   # (proposed)
+    install_point: fuse_box   # one term; the map formerly said "socket"
+    category: objective
+    added: 2026-10-12
+    revised: ""
+
+  - name: arc_flare
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/scare-events.md
+    category: stun_item   # (proposed) single prototype stun item; source leaves type/charges open
+    charges: 2   # (proposed)
+    stun_range_m: 5   # (proposed)
+    stun_cone_deg: 40   # (proposed)
+    added: 2026-10-12
+    revised: ""
+
+  - name: flashlight
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+    category: tool
+    per_survivor: 1
+    affects_monster: false   # (proposed)
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -149,7 +248,474 @@ formulas: []
 #
 # Required fields: name, status, source, referenced_by, value, unit, added
 
-constants: []
+constants:
+  # 1 shapeshifter + 4 survivors (source)
+  - name: players_per_match
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
+    value: 5
+    unit: players
+    added: 2026-10-12
+    revised: ""
+
+  # ~9 min, tune in playtests (source)
+  - name: round_duration_s
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    value: 540
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # Infiltration 0:00-2:00 (source)
+  - name: infiltration_end_s
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    value: 120
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # Evacuation = final 2:00 (source)
+  - name: evacuation_window_s
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    value: 120
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) mid-match disconnect grace
+  - name: reconnect_grace_s
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+      - design/gdd/borrowed-face.md
+    value: 60
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed)
+  - name: post_escape_window_s
+    status: active
+    source: design/gdd/match-flow.md
+    referenced_by:
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+    value: 45
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source
+  - name: data_drives_required
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
+    value: 2
+    unit: drives
+    added: 2026-10-12
+    revised: ""
+
+  # source
+  - name: fuses_required
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/match-flow.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    value: 2
+    unit: fuses
+    added: 2026-10-12
+    revised: ""
+
+  # source; hold-the-area countdown that pauses is (proposed)
+  - name: evac_activation_s
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
+    value: 15
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) map points d1-d6; 2 active
+  - name: drive_candidates
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/levels/research-facility.md
+    value: 6
+    unit: points
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) map points f1-f7; 2 active
+  - name: fuse_candidates
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/levels/research-facility.md
+    value: 7
+    unit: points
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) map points P1-P3, all Zone B; 2 active
+  - name: fuse_box_candidates
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/levels/research-facility.md
+      - design/gdd/scare-events.md
+    value: 3
+    unit: points
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) map points T1-T3, Zone C; 1 active, randomized (Open Question); exit fixed in C4
+  - name: terminal_candidates
+    status: active
+    source: design/gdd/survivor-objectives.md
+    referenced_by:
+      - design/gdd/survivor-objectives.md
+      - design/levels/research-facility.md
+      - design/gdd/match-flow.md
+    value: 3
+    unit: points
+    added: 2026-10-12
+    revised: ""
+
+  # source
+  - name: downs_to_eliminate
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/match-flow.md
+      - design/gdd/survivor-objectives.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/borrowed-face.md
+    value: 2
+    unit: downs
+    added: 2026-10-12
+    revised: ""
+
+  # source
+  - name: rescue_duration_s
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/match-flow.md
+      - design/levels/research-facility.md
+    value: 6
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) hit -> commit -> lunge resolved -> lunge cooldown
+  - name: takedown_commit_s
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/borrowed-face.md
+      - design/gdd/match-flow.md
+    value: 1.5
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) takedown ineligibility after rescue
+  - name: post_rescue_grace_s
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/monster-abilities.md
+    value: 3
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) takedown ineligibility after a cancelled commit
+  - name: post_release_grace_s
+    status: active
+    source: design/gdd/downing-and-rescue.md
+    referenced_by:
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-defense.md
+    value: 2
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) 1.0 s root + 1.0 s slow
+  - name: stun_duration_s
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/borrowed-face.md
+    value: 2.0
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) ends early if the monster starts a lunge wind-up
+  - name: stun_immunity_s
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/borrowed-face.md
+    value: 6
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) per survivor; source leaves this open
+  - name: stun_item_charges
+    status: active
+    source: design/gdd/survivor-defense.md
+    referenced_by:
+      - design/gdd/survivor-defense.md
+      - design/gdd/downing-and-rescue.md
+    value: 2
+    unit: charges
+    added: 2026-10-12
+    revised: ""
+
+  # source; nearby audio distortion
+  - name: transform_duration_s
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/scare-events.md
+      - design/gdd/survivor-defense.md
+    value: 2
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source; starts at completion or interruption (proposed)
+  - name: form_change_cooldown_s
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-defense.md
+    value: 12
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) observed-survivor rule
+  - name: observe_range_m
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/levels/research-facility.md
+      - design/gdd/monster-abilities.md
+    value: 15
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) observed-survivor rule
+  - name: observe_fov_deg
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+    value: 90
+    unit: deg
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) cumulative, no decay
+  - name: observe_time_s
+    status: active
+    source: design/gdd/borrowed-face.md
+    referenced_by:
+      - design/gdd/borrowed-face.md
+      - design/gdd/monster-abilities.md
+      - design/levels/research-facility.md
+    value: 3
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source; starts when the lunge resolves (after the takedown commit on a hit)
+  - name: lunge_cooldown_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/downing-and-rescue.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/borrowed-face.md
+    value: 10
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); scare flinch must stay shorter
+  - name: lunge_windup_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/scare-events.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/downing-and-rescue.md
+    value: 0.6
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source
+  - name: false_signal_cooldown_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/scare-events.md
+    value: 25
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source; emergency lights stay faintly visible
+  - name: blackout_duration_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/gdd/survivor-defense.md
+      - design/gdd/scare-events.md
+      - design/levels/research-facility.md
+    value: 6
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # source; starts on activation (proposed)
+  - name: blackout_cooldown_s
+    status: active
+    source: design/gdd/monster-abilities.md
+    referenced_by:
+      - design/gdd/monster-abilities.md
+      - design/levels/research-facility.md
+    value: 45
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed); also used for False Signal fake callouts from the chosen point
+  - name: callout_range_m
+    status: active
+    source: design/gdd/pings-and-callouts.md
+    referenced_by:
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/monster-abilities.md
+    value: 25
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) "Need rescue" = Downing's Call for Help
+  - name: rescue_callout_range_m
+    status: active
+    source: design/gdd/pings-and-callouts.md
+    referenced_by:
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/downing-and-rescue.md
+    value: 40
+    unit: m
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed)
+  - name: callout_repeat_block_s
+    status: active
+    source: design/gdd/pings-and-callouts.md
+    referenced_by:
+      - design/gdd/pings-and-callouts.md
+      - design/gdd/downing-and-rescue.md
+    value: 8
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed) must be < lunge_windup_s
+  - name: scare_max_control_loss_s
+    status: active
+    source: design/gdd/scare-events.md
+    referenced_by:
+      - design/gdd/scare-events.md
+      - design/gdd/monster-abilities.md
+      - design/gdd/borrowed-face.md
+    value: 0.3
+    unit: s
+    added: 2026-10-12
+    revised: ""
+
+  # (proposed)
+  - name: major_scare_cooldown_s
+    status: active
+    source: design/gdd/scare-events.md
+    referenced_by:
+      - design/gdd/scare-events.md
+      - design/gdd/borrowed-face.md
+    value: 45
+    unit: s
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #

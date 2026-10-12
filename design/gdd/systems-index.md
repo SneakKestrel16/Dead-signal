@@ -2,7 +2,7 @@
 
 > **Status**: Draft
 > **Created**: 2026-10-11
-> **Last Updated**: 2026-10-11
+> **Last Updated**: 2026-10-12
 > **Source Concept**: design/gdd/game-concept.md
 
 ---
@@ -19,6 +19,26 @@ Under all of it sits one technical rule from the source brief: the server is
 authoritative for attacks, stuns, cooldowns, objectives, downing, rescue and
 match results. There are no AI-controlled monsters or creatures anywhere.
 
+
+### Server events
+
+Systems talk to each other through these server events only. The server emits
+them after validation; clients never emit them. Every GDD uses these exact names.
+
+| Event | Emitted by | Consumed by | Meaning |
+|-------|-----------|-------------|---------|
+| `RoundPhaseChanged` | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map (lighting), HUD | Phase moved (Infiltration, Investigation, Evacuation) |
+| `RoundEnded` **(proposed)** | Match Flow & Win Conditions | All systems (freeze), HUD & Results Screen | Outcome final; carries outcome, reason and results payload |
+| `SurvivorEscaped` **(proposed)** | Match Flow & Win Conditions | HUD, Match Telemetry | A Healthy survivor entered the exit after evacuation activated |
+| `SurvivorHit` | Monster Abilities | Downing, Rescue & Elimination | A validated Predatory Lunge hit; starts the takedown commit |
+| `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Pings & Callouts, HUD | Takedown commit completed; first down |
+| `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
+| `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
+| `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation |
+| `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events, all clients (rendering) | Shapeshifter form changed |
+| `ObjectiveProgressChanged` | Survivor Objectives | Match Flow, Scare Events, Facility Map (lighting), HUD | Any objective state change (carry, dock, install, power restored, armed, activated) |
+| `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
+
 ---
 
 ## Systems Enumeration
@@ -28,16 +48,16 @@ match results. There are no AI-controlled monsters or creatures anywhere.
 | 1 | Network Authority & Replication | Core | MVP | Not Started | — (architecture/ADR, after `/setup-engine`) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Not Started | — | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Not Started | — | Network Authority |
-| 4 | Match Flow & Win Conditions | Gameplay | MVP | In Design | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing & Rescue |
+| 4 | Match Flow & Win Conditions | Gameplay | MVP | In Design | design/gdd/match-flow.md | Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination |
 | 5 | Survivor Objectives | Gameplay | MVP | In Design | design/gdd/survivor-objectives.md | Controller & Interaction, Match Flow, Facility Map |
 | 6 | Downing, Rescue & Elimination | Gameplay | MVP | In Design | design/gdd/downing-and-rescue.md | Controller & Interaction, Monster Abilities (Predatory Lunge) |
 | 7 | Survivor Defense (flashlight, stun items, hiding, barricades) | Gameplay | MVP | In Design | design/gdd/survivor-defense.md | Controller & Interaction, Monster Abilities |
 | 8 | Borrowed Face (disguise) | Gameplay | MVP | In Design | design/gdd/borrowed-face.md | Network Authority, Controller & Interaction |
-| 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | In Design | design/gdd/monster-abilities.md | Downing & Rescue, Borrowed Face, Facility Map |
-| 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | In Design | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority |
+| 9 | Monster Abilities (Predatory Lunge, False Signal, Blackout) | Gameplay | MVP (Lunge) / Vertical Slice (False Signal, Blackout) | In Design | design/gdd/monster-abilities.md | Downing, Rescue & Elimination, Borrowed Face, Facility Map |
+| 10 | Pings & Callouts (voice-free communication) | Gameplay | Vertical Slice | In Design | design/gdd/pings-and-callouts.md | Controller & Interaction, Network Authority, Borrowed Face |
 | 11 | Facility Map (Research Facility greybox) | Gameplay | MVP | In Design | design/levels/research-facility.md | Controller & Interaction |
-| 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Design | design/gdd/scare-events.md | Monster Abilities, Facility Map, Network Authority |
-| 13 | HUD & Results Screen | UI | MVP | Not Started | — (`/ux-design`) | Match Flow, Survivor Objectives, Downing & Rescue |
+| 12 | Scare Events (jumpscares, lighting & audio states) | Audio | Vertical Slice | In Design | design/gdd/scare-events.md | Monster Abilities, Borrowed Face, Facility Map, Match Flow, Network Authority |
+| 13 | HUD & Results Screen | UI | MVP | Not Started | — (`/ux-design`) | Match Flow, Survivor Objectives, Downing, Rescue & Elimination |
 | 14 | Accessibility Options (reduced flash, reduced volume) | Meta | Vertical Slice | Not Started | — (`design/accessibility-requirements.md`) | Scare Events |
 | 15 | Match Telemetry (balancing logs) | Meta | Alpha | Not Started | — | Match Flow, all gameplay systems |
 
@@ -86,15 +106,15 @@ the source brief excludes progression and economy from the prototype.
 
 1. Survivor Objectives — depends on: Controller & Interaction, Facility Map
 2. Monster Abilities — depends on: Borrowed Face, Facility Map
-3. Downing, Rescue & Elimination — depends on: Monster Abilities (Predatory Lunge), Controller & Interaction
+3. Downing, Rescue & Elimination — depends on: Monster Abilities (Predatory Lunge), Controller & Interaction (owns the takedown commit that sits between a lunge hit and the lunge cooldown)
 4. Survivor Defense — depends on: Monster Abilities, Controller & Interaction
-5. Match Flow & Win Conditions — depends on: Lobby & Role Assignment, Survivor Objectives, Downing & Rescue
-6. Pings & Callouts — depends on: Controller & Interaction, Network Authority
+5. Match Flow & Win Conditions — depends on: Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination
+6. Pings & Callouts — depends on: Controller & Interaction, Network Authority, Borrowed Face
 
 ### Presentation Layer (depends on features)
 
-1. Scare Events — depends on: Monster Abilities, Facility Map, Match Flow
-2. HUD & Results Screen — depends on: Match Flow, Survivor Objectives, Downing & Rescue
+1. Scare Events — depends on: Monster Abilities, Borrowed Face, Facility Map, Match Flow
+2. HUD & Results Screen — depends on: Match Flow, Survivor Objectives, Downing, Rescue & Elimination
 
 ### Polish Layer (depends on everything)
 
@@ -125,11 +145,13 @@ engine choice first; it must be settled before any gameplay code is written.
 
 ## Circular Dependencies
 
-- **Downing & Rescue ↔ Monster Abilities**: Predatory Lunge produces downs; the
+- **Downing, Rescue & Elimination ↔ Monster Abilities**: Predatory Lunge produces downs; the
   down state limits what the monster can do next (committing to a down).
-  Resolution: Monster Abilities owns *hit resolution*; Downing & Rescue owns
-  *what a hit does to a survivor*. They talk through one server event,
-  `SurvivorHit`.
+  Resolution: Monster Abilities owns *hit resolution* and the lunge cooldown;
+  Downing, Rescue & Elimination owns *what a hit does to a survivor*, including
+  the takedown commit. They talk through `SurvivorHit`. One shared timeline in
+  both GDDs: hit → takedown commit → lunge resolved (commit completes or is
+  cancelled) → 10 s lunge cooldown.
 - **Borrowed Face ↔ Survivor Defense**: stuns interrupt transformation;
   transformation cannot escape a stun. Resolution: Survivor Defense owns the
   stun state; Borrowed Face reads it.
@@ -155,8 +177,8 @@ engine choice first; it must be settled before any gameplay code is written.
 | Design docs started | 9 |
 | Design docs reviewed | 0 |
 | Design docs approved | 0 |
-| MVP systems designed | 0/10 |
-| Vertical Slice systems designed | 0/3 |
+| MVP systems with a Draft GDD (none approved) | 7/11 (Monster Abilities counted as MVP) |
+| Vertical Slice systems with a Draft GDD (none approved) | 2/3 |
 
 ---
 

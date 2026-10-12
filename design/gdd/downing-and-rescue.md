@@ -1,0 +1,354 @@
+# Downing, Rescue & Elimination
+
+> **Status**: Draft
+> **Author**: SneakKestrel16
+> **Last Updated**: 2026-10-12
+> **Last Verified**: 2026-10-11
+> **Implements Pillar**: Counterplay; Fair Fear
+
+## Summary
+
+This system decides what happens to a survivor when the shapeshifter lands a
+takedown: the first completed takedown downs them, a second eliminates them.
+Between the hit and the down sits a short "takedown commit" that teammates can
+interrupt, and a downed survivor can crawl, call for help and be rescued with a
+risky six-second interaction, so no single mistake decides the match.
+
+> **Quick reference** — Layer: `Feature` · Priority: `MVP` · Key deps: `Monster Abilities, First-Person Controller & Interaction, Survivor Defense, Survivor Objectives, Match Flow & Win Conditions`
+
+## Overview
+
+Every survivor has three life states: Healthy, Downed and Eliminated. When the
+shapeshifter's Predatory Lunge connects, Monster Abilities sends a validated
+`SurvivorHit`. The monster then has to finish the takedown: for a short time it
+is rooted over its victim, visible and vulnerable, and a teammate can stun it to
+cancel the takedown entirely. If the commit completes, a survivor who has never
+been downed becomes Downed; a survivor who has already been downed and rescued
+is Eliminated (`downs_to_eliminate` = 2). A Downed survivor crawls slowly and can
+call for help; a teammate who holds a six-second rescue brings them back to their
+feet, one down closer to elimination. The server owns every state change.
+
+## Player Fantasy
+
+**Survivor:** "I got caught, but it isn't over." Being downed is frightening and
+helpless, but your team can still save you, and saving a friend in the dark
+while something may be watching is the bravest thing you do in a round.
+
+**Shapeshifter:** a landed takedown is a payoff, but finishing it costs you
+seconds in the open. You choose whether to strike near the group or wait until
+someone is truly alone.
+
+## Detailed Design
+
+### Core Rules
+
+1. **Server authority.** The server holds each survivor's life state, down
+   count, commit timers and rescue progress. Clients send only intent (start or
+   stop holding Rescue, crawl input, Call for Help). Clients never report hits,
+   downs, rescue completion or elimination; the server validates every timer,
+   range and line-of-sight check and broadcasts the result.
+2. **Down count.** Each survivor has `downs_taken`, starting at 0 each round. It
+   increases only when a takedown commit completes. It never decreases.
+3. **Takedown eligibility.** A survivor is a valid takedown target only when
+   Healthy and not inside post-rescue grace or an active commit. Monster
+   Abilities reads this eligibility before producing `SurvivorHit`; a
+   `SurvivorHit` for an ineligible survivor is ignored. Downed survivors cannot
+   be hit, so there is no "execute" on a downed survivor **(proposed)**.
+4. **Takedown commit.** On a valid `SurvivorHit`:
+   1. The victim enters **Seized** and the monster enters **Committing** for
+      `takedown_commit_s` = 1.5 s **(proposed)**.
+   2. During the commit the monster is rooted, cannot use any ability, cannot
+      transform and cannot interact. The victim cannot move, interact or use
+      items **(proposed)**: the victim's own defensive window was the lunge
+      wind-up (see Survivor Defense); the commit is the *team's* window.
+   3. The commit plays in the monster's true form and is visible and audible to
+      every client in range **(proposed; disguise handling owned by Borrowed
+      Face)**.
+   4. If `MonsterStunned` arrives for the committing monster, the commit is
+      cancelled: the victim returns to their prior state (Healthy, with
+      `downs_taken` unchanged), receives `post_release_grace_s` = 2 s of takedown
+      ineligibility **(proposed)**, and no down is recorded.
+   5. If the commit timer completes, the server resolves the takedown: if
+      `downs_taken` + 1 < `downs_to_eliminate`, the victim becomes **Downed** and
+      `SurvivorDowned` is emitted; otherwise the victim becomes **Eliminated**
+      and `SurvivorEliminated` is emitted. `downs_taken` increments in both cases.
+   6. **Lunge timeline** (stated identically in `monster-abilities.md`): wind-up →
+      dash → **hit** → **takedown commit** (`takedown_commit_s` = 1.5 s
+      **(proposed)**, owned here) → **lunge resolved** (the commit completes,
+      emitting `SurvivorDowned` or `SurvivorEliminated`, or is cancelled, e.g. by
+      `MonsterStunned`) → **`lunge_cooldown_s` = 10 s cooldown** (source; owned by
+      Monster Abilities) starts at resolution. There is no separate post-hit
+      recovery; the commit is the monster's post-hit commitment.
+5. **What counts as the second down.** The second *completed takedown commit*
+   on the same survivor in a round. A cancelled commit, an ignored hit, or a hit
+   absorbed by grace is not a down. A second down skips the Downed state and
+   eliminates directly; the commit is the last chance to save them.
+6. **Downed.** A Downed survivor:
+   - crawls at `crawl_speed_mult` = 0.25 × normal walk speed **(proposed)**;
+   - cannot sprint, interact with objectives, barricade, hide, use items or
+     carry objective items (drop handling is owned by Survivor Objectives);
+   - can ping normally through Pings & Callouts and can use **Call for Help**,
+     which is the "Need rescue" authored callout owned by Pings & Callouts: a
+     directional cry heard by every living player, including the monster, within
+     `rescue_callout_range_m` = 40 m, limited by that system's
+     `callout_repeat_block_s` = 8 s **(proposed; values owned by Pings & Callouts)**;
+   - is shown to living survivors with a "Downed" marker at their position on the
+     HUD **(proposed)**. The monster gets no HUD marker; it must hear or see them.
+   - has no bleed-out timer **(proposed; see Open Questions)**.
+7. **Rescue.** A Healthy survivor within `rescue_range_m` = 1.5 m **(proposed)**
+   of a Downed survivor, with line of sight, may hold Rescue.
+   - Completing `rescue_duration_s` = 6 s of held progress rescues them.
+   - While a rescue is active, both rescuer and Downed survivor are rooted
+     **(proposed)**.
+   - Only one rescuer counts at a time; extra helpers do not speed it up
+     **(proposed)**.
+   - **Interruptions** (server-checked every tick): rescuer releases the input,
+     leaves range or loses line of sight, the rescuer receives a valid
+     `SurvivorHit`, the rescuer is otherwise no longer Healthy, or the match
+     ends. Blackout and scare events do *not* interrupt a rescue **(proposed)**.
+   - **Progress persists and decays**: after an interruption, progress is kept on
+     the Downed survivor and decays at `rescue_decay_rate` = 0.5 s per second
+     **(proposed)** until a rescue resumes or it reaches zero. Any survivor may
+     resume it.
+   - Only survivors can perform a rescue; the monster cannot start or fake one
+     **(proposed; see Open Questions)**.
+8. **Rescued state.** A rescued survivor stands up Healthy with `downs_taken` = 1
+   (the HUD shows them as "Wounded"; this is Healthy with one down, not a new
+   life state). They get `post_rescue_grace_s` = 3 s of takedown ineligibility
+   **(proposed)** so a monster waiting beside the body cannot instantly finish
+   them. `SurvivorRescued` is emitted. No movement penalty **(proposed)**.
+9. **Eliminated.** An Eliminated survivor is out for the rest of the round and
+   becomes a spectator of living survivors **(proposed)**. They cannot ping or
+   speak to living players **(proposed)**. Their body stays as a non-interactive
+   marker **(proposed)**. Their unused defensive item is lost (Survivor Defense).
+10. **All living survivors Downed.** Downed is not Eliminated (source: the
+    monster wins only when all survivors are eliminated). If every
+    non-eliminated, non-escaped survivor is Downed at once, the round continues:
+    nobody can rescue, and the monster must still eliminate each one, which it
+    cannot do by lunging a Downed survivor (rule 3), or wait for the evacuation
+    deadline (Match Flow). An automatic "team wipe" is an Open Question, not a rule.
+
+### States and Transitions
+
+| State | Entry Condition | Exit Condition | Behavior |
+|-------|----------------|----------------|----------|
+| Healthy (`downs_taken` 0 or 1) | Round start; rescue complete; commit cancelled | Valid `SurvivorHit` → Seized | Full movement and interaction. Ineligible for takedown while in grace |
+| Seized | Valid `SurvivorHit` on an eligible Healthy survivor | Commit completes → Downed or Eliminated; `MonsterStunned` on monster → Healthy | Rooted, no input except camera; lasts `takedown_commit_s` |
+| Downed | Commit completes with `downs_taken` becoming 1 | Rescue completes → Healthy | Crawl, Call for Help, pings. Cannot be hit |
+| Eliminated | Commit completes with `downs_taken` becoming 2 | None (end of round) | Spectator |
+
+Monster-side state owned here: **Committing** (entry: valid `SurvivorHit`; exit:
+commit complete or `MonsterStunned`). `MonsterStunned` itself is owned by
+Survivor Defense.
+
+### Interactions with Other Systems
+
+| System | In | Out |
+|--------|----|-----|
+| Monster Abilities | `SurvivorHit` (validated hit, victim, monster) | Takedown eligibility per survivor; "lunge resolved" when the commit ends |
+| Survivor Defense | `MonsterStunned` (cancels commit) | Committing state (a valid stun target); Downed/Eliminated (no item use; item lost on elimination) |
+| Survivor Objectives | — | `SurvivorDowned` / `SurvivorEliminated` (Objectives owns dropping carried drives/fuses); Downed survivors cannot interact with objectives |
+| Match Flow & Win Conditions | Round end (freeze all timers) | `SurvivorEliminated` (all eliminated = monster win); disconnect rule owned by Match Flow |
+| Borrowed Face | — | Committing state (transformation blocked; true form shown) |
+| First-Person Controller & Interaction | Generic timed hold-to-interact pattern | Movement lock (Seized, rescue), crawl speed |
+| Pings & Callouts | Ping availability while Downed | Call for Help cue |
+| HUD & Results Screen | — | Downed markers, "Wounded" roster state, rescue progress, downs/rescues for results |
+| Match Telemetry | — | Hits, commits cancelled, downs, rescues, rescue interruptions, eliminations |
+
+## Formulas
+
+### Takedown outcome
+
+```
+on commit complete:
+  downs_taken = downs_taken + 1
+  state = (downs_taken >= downs_to_eliminate) ? Eliminated : Downed
+```
+
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| downs_taken | int | 0–2 | server state | Completed takedowns on this survivor this round |
+| downs_to_eliminate | int | 2 | canon (source) | Downs that eliminate |
+
+Example: a rescued survivor (`downs_taken` 1) is hit and the commit completes →
+`downs_taken` 2 ≥ 2 → Eliminated.
+
+### Rescue progress
+
+```
+while rescuing:      progress = min(rescue_duration_s, progress + dt)
+while not rescuing:  progress = max(0, progress - rescue_decay_rate * dt)
+rescue completes when progress >= rescue_duration_s
+```
+
+| Variable | Type | Range | Source | Description |
+|----------|------|-------|--------|-------------|
+| progress | float s | 0–6 | server state | Stored on the Downed survivor |
+| rescue_duration_s | float s | 6 | canon (source) | Held time to rescue |
+| rescue_decay_rate | float | 0–1 | proposed 0.5 | Seconds of progress lost per second idle |
+| dt | float s | — | server tick | Tick length |
+
+Example: a rescue is interrupted at 4.0 s; a teammate resumes 3 s later →
+4.0 − 1.5 = 2.5 s stored, 3.5 s left to hold. Expected total rescue time: 6 s
+uninterrupted; never more than 6 s of held progress from zero.
+
+### Crawl speed
+
+```
+crawl_speed = walk_speed * crawl_speed_mult
+```
+`walk_speed` is owned by First-Person Controller (no GDD yet). With
+`crawl_speed_mult` 0.25, a survivor walking 4 m/s crawls 1 m/s.
+
+### Monster exposure per takedown
+
+```
+monster_exposed_s = lunge_windup + takedown_commit_s
+```
+Lunge wind-up is owned by Monster Abilities. With `takedown_commit_s` 1.5 s, the
+team has at least 1.5 s to reach stun range after a hit lands.
+
+## Edge Cases
+
+| Scenario | Expected Behavior | Rationale |
+|----------|------------------|-----------|
+| Rescuer is hit mid-rescue | Rescue interrupts (progress kept, decaying); rescuer enters Seized | Rescue is risky by design |
+| `MonsterStunned` and commit completion land on the same server tick | Stun wins; commit cancelled | Favor the interrupt; counterplay pillar |
+| Victim's teammate stuns the monster during wind-up (before hit) | No `SurvivorHit`; this system does nothing | Wind-up interrupts are owned by Survivor Defense / Monster Abilities |
+| Monster disconnects during a commit | Commit cancelled; victim returns to Healthy with grace | No down without a completed commit |
+| Victim disconnects while Seized or Downed | Handled by Match Flow's disconnect rule; this system freezes their state until told | Match Flow owns disconnects |
+| Downed survivor crawls into a hiding spot | Not allowed; hiding requires Healthy | Hiding a downed body would stall the round |
+| Two survivors try to rescue the same person | First valid starter is the rescuer; second gets "already being rescued" | One rescuer counts |
+| Rescue completes on the same tick the rescuer is hit | Hit processed first; rescue interrupted | Server orders hit resolution before interactions **(proposed)** |
+| Downed survivor carried a data drive | Survivor Objectives decides drop behavior | Ownership of item rules |
+| All living survivors Downed, one has escaped | Escaped survivors are not counted; Match Flow evaluates win | Escape state is Match Flow's |
+| Round timer expires mid-commit or mid-rescue | All timers freeze; Match Flow decides the outcome | Round end overrides |
+| Monster attempts a lunge on a survivor in grace | Not a valid target; Monster Abilities treats it as no hit | Grace prevents instant re-takedown |
+
+## Dependencies
+
+| System | Direction | Nature of Dependency |
+|--------|-----------|---------------------|
+| Monster Abilities | Bidirectional | Consumes `SurvivorHit`; Monster Abilities depends on this for target eligibility and lunge-resolved timing |
+| Survivor Defense | Bidirectional | Consumes `MonsterStunned`; Survivor Defense reads Committing and Downed states |
+| First-Person Controller & Interaction | This depends on it | Hold-to-interact, movement lock, crawl |
+| Survivor Objectives | Objectives depends on this | Reacts to `SurvivorDowned`/`SurvivorEliminated` for item drops |
+| Match Flow & Win Conditions | Bidirectional | Match Flow consumes `SurvivorEliminated`; this system obeys round end and Match Flow's disconnect rule |
+| Borrowed Face | Borrowed Face depends on this | Blocks transformation during Committing |
+| Pings & Callouts | Bidirectional | Downed survivors use pings; Call for Help cue |
+| Network Authority & Replication | This depends on it | Server-authoritative state and replication |
+| HUD & Results Screen | HUD depends on this | Displays down/rescue state |
+| Match Telemetry | Telemetry depends on this | Logs downs, rescues, eliminations |
+
+## Tuning Knobs
+
+| Parameter | Current Value | Safe Range | Effect of Increase | Effect of Decrease |
+|-----------|--------------|------------|-------------------|-------------------|
+| downs_to_eliminate | 2 (canon) | 2 | — (fixed by source) | — |
+| rescue_duration_s | 6 (canon) | 4–8 | Rescues riskier; fewer rescues | Downs matter less |
+| takedown_commit_s | 1.5 (proposed) | 0.8–2.5 | More team interrupts; monster weaker near groups | Commit hard to interrupt; hits ≈ downs |
+| post_release_grace_s | 2 (proposed) | 1–4 | Freed victim escapes more easily | Monster can re-grab after stun ends |
+| post_rescue_grace_s | 3 (proposed) | 1–5 | Camping punished more | Rescued survivors finished instantly |
+| rescue_decay_rate | 0.5 (proposed) | 0–1 | Interruptions hurt more | Partial rescues nearly free to resume |
+| rescue_range_m | 1.5 (proposed) | 1–2.5 | Easier, sloppier rescues | Fiddly positioning |
+| crawl_speed_mult | 0.25 (proposed) | 0.15–0.4 | Downed can reach safety | Downed nearly static |
+
+## Visual/Audio Requirements
+
+| Event | Visual Feedback | Audio Feedback | Priority |
+|-------|----------------|---------------|----------|
+| Takedown commit start | Monster true form pinning victim; victim camera shake (reduced-flash safe) | Loud, directional struggle cue | MVP |
+| Commit cancelled by stun | Victim released, stumbles free | Stun crack + release gasp | MVP |
+| Downed | Victim drops; desaturated, low camera for victim | Collapse + heartbeat for victim | MVP |
+| Call for Help | Brief directional marker for survivors | Directional voice cry | MVP |
+| Rescue in progress | Kneel animation; progress ring for both | Low, quiet effort loop | MVP |
+| Rescued | Stand-up animation; roster shows "Wounded" | Short relief cue | MVP |
+| Eliminated | Body collapses; spectator transition | Distinct final sting (respects reduced volume) | MVP |
+
+## Game Feel
+
+### Feel Reference
+
+Should feel like a Dead by Daylight unhook under pressure: a long, exposed hold
+where every sound matters. The commit should read like a heavy grab, not an
+instant kill. Anti-reference: one-hit deaths with no window.
+
+### Input Responsiveness
+
+| Action | Max Input-to-Response Latency (ms) | Frame Budget (at 60fps) | Notes |
+|--------|-----------------------------------|------------------------|-------|
+| Start/stop Rescue | 100 | 6 | Local progress ring may predict; server confirms |
+| Call for Help | 100 | 6 | Local cue immediate |
+| Crawl input | 50 | 3 | Standard movement prediction |
+
+### Animation Feel Targets
+
+| Animation | Startup Frames | Active Frames | Recovery Frames | Feel Goal | Notes |
+|-----------|---------------|--------------|----------------|-----------|-------|
+| Takedown commit | 6 | 78 (1.3 s) | 6 | Heavy, readable, interruptible | Totals `takedown_commit_s` |
+| Rescue stand-up | 0 | — | 20 | Shaky relief | After completion |
+
+### Impact Moments
+
+| Impact Type | Duration (ms) | Effect Description | Configurable? |
+|-------------|--------------|-------------------|---------------|
+| Camera impact (victim) | 200 | Jolt on `SurvivorHit` | Yes (reduced-flash/motion) |
+| Screen shake (victim) | 300 | Decaying during commit | Yes |
+
+### Weight and Responsiveness Profile
+
+- **Weight**: heavy and deliberate on both sides.
+- **Player control**: victim has low control for 1.5 s; teammates have full control.
+- **Snap quality**: state changes are crisp and binary.
+- **Failure texture**: a down must read as "I was caught alone / we didn't come"; never "it happened instantly".
+
+### Feel Acceptance Criteria
+
+- [ ] In playtests, players can describe why each down happened.
+- [ ] Teammates within 10 m of a hit report noticing the commit in time to act in most cases.
+
+## UI Requirements
+
+| Information | Display Location | Update Frequency | Condition |
+|-------------|-----------------|-----------------|-----------|
+| Teammate state (Healthy / Wounded / Downed / Eliminated) | Survivor roster | On change | Survivors only |
+| Downed teammate marker | World marker | Continuous | Living survivors only |
+| Rescue progress | Centre ring, both players | Per tick | During rescue |
+| Own Seized/Downed state | Full-screen vignette | On change | Victim |
+
+## Cross-References
+
+| This Document References | Target GDD | Specific Element Referenced | Nature |
+|--------------------------|-----------|----------------------------|--------|
+| Hit resolution produces `SurvivorHit` | `design/gdd/monster-abilities.md` | Predatory Lunge hit validation, lunge timeline, `lunge_cooldown_s` | Data dependency |
+| Stun cancels commit | `design/gdd/survivor-defense.md` | `MonsterStunned` | State trigger |
+| Item lost on elimination | `design/gdd/survivor-defense.md` | Starting kit | Rule dependency |
+| Carried items on down | `design/gdd/survivor-objectives.md` | Drive/fuse drop rule | Ownership handoff |
+| Elimination ends match | `design/gdd/match-flow.md` | Win evaluation, disconnect rule, round end | State trigger |
+| Commit blocks transformation | `design/gdd/borrowed-face.md` | Transformation cannot cancel an attack | Rule dependency |
+| Downed pings | `design/gdd/pings-and-callouts.md` | Ping set, eliminated-player voice rule | Rule dependency |
+
+## Acceptance Criteria
+
+- [ ] A Healthy survivor whose takedown commit completes becomes Downed; a survivor with `downs_taken` 1 whose commit completes becomes Eliminated without entering Downed.
+- [ ] A `MonsterStunned` received during Committing cancels the commit; `downs_taken` is unchanged.
+- [ ] A `SurvivorHit` on a Downed survivor or a survivor in grace changes nothing.
+- [ ] Holding Rescue for 6.0 s (±1 tick) uninterrupted rescues; releasing at 4.0 s and resuming 3.0 s later needs 3.5 s more.
+- [ ] A client sending a forged "rescue complete" or "survivor downed" message causes no state change.
+- [ ] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
+- [ ] When all living survivors are Downed at once, none is Eliminated automatically and the round continues until the deadline or another rule ends it.
+- [ ] After a hit whose commit completes or is cancelled at time T, Monster Abilities accepts the next lunge no earlier than T + `lunge_cooldown_s` (10 s).
+- [ ] Every value in Tuning Knobs is loaded from data, not hardcoded.
+
+## Open Questions
+
+| Question | Owner | Deadline | Resolution |
+|----------|-------|----------|-----------|
+| Is `takedown_commit_s` 1.5 s and victim-cannot-act the right shape for the "commit" the source describes? | SneakKestrel16 | Before Milestone 2 | |
+| Should Downed survivors bleed out after a time limit? | SneakKestrel16 | Before Milestone 2 | Proposed: no bleed-out |
+| Should the team-wipe rule exist here, or should Match Flow handle it? | SneakKestrel16 | Before Milestone 2 | |
+| Suggestion (not adopted; conflicts with source "all survivors eliminated"): a team wipe, where if every living survivor is Downed at once, all are Eliminated after `wipe_delay_s` = 3 s (proposed). Without it, or a bleed-out, an all-Downed team stalls until the deadline because Downed survivors cannot be hit. | SneakKestrel16 | Before Milestone 2 | Match Flow has the matching question |
+| Can the disguised monster fake a rescue animation (deception) without progress? | SneakKestrel16 | Before Milestone 3 | Proposed: no |
+| Does the commit force the monster's true form, or does the disguise drop earlier at lunge wind-up? | SneakKestrel16 | Before Milestone 3 | Coordinate with Borrowed Face |
+| Should "Wounded" (one down) be visible on the survivor model, or only on the roster? | SneakKestrel16 | Before Milestone 4 | |
+| Can eliminated players communicate with living players? | SneakKestrel16 | Before Milestone 5 | Proposed: no |
