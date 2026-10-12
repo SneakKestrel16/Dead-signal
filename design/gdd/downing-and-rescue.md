@@ -2,7 +2,7 @@
 
 > **Status**: Approved
 > **Author**: SneakKestrel16
-> **Last Updated**: 2026-10-11 (cross-review re-review R1/R5: any player pauses bleed-out; outside-radius camping accepted)
+> **Last Updated**: 2026-10-11 (design review: camp pause counts only in-world players; disconnected survivors not Healthy)
 > **Last Verified**: 2026-10-11
 > **Implements Pillar**: Counterplay; Fair Fear
 
@@ -65,8 +65,8 @@ someone is truly alone.
       items **(proposed)**: the victim's own defensive window was the lunge
       wind-up (see Survivor Defense); the commit is the *team's* window.
    3. The commit plays in the monster's true form and is visible and audible to
-      every client in range **(proposed; disguise handling owned by Borrowed
-      Face)**.
+      every client in range **(proposed)**. Predatory Lunge requires True Form
+      (Borrowed Face rule 11), so the monster is never disguised here.
    4. If `MonsterStunned` arrives for the committing monster, the commit is
       cancelled: the victim returns to their prior state (Healthy, with
       `downs_taken` unchanged), receives `post_release_grace_s` = 2 s of takedown
@@ -110,7 +110,10 @@ someone is truly alone.
      shapeshifter in any form — is within `camp_pause_radius_m` = 10 m** of the
      Downed survivor (designer decision, 2026-10-11, against rescue camping;
      radius **proposed**), but only while at least one living survivor is
-     Healthy **(designer decision, 2026-10-11)**. Survivors count as well as the
+     Healthy **(designer decision, 2026-10-11)**. Only players with a body in
+     the world count: Eliminated, Escaped and disconnected players (Match Flow
+     rule 19 removes a disconnected character) never pause it, and a
+     disconnected survivor is not counted as Healthy. Survivors count as well as the
      monster so that a paused ring carries no identity information (designer
      decision, 2026-10-11, cross-review re-review R1). Distance is
      straight-line, through walls and floors **(proposed)**. Waiting at the
@@ -235,9 +238,9 @@ Eliminated when bleed_elapsed_s >= bleedout_s
 |----------|------|-------|--------|-------------|
 | bleed_elapsed_s | float s | 0–bleedout_s | server state | Starts at 0 on entering Downed |
 | bleedout_s | float s | 30–120 | proposed 60 | Time a Downed survivor survives unrescued |
-| nearest_player_distance_m | float m | 0+ | server state | Straight-line distance to the Downed survivor from the nearest other player who is not Downed: a survivor or the shapeshifter in any form |
+| nearest_player_distance_m | float m | 0+ | server state | Straight-line distance to the Downed survivor from the nearest other player who is in the world and not Downed: a survivor or the shapeshifter in any form. Eliminated, Escaped and disconnected players are excluded |
 | camp_pause_radius_m | float m | 5–20 | proposed 10 | Any other non-Downed player closer than this pauses bleed-out |
-| healthy_survivors | int | 0–3 | server state | Living, non-escaped survivors who are Healthy (not Seized, Downed or Eliminated) |
+| healthy_survivors | int | 0–3 | server state | Living, non-escaped, connected survivors who are Healthy (not Seized, Downed or Eliminated) |
 
 Example: downed at 200 s, a teammate holds a rescue from 230 s to 233 s (interrupted),
 nobody else comes → bleed_elapsed reaches 60 s at 263 s → Eliminated at 263 s.
@@ -424,6 +427,7 @@ instant kill. Anti-reference: one-hit deaths with no window.
 | Should the bleed-out timer pause during an active rescue, and should the monster see it? | SneakKestrel16 | Before Milestone 2 | Pausing decided (rule 6, rescue and camping). Proposed: the monster does not see the timer |
 | Rescue camping is the dominant monster strategy (cross-review 2026-10-11, blocker 3) | SneakKestrel16 | Before Milestone 2 | **Decided 2026-10-11:** bleed-out pauses while the shapeshifter is within `camp_pause_radius_m` (rule 6). **Updated 2026-10-11 (re-review R1, R5):** any other non-Downed player pauses it; camping just outside the radius is accepted and playtest-gated |
 | Does the bleed-out ring show the camping pause? A visible pause tells survivors a disguised monster is within 10 m. | SneakKestrel16 | Before Milestone 3 | **Decided 2026-10-11 (re-review R1):** yes; because any player within the radius pauses it, the pause carries no identity information |
+| A paused ring with no teammate visibly near still tells survivors, over voice, that *someone* is within 10 m. R1 removed the identity leak, not this presence leak | SneakKestrel16 | Before Milestone 2 | **Accepted residual (design review 2026-10-11).** Revisit if the camping playtest AC shows survivors using it as a monster radar |
 | Can the disguised monster fake a rescue animation (deception) without progress? | SneakKestrel16 | Before Milestone 3 | Proposed: no |
 | Does the commit force the monster's true form, or does the disguise drop earlier at lunge wind-up? | SneakKestrel16 | Before Milestone 3 | **Settled:** Predatory Lunge requires True Form (Borrowed Face rule 11, Monster Abilities), so the monster is already in true form at wind-up and the commit never needs to force it |
 | Should "Wounded" (one down) be visible on the survivor model, or only on the roster? | SneakKestrel16 | Before Milestone 4 | |

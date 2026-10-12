@@ -47,3 +47,17 @@ Findings:
 - [NICE-TO-HAVE] Formulas: the monster exposure window ignores `stun_use_delay_s` (0.2 s). Not applied.
 Reviewed-Content-Hash: design/gdd/downing-and-rescue.md e808f38bd6f5076b081e78f90fe77d427419a97f
 Reviewed-Content-Hash: design/registry/entities.yaml 882a83438b6118dc29520259d84f868ae97764ae
+
+## Review — 2026-10-11 (re-review after R1/R5) — Verdict: APPROVED
+Scope signal: L
+Specialists: none (lean review)
+Blocking items: 0 | Recommended: 3
+Summary: Re-review after the cross-review re-review decisions in 55dd311 (any player pauses bleed-out; outside-radius camping accepted). Rules, formula, edge rows and ACs agree, and registry values match. The new "any other player" wording left out-of-world players undefined. Fixed in the same session, together with the stale rule 4.3 note.
+Prior verdict resolved: Yes
+Findings:
+- [RECOMMENDED] Core Rules 4.3: "disguise handling owned by Borrowed Face" was stale, because Lunge requires True Form. Fixed.
+- [RECOMMENDED] Core Rules 6 / Formulas: "other player" did not say whether Eliminated, Escaped or disconnected players pause bleed-out. Now only in-world players count (Match Flow rule 19 removes disconnected characters).
+- [RECOMMENDED] Formulas: `healthy_survivors` could count a disconnected Healthy survivor, which kept the pause alive for up to `reconnect_grace_s` with nobody able to rescue. Now excludes disconnected survivors.
+- [NICE-TO-HAVE] Open Questions: a paused ring with no teammate near still leaks the presence of *someone* over voice. Logged as an accepted residual.
+Reviewed-Content-Hash: design/gdd/downing-and-rescue.md 7082888e0fe9326eba9f30782275a25efdee3725
+Reviewed-Content-Hash: design/registry/entities.yaml 2d26b4ae2b547500e777d53de28678ac521730f4
