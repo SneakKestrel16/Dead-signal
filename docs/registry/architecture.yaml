@@ -52,6 +52,18 @@ state_ownership:
     write_access: network-authority-only
     referenced_by:
       - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md   # input queue keyed by player ID
+    added: 2026-10-12
+    revised: ""
+
+  - state: server_tick
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    interface: "TickRunner.current_tick() -> int (read-only); advanced once per _physics_process at sim_tick_hz = 60, set once at boot"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
     added: 2026-10-12
     revised: ""
 
@@ -96,6 +108,19 @@ interfaces:
     added: 2026-10-12
     revised: ""
 
+  - contract: tick_phases
+    status: active
+    pattern: direct_call
+    producer: network-authority   # TickRunner
+    consumers:
+      - all-feature-systems       # server_tick(tick) in the order ADR-0005 defines
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    signal_signature: "server_tick(tick: int) -> void, called once per tick by TickRunner after the movement and snapshot-history phases"
+    referenced_by:
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # interfaces:
@@ -123,7 +148,23 @@ interfaces:
 # Register a budget when an ADR explicitly claims a frame time allocation.
 # The registry lets /architecture-review verify the total doesn't exceed the target.
 
-performance_budgets: []
+performance_budgets:
+  - target_fps: 60
+    total_frame_budget_ms: 16.6
+    platform: PC
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
+
+  - system: server-tick
+    status: active
+    budget_ms: 2.0
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    notes: "Whole TickRunner tick on the host for 6 players (input, movement, Feature phases, snapshot build and send). Proposed, not measured: spike measured ~0.16 ms with minimal state; ~10x headroom for real Feature state."
+    referenced_by:
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
 
 # Example:
 #
@@ -177,6 +218,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: owner_movement_replication
+    status: active
+    api: custom unreliable per-peer snapshot RPC + owner prediction and replay (CharacterBody3D.move_and_slide in _physics_process)
+    not: MultiplayerSynchronizer for player movement
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    reason: "The synchronizer has no input prediction or replay, so the owner would feel the full round trip; it remains in use for per-peer entity visibility (ADR-0004)"
+    referenced_by:
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -221,6 +273,27 @@ forbidden_patterns:
     description: "SceneMultiplayer.server_relay must be false; clients never send RPCs or state to each other."
     why: "Every message must pass server validation and per-recipient projection, or hidden information (disguise, discovery, scares) leaks."
     adr: docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+
+  - pattern: rules_in_own_physics_process
+    status: active
+    description: "A Feature module must not run rule logic in its own _physics_process. Rules run in TickRunner phases via server_tick(tick)."
+    why: "Node process order is not the designed tick order; same-tick rules (stun beats transform, extraction beats deadline) would become order-of-tree accidents."
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+
+  - pattern: wall_clock_rule_timer
+    status: active
+    description: "Rule timers must count server ticks; they must never read Time or the wall clock."
+    why: "A host that falls behind real time would desynchronise wall-clock timers from tick-based ones and break the GDDs' ±1 tick tolerances."
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+
+  - pattern: client_sent_position
+    status: active
+    description: "Clients must never send position, velocity, speed or progress; only input frames and discrete intents."
+    why: "Any client-claimed state is a cheat vector; the server computes all of it (first-person-controller.md rule 9)."
+    adr: docs/architecture/adr-0002-authoritative-sim-tick-input.md
     added: 2026-10-12
 
 # Example:
