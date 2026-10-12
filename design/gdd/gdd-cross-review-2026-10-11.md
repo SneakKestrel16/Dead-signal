@@ -346,3 +346,15 @@ The systems index marks Downing and Survivor Defense Needs Revision. Monster Abi
 The five blockers above must be resolved before architecture begins:
 - R1, R2 and R5 need designer decisions.
 - R3 and R4 need an ownership or rule decision followed by clean-up edits.
+
+### Re-review blocker resolutions (2026-10-11)
+
+| Blocker | Decision | Edits |
+|---------|----------|-------|
+| R1 | Any other non-Downed player within `camp_pause_radius_m` pauses bleed-out, so a pause carries no identity information. The ring shows the pause | downing-and-rescue rule 6, rule 10, States row, formula (`nearest_player_distance_m`), edge rows, ACs, Open Questions; registry `bleedout_s` comment |
+| R2 | One action lock for all three cases for `stun_duration_s`: no doors, interact, items, pings or callouts. A shock cancels holds. An immune hit does not cancel a transform. Survivor clients get one "shocked" event and never `MonsterStunned` or immunity data while the monster is disguised | survivor-defense rules 1, 10, 11, 14, formula example, edge row, ACs; downing-and-rescue rule 7; borrowed-face Interactions and AC; survivor-objectives rule 2; pings-and-callouts rule 23 and AC; systems-index `MonsterStunned` row |
+| R3 | Option (a): events plus read-only replicated state listed in a state table | systems-index Server events rule and new "Read-only replicated state" table |
+| R4 | Option (a): Facility Map resets lighting on `RoundEnded`; per-volume `blackout_able` flag, false only for the active terminal room during Evacuation (settles W8, proposed) | research-facility lighting volumes and Lighting States Reset row; monster-abilities rule 17, edge rows, Open Question |
+| R5 | Accepted: camping just outside the radius still lets bleed-out run; a playtest AC gates the radius. Drops to a warning | downing-and-rescue rule 6, tuning row, edge row, playtest AC |
+
+R-W8 and the R-W9 qualifier gaps were fixed alongside. Still open: R-W1 (stale Depends On columns), R-W5 (Downing rule 4.3 ownership text), the R-W9 reconnect-grace question and the other warnings. Next: `/design-review` on downing-and-rescue and survivor-defense.

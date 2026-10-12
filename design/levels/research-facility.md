@@ -228,6 +228,8 @@ Feeds can be watched only at the C1 monitor station, one feed at a time **(propo
 
 **Lighting volumes**: Blackout affects "a nearby room or short corridor" (source). Each room is one lighting volume. H-N and H-S are each split into four ~12 m segments and A2 into three ~11 m segments, so a blackout never darkens a whole corridor **(proposed)**.
 
+Each lighting volume carries a **`blackout_able`** flag that Monster Abilities rule 17 reads (cross-review re-review R4, 2026-10-11). Every volume is `blackout_able` except the room holding the active evacuation terminal (T1 C4, T2 C2 or T3 C3), which is not `blackout_able` once the Evacuation phase starts **(proposed; settles W8)**. This keeps the rule below that lighting never fully darkens the route to the active terminal during Evacuation. Before Evacuation the terminal room can be blacked out like any other.
+
 ## Dimensions and Traversal
 
 Traversal times use a reference walk speed of 4.0 m/s **(proposed)**. First-Person Controller owns the real speed; if it differs, scale every time below by the ratio.
@@ -291,6 +293,7 @@ Emergency lights (faint floor-level strips plus exit signage) are always on in e
 | Evacuation | `RoundPhaseChanged` to Evacuation (final 2:00) | Emergency mode: overheads drop to ~50%; rotating amber beacons along H-N, H-S and C2 toward C4; exit sign over E brightens **(proposed)** |
 | Terminal Activating | `ObjectiveProgressChanged` (activation started) | C4 beacon spins red; alarm lights in the terminal room **(proposed)** |
 | Exit Open | Activation complete | Exit door E opens; green light floods C4 from the doorway **(proposed)** |
+| Reset | `RoundEnded`, and round start | Any active Blackout ends; every volume returns to the round-start Low Power state, so the results screen and the next round start clean (cross-review re-review R4, 2026-10-11) **(proposed)** |
 
 In reduced-flash mode, rotating and pulsing lights become steady colour changes **(proposed)**; Accessibility Options owns the setting. Lighting changes never fully darken the route to the active terminal during Evacuation **(proposed)**, so Readable Objectives holds when the stakes are highest.
 

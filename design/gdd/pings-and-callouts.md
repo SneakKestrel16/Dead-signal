@@ -66,7 +66,7 @@ Survivor: "I can tell my team exactly what I need with one button, even in the d
 
 21. **Disguised** (Borrowed Face active): the monster can send all ping types and all callouts. They are attributed to the borrowed survivor's identity and use that survivor's voice set. This is a deliberate deception tool **(proposed)**.
 22. **True form**: the monster cannot ping or call out **(proposed)**. It has no teammate identity to speak as.
-23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**.
+23. **Transforming** (`transform_duration_s`): pings and callouts are blocked **(proposed)**. **Shocked or stunned**: for `stun_duration_s` after a taser hit, pings and callouts are blocked for a shocked survivor and for the disguised monster, stunned or immune, alike (Survivor Defense rule 14; designer decision, 2026-10-11, cross-review re-review R2). Proximity voice is not blocked.
 24. Duplicate identity is a fair clue: if the monster and the real survivor it is copying both ping or call out, both appear with the same name. The server does not hide or merge them **(proposed)**.
 25. **Monster voice: both** (designer decision, 2026-10-12). The monster has (a) **preset lines**: while Disguised, the authored callouts in the borrowed survivor's voice set (rule 21); and (b) **proximity voice**: its own real voice, under the same lobby setting and range as survivors (rules 18–19), so voice availability is never a role tell.
     - While Disguised, its proximity voice is its own, unaltered **(proposed)**. The game never changes it to sound like the borrowed survivor (the source rules out voice-imitation software). A voice that does not match the face is a fair tell, and a quiet monster leaning on preset lines is a fair bluff.
@@ -272,6 +272,7 @@ Light and instant. The player keeps full movement control while pinging or using
 - [ ] A downed survivor can send "Need rescue"; an eliminated player cannot send any ping or callout.
 - [ ] A full 5-client round is completed with proximity voice Off and no external voice chat.
 - [ ] No ping or callout changes objective, downing, stun or outcome state on the server.
+- [ ] For `stun_duration_s` after a taser hit, a ping or callout from a shocked survivor, a stunned disguised monster or an immune disguised monster is rejected, and the first one after it ends is accepted.
 
 ## Open Questions
 

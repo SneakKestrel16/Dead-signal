@@ -103,7 +103,7 @@ Form-change cooldown runs independently of these states from each completed or i
 ### Interactions with Other Systems
 
 - **Network Authority & Replication**: the server owns the disguise state (current form, transforming flag, target, start time, cooldown end). Every client renders the shapeshifter only from that replicated state; clients never decide form. `FormChanged` is sent to all clients; a reconnecting client receives the current form on join. Survivor clients should receive only what is needed to render the presented form, with no marker identifying the entity as the monster, as far as the network layer allows **(proposed)**.
-- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. The immune-hit root and slow is not the Stunned state: it neither interrupts nor blocks a transformation.
+- **Survivor Defense**: reads the Stunned state (`MonsterStunned`). Survivor Defense rule 11 makes a real survivor hit by a stun item look exactly like a stunned disguised monster, and its rule 10 makes a hit on an immune disguised monster look the same too, so a stun is never an identity test. All three cases share one action lock for `stun_duration_s` (Survivor Defense rule 14, re-review R2). The immune-hit lock is not the Stunned state: it does not interrupt a transformation already in progress, but like the Stunned state it blocks starting one until it ends.
 - **Monster Abilities**: Lunge requires True Form; False Signal and Blackout are allowed while Disguised and do not break it. False Signal's fake callout voice uses observed survivors (this system supplies the observed list).
 - **Downing, Rescue & Elimination**: supplies Healthy/Downed/Eliminated status for rule 6 and 13.
 - **Survivor Objectives**: rejects carry, install and progress requests from the shapeshifter in any form (rule 12).
@@ -282,7 +282,7 @@ Survivors get no disguise UI.
 - [ ] The copied name label (where labels exist) and footstep set match the target exactly.
 - [ ] While Stunned, the shapeshifter accumulates no observation time on a survivor that otherwise meets every rule 2 condition.
 - [ ] A disguised shapeshifter that is stunned stays in the borrowed form on every client, plays the stagger on the borrowed body with that survivor's shocked grunt, and plays no monster pain cry; a true-form stun plays the monster stagger and pain cry.
-- [ ] A stun item hit on an immune disguised shapeshifter shows the same shock as a stun, does not interrupt a transformation in progress, and does not change the form.
+- [ ] A stun item hit on an immune disguised shapeshifter shows the same shock as a stun, does not interrupt a transformation in progress, and does not change the form; a transformation request during the following `stun_duration_s` is rejected.
 - [ ] While Transforming, the shapeshifter can walk but sprint, interact and ability requests are rejected; every client receives the transforming state within 250 ms of acceptance.
 - [ ] A disguised shapeshifter's rescue request on a Downed survivor is rejected and the bleed-out timer is unchanged.
 - [ ] A shapeshifter that disconnects while disguised and reconnects within the Match Flow grace returns in true form with its observed list unchanged.

@@ -22,8 +22,12 @@ match results. There are no AI-controlled monsters or creatures anywhere.
 
 ### Server events
 
-Systems talk to each other through these server events only. The server emits
-them after validation; clients never emit them. Every GDD uses these exact names.
+Systems talk to each other through these server events, plus the read-only
+replicated state listed in the next table (designer decision, 2026-10-11,
+cross-review re-review R3). The server emits events after validation; clients
+never emit them. Every GDD uses these exact names. A system may read another
+system's state only if that state is in the state table; anything else goes
+through an event.
 
 | Event | Emitted by | Consumed by | Meaning |
 |-------|-----------|-------------|---------|
@@ -34,13 +38,26 @@ them after validation; clients never emit them. Every GDD uses these exact names
 | `SurvivorDowned` | Downing, Rescue & Elimination | Survivor Objectives (drops), Match Flow, Monster Abilities (lunge resolved), Pings & Callouts, HUD | Takedown commit completed; first down |
 | `SurvivorRescued` | Downing, Rescue & Elimination | Pings & Callouts, Match Flow (stats), HUD | Rescue completed |
 | `SurvivorEliminated` | Downing, Rescue & Elimination | Match Flow (win check), Monster Abilities (lunge resolved), Survivor Objectives, Pings & Callouts, HUD | Second down completed |
-| `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation |
+| `MonsterStunned` | Survivor Defense | Monster Abilities, Downing, Rescue & Elimination, Borrowed Face | Stun applied; cancels lunge, takedown commit or transformation. While the monster is disguised, survivor clients get a "shocked" event instead (Survivor Defense rule 1) |
 | `FormChanged` | Borrowed Face | Pings & Callouts, Scare Events (transformation reveal on change into true form), all clients (rendering) | Shapeshifter form changed |
 | `ObjectiveProgressChanged` | Survivor Objectives | Match Flow, Scare Events, Facility Map (lighting), HUD | Any objective state change (carry, drop, dock, install, power restored, armed, activated, drives ejected, drive extracted) |
 | `ScareTriggered` | Scare Events | Recipient clients only | A scare; carries scope (shared or single-client) |
 | `AbilityUsed` **(proposed)** | Monster Abilities | Scare Events (scare triggers), Pings & Callouts (False Signal fake callout), Match Telemetry | A validated Lunge wind-up, False Signal or Blackout; carries ability, position and, for False Signal, the sound or impersonated callout |
 | `BarricadeBroken` **(proposed)** | Survivor Defense | Scare Events, HUD | A barricade was destroyed |
 | `PlayerConnectionChanged` **(proposed)** | Match Flow & Win Conditions | Downing, Rescue & Elimination (cancel commit on monster disconnect), Monster Abilities, HUD | A player disconnected, reconnected or ran out of reconnect grace |
+
+### Read-only replicated state
+
+Server-held state that other systems read directly instead of waiting for an
+event. Only the owner writes it. Readers never change it.
+
+| State | Owner | Read by | Meaning |
+|-------|-------|---------|---------|
+| Transforming flag (target form, start time) | Borrowed Face (rule 8) | Pings & Callouts, Survivor Defense, all clients (rendering) | A transformation is in progress |
+| Takedown eligibility (Seized, Downed, grace) | Downing, Rescue & Elimination | Monster Abilities (rule 7 hit validation) | Whether a survivor can be lunged |
+| Player positions and life states | Network Authority & Replication; life state from Downing, Rescue & Elimination | Downing, Rescue & Elimination (camp pause, rule 6), Survivor Objectives (zone counts) | Where each player is and whether they are Healthy, Seized, Downed or Eliminated |
+| Hidden and item-use state | Survivor Defense | Survivor Objectives (hidden survivors cannot interact or hold the zone) | Whether a survivor is hidden or using an item |
+| Shock/stun lock | Survivor Defense (rule 14) | Pings & Callouts, Survivor Objectives, Borrowed Face | A player is under the taser action lock |
 
 ---
 

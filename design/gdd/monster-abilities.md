@@ -74,7 +74,7 @@ Counters: sound is only an **approximate clue** (source) — survivors **verify 
 
 **Blackout** (Vertical Slice)
 
-17. Activation: cooldown ready; the target is the lighting zone the monster is standing in or one it aims at within `blackout_range_m` = 15 m with line of sight **(proposed)**. Lighting zones are authored per room or short corridor in the Facility Map; the server rejects any zone not flagged as blackout-able (e.g. the evacuation terminal area if the map so decides).
+17. Activation: cooldown ready; the target is the lighting zone the monster is standing in or one it aims at within `blackout_range_m` = 15 m with line of sight **(proposed)**. Lighting zones are authored per room or short corridor in the Facility Map; the server rejects any zone whose `blackout_able` flag is false (defined per lighting volume in `research-facility.md`; the active terminal room is excluded during Evacuation).
 18. Effect: all normal lights in the zone go out for `blackout_duration_s` = 6 s (source). Emergency lights remain faintly visible (source). Flashlights are unaffected **(proposed)**.
 19. Backup switches (Facility Map) placed in or near blackout-able zones restore the zone's lights immediately when a survivor interacts with them for `backup_switch_hold_s` = 1 s **(proposed)**. Restoring early does not reduce the monster's cooldown.
 20. One zone per Blackout; Blackout cannot target a zone already blacked out **(proposed)**. Lighting state is server-owned and replicated so every client sees the same zone dark.
@@ -156,9 +156,9 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | Lunge while Disguised | Rejected | Requires True Form (kept for now; playtest) |
 | False Signal aimed through a wall | Allowed if within range; sound plays there | Sound travels; sight verifies |
 | False Signal callout as an unobserved survivor | Rejected | Uses observed list |
-| Blackout on the evacuation zone | Allowed unless Facility Map flags it not blackout-able | Map owns zone flags |
+| Blackout on the evacuation zone | Rejected for the active terminal room during Evacuation; allowed before it (`blackout_able`, Facility Map) | Map owns zone flags |
 | Backup switch used then monster recasts | Cannot until 45 s cooldown ends | Counter must matter |
-| Round ends during Blackout | Lights state reset by Match Flow | Clean results |
+| Round ends during Blackout | Facility Map ends the Blackout and resets lighting on `RoundEnded` (`research-facility.md` Lighting States, Reset row) | Clean results; the map owns lighting state |
 
 ## Dependencies
 
@@ -284,6 +284,6 @@ Lunge: Dead by Daylight's lunge — committed and telegraphed, with a punishing 
 | Does a fake callout look exactly like a real one (HUD text, marker)? | SneakKestrel16 | Before Milestone 3 | Owned by Pings & Callouts (rules 26–29); this doc follows it |
 | Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | Open |
 | Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12); test in the M5 playtest.** Test plan lives in Borrowed Face's Open Questions |
-| Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map |
+| Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map. **Proposed 2026-10-11 (re-review R4):** every volume except the active terminal room during Evacuation |
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | — |
 | Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | Network Authority ADR |

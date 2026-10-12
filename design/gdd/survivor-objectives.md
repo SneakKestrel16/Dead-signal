@@ -26,7 +26,7 @@ Survivors are a small crew doing dangerous chores in the dark. Every task is a d
 
 **Shared rules for all objective interactions**
 1. Every objective interaction is a timed hold-to-interact (pattern owned by First-Person Controller & Interaction). The client only asks to start or stop. The server checks range, line of sight to the object, the actor's role and state, and the elapsed time. Only the server completes the interaction and broadcasts `ObjectiveProgressChanged`. A client message saying "done" is ignored.
-2. Only a survivor in the Healthy state can start or continue an objective interaction. Being Downed, being hit, moving out of `interact_range_m` = 2.0 **(proposed)**, or releasing input cancels it.
+2. Only a survivor in the Healthy state can start or continue an objective interaction. Being Downed, being hit (a monster hit or a taser shock, Survivor Defense rule 11), moving out of `interact_range_m` = 2.0 **(proposed)**, or releasing input cancels it.
 3. Cancelled hold interactions lose their progress (they reset) **(proposed)**. The evacuation activation is the exception (rule 19).
 4. When Match Flow ends the round, all objective state freezes.
 

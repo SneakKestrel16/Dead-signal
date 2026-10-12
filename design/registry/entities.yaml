@@ -457,7 +457,7 @@ constants:
     referenced_by:
       - design/gdd/downing-and-rescue.md
       - design/gdd/match-flow.md
-    value: 60   # (proposed) bleed-out itself decided 2026-10-12; pauses during an active rescue
+    value: 60   # (proposed) bleed-out itself decided 2026-10-12; pauses during an active rescue and while any other non-Downed player is within camp_pause_radius_m (10 m) and a survivor is Healthy
     unit: seconds
     added: 2026-10-12
     revised: ""
