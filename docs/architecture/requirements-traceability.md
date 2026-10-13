@@ -2,14 +2,14 @@
 Last Updated: 2026-10-12
 Engine: Godot 4.7.2
 
-Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md); first run [here](architecture-review-2026-10-12.md)). Requirement IDs and full text: [`tr-registry.yaml`](tr-registry.yaml). Every ADR is Proposed, so no row is ✅.
+Written by `/architecture-review` ([report](architecture-review-2026-10-12c.md); earlier runs [b](architecture-review-2026-10-12b.md), [first](architecture-review-2026-10-12.md)). Requirement IDs and full text: [`tr-registry.yaml`](tr-registry.yaml). Every ADR is Proposed, so no row is ✅.
 
 ## Coverage Summary
 - Total requirements: 138
 - Covered (Accepted): 0 (0%)
-- Covered (Proposed): 104 (75%)
-- Partial: 23
-- Gaps: 8
+- Covered (Proposed): 114 (83%)
+- Partial: 19
+- Gaps: 2 (TR-pings-007, TR-pings-010, both deferred)
 - No ADR needed: 3
 
 ## Full Matrix
@@ -31,7 +31,7 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-index-009 | systems-index.md | index | blackout_able per lighting volume is Facility Map state; flips false for the active terminal room on RoundPhaseChanged to Evacuation; read by Monster Abilities | ADR-0009 §1, §2, §4 | 🟡 |
 | TR-index-010 | systems-index.md | index | Layering: Network Authority and Controller are Foundation with no dependency on Feature systems (Controller consumes only RoundEnded and PlayerConnectionChanged as events); Scare Events writes Controller input, not vice versa. Build must not allow upward references | ADR-0005 composition root; no build check | ⚠️ |
 | TR-index-011 | systems-index.md | index | Same-tick ordering matters: hits, downs, eliminations and objective completions are processed in received order, then the win check runs in fixed order; stun beats commit completion; hit beats rescue completion. Needs one deterministic server tick pipeline with defined phase order | ADR-0005, ADR-0008 | 🟡 |
-| TR-index-012 | systems-index.md | index | Not-yet-designed systems depend on these contracts: HUD and Results Screen (MVP, no GDD), Accessibility Options (VS), Match Telemetry (Alpha); every system exposes stat/telemetry hooks (stun, lunge, ping, scare, dispute logs) | ADR-0011 (Proposed); Telemetry deferred | 🟡 |
+| TR-index-012 | systems-index.md | index | Not-yet-designed systems depend on these contracts: HUD and Results Screen (MVP, no GDD), Accessibility Options (VS), Match Telemetry (Alpha); every system exposes stat/telemetry hooks (stun, lunge, ping, scare, dispute logs) | ADR-0011 stat hooks (Proposed); HUD and Accessibility contract: UI ADR none; Telemetry deferred | ⚠️ |
 | TR-lobby-001 | lobby-role-assignment.md | lobby | Listen-server direct join by address and port (ENet); the host process is the server; dedicated server is left to the Network Authority ADR; no matchmaking, no host migration (host leaving closes the session for all) | ADR-0001 | 🟡 |
 | TR-lobby-002 | lobby-role-assignment.md | lobby | Server validates every join: reject when lobby full, round in progress (except Match Flow reconnect within grace), or game version string differs; reject reason is sent to the client. Fits SceneMultiplayer auth_callback | ADR-0001 | 🟡 |
 | TR-lobby-003 | lobby-role-assignment.md | lobby | Display names 1-16 chars, case-insensitive uniqueness by suffix (\" (2)\"), validated server-side | ADR-0001 | 🟡 |
@@ -52,7 +52,7 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-controller-008 | first-person-controller.md | controller | Input timeout: no intent for 500 ms releases input, cancels holds, stops movement; RoundEnded freezes movement and holds; PlayerConnectionChanged cancels holds | ADR-0002, ADR-0008 | 🟡 |
 | TR-controller-009 | first-person-controller.md | controller | Server correction: player found inside geometry is moved to last valid position; accel ramp 0.05 s (<= 0.09 s) is dodge-critical | ADR-0002, ADR-0007 | 🟡 |
 | TR-controller-010 | first-person-controller.md | controller | Camera effects other than the sanctioned flinch are client-only visual offsets that never change the server view direction; flinch re-baseline on reset (no visible snap) | ADR-0002 §8 partial | ⚠️ |
-| TR-controller-011 | first-person-controller.md | controller | Footstep audio from each player's replicated gait and the disguise target's footstep set; audible radii from data (sprint 20, walk 6, crouch/crawl 2) with occlusion by audio implementation | ADR-0004 §6; audio ADR none | ⚠️ |
+| TR-controller-011 | first-person-controller.md | controller | Footstep audio from each player's replicated gait and the disguise target's footstep set; audible radii from data (sprint 20, walk 6, crouch/crawl 2) with occlusion by audio implementation | ADR-0004 §6, ADR-0010 §2 footstep set, ADR-0013 §2-3, §7-8 (Proposed) | 🟡 |
 | TR-controller-012 | first-person-controller.md | controller | Doors are instant interactions; a close is rejected while any capsule overlaps the door swing area (needs a swing-area overlap query on the server) | ADR-0007 | 🟡 |
 | TR-controller-013 | first-person-controller.md | controller | Input bindings via InputMap actions (move, sprint, crouch, interact, ping, callout wheel, use item); mouse look and keyboard device IDs must not be assumed 0 (Godot 4.7); Out state spectator view | ADR-0007, ADR-0004 | 🟡 |
 | TR-matchflow-001 | match-flow.md | matchflow | Server-only round clock and phase state machine (Loading, Infiltration, Investigation, Evacuation, Ended, Results, Cancelled); clients display a replicated value and never advance phase; each phase change sends exactly one RoundPhaseChanged; Infiltration may skip to Evacuation | ADR-0002, ADR-0005 | 🟡 |
@@ -83,7 +83,7 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-downing-004 | downing-and-rescue.md | downing | Bleed-out timer (60 s) pauses during active rescue and runs at 0.25 rate while any non-Downed player (any form) is within 10 m straight-line, only if a Healthy survivor exists; requires a per-tick proximity query over all player positions | ADR-0002, ADR-0005 | 🟡 |
 | TR-downing-005 | downing-and-rescue.md | downing | Rescue as hold (6 s, range 1.5, rooted both); single rescuer; progress persists and decays 0.5 s/s; interrupts by hit, shock, release, range, LOS | ADR-0008 | 🟡 |
 | TR-downing-006 | downing-and-rescue.md | downing | Downed state: crawl 0.25x, no items/objectives/hide, can ping/Danger/Call for Help (Need rescue callout), shown with a marker to living survivors only (never to the monster) | ADR-0004 | 🟡 |
-| TR-downing-007 | downing-and-rescue.md | downing | Emits SurvivorDowned/Rescued/Eliminated; Eliminated survivors become spectators; stats (hits, cancelled commits, rescues, interruptions) exported to telemetry/results | ADR-0005; stats none | ⚠️ |
+| TR-downing-007 | downing-and-rescue.md | downing | Emits SurvivorDowned/Rescued/Eliminated; Eliminated survivors become spectators; stats (hits, cancelled commits, rescues, interruptions) exported to telemetry/results | ADR-0005, ADR-0011 `stats.downing` (Proposed) | 🟡 |
 | TR-downing-008 | downing-and-rescue.md | downing | Disconnected players keep bleeding out and are eliminated on expiry while disconnected; a disconnected survivor is not Healthy for camp-slow purposes | ADR-0001, ADR-0002 | 🟡 |
 | TR-downing-009 | downing-and-rescue.md | downing | Tuning knobs (commit, graces, bleed-out, camp radius/mult, rescue) are data; downs_to_eliminate fixed at 2; camp radius is playtest-gated | ADR-0006 | 🟡 |
 | TR-defense-001 | survivor-defense.md | defense | Server owns charges, stun/immunity timers, hide occupancy, barricade durability; client intent only (fire with aim, hide, barricade, break) | ADR-0002 | 🟡 |
@@ -102,12 +102,12 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-borrowedface-003 | borrowed-face.md | borrowedface | Per-tick server observation accumulator per survivor (range 15, 90 degree horizontal cone, multi-point LOS, not stunned/locked, 3 s cumulative); results visible only to the monster client; survivors get no indication | ADR-0007, ADR-0005 | 🟡 |
 | TR-borrowedface-004 | borrowed-face.md | borrowedface | Transform state machine (2 s transform, 12 s cooldown from completion/interrupt; accepted only if not stunned/locked/lunging/committing); no start event, observers read the replicated Transforming flag; FormChanged on completion | ADR-0005 | 🟡 |
 | TR-borrowedface-005 | borrowed-face.md | borrowedface | Disguise copies body, outfit, colour, animations, footstep set, survivor speeds, name label, cosmetic flashlight; does not copy carried items, held item, Downed presentation, voice. Appearance must be data-driven per character (C1-C5) so a disguise swaps the same mesh/material set | ADR-0010 (Proposed) | 🟡 |
-| TR-borrowedface-006 | borrowed-face.md | borrowedface | Transform visual warp and spatial distortion audio (15 m, directional); needs a non-audio alternative cue for accessibility | ADR-0004 §6 partial | ⚠️ |
+| TR-borrowedface-006 | borrowed-face.md | borrowedface | Transform visual warp and spatial distortion audio (15 m, directional); needs a non-audio alternative cue for accessibility | ADR-0004 §6, ADR-0010 §6 warp and reduced-motion tint, ADR-0013 §2-3 (Proposed) | 🟡 |
 | TR-borrowedface-007 | borrowed-face.md | borrowedface | Disguise permissions are gate checks by other systems (no objective progress, no carry, no rescue, no hide/barricade; search/break stay visible); server rejects these requests | ADR-0008 | 🟡 |
 | TR-borrowedface-008 | borrowed-face.md | borrowedface | Disguise persists when the copied survivor is downed, eliminated, escaped or disconnects; new transforms into ineligible survivors rejected; disguise lost on monster disconnect, observed list kept | ADR-0005 | 🟡 |
 | TR-borrowedface-009 | borrowed-face.md | borrowedface | FormChanged to true form drives the reveal scare (radius 10 m with LOS); form change must never be gated or delayed by scare suppression | ADR-0005, ADR-0004 | 🟡 |
 | TR-borrowedface-010 | borrowed-face.md | borrowedface | Observation, transform and reveal parameters are data (observe range/fov/time, durations, radii); form-change stats exported for results | ADR-0006 | 🟡 |
-| TR-borrowedface-011 | borrowed-face.md | borrowedface | True-form model is a separate model with the same collision capsule; a form swap on the same networked entity must not leak via node/scene changes visible to clients (spawn/despawn timing, authority, visibility) | ADR-0004 §2 leak; render none | ⚠️ |
+| TR-borrowedface-011 | borrowed-face.md | borrowedface | True-form model is a separate model with the same collision capsule; a form swap on the same networked entity must not leak via node/scene changes visible to clients (spawn/despawn timing, authority, visibility) | ADR-0004 §2-3, ADR-0010 §1, §3, §5 (Proposed) | 🟡 |
 | TR-monster-001 | monster-abilities.md | monster | Server owns all ability state (cooldowns, wind-up, hit resolution, placement); client sends activation request and aim point only; invalid requests have no effect and no cooldown cost | ADR-0002 | 🟡 |
 | TR-monster-002 | monster-abilities.md | monster | Predatory Lunge state machine (Ready, Wind-up 0.6 s root with 15 deg/s turn, Active 0.3 s dash 4 m with 30 deg/s steer, Takedown Commit, Resolved, Cooldown 10 s); True Form only; cooldown starts at resolution | ADR-0005 | 🟡 |
 | TR-monster-003 | monster-abilities.md | monster | Server-side lunge hit test every tick of Active: eligibility, distance <= 1.2 to body, 60 degree cone, chest LOS, not stunned since wind-up; dash blocked by walls, closed/barricaded doors and non-target survivor bodies; needs a physics-tick-aligned sweep, deterministic at the server tick rate | ADR-0003, ADR-0007 | 🟡 |
@@ -118,12 +118,12 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-monster-008 | monster-abilities.md | monster | Fake and real sounds/callouts must be indistinguishable in network data (no real/fake tag sent to clients) | ADR-0004 | 🟡 |
 | TR-monster-009 | monster-abilities.md | monster | Blackout: target lighting volume (current or aimed within 15 m with LOS), blackout_able check, 6 s, 45 s cooldown from activation, one zone at a time; server-owned lighting state replicated to all clients; backup switch (1 s hold, per room) restores one zone | ADR-0009 §2, §4–5; ADR-0008 switch | 🟡 |
 | TR-monster-010 | monster-abilities.md | monster | Miss slow (0.5x for 1.5 s) as a Controller modifier; stun-interrupted lunge counts as resolved; monster disconnect ends lunge without hit | ADR-0002 §5–6 | 🟡 |
-| TR-monster-011 | monster-abilities.md | monster | Cue audio: lunge wind-up cue audible within 20 m; coil pose; all monster stats (lunges, False Signals, Blackouts) exported to results | Audio and stats partial | ⚠️ |
+| TR-monster-011 | monster-abilities.md | monster | Cue audio: lunge wind-up cue audible within 20 m; coil pose; all monster stats (lunges, False Signals, Blackouts) exported to results | ADR-0013 lunge cue, ADR-0011 `stats.abilities`, ADR-0010 §3 (Proposed) | 🟡 |
 | TR-monster-012 | monster-abilities.md | monster | MVP scope is Lunge only; False Signal and Blackout are Vertical Slice; all numbers in data with safe ranges | ADR-0006 | 🟡 |
 | TR-pings-001 | pings-and-callouts.md | pings | Every ping/callout is a client request validated by the server (alive, state not blocking, rate limit, range 40 m, LOS from view ray, target valid); sender identity attached from server-side disguise state, never from the client | ADR-0002, ADR-0004, ADR-0005 | 🟡 |
 | TR-pings-002 | pings-and-callouts.md | pings | Per-recipient filtering: all living survivors; monster only if the target is in its LOS (facing ignored); spectators mirror the survivor they watch; a rejected ping to the monster gives no signal to the sender | ADR-0004 | 🟡 |
 | TR-pings-003 | pings-and-callouts.md | pings | Rate limits: token bucket per player (3, 2 s refill), callout global cooldown 3 s and per-line repeat block 8 s; reconnect keeps bucket state; fake callouts touch no limit state | ADR-0002 | 🟡 |
-| TR-pings-004 | pings-and-callouts.md | pings | Callouts: 8 authored lines, voice set per character (C1-C5), range 25 m (Need rescue 40 m), audio positional with wall attenuation, feed line + arrow to survivors, monster gets audio only; delivery uses distance, not walls | ADR-0004 §6; audio none | ⚠️ |
+| TR-pings-004 | pings-and-callouts.md | pings | Callouts: 8 authored lines, voice set per character (C1-C5), range 25 m (Need rescue 40 m), audio positional with wall attenuation, feed line + arrow to survivors, monster gets audio only; delivery uses distance, not walls | ADR-0004 §6, ADR-0013 audio (Proposed); feed line and arrow: UI ADR none | ⚠️ |
 | TR-pings-005 | pings-and-callouts.md | pings | Marker types (location, item, warning on point or player), static positions, max 2 per sender, 8 s lifetime, visible through walls with direction and distance to survivors; item pings need a registry of pingable objects and types | UI ADR none | ⚠️ |
 | TR-pings-006 | pings-and-callouts.md | pings | Fake callout presentation parity: same line, voice, feed format; \"(not you)\" mark for impersonated survivor in range; mark on pings only if sender within callout range; no real/fake tag on the wire | ADR-0004 | 🟡 |
 | TR-pings-007 | pings-and-callouts.md | pings | Optional proximity voice (lobby setting, off by default, 20 m, positional); monster voice distortion in true form/transforming; no rule may require voice; Eliminated/Escaped muted to living players | Deferred (NOT SOURCEABLE) | ❌ |
@@ -156,16 +156,12 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12b.md);
 | TR-facility-012 | research-facility.md | facility | Collision authoring limits: an invisible ramp collider no steeper than 40 degrees on every step up to 0.35 m, large box floor colliders, and an exit point plus alternate exit points per hiding spot | ADR-0007 | 🟡 |
 
 ## Known Gaps
-- TR-index-012: Not-yet-designed systems depend on these contracts: HUD and Results Screen (MVP, no GDD), Accessibility Options (VS), Match Telemetry (Alpha); every system exposes stat/telemetry hooks (stun, lunge, ping, scare, dispute logs) (No GDD; /ux-design, Telemetry deferred)
-- TR-matchflow-008: Results payload aggregates stats from other systems (outcome, per-survivor state, downs, rescues, objective times, lunges, stuns, form changes, abilities); a stats-collection interface must exist on each system (Stats/results interface ADR)
-- TR-objectives-003: Discovery tracking: a drive room or fuse spawn becomes visible to all survivors once any survivor has it in view within 8 m (server-side visibility test) (Objective discovery ADR)
-- TR-borrowedface-005: Disguise copies body, outfit, colour, animations, footstep set, survivor speeds, name label, cosmetic flashlight; does not copy carried items, held item, Downed presentation, voice. Appearance must be data-driven per character (C1-C5) so a disguise swaps the same mesh/material set (Borrowed Face rendering ADR)
-- TR-pings-007: Optional proximity voice (lobby setting, off by default, 20 m, positional); monster voice distortion in true form/transforming; no rule may require voice; Eliminated/Escaped muted to living players (Deferred (NOT SOURCEABLE))
-- TR-pings-010: Voice transport is undecided (inference: Godot has no built-in VoIP; needs capture, encode, relay through server with positional mixing); optional and a post-MVP candidate (Deferred (NOT SOURCEABLE))
-- TR-scare-008: Audio: diegetic scares positional at true origin; stingers only on Major, <= +6 dB over ambient bed; ducking priority (gameplay cues and callouts never masked; ducks on PlayerShocked/MonsterStunned); separate bus scale for stinger/scare master (Audio ADR)
-- TR-facility-008: Zone-based audio: ambience per zone, B3 machinery masks footsteps, wall occlusion of positional sounds is audio-implementation work; room IDs exposed for callout vocabulary (Audio ADR)
+- TR-pings-007: Optional proximity voice (lobby setting, off by default, 20 m, positional); no rule may require voice (Deferred, NOT SOURCEABLE; ADR-0013 reserves the `ProximityVoice` bus only)
+- TR-pings-010: Voice transport is undecided (inference: Godot has no built-in VoIP) (Deferred, NOT SOURCEABLE)
+
+Partial rows with no ADR yet for the open half: TR-index-012 and TR-pings-005 (UI and input-focus framework, after `/ux-design`), TR-objectives-002 (seeded candidate selection), TR-scare-009 and TR-scare-012 (screen flash, camera reaction, flinch-toggle transport), TR-scare-006, TR-controller-010, TR-index-008 (view offset), TR-defense-006 (hide peek view).
 
 ## Superseded Requirements
-None. Reworded on 2026-10-12 (second review): TR-controller-009 (accel ≤ 0.09 s), TR-index-004 (row count dropped), TR-scare-007 (requests no lighting).
+None. Third review (2026-10-12c): no GDD requirement reworded. Earlier: reworded on 2026-10-12 (second review): TR-controller-009 (accel ≤ 0.09 s), TR-index-004 (row count dropped), TR-scare-007 (requests no lighting).
 
 Earlier: Reworded on 2026-10-12 to match ADR-driven GDD edits: TR-monster-004 (rewind cap 180 ms), TR-matchflow-002 (refuse to host), TR-facility-009 (analytic zones), TR-controller-001 (method now ADR-0002).

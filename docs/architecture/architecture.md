@@ -6,7 +6,7 @@
 - Last Updated: 2026-10-12
 - Engine: Godot 4.7.2 (GDScript)
 - GDDs Covered: `lobby-role-assignment`, `first-person-controller`, `match-flow`, `survivor-objectives`, `downing-and-rescue`, `survivor-defense`, `borrowed-face`, `monster-abilities`, `pings-and-callouts`, `scare-events`, plus the Facility Map in `design/levels/research-facility.md`. Not covered (no GDD yet): HUD & Results Screen, Accessibility Options, Match Telemetry.
-- ADRs Referenced: ADR-0001 to ADR-0009, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
+- ADRs Referenced: ADR-0001 to ADR-0013, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
 - Evidence beyond the GDDs: `prototypes/networking-spike/README.md` (single-machine results, 2026-10-12).
 - TD-ARCHITECTURE: 2026-10-12 — skipped — Lean mode
 - LP-FEASIBILITY: 2026-10-12 — skipped — Lean mode
@@ -119,7 +119,7 @@ Feature modules are mostly GDScript over Foundation and Core. Exceptions: `inter
 
 ### Presentation
 
-HUD & Results, Scare Events client half, Accessibility Options and Match Telemetry consume events and registry state only and own no gameplay state. `Control` and `RichTextLabel` carry the 4.7 renames (`UPDATE_WIDTH_UNIT`) and the 4.6 dual-focus change.
+`BodyPuppet`/`ClientBodies` and `AudioDirector` (client modules from ADR-0010 and ADR-0013), HUD & Results, Scare Events client half, Accessibility Options and Match Telemetry consume events and registry state only and own no gameplay state. Round stats are getter-only `*StatsView`s registered by their owners and read once by `MatchFlow.resolve` (ADR-0011); objective discovery and Borrowed Face observation share one server `SightTest` (ADR-0012). `Control` and `RichTextLabel` carry the 4.7 renames (`UPDATE_WIDTH_UNIT`) and the 4.6 dual-focus change.
 
 ### Dependency direction
 
@@ -303,7 +303,7 @@ Per-event payload schemas (15 events) belong to the Event Catalog ADR. Borrowed 
 
 ## ADR Audit
 
-Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet covered by an accepted decision.
+Thirteen ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet covered by an accepted decision.
 
 | ADR | Decision | Acceptance waits on ([verification results](../../prototypes/adr-verification/README.md)) |
 |---|---|---|
@@ -316,8 +316,12 @@ Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet c
 | [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Nothing outstanding; verification passed (floor angle and same-tick queries amended) |
 | [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Nothing outstanding beyond the lock test written with `HoldService` |
 | [ADR-0009](adr-0009-lighting-states-and-blackout.md) | Facility Map owns per-volume lighting (base, overlays, Blackout) with its own tick step; replicated under visibility sets like doors; dynamic lights from presets; seeded client flicker; one live surveillance feed with relevance extended | Greybox rendering and profiling spike (Verification 1–10) |
+| [ADR-0010](adr-0010-borrowed-face-rendering.md) | One `BodyPuppet` per handle; appearance is a data child scene swapped in place; shared survivor rig; overlay warp | Verification 1-7 on the greybox |
+| [ADR-0011](adr-0011-round-stats-and-results-payload.md) | Owners keep counters, expose `*StatsView`s; `MatchFlow.resolve` builds `RoundResults` once | Verification 1 (payload size) |
+| [ADR-0012](adr-0012-objective-discovery.md) | One server `SightTest`; discovery grants the hidden entity to survivor peers | Verification 1-2 |
+| [ADR-0013](adr-0013-spatial-audio-pipeline.md) | Fixed bus tree, catalog-driven pooled 3D players, scripted ducking, server-side footstep masking, client occlusion ray | Verification 1-4 |
 
-**Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 91 covered by a Proposed ADR, 28 partial, 16 gaps, 3 need no ADR. All 16 gaps fall to the should-have ADRs below. Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
+**Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 114 covered by a Proposed ADR, 19 partial, 2 gaps (deferred voice), 3 need no ADR (third review, `architecture-review-2026-10-12c.md`). Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
 
 The table below is version 1's condensed baseline of 41 architecture-driving requirements, kept because the ADR column shows which planned ADR each was assigned to. The baseline was extracted from 10 system GDDs plus the Facility Map level doc; `first-person-controller.md` has no `## Tuning Knobs` heading, so it was read from Formulas and Dependencies.
 
@@ -387,10 +391,11 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 
 ### Should have before the relevant system is built
 
-- Borrowed Face rendering and replication (shared rig or separate models, footstep-set copy) — rend-003 — MEDIUM
+- **Written: [ADR-0010](adr-0010-borrowed-face-rendering.md) (Proposed).** Borrowed Face rendering and appearance swap — rend-003 — MEDIUM
 - **Written: [ADR-0009](adr-0009-lighting-states-and-blackout.md) (Proposed).** Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
-- Spatial audio and cue pipeline (buses, `area_mask`, ducking, bearing accuracy) — audio-001, audio-002, audio-004 — HIGH
-- Objective candidate selection and discovery filter (seeded RNG) — core-006 — Low
+- **Written: [ADR-0013](adr-0013-spatial-audio-pipeline.md) (Proposed).** Spatial audio and cue pipeline (buses, ducking, occlusion) — audio-001, audio-002, audio-004 — HIGH
+- **Written (discovery half): [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Seeded candidate selection (TR-objectives-002) is still open — core-006 — Low
+- **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Proposed).** Round stats and results payload — Low
 - Scare replication scoping and view offset — net-008, input-002 — Low
 - UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
 - Server-sim testability (injectable clock and RNG, headless server), which the unit-test acceptance criteria in the GDDs assume — Low
