@@ -32,6 +32,11 @@ var version := VERSION
 var interp_ms := 100.0
 var tag := "run"
 var leave_after := -1.0
+var host_addr := "127.0.0.1"
+var use_upnp := false
+var wait_s := 0.0
+var upnp: UPNP
+var upnp_info := {}
 
 var rng := RandomNumberGenerator.new()
 var outbox: Array = []
@@ -95,6 +100,9 @@ func _ready() -> void:
 			"interp": interp_ms = float(v)
 			"tag": tag = v
 			"leave_after": leave_after = float(v)
+			"host": host_addr = v
+			"upnp": use_upnp = v != "0"
+			"wait": wait_s = float(v)
 	rng.seed = seed_v
 	Engine.physics_ticks_per_second = tick_hz
 	Engine.max_fps = 500
@@ -113,6 +121,9 @@ func _ready() -> void:
 			print("SERVER create_server failed: %d" % err)
 			get_tree().quit(1)
 			return
+		if use_upnp:
+			_upnp_open()
+		print("SERVER LAN addresses: %s" % ", ".join(Array(IP.get_local_addresses()).filter(func(a): return "." in a and not a.begins_with("127.") and not a.begins_with("169.254."))))
 		multiplayer.multiplayer_peer = peer
 		multiplayer.peer_connected.connect(_on_peer_connected)
 		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
@@ -122,7 +133,7 @@ func _ready() -> void:
 		if mode == "auth" or mode == "vis":
 			get_tree().create_timer(duration).timeout.connect(_finish)
 	else:
-		peer.create_client("127.0.0.1", PORT)
+		peer.create_client(host_addr, PORT)
 		multiplayer.multiplayer_peer = peer
 		multiplayer.connected_to_server.connect(func(): _log_c("connected"))
 		multiplayer.connection_failed.connect(func(): _log_c("connection_failed"); _quit_soon())
@@ -131,7 +142,7 @@ func _ready() -> void:
 			get_tree().create_timer(leave_after).timeout.connect(_leave)
 		if mode != "move":
 			get_tree().create_timer(duration).timeout.connect(_quit_soon)
-	get_tree().create_timer(duration + 40.0).timeout.connect(func(): print("HARD TIMEOUT"); get_tree().quit(2))
+	get_tree().create_timer(duration + 40.0 + wait_s).timeout.connect(func(): print("HARD TIMEOUT"); get_tree().quit(2))
 
 
 # ---------------------------------------------------------------- world
@@ -744,6 +755,10 @@ func _finish() -> void:
 		out["vis"] = vis_log
 	elif mode == "auth":
 		out["auth"] = auth_log
+	if use_upnp:
+		out["upnp"] = upnp_info
+		if upnp and upnp_info.get("mapped", false):
+			upnp.delete_port_mapping(PORT, "UDP")
 	var txt := JSON.stringify(out, "  ")
 	print("RESULT " + JSON.stringify(out))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://results"))
@@ -752,3 +767,23 @@ func _finish() -> void:
 		f.store_string(txt + "\n")
 		f.close()
 	get_tree().create_timer(0.5).timeout.connect(func(): get_tree().quit())
+
+
+# ---------------------------------------------------------------- reachability (two-network tests)
+
+## Asks the router to forward PORT (UDP) to this PC. Records whether that worked and
+## the router's external IP: a 10.x, 172.16-31.x, 192.168.x or 100.64-127.x external
+## IP means a second NAT (CGNAT) in front, so no forward from here reaches the host.
+func _upnp_open() -> void:
+	upnp = UPNP.new()
+	var d := upnp.discover()
+	var gw := upnp.get_gateway()
+	upnp_info = {"discover": d, "gateway": gw != null and gw.is_valid_gateway(), "mapped": false}
+	if upnp_info.gateway:
+		upnp_info["map_result"] = upnp.add_port_mapping(PORT, PORT, "dead-signal-spike", "UDP", 3600)
+		upnp_info["mapped"] = upnp_info.map_result == UPNP.UPNP_RESULT_SUCCESS
+		var ext := upnp.query_external_address()
+		upnp_info["external_ip"] = ext
+		var o := ext.split(".")
+		upnp_info["external_ip_is_private"] = o.size() == 4 and (o[0] == "10" or (o[0] == "172" and int(o[1]) >= 16 and int(o[1]) <= 31) or (o[0] == "192" and o[1] == "168") or (o[0] == "100" and int(o[1]) >= 64 and int(o[1]) <= 127))
+	print("SERVER UPnP %s" % JSON.stringify(upnp_info))

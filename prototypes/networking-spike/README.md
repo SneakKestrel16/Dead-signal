@@ -124,5 +124,26 @@ Run these before the Network Authority ADR is accepted (they can follow its draf
 5. **Wi-Fi spikes:** a client on Wi-Fi with background traffic; watch snap sizes
    and stale-state counts.
 
-Use the same `run_tests.sh` logic with the server on one machine and clients
-started on the other (`create_client` address must change from `127.0.0.1`).
+### Two-network tests: how to run
+
+The host runs on this PC (home network). The clients run on a second PC on
+another network, such as a phone hotspot. Do not host from the hotspot side:
+mobile carriers put phones behind CGNAT, so nothing can reach a host there.
+
+1. Host: `bash run_remote.sh pack`. This builds `dist/spike-client.zip` (about
+   86 MB, includes Godot). Copy it to the client PC.
+2. Host: allow inbound UDP 24680 through Windows Firewall (admin PowerShell):
+   `New-NetFirewallRule -DisplayName "dead-signal-spike" -Direction Inbound -Protocol UDP -LocalPort 24680 -Action Allow`
+3. Host: `bash run_remote.sh move` (60 s, tests 1, 2, 5) or `drift` (540 s, test 4).
+   The server first asks the router for a UPnP mapping of UDP 24680 and prints
+   the result and the external IP (test 3). If UPnP fails, forward UDP 24680
+   manually to the host's LAN IP. `UPNP=0` skips the attempt. `N` and `TICK`
+   set the client count and tick rate.
+4. Client PC (PowerShell, in the unzipped folder):
+   `.\client.bat <host-external-ip> move` (or `drift`). It needs no Git Bash.
+5. The result is written to `results/wan-<test>-t<tick>.json` on the host.
+
+`main.gd` takes `--host=<ip>` (client), plus `--upnp=1` and `--wait=<s>`
+(server; the wait extends the hard timeout while clients join).
+Verified on one LAN on 2026-10-13: 2 clients via `10.0.0.73`, RTT p50 7 ms
+(`results/lan-verify-2026-10-13.json`). Not yet run across two networks.
