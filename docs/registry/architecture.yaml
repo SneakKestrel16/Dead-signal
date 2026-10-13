@@ -56,6 +56,17 @@ state_ownership:
     added: 2026-10-12
     revised: ""
 
+  - state: player_settings
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0015-scare-presentation-and-view-offset.md
+    interface: "PlayerSettingsView.flinch_enabled(player_id) -> bool (read-only; false for unknown ids); set only by the owning client's reliable set_flinch_enabled(bool) RPC on join and on change, kept in the session record"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0015-scare-presentation-and-view-offset.md   # Scare Events and Controller read it
+    added: 2026-10-12
+    revised: ""
+
   - state: server_tick
     status: active
     owner_system: network-authority
@@ -677,7 +688,7 @@ api_decisions:
 
   - purpose: flinch_view_offset
     status: active
-    api: "Controller owns a per-player FlinchRecord (from, target, start_tick, ramp_ticks); FlinchRecord.offset_at is shared by server and client; ViewOffsetChanged is reliable, owner and spectators only; server evaluates at the frame's offset_tick and adds base[view_epoch]; resets use the epoch handshake; pitch clamp on the sum"
+    api: "Controller owns a per-player FlinchRecord (from, target, start_tick, ramp_ticks); FlinchRecord.offset_at is shared by server and client; ViewOffsetChanged is reliable, owner and spectators only; server evaluates the frame's own record_id record at its offset_tick and adds base[view_epoch]; resets use the epoch handshake; pitch clamp on the sum"
     not: offset in unreliable snapshots; zeroing the offset without a handshake; client camera effects writing yaw/pitch
     adr: docs/architecture/adr-0015-scare-presentation-and-view-offset.md
     reason: "The aim ray uses the server view direction, so the owner must render exactly what the server computes"

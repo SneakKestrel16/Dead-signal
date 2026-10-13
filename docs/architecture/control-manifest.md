@@ -198,10 +198,10 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Occlusion uses `SightTest.line_clear` (doors occlude), queued to `AudioDirector._physics_process`, source lifted `occlusion_floor_lift_m`** — source: ADR-0013, ADR-0012
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
 - **`InputContextStack` is the only writer of `Input.mouse_mode`; the input sampler masks every frame by the top context; `_unhandled_input` gameplay handlers check `allows_actions()`** — source: ADR-0014
-- **Every screen pushes its context when shown and pops the same one when hidden; pop hides the layer, then restores the remembered focus owner only if valid and visible** — source: ADR-0014
+- **Every screen pushes its context when shown and pops the same one when hidden; push shows the layer before `grab_focus`; pop hides the layer, then restores the remembered focus owner only if valid and visible; the stack resets to `MENU` at round end** — source: ADR-0014
 - **HUD widgets read only `HudModel`; HUD and marker `Control`s use `FOCUS_NONE` and `MOUSE_FILTER_IGNORE`; layers come from `UiLayers`** — source: ADR-0014
-- **Every focusable `Control` sets `accessibility_name` from `tr()`; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014
-- **Only the Controller writes a `FlinchRecord`; server and client use the one `FlinchRecord.offset_at` (float tick, `maxi(ramp_ticks, 1)`); the server evaluates at the frame's `offset_tick` and adds `base[view_epoch]`; resets use the epoch handshake; the ±85° clamp applies to the sum** — source: ADR-0015, ADR-0002
+- **Every focusable `Control` without visible text sets `accessibility_name` from `tr()` and refreshes it on locale change; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014
+- **Only the Controller writes a `FlinchRecord`; server and client use the one `FlinchRecord.offset_at` (float tick, `maxi(ramp_ticks, 1)`); the server evaluates the frame's own `record_id` record at its `offset_tick` and adds `base[view_epoch]`; resets use the epoch handshake; the ±85° clamp applies to the sum** — source: ADR-0015, ADR-0002
 - **Client camera effects live under `CameraFx` (physics interpolation off on head, `CameraFx`, `Camera3D`) and never change sent yaw/pitch; every luminance flash passes `FlashLimiter`** — source: ADR-0015
 
 ### Forbidden Approaches
