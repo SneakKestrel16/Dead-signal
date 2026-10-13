@@ -24,7 +24,7 @@ Every GDD rule assumes a server that simulates the round and a client that only 
 | **Knowledge Risk** | HIGH (post-cutoff version; Jolt default since 4.6; `modules/networking.md` and `modules/physics.md` are 4.6 snapshots) |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `modules/networking.md`, `modules/physics.md`, `breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md`; `prototypes/networking-spike/README.md` and `main.gd` (run on 4.7.2) |
 | **Post-Cutoff APIs Used** | Jolt as the default 3D engine (4.6). 3D physics interpolation moved to SceneTree in 4.5 (API unchanged per the reference) |
-| **Verification Required** | (1) ENet head-of-line behaviour between reliable and unreliable traffic, and that separate `@rpc` transfer channels avoid it. (2) `Engine.max_physics_steps_per_frame` default and behaviour on a slow host. (3) `Node3D.reset_physics_interpolation()` on 4.7.2. (4) `move_and_slide` called several times in one `_physics_process` with gravity and floor snapping (the spike replayed only flat, y-pinned movement). (5) Jolt result drift between host and client for identical input (no cross-machine determinism guarantee is documented). (6) Packet size of a full 6-player snapshot against ENet fragmentation |
+| **Verification Required** | (1) ENet head-of-line behaviour between reliable and unreliable traffic, and that separate `@rpc` transfer channels avoid it. (2) `Engine.max_physics_steps_per_frame` default and behaviour on a slow host. (3) `Node3D.reset_physics_interpolation()` on 4.7.2. (4) `move_and_slide` called several times in one `_physics_process` with gravity and floor snapping (the spike replayed only flat, y-pinned movement). (5) Jolt result drift between host and client for identical input (no cross-machine determinism guarantee is documented). (6) Packet size of a full 6-player snapshot against ENet fragmentation. (7) After setting `global_position` and `velocity` on a body standing on a 40° ramp or at the top of a 0.35 m step ramp, `apply_floor_snap()` makes `is_on_floor()` true and the next `move_and_slide()` keeps floor snap; without it, the first replayed step loses snap |
 
 **API coverage.** In the repo reference: ENet, `@rpc` modes, `CharacterBody3D.move_and_slide`, Jolt as default. Exercised by the spike on 4.7.2: setting `Engine.physics_ticks_per_second` at boot, `_physics_process` as the server tick, unreliable RPCs carrying `PackedInt32Array` / `PackedVector2Array` / `PackedByteArray` / `PackedVector3Array` / `PackedFloat32Array`, several `move_and_slide` calls in one physics frame, a server that consumes two inputs in one tick, and a client tick estimate. Training data only: everything under Verification Required.
 
@@ -89,12 +89,12 @@ Traffic uses three transfer channels, so unreliable input or state never waits b
 
 The client never sends position, speed or progress.
 
-**5. Snapshots.** Every tick the server sends each peer one unreliable snapshot stamped with `server_tick`. It carries every player visible to that peer (position, yaw, gait; filtering is ADR-0004's). For the receiving player's own body it also carries the last consumed `seq`, the authoritative position and velocity, and the on-floor flag and floor normal. State-changing facts never travel in snapshots; they are reliable events (`architecture.md`, Data Flow).
+**5. Snapshots.** Every tick the server sends each peer one unreliable snapshot stamped with `server_tick`. It carries every player visible to that peer (position, yaw, gait; filtering is ADR-0004's). For the receiving player's own body it also carries the last consumed `seq`, the authoritative position and velocity, the on-floor flag, and the effective movement modifier after the Controller's arbitration: lock, root, or the slow multiplier (1.0 = none). (Amended after the 2026-10-12 architecture review: the modifier was added because nothing else delivered it to the owner; the floor normal was dropped because `CharacterBody3D` cannot be given one, see rule 6.) State-changing facts never travel in snapshots; they are reliable events (`architecture.md`, Data Flow).
 
 **6. Owner-only prediction and reconciliation.** The owning client runs the same movement step as the server on its own `CharacterBody3D`, and keeps every frame the server has not yet acknowledged.
 
 On each snapshot the client:
-1. restores the server's position, velocity and floor state at the acknowledged `seq`;
+1. restores the server's position and velocity at the acknowledged `seq`, then, if the snapshot's on-floor flag is set, calls `apply_floor_snap()` so the body re-finds its floor before the first replayed step. `CharacterBody3D` has no floor-state setter, so the floor is recomputed from geometry, not copied. `apply_floor_snap()` is training data only (NOT SOURCEABLE from `modules/physics.md`); Verification Required item 7 settles it;
 2. replays the unacknowledged frames inside `_physics_process`;
 3. corrects only if the replayed position differs from the predicted one by more than `correction_deadzone_m` = 0.001.
 
@@ -104,7 +104,7 @@ How a correction shows:
 
 Scope of prediction:
 - Predicted movement collides with static geometry and with doors driven by replicated door state (amended by ADR-0007; was static geometry only). Other players are corrected by the server.
-- Movement modifiers (root, slow, lock) are predicted from the latest replicated registry state, so the first tick of a new modifier may be corrected.
+- Movement modifiers (root, slow, lock) are predicted from the effective modifier in the latest own-body snapshot entry (rule 5), so the first tick of a new modifier may be corrected.
 - Only the owner's own movement is predicted. Hold bars are UI prediction only and the server confirms them (controller rule 13).
 
 **7. Client tick estimate.** The client estimates the current server tick from the stamped snapshots with a smoothed offset, filtered toward the lowest observed round trip, so bursty arrival from a slow host does not jerk it. There is no separate clock-sync protocol.
@@ -168,6 +168,7 @@ func next(tick: int) -> InputFrame   # repeats last on starvation; released afte
 - Input, state and events **must** use separate transfer channels.
 - The movement step **must** be one function shared by server and client. Client-only movement code is forbidden.
 - Every snap **must** call `reset_physics_interpolation()`.
+- Reconciliation **must** restore the floor with `apply_floor_snap()` after setting position, never by assuming the previous floor state carries over.
 - `sim_tick_hz`, `intent_timeout_ms`, queue depths and cap, starvation thresholds and window, `max_seq_ahead`, `correction_deadzone_m`, `correction_smooth_max_m` and `correction_smooth_s` **must** come from data.
 
 ## Alternatives Considered
@@ -249,9 +250,10 @@ No production code exists. The spike is reference only and is rewritten to produ
 
 ## Related
 - ADR-0001 — hosting, session and identity (depends on)
-- ADR-0003 — rewind budget and interpolation delay (not yet written)
-- ADR-0004 — replication scope (not yet written)
-- ADR-0005 — tick order of Feature modules (not yet written)
+- ADR-0003 — rewind budget and interpolation delay
+- ADR-0004 — replication scope
+- ADR-0005 — tick order of Feature modules
+- ADR-0007 — movement step, floor settings, prediction mask (amends rule 6)
 - `docs/architecture/architecture.md` — Data Flow, Required ADR 2
 - `design/gdd/first-person-controller.md`, `design/gdd/match-flow.md`
 - `prototypes/networking-spike/README.md` (H1, H2)

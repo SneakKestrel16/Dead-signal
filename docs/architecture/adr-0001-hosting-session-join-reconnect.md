@@ -203,4 +203,4 @@ No production code exists. The spike (`prototypes/networking-spike/`) is referen
 - `docs/architecture/architecture.md` — Required ADR 1; principles 1 and 4
 - `design/gdd/lobby-role-assignment.md`, `design/gdd/match-flow.md`, `design/gdd/systems-index.md`
 - `prototypes/networking-spike/README.md` (H5)
-- Enables ADR-0002 and ADR-0004 (not yet written)
+- Enables ADR-0002 and ADR-0004

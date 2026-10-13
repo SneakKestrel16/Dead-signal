@@ -24,7 +24,7 @@ The systems index defines 15 server events and a table of read-only replicated s
 | **Knowledge Risk** | HIGH (4.7: overrides inherit the parent's typed return; packed-array element writes no longer call the property setter; `@abstract` is 4.5+) |
 | **References Consulted** | `docs/engine-reference/godot/breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md` |
 | **Post-Cutoff APIs Used** | `@abstract` classes and methods (4.5); 4.7 typed-return override inheritance |
-| **Verification Required** | A headless script per item, before acceptance: (1) an `@abstract` class with non-abstract fields and methods, and instantiating it fails; (2) an override of `@abstract func project(...) -> Dictionary` compiles only with a `return` on every branch; (3) `Callable.is_valid()` after the bound Node is freed; (4) a RefCounted cycle (module → bus → Callable → module) is not freed until `bus.clear()`; (5) `is_instance_of(view, ViewClass)` with a `class_name` script |
+| **Verification Required** | A headless script per item, before acceptance: (1) an `@abstract` class with non-abstract fields and methods, and instantiating it fails; (2) an override of `@abstract func project(...) -> Dictionary` compiles only with a `return` on every branch; (3) `Callable.is_valid()` after the bound Node is freed; (4) a RefCounted cycle (module → bus → Callable → module) is not freed until `bus.clear()`; (5) `is_instance_of(view, ViewClass)` with a `class_name` script; (6) `Dictionary[StringName, Array[Callable]]` fails to parse and `Dictionary[StringName, Array]` with a cast on read works |
 
 **API coverage.** In the repo reference: `@abstract` (bodyless abstract methods), the 4.7 typed-return rule, lambda capture by value. Training data only: everything under Verification Required.
 
@@ -89,7 +89,7 @@ A new event needs a `systems-index.md` row first.
 
 **2. EventBus.** A plain `RefCounted`, injected:
 - `emit(e)` appends to a queue. It is server only.
-- `subscribe(type, handler)` adds a named method to `Dictionary[StringName, Array[Callable]]`.
+- `subscribe(type, handler)` adds a named method to a `Dictionary[StringName, Array]` of handler lists; readers cast elements to `Callable`. GDScript does not nest typed collections, so `Dictionary[StringName, Array[Callable]]` does not compile (`godot-specialist`, 2026-10-12 review; NOT SOURCEABLE from `current-best-practices.md`, Verification Required item 6 settles it).
 - `flush()` drains the queue. Each event is delivered to its subscribers in subscribe order, iterating over a copy of the list and skipping callables that are no longer valid.
 - Events emitted by handlers during a flush join the same drain, so the whole cascade resolves on that tick. A flush that needs more than `max_flush_rounds` = 8 rounds asserts in debug and logs in release.
 - Every event delivered during the tick is also collected for NetAuthority's per-peer projection at the end of the tick (ADR-0002 phase 6).
@@ -99,7 +99,7 @@ A new event needs a `systems-index.md` row first.
 **4. Tick order (ADR-0002 phase 4).** Each step is followed by `bus.flush()`.
 
 1. `MatchFlow.begin` — advance the round clock; phase changes.
-2. `SurvivorDefense` — stun, immunity and shock-lock timers; taser resolution; hiding; barricades.
+2. `SurvivorDefense` — non-hold timers only: stun, immunity and shock lock, rebarricade lockout, hide cue; taser resolution. Hiding, barricading, removing and breaking barricades are holds, timed only by `HoldService` in step 5a (ADR-0008 §1); Defense receives their `on_start`, `on_complete` and `on_cancel` calls.
 3. `BorrowedFace` — observation; transformation progress and completion.
 4. `MonsterAbilities` — lunge wind-up, dash and hit test (ADR-0003); False Signal; Blackout.
 5. `Downing` — takedown commit; bleed-out; rescue.
@@ -145,7 +145,8 @@ phase 6: NetAuthority projects collected events per peer (ADR-0004)
 ### Key Interfaces
 
 ```gdscript
-@abstract class_name ServerEvent extends RefCounted
+@abstract
+class_name ServerEvent extends RefCounted
 var tick: int
 var server_time: float
 @abstract func type() -> StringName
@@ -169,6 +170,7 @@ func server_tick(tick: int) -> void
 ```
 
 ### Implementation Guidelines
+- `@abstract` **must** sit on its own line above `class_name`, as in `current-best-practices.md` and ADR-0008.
 - Every catalog event **must** be a `ServerEvent` subclass named `Ev<EventName>`, implementing `type()` and `project()`, with a `return` on every branch.
 - Only the emitter named in `systems-index.md` **must** emit an event. Clients **must never** emit.
 - A handler **must** change only its own module's state. Cross-module effects **must** go through events.

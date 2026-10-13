@@ -24,7 +24,7 @@ Every player moves through one shared movement step, and every system that casts
 | **Knowledge Risk** | HIGH (Jolt default since 4.6; 4.7 input device IDs; `modules/physics.md` and `modules/input.md` are 4.6 snapshots) |
 | **References Consulted** | `docs/engine-reference/godot/modules/physics.md`, `modules/input.md`, `breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md`; `prototypes/networking-spike/main.gd` |
 | **Post-Cutoff APIs Used** | Jolt as the default 3D engine (4.6); input device checks by event type or `InputEvent.DEVICE_ID_*` (4.7). The 4.7 Jolt changes (`WorldBoundaryShape3D` plane sign, `Area3D` reporting `SoftBody3D`) do not apply: this design uses neither node |
-| **Verification Required** | (1) The project setting value that selects Jolt. (2) `CharacterBody3D` defaults on 4.7.2 for `safe_margin`, `max_slides`, `wall_min_slide_angle` (recalled as 0.001, 6, 15°; training data). (3) Several `move_and_slide` calls in one physics frame replay correctly with gravity and floor snap (needed by ADR-0002; the spike pinned y). (4) `intersect_shape` with `margin = 0` and `exclude` for the stand-up check. (5) `local_to_scene` or code-built shapes are not shared between instances. (6) Capsule snagging on floor seams with Jolt |
+| **Verification Required** | (1) The project setting value that selects Jolt. (2) `CharacterBody3D` defaults on 4.7.2 for `safe_margin`, `max_slides`, `wall_min_slide_angle` (recalled as 0.001, 6, 15°; training data). (3) Several `move_and_slide` calls in one physics frame replay correctly with gravity and floor snap, starting from a restore by position, velocity and `apply_floor_snap()` (needed by ADR-0002, its item 7; the spike pinned y). (4) `intersect_shape` with `margin = 0` and `exclude` for the stand-up check. (5) `local_to_scene` or code-built shapes are not shared between instances. (6) Capsule snagging on floor seams with Jolt |
 
 **API coverage.** In the repo reference: Jolt as the default, `CharacterBody3D.move_and_slide`, `get_gravity`, `PhysicsRayQueryParameters3D` / `intersect_ray`, `Input.get_vector`, device-ID rule. Spike-verified on 4.7.2: Jolt `CharacterBody3D` with `collision_layer` and `move_and_slide` (no gravity). Training data only: the items under Verification Required, `floor_*` properties, `Input.use_accumulated_input`.
 
@@ -70,7 +70,7 @@ Standing up uses `PhysicsDirectSpaceState3D.intersect_shape` with the standing c
 - **Horizontal.** Velocity moves toward `input_dir × effective_speed` over `accel_time_s` = 0.05; `effective_speed` comes from the Controller's gait and modifier rules.
 - **Vertical.** Velocity comes from `get_gravity()` and is reset to 0 while on the floor.
 - **Fixed settings, all from data:** `floor_max_angle = deg_to_rad(40.5)` (just above the 40° limit, so 40° climbs and 41° does not); `floor_snap_length` = 0.4 m (above the 0.35 m step); `floor_stop_on_slope = true`; `floor_constant_speed = true`; and `safe_margin`, `max_slides` and `wall_min_slide_angle` set explicitly.
-- **Read-back.** After `move_and_slide()`, the floor flag and normal are read for ADR-0002's snapshot.
+- **Read-back.** After `move_and_slide()`, `is_on_floor()` is read for ADR-0002's snapshot. On reconciliation the owning client restores position and velocity, then calls `apply_floor_snap()` when that flag is set (ADR-0002 rule 6); the floor is recomputed, never copied, because `CharacterBody3D` has no floor-state setter. (Amended after the 2026-10-12 architecture review; was "the floor flag and normal are read", which assumed a restore the engine does not offer.)
 - **No jump.** No jump action exists.
 
 **4. Steps.** Every step and stair up to 0.35 m gets an invisible ramp collider no steeper than 40°; the visual mesh keeps its steps. Floors use large box colliders rather than many small coplanar pieces, to avoid seam snagging. The camera height is smoothed over the ramp so the visual steps do not jolt the view.
@@ -238,5 +238,5 @@ No production code exists. Amends ADR-0002 rule 6 (prediction includes doors). U
 ## Related
 - ADR-0002 — movement step and prediction (depends on; amended)
 - ADR-0003 — sight rays, analytic doors (depends on)
-- ADR-0008 — hold protocol (not yet written)
+- ADR-0008 — hold protocol
 - `design/gdd/first-person-controller.md`, `design/gdd/borrowed-face.md`, `design/gdd/monster-abilities.md`, `design/gdd/survivor-defense.md`, `design/levels/research-facility.md`

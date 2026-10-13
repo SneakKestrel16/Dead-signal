@@ -2,16 +2,16 @@
 
 ## Document Status
 
-- Version: 1
+- Version: 2
 - Last Updated: 2026-10-12
 - Engine: Godot 4.7.2 (GDScript)
 - GDDs Covered: `lobby-role-assignment`, `first-person-controller`, `match-flow`, `survivor-objectives`, `downing-and-rescue`, `survivor-defense`, `borrowed-face`, `monster-abilities`, `pings-and-callouts`, `scare-events`, plus the Facility Map in `design/levels/research-facility.md`. Not covered (no GDD yet): HUD & Results Screen, Accessibility Options, Match Telemetry.
-- ADRs Referenced: none. No ADRs exist yet (see [ADR Audit](#adr-audit)).
+- ADRs Referenced: ADR-0001 to ADR-0008, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
 - Evidence beyond the GDDs: `prototypes/networking-spike/README.md` (single-machine results, 2026-10-12).
 - TD-ARCHITECTURE: 2026-10-12 — skipped — Lean mode
 - LP-FEASIBILITY: 2026-10-12 — skipped — Lean mode
 
-TR IDs used in this document (`TR-net-*`, `TR-core-*`, ...) are provisional working IDs keyed by domain. `/architecture-review` re-keys them by system when it bootstraps `docs/architecture/tr-registry.yaml`. Nothing has been written to the registry.
+TR IDs in the [ADR Audit](#adr-audit) baseline (`TR-net-*`, `TR-core-*`, ...) are the provisional domain-keyed IDs from version 1. `/architecture-review` re-keyed them by system into [`tr-registry.yaml`](tr-registry.yaml) (138 requirements); use the registry IDs for stories.
 
 ## Engine Knowledge Gap Summary
 
@@ -52,8 +52,8 @@ The model's training data covers Godot to about 4.3. The project is pinned to 4.
 │                Survivor Defense · Monster Abilities · Pings/Callouts │
 │                Scare Events (server half: gating, recipients)        │
 ├──────────────────────────────────────────────────────────────────────┤
-│ CORE           First-Person Controller & Interaction · Borrowed Face │
-│                Lobby & Role Assignment · Facility Map                │
+│ CORE           First-Person Controller & Interaction (HoldService)   │
+│                Borrowed Face · Lobby & Role Assignment · Facility Map│
 ├──────────────────────────────────────────────────────────────────────┤
 │ FOUNDATION     Network Authority & Replication (session, tick,       │
 │                  intent, snapshots, rewind buffer, per-peer          │
@@ -69,7 +69,7 @@ The model's training data covers Godot to about 4.3. The project is pinned to 4.
 Three structural decisions govern the map (approved 2026-10-12):
 
 1. **Every gameplay system has a server half and a client half.** The server half runs in the authoritative simulation, which on a listen server is the host's process. The client half is view, prediction and input. Many GDD rules state what a role must never receive (TR-net-007 to TR-net-012), so the split is a module boundary rather than a convention.
-2. **The event catalog lives in Foundation and Feature systems only emit.** The Controller is Foundation-level yet consumes `RoundEnded` and `PlayerConnectionChanged`, which Match Flow emits. With the catalog in Foundation, the Controller subscribes to the bus and never imports Match Flow, so dependencies still point down. This is an inference; the GDDs say only "event-only, not a layer dependency".
+2. **The event catalog lives in Foundation and Feature systems only emit.** The Controller is Core-level (ADR-0008 §1) yet consumes `RoundEnded` and `PlayerConnectionChanged`, which Match Flow emits. With the catalog in Foundation, the Controller subscribes to the bus and never imports Match Flow, so dependencies still point down. This is an inference; the GDDs say only "event-only, not a layer dependency". (`systems-index.md` files the Controller under its "Core" category, which that document defines as "foundation systems everything depends on"; its category names are not this map's layers. Version 1 of this decision called the Controller Foundation-level, contradicting the map.)
 3. **Borrowed Face stays in Core.** It reads Feature-layer state (stun lock, takedown commit, lunge state) through the State Registry, not by import. The systems index treats event and state reads as non-layer dependencies (cross-review 12d W3).
 
 **Engine awareness (Foundation and Core)**
@@ -78,7 +78,7 @@ Three structural decisions govern the map (approved 2026-10-12):
 |---|---|---|
 | Network Authority | SceneMultiplayer, ENet, `MultiplayerSynchronizer` visibility | NOT SOURCEABLE for 4.7; spike-backed |
 | Controller | Jolt `CharacterBody3D`, input device IDs | HIGH |
-| Facility Map | Lighting states, audio `area_mask`, `Area3D` zones | HIGH |
+| Facility Map | Lighting states, audio `area_mask`; zones are analytic boxes, no `Area3D` (ADR-0007 §9) | HIGH |
 | Event Catalog / State Registry | GDScript typed overrides, packed-array setters | HIGH |
 | Borrowed Face | Animation, `LookAtModifier3D` if used | MEDIUM |
 
@@ -90,18 +90,18 @@ Engine API tags: **V** = covered by the engine reference or proven by the networ
 
 | Module | Owns | Exposes | Consumes | Engine APIs |
 |---|---|---|---|---|
-| Network Authority & Replication | Session and peer table, server tick and clock, per-player input queue (1–2 tick buffer), snapshot history for rewind, per-peer visibility rules, reconnect tokens, join auth | `submit_intent`, `server_time`, `rewound_positions`, `set_entity_visible_to`, `send_event` | Event Catalog (transport), Data/Config | `ENetMultiplayerPeer` V · `SceneMultiplayer.auth_callback` V (spike) · `@rpc` V · `MultiplayerSynchronizer.set_visibility_for` V (spike) · `MultiplayerSpawner` V · `set_multiplayer_authority` V |
-| Event Catalog + State Registry | The 15 named server events and the read-only replicated state table; one declared owner per state key | `emit` (server only), `subscribe`, `read` | Network (transport to clients) | GDScript signals and typed `Resource`s. HIGH: 4.7 typed-return override and packed-array setter changes |
-| Data/Config loader | Every tuning knob, loaded from data files and validated at load | `get_float`, `get_int` | none | `Resource` / `FileAccess` V |
+| Network Authority & Replication | Session and peer table, server tick and clock, per-player input queue (1–2 tick buffer), snapshot history for rewind, per-peer relevance and handles, reconnect tokens, join auth | `TickRunner`, `InputFrame` / `InputQueue` (ADR-0002), `RewindHistory` / `LagCompensation` (ADR-0003), `Relevance` / `HandleTable` (ADR-0004) | Event Catalog (transport), Data/Config | `ENetMultiplayerPeer` V · `SceneMultiplayer.auth_callback` V (spike) · `@rpc` V · `MultiplayerSynchronizer.set_visibility_for` V (spike) · `MultiplayerSpawner` V · `set_multiplayer_authority` V |
+| Event Catalog + State Registry | The 15 named server events and the read-only replicated state table; one declared owner per state key | `EventBus.emit` (server only), `subscribe`, `flush`; `StateRegistry.view` (ADR-0005) | Network (transport to clients) | `@abstract` `RefCounted` event classes, `Callable` handler lists. HIGH: 4.7 typed-return override and packed-array setter changes |
+| Data/Config loader | Every tuning knob, loaded from data files and validated at load | `Knobs` with one typed section per system, `ticks(seconds)` (ADR-0006) | none | `Resource` / `FileAccess` V |
 
 ### Core
 
 | Module | Owns | Exposes | Consumes | Engine APIs |
 |---|---|---|---|---|
-| First-Person Controller & Interaction | Capsule, gaits, effective speed, modifier stack (lock > root > slow), server view direction and view offset, hold protocol, doors | `add_root`/`add_slow`/`add_lock`/`remove`, `view_ray`, interactable definition, hold start/cancel | Network (intent, tick), Registry (`RoundEnded`, `PlayerConnectionChanged`, flinch toggle), Data | `CharacterBody3D.move_and_slide` V · `PhysicsRayQueryParameters3D` V · `Input.get_vector` V · HIGH: Jolt default, `InputEvent.DEVICE_ID_*` |
+| First-Person Controller & Interaction | Capsule, gaits, effective speed, modifier stack (lock > root > slow), server view direction and view offset, `HoldService` (ADR-0008) | `add_root`/`add_slow`/`add_lock`/`remove`, `view_ray`, `Interactable`, `HoldService.register`/`cancel` | Network (intent, tick), Registry (`RoundEnded`, `PlayerConnectionChanged`, flinch toggle), Data | `CharacterBody3D.move_and_slide` V · `PhysicsRayQueryParameters3D` V · `Input.get_vector` V · HIGH: Jolt default, `InputEvent.DEVICE_ID_*` |
 | Borrowed Face | Observation timers, observed list, form, Transforming flag, form-change cooldown | `FormChanged`, form and Transforming state, `displayed_identity(player)` | Controller (speeds, rejection), Facility Map (line of sight), Registry (stun lock, Committing, Lunge state) | Server line of sight via `intersect_ray` V · skeleton/animation copy NV |
 | Lobby & Role Assignment | Roster, rotation queue, preferences, ready flags, countdown, proximity-voice setting | Locked roster handed to Match Flow, `PlayerRoster` state | Network (join, peers), Data | `SceneMultiplayer` V, `ENetMultiplayerPeer` V · UI `Control` nodes (dual focus) V |
-| Facility Map | Level geometry, door state, lighting-volume state, `blackout_able`, active candidate set, camera feeds, exit state, spawn points | Door, volume and exit state, `candidates_for(peer)`, line-of-sight geometry | Registry (`RoundPhaseChanged`, `ObjectiveProgressChanged`), Network (visibility) | `Light3D` / `WorldEnvironment` NV · `Compositor` V · `Area3D` zones HIGH · `AudioStreamPlayer.area_mask` HIGH |
+| Facility Map | Level geometry, door open/closed state, lighting-volume state, `blackout_able`, active candidate set, camera feeds, exit state, spawn points, visibility sets (ADR-0004), analytic zones (ADR-0007) | Door, volume and exit state, `candidates_for(peer)`, `MapQueries`, line-of-sight geometry | Registry (`RoundPhaseChanged`, `ObjectiveProgressChanged`), Network (visibility) | `Light3D` / `WorldEnvironment` NV · `Compositor` V · `AudioStreamPlayer.area_mask` HIGH |
 
 ### Feature
 
@@ -110,7 +110,7 @@ Engine API tags: **V** = covered by the engine reference or proven by the networ
 | Match Flow | Round clock, phase, win evaluation, outcome lock, disconnect grace, results payload | `RoundPhaseChanged`, `RoundEnded`, `SurvivorEscaped`, `PlayerConnectionChanged` | Lobby roster, Objectives (armed, extracted), Downing (eliminated) |
 | Survivor Objectives | Active points, drive/fuse/terminal state, carry, discovery, activation countdown | `ObjectiveProgressChanged` | Controller holds, Facility Map candidates, Downing drops, Defense hidden state |
 | Downing, Rescue & Elimination | Life state, `downs_taken`, takedown commit, bleed-out, rescue progress | `SurvivorDowned`, `SurvivorRescued`, `SurvivorEliminated`; takedown eligibility, Committing | `SurvivorHit`, `MonsterStunned`, positions |
-| Survivor Defense | Charges, stun and immunity, shock lock, hiding spots, barricades, flashlight | `MonsterStunned`, `PlayerShocked`, `BarricadeBroken`; hidden and shock-lock state | Controller view ray, Borrowed Face form, Lunge state |
+| Survivor Defense | Charges, stun and immunity, shock lock, hiding spots, barricade state (barricaded, break progress, lockout), door interaction rules, flashlight | `MonsterStunned`, `PlayerShocked`, `BarricadeBroken`; hidden and shock-lock state | Controller view ray, Borrowed Face form, Lunge state |
 | Monster Abilities | Lunge, False Signal and Blackout state, cooldowns, hit resolution | `SurvivorHit`, `AbilityUsed` (server-only); Lunge state | Network rewind, Borrowed Face, Downing eligibility, Facility Map volumes |
 | Pings & Callouts | Ping tokens, callout cooldowns, markers, displayed-identity attribution | Per-recipient presentation messages | Borrowed Face identity, `AbilityUsed`, Controller view ray |
 | Scare Events (server half) | Scare gating, cooldowns, budgets, recipients, view-offset writes | `ScareTriggered`, view offset | Many events; Facility Map lighting requests |
@@ -151,7 +151,7 @@ Feature tick, FIXED ORDER (ADR-0005), event queue drained after each step:
 Network: per-peer snapshot + event projection ─▶ send
 ```
 
-Client frame: sample input, predict locally, send intent, receive snapshot, reconcile (under 1 m smoothed over 100 ms, larger snaps), interpolate remote players 100 ms behind, render.
+Client frame: sample input, predict locally, send intent, receive snapshot, reconcile (restore position, velocity and floor snap, replay; under 1 m smoothed over 100 ms, larger snaps; ADR-0002), interpolate remote players 50 ms behind (ADR-0003), render.
 
 The fixed order is a requirement. Four GDD rules are tick-order rules: a stun on the tick a transform completes wins (`borrowed-face.md` rule 9); `SurvivorHit` starts the commit and `MonsterStunned` cancels it on the same tick (`downing-and-rescue.md` rule 4); an extraction in the same tick as the deadline wins (`match-flow.md` edge cases); a stun since wind-up cancels the hit (`monster-abilities.md` rule 7). ADR-0005 shows how the order satisfies each.
 
@@ -161,11 +161,11 @@ The fixed order is a requirement. Four GDD rules are tick-order rules: a stun on
 |---|---|---|---|
 | Server-internal event | emitter module → subscribers | Queue drained after each module phase (ADR-0005) | Clients can never emit |
 | Registry state read | owner → reader | Shared state, read-only | Only the owner writes |
-| Client intent | client → Network → owning module | Reliable RPC (`any_peer`), server validates | A forged "done" message is dropped |
+| Client intent | client → Network → owning module | Input frames (move, view, hold bit and target): unreliable, last 3 frames redundant. Item use, ping, callout: reliable RPC tagged with the frame's `seq` (ADR-0002, ADR-0008). Server validates both | No completion message exists to forge; holds are timed on the server |
 | Event to clients | emitter → Network → each recipient | Reliable RPC, per-recipient payload projection | See below |
 | Position and state stream | server → clients | Unreliable snapshots | State-changing facts never travel unreliably |
 
-**Payload projection.** The emitting module supplies `project(event, recipient)` and Network executes it. This keeps `PlayerShocked` identical for a shocked survivor, a stunned disguised monster and an immune disguised monster; sends `MonsterStunned` to survivors only for a true-form monster; strips `source` from `ScareTriggered`; and withholds bleed-out state from the shapeshifter's client. Per-entity hiding (undiscovered drives, hallucinations) uses `MultiplayerSynchronizer` visibility, verified by the spike (H4).
+**Payload projection.** Each event class implements `project(peer, handles) -> Dictionary` (`{}` = not sent) and Network batches the results per peer (ADR-0004 §5, ADR-0005 §1). This keeps `PlayerShocked` identical for a shocked survivor, a stunned disguised monster and an immune disguised monster; sends `MonsterStunned` to survivors only for a true-form monster; strips `source` from `ScareTriggered`; and withholds bleed-out state from the shapeshifter's client. Bodies reach clients only through per-peer snapshots, named by per-peer handles re-issued on re-entry and filtered by the authored room PVS (ADR-0004 §2–4). Per-entity hiding of non-body entities (undiscovered drives, hallucinations) uses `MultiplayerSynchronizer` visibility, verified by the spike (H4); the spawner-leak case is still open (ADR-0004 Verification Required 1).
 
 ### Save and load
 
@@ -196,27 +196,39 @@ Typed GDScript. Engine types used (`Resource`, `StringName`, `Callable`, `Vector
 
 ### Network Authority (Foundation)
 
-```gdscript
-class_name NetAuthority extends Node
+Version 1's `NetAuthority.submit_intent`, `rewound_positions` and `set_entity_visible_to` are superseded. Full signatures live in the ADRs; the main types:
 
-func is_server() -> bool
-func server_time() -> float                         # server clock, seconds since round start
-func submit_intent(kind: StringName, payload: Dictionary) -> void   # client -> server, reliable
-func rewound_positions(at_time: float, max_rewind_s: float) -> Dictionary  # {player_id: Vector3}
-func set_entity_visible_to(entity: Node, peers: PackedInt32Array) -> void
-func send_event(event: ServerEvent, project: Callable) -> void      # project(event, peer_id) -> Dictionary or null
+```gdscript
+class_name InputFrame extends RefCounted     # ADR-0002 §3; ADR-0003 and ADR-0008 add fields
+var seq: int; var move: Vector2; var sprint: bool; var crouch: bool; var yaw: float; var pitch: float
+var view_tick: float; var ack_snapshot_tick: int
+var interact: bool; var interact_target: int; var target_is_body: bool
+
+class_name TickRunner extends Node           # ADR-0002 §2: the only server tick loop
+func current_tick() -> int
+func register_feature(module: Object, phase_order: int) -> void
+
+class_name RewindHistory extends RefCounted  # ADR-0003 §4
+func sample(player_id: int, tick: float) -> Dictionary   # ok = false when out of history
+
+class_name LagCompensation extends RefCounted   # ADR-0003 §6: every server hit test
+func rewind_ticks(attacker_id: int, tick: int) -> float  # clamped; logs disputes
+
+class_name HandleTable extends RefCounted    # ADR-0004 §3: per-peer opaque body handles
+func handle_for(peer: int, player_id: int) -> int
+func retire(peer: int, player_id: int) -> void
 ```
 
-- Invariants: intent handlers treat payloads as untrusted; `send_event` is server-only; `project` returning `null` means the peer receives nothing.
-- Guarantees: one player's intents are consumed in order; reliable events arrive in emit order per recipient; `rewound_positions` clamps to `max_rewind_s` and reports the clamp so disputes can be logged.
-- Open: the value of `max_rewind_s` is ADR 3.
+- Invariants: input packets are validated (lengths, ≤ 3 frames, finite) before any element is read; clients never send position, speed or progress; rule timers count ticks, never the wall clock; client payloads name bodies by handle, never by the shapeshifter's player ID.
+- Guarantees: one player's frames are consumed in `seq` order; reliable events arrive in emit order per recipient; the rewind is clamped to `max_rewind_ms` = 180 and the server-measured RTT bound, and every clamp is logged (ADR-0003).
 
 ### Event Catalog and State Registry (Foundation)
 
 Superseded in detail by ADR-0005 (typed read-only views, drain-flush after each module phase, composition-root wiring).
 
 ```gdscript
-@abstract class_name ServerEvent extends RefCounted   # one Ev<EventName> subclass per catalog event
+@abstract
+class_name ServerEvent extends RefCounted   # one Ev<EventName> subclass per catalog event
 var tick: int
 var server_time: float
 @abstract func type() -> StringName
@@ -244,15 +256,19 @@ func add_slow(player: int, owner: StringName, mult: float, duration_s: float) ->
 func add_lock(player: int, owner: StringName) -> void
 func remove(player: int, owner: StringName) -> void   # removes only that owner's modifiers
 
-@abstract class_name Interactable extends Resource
-@export var range_m: float
-@export var duration_s: float                        # 0 = instant
-@abstract func can_start(actor: int) -> bool
+@abstract
+class_name Interactable extends RefCounted          # ADR-0008 §2; was Resource with can_start
+var net_id: int
+var range_m: float
+var duration_s: float                                # 0 = instant
+var lock_key: StringName                             # &"" = no lock
+@abstract func eligible(actor: int) -> bool
+@abstract func start_progress_s() -> float
 @abstract func on_complete(actor: int) -> void       # owner emits its event here
-@abstract func on_cancel(actor: int, cause: StringName) -> void
+@abstract func on_cancel(actor: int, progress_s: float, reason: StringName) -> void
 ```
 
-- Invariants: the effective modifier is the most restrictive, never a product; one hold per actor; Start is checked on the server against range, line of sight and the exclusive lock.
+- Invariants: the effective modifier is the most restrictive, never a product; the owning client predicts it from its own snapshot entry (ADR-0002 §5); one hold per actor; only `HoldService` times holds; Start is checked on the server against range, line of sight and the exclusive lock.
 - Guarantees: `on_complete` fires exactly once, on the server, never from a client message.
 
 ### Lobby to Match Flow roster handoff (Core to Feature)
@@ -287,9 +303,22 @@ Per-event payload schemas (15 events) belong to the Event Catalog ADR. Borrowed 
 
 ## ADR Audit
 
-`docs/architecture/` contains no ADRs. The ADR quality check (engine compatibility, version, GDD linkage, conflicts, validity) was **not run** because there is nothing to check.
+Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet covered by an accepted decision.
 
-**Traceability coverage: 0 of 41 baseline requirements covered, 41 gaps.** The baseline was extracted from 10 system GDDs plus the Facility Map level doc. `first-person-controller.md` has no `## Tuning Knobs` heading, so it was read from Formulas and Dependencies. The table below is the condensed baseline (the architecture-driving requirements, not all roughly 200 acceptance criteria).
+| ADR | Decision | Acceptance waits on |
+|---|---|---|
+| [ADR-0001](adr-0001-hosting-session-join-reconnect.md) | Listen server over direct ENet, separable server role, `auth_callback` join check, session-token reconnect | Spike's deferred real-network tests |
+| [ADR-0002](adr-0002-authoritative-sim-tick-input.md) | 60 Hz `TickRunner`, redundant unreliable input frames, adaptive 1–2 frame queue, per-peer snapshots, owner-only prediction and replay | Real-network tests; replay with gravity and floor snap (Verification 4, 7) |
+| [ADR-0003](adr-0003-lag-compensation-rewind.md) | 50 ms interpolation, 180 ms rewind cap bounded by measured RTT, analytic hit tests on rewound capsules | Real-network tests; pursuit-simulation rerun at 0.43 s |
+| [ADR-0004](adr-0004-replication-scope-information-hiding.md) | Bodies only through per-peer snapshots, per-peer handles re-issued on re-entry, authored room PVS, per-event projection | Spawner-leak spike case; authored visibility table |
+| [ADR-0005](adr-0005-event-catalog-state-registry-tick-order.md) | `@abstract` event classes with `project()`, drain-flush after each module phase, typed read-only views, fixed module order, composition root | Headless verification scripts |
+| [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Headless verification scripts |
+| [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Replay with gravity and floor snap |
+| [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Headless verification scripts |
+
+**Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 91 covered by a Proposed ADR, 28 partial, 16 gaps, 3 need no ADR. All 16 gaps fall to the should-have ADRs below. Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
+
+The table below is version 1's condensed baseline of 41 architecture-driving requirements, kept because the ADR column shows which planned ADR each was assigned to. The baseline was extracted from 10 system GDDs plus the Facility Map level doc; `first-person-controller.md` has no `## Tuning Knobs` heading, so it was read from Formulas and Dependencies.
 
 | Req ID | Source | Requirement | Domain | ADR |
 |---|---|---|---|---|
@@ -336,11 +365,11 @@ Per-event payload schemas (15 events) belong to the Event Catalog ADR. Borrowed 
 | TR-map-003 | research-facility | 17 lighting volumes with `blackout_able` | Rendering | Should: lighting |
 | TR-map-004 | research-facility | Server-driven camera feed content | Rendering | Should: lighting |
 
-Once the ADRs below exist, every row above names the ADR that is expected to cover it. Until then the status of all rows is a gap.
+A number in the ADR column is the ADR with that number (2 = ADR-0002). Per-requirement status is tracked in the traceability matrix, not here.
 
 ## Required ADRs
 
-At `workflow: standard` only critical ADRs are required. The "before coding" list is the critical set.
+At `workflow: standard` only critical ADRs are required. The "before coding" list is the critical set. All eight are written as ADR-0001 to ADR-0008 (Proposed); each must be accepted, parents first, before code that depends on it is written.
 
 ### Must have before coding starts (Foundation and Core)
 
@@ -383,11 +412,13 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 
 Each blocks the ADR named in brackets.
 
-- **Rewind budget.** Needed rewind is one-way latency plus 100 ms interpolation: about 160 ms at 50 ms RTT and 260 ms at 150 ms RTT, against the 150 ms cap in `monster-abilities.md`. Raise the cap to about 250–300 ms, cut interpolation to about 50 ms, or both, then rerun the dodge-window check. Accepting any value reopens that GDD. [ADR 3]
-- **Hosting model and real networks.** Listen vs dedicated server is undecided. Real WAN latency and loss, home upload, NAT and port forwarding, clock drift and Wi-Fi spikes are untested (the spike's deferred list). [ADR 1]
-- **Monster identity leak.** Can survivor clients be kept from learning which entity is the monster? `FormChanged` names the shapeshifter and the Transforming flag sits on its entity (`borrowed-face.md` Open Questions). [ADR 4]
-- **Spectator scope.** Eliminated and Escaped players should receive exactly what the survivor they watch receives (`pings-and-callouts.md`), but no GDD defines the replication mechanism. [ADR 4]
+- **Real networks.** Real WAN latency and loss, home upload, NAT and port forwarding, clock drift and Wi-Fi spikes are untested (the spike's deferred list). They gate acceptance of ADR-0001 to ADR-0003. [ADR-0001]
 - **Borrowed Face rendering.** Shared rig or separate models is in no GDD. [Should-have ADR]
-- **NOT SOURCEABLE gaps.** `Light3D` and lighting volumes, proximity voice transport, engine-internal threading, 4.7 networking beyond the spike. The networking module doc needs a 4.7 refresh. [lighting, voice and ADR 1]
-- **Dedicated-server support.** `lobby-role-assignment.md` rule 1 defers it to the Network Authority ADR and no acceptance criterion covers it. [ADR 1]
+- **NOT SOURCEABLE gaps.** `Light3D` and lighting volumes, proximity voice transport, engine-internal threading, 4.7 networking beyond the spike. The networking module doc needs a 4.7 refresh. [lighting, voice, ADR-0001]
 - **Missing GDDs.** HUD & Results Screen (`/ux-design`), Accessibility Options and Match Telemetry have no design doc, so their requirements are not in the baseline.
+
+Resolved since version 1:
+- **Rewind budget**: 50 ms interpolation and a 180 ms cap bounded by measured RTT (ADR-0003); the pursuit simulation still needs its rerun at 0.43 s.
+- **Hosting model**: listen server for MVP with a separable server role; dedicated hosting stays possible but is not built (ADR-0001).
+- **Monster identity leak**: per-peer handles re-issued on re-entry and per-event projection (ADR-0004).
+- **Spectator scope**: a spectator receives the stream projected for the watched survivor; switching re-issues every handle (ADR-0004 §8).

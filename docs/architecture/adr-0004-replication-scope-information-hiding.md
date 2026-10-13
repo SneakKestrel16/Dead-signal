@@ -24,7 +24,7 @@ The GDDs require that no client learns what its player could not perceive, and a
 | **Knowledge Risk** | HIGH (post-cutoff version; `modules/networking.md` is a 4.6 snapshot; the 4.7 migration guide lists no multiplayer changes) |
 | **References Consulted** | `docs/engine-reference/godot/modules/networking.md`, `breaking-changes.md`, `deprecated-apis.md`; `prototypes/networking-spike/README.md` (H4) and `main.gd` |
 | **Post-Cutoff APIs Used** | None introduced after 4.3 |
-| **Verification Required** | (1) **Blocking for acceptance:** a spike case that spawns a hidden entity through `MultiplayerSpawner` and confirms a never-granted peer receives neither the node nor any traffic for it. (2) `set_visibility_for` on a node not yet spawned for that peer. (3) `MultiplayerSynchronizer.add_visibility_filter` and `update_visibility` timing (training data only). (4) Snapshot size with real body state against the estimate below |
+| **Verification Required** | (1) **Blocking for acceptance:** a spike case that spawns a hidden entity through `MultiplayerSpawner` and confirms a never-granted peer receives neither the node nor any traffic for it. (2) `set_visibility_for` on a node not yet spawned for that peer. (3) `MultiplayerSynchronizer.add_visibility_filter` and `update_visibility` timing (training data only). (4) Snapshot size with real body state against the estimate below. (5) A packet capture of the first RPC to each fixed-name node shows no player or peer ID in any node path |
 
 **API coverage.** In the repo reference: `rpc_id`, `@rpc` modes, `SceneMultiplayer.server_relay`. Spike-verified on 4.7.2: `MultiplayerSynchronizer.public_visibility = false`, `set_visibility_for` grant and revoke (revoke despawns on that peer), `update_visibility`, `MultiplayerSpawner.spawn_function` / `spawn_path` / `spawn()`. Training data only: `add_visibility_filter`, spawner-level visibility rules, exact `update_visibility` timing.
 
@@ -98,6 +98,10 @@ A body entry in a snapshot carries:
 
 **7. Non-body hidden entities.** Undiscovered drive rooms and fuse spawns, single-client hallucinations and monster-only markers are spawned through `MultiplayerSpawner` with a `MultiplayerSynchronizer` whose `public_visibility` is `false`. They are granted per peer with `set_visibility_for(peer, true)`. Spawned node names are opaque counters (`E%d`), and spawn payloads carry no identity.
 
+Spawn order (amended after the 2026-10-12 architecture review): the `spawn_function` returns the node with its synchronizer's `public_visibility = false` already set, and the server calls `set_visibility_for` for each granted peer right after `spawn()`, in the same frame, before the next network poll. Whether that order keeps a never-granted peer from receiving the spawn is what Verification Required item 1 tests; until it passes, this decision is not acceptable.
+
+**7a. RPC paths.** The first RPC to a node sends its node path to the peer, so a node name is a payload. Every per-peer RPC (introduce, retire, event batches, snapshots, positional sounds) targets one fixed-name node on the round-server root. Client puppet nodes carry no RPCs and are named by a client-local counter, never by player ID, peer ID or handle. No node anywhere is named after a player or peer ID during a round. (`godot-specialist`, 2026-10-12 review; path-on-first-RPC is NOT SOURCEABLE from `modules/networking.md`, so Verification Required item 5 checks it.)
+
 **8. Spectators.** An Eliminated or Escaped player's client receives the stream projected for the survivor it watches. Switching the watched survivor discards the spectator's puppet map; every handle is re-issued and a full snapshot is sent.
 
 **9. Reconnect.** On ADR-0001's rebind, the client discards its puppet map. The server re-issues every handle for the new peer, re-applies `set_visibility_for` for the new peer ID, and sends a full snapshot before any delta.
@@ -142,7 +146,8 @@ func project(peer: int, handles: HandleTable) -> Dictionary     # {} = not sent 
 - A handle **must** be introduced on the reliable event channel before any event or snapshot uses it.
 - A form change or transformation start on a lingering body **must** retire its handle.
 - Sounds **must** be positional events with no handle.
-- Spawned non-body nodes **must** use opaque counter names and identity-free spawn payloads.
+- Spawned non-body nodes **must** use opaque counter names and identity-free spawn payloads. Their synchronizer **must** have `public_visibility = false` before `spawn()` returns, and `set_visibility_for` grants **must** follow `spawn()` in the same frame.
+- Per-peer RPCs **must** target fixed-name nodes. Puppet nodes **must never** carry RPCs. Nodes **must never** be named after a player ID, peer ID or handle.
 - `relevance_near_m` and `relevance_linger_s` **must** come from data. The visibility sets **must** come from Facility Map data, not code.
 
 ## Alternatives Considered
@@ -186,7 +191,8 @@ func project(peer: int, handles: HandleTable) -> Dictionary     # {} = not sent 
 - A body that leaves and returns within 0.5 s keeps its handle, so a short gap can be bridged (bounded by the form-change retire rule).
 
 ## Risks
-- **Spawner visibility leak.** Unverified whether a spawner reaches peers its synchronizer never granted. Mitigation: Verification Required item 1 before acceptance.
+- **Spawner visibility leak.** Unverified whether a spawner reaches peers its synchronizer never granted. Mitigation: the spawn order in Decision 7; Verification Required item 1 before acceptance.
+- **Node-path leak.** A node named by player or peer ID leaks it in the first RPC's path. Mitigation: Decision 7a; Verification Required item 5.
 - **Timing correlation.** A cheater may correlate one body leaving and another appearing. Mitigation: accepted residual; it matches what an attentive player infers by ear.
 - **PVS authoring errors.** A missing set entry hides a visible body (pop-in); an extra one leaks. Mitigation: a debug overlay listing relevant bodies per peer, and an integration test walking every volume.
 - **Projection mistakes.** One event that forgets to project leaks. Mitigation: ADR-0005 makes `project` mandatory; a test fails on any event class without it.
@@ -224,7 +230,7 @@ No production code exists. GDDs updated alongside this ADR: `research-facility.m
 
 ## Related
 - ADR-0001, ADR-0002 (depends on)
-- ADR-0005 — event catalog; makes `project` mandatory (not yet written)
+- ADR-0005 — event catalog; makes `project` mandatory
 - `docs/architecture/architecture.md` — principle 2, Required ADR 4
 - `design/gdd/borrowed-face.md`, `design/gdd/survivor-defense.md`, `design/gdd/scare-events.md`, `design/gdd/survivor-objectives.md`, `design/gdd/downing-and-rescue.md`, `design/gdd/pings-and-callouts.md`, `design/levels/research-facility.md`, `design/gdd/systems-index.md`
 - `prototypes/networking-spike/README.md` (H4)

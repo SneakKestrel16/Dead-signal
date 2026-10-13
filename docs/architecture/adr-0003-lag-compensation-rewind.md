@@ -77,8 +77,8 @@ rewind     = clamp(view_lag, 0, min(cap_ticks, rtt_bound))
 
 **6. Analytic hit tests.** No physics body is moved for a test.
 - **Targets.** Distance and cone checks against rewound capsules are computed in GDScript. The capsule segment half-length is `height / 2 - radius`.
-- **Walls.** Line of sight to static walls uses `intersect_ray` with a `collision_mask` limited to static geometry; player bodies, doors and areas are excluded. Rays start at the eye or chest point, never inside a collider.
-- **Doors and barricades.** They are tested analytically as boxes built from the Facility Map's authoritative open, closed and barricaded state. This avoids any same-tick lag between a door toggle and the physics space.
+- **Walls.** World rays use `intersect_ray` with a named mask from ADR-0007's `PhysicsLayers`: `SIGHT` (`world`) for line of sight, so glass does not block it, and `PROJECTILE` (`world | glass`) for the taser ray and the dash path. Player bodies and the `doors` layer are excluded. Rays start at the eye or chest point, never inside a collider. (Amended after ADR-0007; was "static geometry only", which predates the glass and doors layers.)
+- **Doors and barricades.** They are tested analytically as boxes built from authoritative state: door open or closed from the Facility Map, barricade state from Survivor Defense (owners per the `systems-index.md` state table). This avoids any same-tick lag between a door toggle and the physics space.
 - **Lunge.** Each tick of Active, the GDD's rule 7 test runs against rewound capsules, analytic door boxes and the wall ray; the closest qualifying survivor is hit.
 - **Taser.** The shot ray is tested against each rewound capsule (skipping Seized and Downed survivors), the analytic door boxes and the wall ray. The nearest hit along the ray wins. `stun_aim_tolerance_deg` widens the target test for aim imprecision only.
 
@@ -94,7 +94,7 @@ CLIENT A (attacker)                     SERVER tick T (TickRunner)
             ack_snapshot_tick} ───────▶            min(180 ms, rtt_bound))
                                            targets = history.at(T - rewind)   (interpolated)
                                            test: analytic capsules + analytic door boxes
-                                                 + intersect_ray(static walls only)
+                                                 + intersect_ray(SIGHT / PROJECTILE)
                                            eligibility, stun, doors: CURRENT state
                                            clamp applied? → dispute log
 ```
@@ -121,7 +121,7 @@ func ray_first_hit(origin: Vector3, dir: Vector3, max_dist: float, targets: Arra
 - Hit tests **must never** move a physics body or use `intersect_shape` to test players. Players are tested analytically against rewound history.
 - Eligibility, stun, hiding, grace and door state **must** be read at the current tick, never rewound.
 - `view_tick` **must** be rejected when non-finite or ahead of the server tick. The rewind **must** be clamped by the server-measured RTT bound.
-- World rays **must** use a mask of static geometry only. Doors and barricades **must** be tested from authoritative state.
+- World rays **must** use `PhysicsLayers.SIGHT` for line of sight and `PhysicsLayers.PROJECTILE` for the taser ray and dash path (ADR-0007). Doors and barricades **must** be tested from authoritative state.
 - `interp_delay_ms`, `max_extrapolation_ms`, `max_rewind_ms`, `history_ticks` and `slack_ticks` **must** come from data.
 
 ## Alternatives Considered
