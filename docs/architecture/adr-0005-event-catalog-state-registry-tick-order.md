@@ -24,7 +24,7 @@ The systems index defines 15 server events and a table of read-only replicated s
 | **Knowledge Risk** | HIGH (4.7: overrides inherit the parent's typed return; packed-array element writes no longer call the property setter; `@abstract` is 4.5+) |
 | **References Consulted** | `docs/engine-reference/godot/breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md` |
 | **Post-Cutoff APIs Used** | `@abstract` classes and methods (4.5); 4.7 typed-return override inheritance |
-| **Verification Required** | A headless script per item, before acceptance: (1) an `@abstract` class with non-abstract fields and methods, and instantiating it fails; (2) an override of `@abstract func project(...) -> Dictionary` compiles only with a `return` on every branch; (3) `Callable.is_valid()` after the bound Node is freed; (4) a RefCounted cycle (module → bus → Callable → module) is not freed until `bus.clear()`; (5) `is_instance_of(view, ViewClass)` with a `class_name` script; (6) `Dictionary[StringName, Array[Callable]]` fails to parse and `Dictionary[StringName, Array]` with a cast on read works |
+| **Verification Required** | A headless script per item, before acceptance: (1) an `@abstract` class with non-abstract fields and methods, and instantiating it fails; (2) an override of `@abstract func project(...) -> Dictionary` compiles only with a `return` on every branch; (3) `Callable.is_valid()` after the bound Node is freed; (4) which references actually keep a round alive: whether a named-method `Callable` holds a strong reference to its `RefCounted` object or only its object ID (`godot-specialist` expects the ID, which would mean module → bus → Callable → module is not a cycle), and whether module → registry → view → module state is one, freed only by `registry.clear()`; (5) `is_instance_of(view, ViewClass)` with a `class_name` script; (6) `Dictionary[StringName, Array[Callable]]` fails to parse and `Dictionary[StringName, Array]` with a cast on read works |
 
 **API coverage.** In the repo reference: `@abstract` (bodyless abstract methods), the 4.7 typed-return rule, lambda capture by value. Training data only: everything under Verification Required.
 
@@ -63,7 +63,7 @@ The order sketched in `architecture.md` ran the Match Flow clock first and check
 
 ## Decision
 
-**1. Events.** `ServerEvent` is an `@abstract` class extending `RefCounted` with `tick` and `server_time` fields and two abstract methods: `type() -> StringName` and `project(peer, handles) -> Dictionary`. `project` returns `{}` when the peer receives nothing. Each catalog event is a subclass named `Ev<EventName>` with typed fields, and its file header names its emitter. Every override ends every branch with an explicit `return` (4.7).
+**1. Events.** `ServerEvent` is an `@abstract` class extending `RefCounted` with `tick` and `server_time` fields and two abstract methods: `type() -> StringName` and `project(peer, handles) -> Dictionary`. `project` returns `{}` when the peer receives nothing. Each catalog event is a subclass named `Ev<EventName>` with typed fields, and its file header names its emitter. Every override restates the parent's return type in its signature and ends every branch with an explicit `return` (4.7 typed-return inheritance, `breaking-changes.md`); restating keeps the type visible where the method is read, rather than inherited silently.
 
 The catalog is the 15 events in `systems-index.md`, with names unchanged:
 
@@ -123,7 +123,7 @@ How the four same-tick rules hold:
 
 The registry's keys are the rows of the `systems-index.md` state table.
 
-**6. Composition root.** One round-server node constructs the services (`TickRunner`, `EventBus`, `StateRegistry`, `Knobs`, `NetAuthority`) and every module, passing services in through `setup()`. There are no gameplay autoloads. Modules subscribe and register views in `setup()`. At round end the root calls `bus.clear()` and `registry.clear()` and drops its module references, which breaks the module → bus → Callable → module cycles RefCounted cannot collect.
+**6. Composition root.** One round-server node constructs the services (`TickRunner`, `EventBus`, `StateRegistry`, `Knobs`, `NetAuthority`) and every module, passing services in through `setup()`. There are no gameplay autoloads. Modules subscribe and register views in `setup()`. At round end the root calls `bus.clear()` and `registry.clear()` and drops its module references. That breaks every cycle RefCounted cannot collect: certainly module → registry → view → module (a view reads its owner's state), and module → bus → Callable → module if a `Callable` holds a strong reference (Verification Required item 4; the original premise named only the bus cycle, which the 2026-10-12 review doubts).
 
 **7. Client side.** A `ClientEventRouter` receives ADR-0004's projected per-peer batches and dispatches each payload by its type to client presentation modules. Clients never construct `ServerEvent` objects.
 
@@ -171,7 +171,7 @@ func server_tick(tick: int) -> void
 
 ### Implementation Guidelines
 - `@abstract` **must** sit on its own line above `class_name`, as in `current-best-practices.md` and ADR-0008.
-- Every catalog event **must** be a `ServerEvent` subclass named `Ev<EventName>`, implementing `type()` and `project()`, with a `return` on every branch.
+- Every catalog event **must** be a `ServerEvent` subclass named `Ev<EventName>`, implementing `type()` and `project()`, restating each parent return type, with a `return` on every branch.
 - Only the emitter named in `systems-index.md` **must** emit an event. Clients **must never** emit.
 - A handler **must** change only its own module's state. Cross-module effects **must** go through events.
 - Handlers **must** be named methods, not lambdas.
@@ -229,7 +229,7 @@ func server_tick(tick: int) -> void
 
 ## Risks
 - **Hidden ordering assumptions.** A new rule may need a different order. Mitigation: any order change is an ADR amendment; tick-order tests encode the four rules above.
-- **Reference cycles.** Mitigation: `clear()` at round end; an orphan-node and object-count check in the round-teardown test (gdUnit4 reports orphans).
+- **Reference cycles.** Mitigation: `clear()` on bus and registry at round end; an orphan-node and object-count check in the round-teardown test (gdUnit4 reports orphans); Verification Required item 4 names which cycles exist.
 - **`@abstract` behaviour on 4.7.2.** Mitigation: Verification Required items 1–2.
 
 ## GDD Requirements Addressed

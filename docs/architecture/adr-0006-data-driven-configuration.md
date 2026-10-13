@@ -24,7 +24,7 @@ About 120 tuning knobs across the 10 system GDDs must live outside code, be vali
 | **Knowledge Risk** | MEDIUM: `Resource` and `.tres` are stable since 4.0; 4.5 added `duplicate_deep()` (`current-best-practices.md`). Load-time behaviours below are not covered by the engine reference |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `current-best-practices.md` (Resources 4.5+), `breaking-changes.md`, `deprecated-apis.md`; ADR-0001, ADR-0002, ADR-0005 |
 | **Post-Cutoff APIs Used** | None required |
-| **Verification Required** | A headless script per item, before acceptance. Each is NOT SOURCEABLE from `docs/engine-reference/godot/`: (1) `get_property_list()` on a script `Resource` returns `PROPERTY_HINT_RANGE` with a `"min,max"` hint string for `@export_range(min, max)` fields; (2) `ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)` returns a fresh instance each call, and mutating it does not affect the next load; (3) `nan` round-trips through the `.tres` text format, a field left at its `NAN` default is omitted from the file and reported as unset after load, and an exported build (binary `.res` + `.remap`) loads `res://data/knobs/<section>.tres` by path; (4) `HashingContext` SHA-256 over `var_to_bytes` of the same values gives the same digest on two runs and two machines |
+| **Verification Required** | A headless script per item, before acceptance. Each is NOT SOURCEABLE from `docs/engine-reference/godot/`: (1) `get_property_list()` on a script `Resource` returns `PROPERTY_HINT_RANGE` with a `"min,max"` hint string for `@export_range(min, max)` fields; (2) `ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)` returns a fresh instance each call, and mutating it does not affect the next load; (3) `nan` round-trips through the `.tres` text format, a field left at its `NAN` default is omitted from the file and reported as unset after load, and an exported build (binary `.res` + `.remap`) loads `res://data/knobs/<section>.tres` by path; (4) `HashingContext` SHA-256 over `var_to_bytes` of the same values gives the same digest on two runs and two machines; (5) a `.tres` with one misspelled key loads without a fatal error, and the correctly named field reports unset |
 
 ## ADR Dependencies
 
@@ -49,7 +49,7 @@ The coding standard requires every gameplay value to come from external config, 
 ### Requirements
 - Every Tuning Knobs value is in data, with its GDD's safe range checked at load.
 - Cross-knob rules named in GDDs and ADRs are checked at load.
-- Typos in knob names fail at parse time, not mid-round.
+- Typos in knob names fail before the round starts: at parse time in code, at load in data files.
 - Unit tests can build knobs without file I/O.
 
 ## Decision
@@ -62,7 +62,7 @@ The coding standard requires every gameplay value to come from external config, 
 
 **4. Load and validate.** At boot, `Knobs.load_all()` loads each file with `CACHE_MODE_IGNORE` and runs:
 - **Range check**, derived from each field's `PROPERTY_HINT_RANGE` hint string (`split(",")`, first two entries; trailing flags such as `or_greater` ignored), so the GDD range is written once, in the `@export_range`;
-- **Unset check** (rule 2);
+- **Unset check** (rule 2). This is also what catches a misspelled key in a `.tres`: the loader most likely drops a property the script does not declare, so the real field stays at its unset default. That drop is inference (`godot-specialist`, 2026-10-12 review; NOT SOURCEABLE), settled by Verification Required item 5;
 - **Cross-knob rules**: each section's `validate_cross()` and `Knobs.validate_cross()` for rules spanning sections, each check citing its GDD or ADR (e.g. `hold_range_tolerance_m` < `interact_range_m`; the ADR-0003 dodge budget from `max_rewind_ms`, `lunge_windup_s` and the interpolation delay).
 
 Errors are collected, not stopped at the first. Any error means the game refuses to host and shows the list; debug builds also assert. A client with invalid knobs cannot join, because its hash will not match.
@@ -126,7 +126,7 @@ func ticks(seconds: float) -> int                 # roundi(seconds * net.sim_tic
 - **Description**: `get_float(&"stun_duration_s")` over one parsed file (architecture.md's original API).
 - **Pros**: Plain text, diff-friendly, one file.
 - **Cons**: A typo in a key is found only when that line runs; types are checked by hand; ranges need a separate schema.
-- **Rejection Reason**: Typed fields catch name errors at parse time, and `@export_range` carries the range once.
+- **Rejection Reason**: Typed fields catch code-side name errors at parse time and file-side ones at load (unset check), and `@export_range` carries the range once.
 
 ### Alternative 2: Constants in a GDScript file
 - **Description**: `const STUN_DURATION_S := 2.0`.
@@ -149,7 +149,7 @@ func ticks(seconds: float) -> int                 # roundi(seconds * net.sim_tic
 ## Consequences
 
 ### Positive
-- Knob-name typos fail at parse time; ranges are written once.
+- Knob-name typos in code fail at parse time; typos in data files fail the unset check at load. Ranges are written once.
 - Host and clients provably run the same values.
 - `.tres` files are editable in the Godot inspector with range sliders.
 

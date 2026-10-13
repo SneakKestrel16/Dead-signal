@@ -24,7 +24,7 @@ Every interaction in Dead Signal (objectives, rescue, barricades, hiding, search
 | **Knowledge Risk** | HIGH: 4.5 `@abstract`; 4.7 typed-return overrides need an explicit `return` (the reference states it for typed returns; whether a `void` override is affected is unverified until Verification item 1 runs) |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `breaking-changes.md`, `current-best-practices.md`, `modules/physics.md`, `modules/networking.md`; ADR-0002, ADR-0004, ADR-0005, ADR-0007 |
 | **Post-Cutoff APIs Used** | `@abstract` (4.5) on `Interactable`; Jolt `intersect_ray` (default since 4.6) for the line-of-sight check |
-| **Verification Required** | A headless script per item, before acceptance: (1) does an `Interactable` subclass whose `void` `on_cancel` override has no `return` compile (unverified: the reference is silent on `void`)? And does one whose `eligible` override misses a branch's `return` fail to compile? (2) a line-of-sight `intersect_ray` on `PhysicsLayers.PROJECTILE` from an eye inside a player capsule, with that player's RID excluded, reports the wall beyond and not the capsule, with `hit_from_inside = false` and `collide_with_areas = false` (neither setting is in the engine reference); (3) two actors started on one `lock_key` on the same tick in a scripted queue order; the first in rotated order holds the lock |
+| **Verification Required** | A headless script per item, before acceptance: (1) does an `Interactable` subclass whose `void` `on_cancel` override has no `return` compile (unverified: the reference is silent on `void`)? And does one whose `eligible` override misses a branch's `return` fail to compile? (2) the line-of-sight check (`intersect_ray` on `PhysicsLayers.PROJECTILE` plus the analytic door test) is blocked by a glass pane and by a closed door between eye and point, and not blocked once the door opens; with `collide_with_areas = false` (not in the engine reference). This replaces the original item, which tested that the actor's own capsule is skipped: `PROJECTILE` excludes the `players` layer, so it cannot be hit (2026-10-12 review); (3) two actors started on one `lock_key` on the same tick in a scripted queue order; the first in rotated order holds the lock |
 
 ## ADR Dependencies
 
@@ -148,6 +148,7 @@ func interactable_on_ray(origin: Vector3, dir: Vector3) -> int   # net id, -1 if
 - `HoldService.server_tick` **must** run only inside TickRunner's `_physics_process` phases, because it queries `direct_space_state`. Querying outside the physics step is not covered by the engine reference.
 - The flags byte **must** be packed whole per frame. Writing a `PackedByteArray` property by index no longer fires its setter (4.7, `breaking-changes.md`).
 - `@abstract` **must** sit on its own line above `class_name`, as in `current-best-practices.md`.
+- Every `Interactable` override **must** restate the parent's return type, `void` included (ADR-0005 §1). Whether a `void` override also needs an explicit `return` stays Verification item 1.
 
 ## Alternatives Considered
 

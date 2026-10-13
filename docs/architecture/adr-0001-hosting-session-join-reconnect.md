@@ -116,6 +116,7 @@ Reject reasons are `StringName` codes (`&"lobby_full"`, `&"round_in_progress"`, 
 - The host's local player **must** submit intent through the same path as remote players.
 - The server role **must** run with no local player.
 - `server_relay` **must** be `false`.
+- `auth_callback`, `auth_timeout` and `server_relay` **must** be set on the `SceneMultiplayer` before `multiplayer_peer` is assigned, on host and client, as in the `modules/networking.md` example, so no peer connects under default settings. (`godot-specialist`, 2026-10-12 review.)
 - On rebind, the server **must** re-apply per-peer visibility and send a full snapshot before any delta.
 - A token **must never** be sent to any peer but its owner, logged in telemetry or shown in UI.
 - Port, `max_clients` headroom, `auth_timeout`, ENet timeout, `reject_close_delay_s` and the payload cap **must** come from data, not literals.

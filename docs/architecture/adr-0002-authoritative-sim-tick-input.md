@@ -24,7 +24,7 @@ Every GDD rule assumes a server that simulates the round and a client that only 
 | **Knowledge Risk** | HIGH (post-cutoff version; Jolt default since 4.6; `modules/networking.md` and `modules/physics.md` are 4.6 snapshots) |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `modules/networking.md`, `modules/physics.md`, `breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md`; `prototypes/networking-spike/README.md` and `main.gd` (run on 4.7.2) |
 | **Post-Cutoff APIs Used** | Jolt as the default 3D engine (4.6). 3D physics interpolation moved to SceneTree in 4.5 (API unchanged per the reference) |
-| **Verification Required** | (1) ENet head-of-line behaviour between reliable and unreliable traffic, and that separate `@rpc` transfer channels avoid it. (2) `Engine.max_physics_steps_per_frame` default and behaviour on a slow host. (3) `Node3D.reset_physics_interpolation()` on 4.7.2. (4) `move_and_slide` called several times in one `_physics_process` with gravity and floor snapping (the spike replayed only flat, y-pinned movement). (5) Jolt result drift between host and client for identical input (no cross-machine determinism guarantee is documented). (6) Packet size of a full 6-player snapshot against ENet fragmentation. (7) After setting `global_position` and `velocity` on a body standing on a 40° ramp or at the top of a 0.35 m step ramp, `apply_floor_snap()` makes `is_on_floor()` true and the next `move_and_slide()` keeps floor snap; without it, the first replayed step loses snap |
+| **Verification Required** | (1) ENet head-of-line behaviour between reliable and unreliable traffic, and that separate `@rpc` transfer channels avoid it. (2) `Engine.max_physics_steps_per_frame` default and behaviour on a slow host. (3) `Node3D.reset_physics_interpolation()` on 4.7.2, and that a child with `physics_interpolation_mode` OFF under an interpolated body renders its offset and the camera's rotation unsmoothed. (4) `move_and_slide` called several times in one `_physics_process` with gravity and floor snapping (the spike replayed only flat, y-pinned movement). (5) Jolt result drift between host and client for identical input (no cross-machine determinism guarantee is documented). (6) Packet size of a full 6-player snapshot against ENet fragmentation. (7) After setting `global_position` and `velocity` on a body standing on a 40° ramp or at the top of a 0.35 m step ramp, `apply_floor_snap()` makes `is_on_floor()` true and the next `move_and_slide()` keeps floor snap; without it, the first replayed step loses snap |
 
 **API coverage.** In the repo reference: ENet, `@rpc` modes, `CharacterBody3D.move_and_slide`, Jolt as default. Exercised by the spike on 4.7.2: setting `Engine.physics_ticks_per_second` at boot, `_physics_process` as the server tick, unreliable RPCs carrying `PackedInt32Array` / `PackedVector2Array` / `PackedByteArray` / `PackedVector3Array` / `PackedFloat32Array`, several `move_and_slide` calls in one physics frame, a server that consumes two inputs in one tick, and a client tick estimate. Training data only: everything under Verification Required.
 
@@ -74,7 +74,7 @@ Feature modules must not run rules from their own `_physics_process`.
 
 **3. Intent transport.** Every physics tick the client sends one unreliable RPC to the server holding its last 3 input frames, as packed arrays: `seq` (`PackedInt32Array`), `move` (`PackedVector2Array`), flags (`PackedByteArray`: sprint, crouch), `yaw` and `pitch` (`PackedFloat32Array`). Interaction start and stop travel in the frame itself as an `interact` flag and a target (amended by ADR-0008). Other discrete intents (item use, ping, callout) go by a reliable RPC carrying the `seq` of the frame they belong to, so the server applies them on the same tick as that frame.
 
-Traffic uses three transfer channels, so unreliable input or state never waits behind a lost reliable packet:
+Traffic uses three transfer channels, so unreliable input or state never waits behind a lost reliable packet. `create_server` and `create_client` are called with a channel count that covers them plus ENet's default channel; the exact count is fixed when the loss-injection test (Risks) confirms which channel numbers `@rpc` uses:
 - input frames;
 - snapshots;
 - reliable intents and events.
@@ -83,7 +83,7 @@ Traffic uses three transfer channels, so unreliable input or state never waits b
 - **Validation.** All arrays must have equal length and at most 3 entries, and every float must be finite; otherwise the whole packet is dropped. `move` is clamped to length 1 and pitch to ±85°. Already-seen or out-of-order `seq` values are dropped. A `seq` more than `max_seq_ahead` beyond the last consumed is rejected.
 - **Consumption.** The queue has an adaptive target depth of 1 or 2 frames. It normally consumes one frame per tick, and two when the backlog exceeds target + 1.
 - **Adaptation.** The target rises to 2 when starvation over a `starvation_window_s` = 2 window exceeds `starvation_high`, and falls back to 1 below `starvation_low`.
-- **Starvation.** The last frame repeats. After `intent_timeout_ms` = 500 with no frame, input is treated as released and holds are cancelled.
+- **Starvation.** The last frame repeats. After `intent_timeout_ms` = 500 with no frame, input is treated as released and holds are cancelled. The timeout is counted in ticks through `Knobs.ticks(intent_timeout_ms / 1000.0)` (ADR-0006 §6), never against the clock.
 - **Cap.** The queue is hard-capped at `input_queue_cap` frames and drops the oldest. If the host falls behind real time, everyone slows together and rule timers stay consistent, because they count ticks.
 - **Host.** The host's own player enqueues directly at depth 0, with no prediction: the server body is its body. This is the same queue, so ADR-0001's no-shortcut rule holds.
 
@@ -99,7 +99,7 @@ On each snapshot the client:
 3. corrects only if the replayed position differs from the predicted one by more than `correction_deadzone_m` = 0.001.
 
 How a correction shows:
-- Under `correction_smooth_max_m` = 1.0, it is hidden by an offset on a non-interpolated visual child that decays over `correction_smooth_s` = 0.1.
+- Under `correction_smooth_max_m` = 1.0, it is hidden by an offset on a non-interpolated visual child that decays over `correction_smooth_s` = 0.1. "Non-interpolated" means `physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_OFF` on that child and on the camera node, whose yaw and pitch render from local input (rule 8); otherwise interpolation would smooth the offset and camera a second time. The OFF behaviour is NOT SOURCEABLE (`breaking-changes.md` 4.5 Physics row says only that 3D interpolation moved to SceneTree); Verification Required item 3 covers it.
 - At or above that, the body snaps and `reset_physics_interpolation()` is called.
 
 Scope of prediction:
@@ -216,7 +216,7 @@ func next(tick: int) -> InputFrame   # repeats last on starvation; released afte
 - **Jolt drift between machines.** Mitigation: the correction deadzone; log correction rates.
 - **Snapshot size growth.** Real state (life state, form, items) adds to the spike's minimal payload. Mitigation: measure once Feature state exists; delta compression or a 30 Hz snapshot rate are the fallbacks.
 - **Clock drift over a 9-minute round.** Untested (spike deferred list). Mitigation: the adaptive buffer and queue cap; rerun on two machines.
-- **ENet channel behaviour unverified.** Mitigation: a loss-injection test showing input still flows while a reliable packet is lost.
+- **ENet channel behaviour unverified.** Mitigation: a loss-injection test showing input still flows while a reliable packet is lost; the same test fixes the channel count passed to `create_server` and `create_client`.
 
 ## GDD Requirements Addressed
 
