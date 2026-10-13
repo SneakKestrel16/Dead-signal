@@ -488,3 +488,4 @@ keeps the monster permanently stuck.
 | Does the lunge cooldown start when a stun cancels it? | SneakKestrel16 | Before Milestone 3 | **Settled in Monster Abilities rule 12:** yes, the interrupted lunge counts as resolved and the cooldown starts (proposed) |
 | Does the flashlight need a battery limit? | SneakKestrel16 | Before Milestone 4 | Proposed: no |
 | Should the long-hide cue exist, or is Search enough? | SneakKestrel16 | Before Milestone 5 | |
+| Does a taser dart pass through glass partitions? | SneakKestrel16 | Before Milestone 3 | ADR-0007 default: glass blocks the dart (projectile mask `world \| glass`); sight passes glass |

@@ -254,7 +254,7 @@ Each lighting volume carries a **`blackout_able`** flag that Monster Abilities r
 
 ## Dimensions and Traversal
 
-**Geometry limits** (from `first-person-controller.md`: capsule `player_radius_m` 0.3, `step_height_m` 0.35, slope limit 40 degrees; cross-review 12d W4). The greybox must respect them: every doorway and archway at least 0.8 m clear width; steps no higher than `step_height_m` 0.35 m; slopes no steeper than 40 degrees; each door's swing area kept clear of fixtures and props, since a door close is rejected while a capsule overlaps the swing area. The map has no jumps and no drops.
+**Geometry limits** (from `first-person-controller.md`: capsule `player_radius_m` 0.3, `step_height_m` 0.35, slope limit 40 degrees; cross-review 12d W4). The greybox must respect them: every doorway and archway at least 0.8 m clear width; steps no higher than `step_height_m` 0.35 m, each with an invisible ramp collider no steeper than 40 degrees (ADR-0007); slopes no steeper than 40 degrees; floors built from large box colliders, not many small coplanar pieces (ADR-0007, Jolt seam snagging); each hiding spot authors a hide point, an exit point and at least one alternate exit point; each door's swing area kept clear of fixtures and props, since a door close is rejected while a capsule overlaps the swing area. The map has no jumps and no drops.
 
 Traversal times use a reference walk speed of 4.0 m/s **(proposed)**. First-Person Controller owns the real speed; if it differs, scale every time below by the ratio.
 

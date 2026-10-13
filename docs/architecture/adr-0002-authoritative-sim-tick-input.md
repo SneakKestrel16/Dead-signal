@@ -103,7 +103,7 @@ How a correction shows:
 - At or above that, the body snaps and `reset_physics_interpolation()` is called.
 
 Scope of prediction:
-- Predicted movement collides only with static geometry. Doors and other players are corrected by the server.
+- Predicted movement collides with static geometry and with doors driven by replicated door state (amended by ADR-0007; was static geometry only). Other players are corrected by the server.
 - Movement modifiers (root, slow, lock) are predicted from the latest replicated registry state, so the first tick of a new modifier may be corrected.
 - Only the owner's own movement is predicted. Hold bars are UI prediction only and the server confirms them (controller rule 13).
 
@@ -204,7 +204,7 @@ func next(tick: int) -> InputFrame   # repeats last on starvation; released afte
 ### Negative
 - Custom snapshot and reconciliation code to own and test.
 - The host plays with zero input latency; remote players carry a 1–2 frame buffer.
-- Collisions with doors and other players are not predicted, so the owner sees small corrections there.
+- Collisions with other players are not predicted, and a door that changes state this tick may block one tick late, so the owner sees small corrections there.
 - A host that cannot hold 60 Hz slows everyone.
 
 ## Risks

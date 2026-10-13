@@ -235,6 +235,20 @@ interfaces:
     added: 2026-10-12
     revised: ""
 
+  - contract: collision_masks
+    status: active
+    pattern: shared_resource
+    producer: first-person-controller   # PhysicsLayers constants
+    consumers:
+      - all-systems-issuing-physics-queries
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    signal_signature: "Layers WORLD=1, GLASS=2, DOORS=3, PLAYERS=4. Masks: MOVE_SERVER=world|glass|doors|players; MOVE_PREDICT=world|glass|doors; SIGHT=world (doors analytic); PROJECTILE=world|glass (taser, dash, interaction blocking; doors analytic)"
+    referenced_by:
+      - docs/architecture/adr-0007-movement-physics-collision-layers.md
+      - docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+    revised: ""
+
   - contract: handle_lifecycle
     status: active
     pattern: rpc
@@ -389,6 +403,50 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: player_body
+    status: active
+    api: Jolt CharacterBody3D (grounded) + move_and_slide, two per-player CapsuleShape3D built with .new()
+    not: RigidBody3D players or a hand-written kinematic controller
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    reason: "Shared movement step for server and prediction (ADR-0002); forces would fight reconciliation"
+    referenced_by:
+      - docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: step_climbing
+    status: active
+    api: invisible ramp colliders <= 40 deg on every step; floor_max_angle 40.5 deg, floor_snap_length 0.4
+    not: custom step-up code
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    reason: "Meets the controller step and slope ACs with no code that prediction must match"
+    referenced_by:
+      - docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: gameplay_zones
+    status: active
+    api: analytic boxes from Facility Map data (MapQueries.volume_at, in_zone)
+    not: Area3D for gameplay zones
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    reason: "Deterministic pure functions; no overlap-signal timing; 4.7 Area3D changes avoided"
+    referenced_by:
+      - docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: interaction_targeting
+    status: active
+    api: analytic interaction point + radius from map data along the server view ray; intersect_ray on PROJECTILE mask + analytic doors for blocking distance
+    not: an interactable physics layer
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    reason: "Same analytic style as ADR-0003; fewer physics objects"
+    referenced_by:
+      - docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -510,6 +568,27 @@ forbidden_patterns:
     description: "Owners must replace collection values exposed through views (packed arrays, arrays, dictionaries) whole; never set an element in place."
     why: "Godot 4.7: setting a packed-array element no longer calls the property setter, so change tracking and replication would miss it."
     adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+
+  - pattern: inline_layer_numbers
+    status: active
+    description: "Physics queries and bodies must use PhysicsLayers constants; never inline layer or mask numbers."
+    why: "One mask table settles what blocks what (glass blocks bodies, not sight); inline numbers drift."
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+
+  - pattern: shared_player_shape
+    status: active
+    description: "Each player must own its CapsuleShape3D resources (built with .new() or local_to_scene); never share a shape between players."
+    why: "Sub-resources in a PackedScene are shared; one player's crouch would resize every capsule."
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+
+  - pattern: device_zero_check
+    status: active
+    description: "Never detect mouse or keyboard input with event.device == 0; test the event type or compare to InputEvent.DEVICE_ID_MOUSE / DEVICE_ID_KEYBOARD."
+    why: "Godot 4.7 changed mouse/keyboard device IDs from 0 (docs/engine-reference/godot/breaking-changes.md)."
+    adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
     added: 2026-10-12
 
 # Example:
