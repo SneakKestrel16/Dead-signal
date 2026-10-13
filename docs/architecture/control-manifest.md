@@ -3,7 +3,7 @@
 > **Engine**: Godot 4.7.2
 > **Last Updated**: 2026-10-12
 > **Manifest Version**: 2026-10-12
-> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009
+> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013
 > **Status**: Active, built from **Proposed** ADRs (none Accepted yet; autonomous decision AD-27). Regenerate with `/create-control-manifest update` when any ADR is accepted or revised.
 
 `Manifest Version` is the date this manifest was generated. Story files embed
@@ -154,12 +154,18 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Fake holds (shapeshifter) take no lock, change no progress and never call the owner** — source: ADR-0008
 - **Monster Abilities validates a Blackout target through `LightingView` before emitting `AbilityUsed`** — source: ADR-0009
 - **Every `duration_s`, `range_m`, `hold_range_tolerance_m` and `interact_ray_max_m` comes from data** — source: ADR-0008
+- **Each results field has one owner that counts it and exposes a getter-only `*StatsView` under `stats.<system>`; `MatchFlow.resolve` reads them once on the outcome tick into `RoundResults` on `RoundEnded`** — source: ADR-0011
+- **Objective discovery and Borrowed Face observation use the one server `SightTest` (distance, then cone, then `SIGHT` rays + analytic doors), only in TickRunner physics phases; sample points sit ≥ 5 cm off surfaces** — source: ADR-0012
+- **An undiscovered point stays ungranted on every survivor peer until discovery; the shapeshifter and hidden survivors never discover** — source: ADR-0012
+- **Footstep masking scales the server's send radius by the volume's `footstep_radius_scale`** — source: ADR-0013
 
 ### Forbidden Approaches
 - **Never let `HoldService` emit events** [hold_service_events] — source: ADR-0008
 - **Never let a fake hold take a lock** [fake_hold_lock] — source: ADR-0008
 - **Never have each owner run its own hold logic** — copies drift — source: ADR-0008
 - **Never emit an event from a client** — source: ADR-0005
+- **Never let Match Flow tally other systems' stats or call into their modules; never compute results on a client** — source: ADR-0011
+- **Never decide discovery from a client report, proximity alone or room entry** — source: ADR-0012
 
 ---
 
@@ -180,6 +186,11 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Count `max_shadowed_omni` / `max_shadowed_spot` per rendered view (the feed is a second view)** — source: ADR-0009
 - **The feed `SubViewport` sets its own `positional_shadow_atlas_size`; the feed `Camera3D` has its own cheap `Environment`** — source: ADR-0009
 - **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`; the five ADR-only lighting knobs live in `FacilityKnobs`** — source: ADR-0009, ADR-0006
+- **Each body is one `BodyPuppet` per handle; a form change swaps only the `AppearanceSlot` child (remove + `queue_free` + add in one frame); appearances come from `res://data/appearances.tres`, preloaded and render-warmed at load** — source: ADR-0010
+- **C1–C5 share one skeleton bone set and one `AnimationLibrary` `.tres`; animation comes only from snapshot fields; `LookAtModifier3D.relative` set explicitly; trees enabled with `AnimationTree.active`** — source: ADR-0010
+- **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; body flashlights shadowless** — source: ADR-0010
+- **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius** — source: ADR-0013
+- **Ducking writes only `Ambience` and `ScareDuck`; gameplay cues and callouts are never ducked or stolen by scare or ambience sounds** — source: ADR-0013
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
 
 ### Forbidden Approaches
@@ -187,6 +198,10 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Never change lighting state locally on a client** (seeded flicker on top is allowed) [client_local_lighting_state] — source: ADR-0009
 - **Never send flicker steps as individual messages; never replicate per-light values; never use baked lightmaps per state (revisit in M4)** — source: ADR-0009
 - **Never set light looks from code** — source: ADR-0009
+- **Never branch presentation on role, player ID or "is monster"** [role_branch_in_presentation] — source: ADR-0010
+- **Never free, rename or re-parent a `BodyPuppet` on a form change** [puppet_recreated_on_form_change] — source: ADR-0010
+- **Never instantiate an appearance from disk mid-round** — source: ADR-0010
+- **Never use sidechain ducking, `Area3D` audio overrides, or mix-only masking of information** — source: ADR-0013
 - **Never rely on Shader Baker to prevent mid-round hitches** — the reference only says it shortens startup — source: ADR-0009
 
 ### Performance Guardrails
