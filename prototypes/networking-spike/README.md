@@ -145,5 +145,9 @@ mobile carriers put phones behind CGNAT, so nothing can reach a host there.
 
 `main.gd` takes `--host=<ip>` (client), plus `--upnp=1` and `--wait=<s>`
 (server; the wait extends the hard timeout while clients join).
+Probe 2026-10-13 (host network): router answers no UPnP discovery, so the
+mapping attempt fails here; manual UDP 24680 forward works, shown by a client on
+the host connecting via the public IP (NAT hairpin). Public IP is not CGNAT.
+A friend's router without UPnP would need the same manual forward (test 3).
 Verified on one LAN on 2026-10-13: 2 clients via `10.0.0.73`, RTT p50 7 ms
 (`results/lan-verify-2026-10-13.json`). Not yet run across two networks.
