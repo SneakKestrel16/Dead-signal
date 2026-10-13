@@ -219,6 +219,7 @@ Lobby screen, to be specified with `/ux-design`:
 - Proximity voice toggle: the host can change it, others can only see it (rule 16)
 - Countdown
 - Reject and close reasons (rules 2, 3, 19)
+- Last round: reopens a read-only copy of the previous round's results (`design/ux/results.md`). The client keeps the last `RoundEnded` payload in memory for the session and discards it when the session closes or the host leaves (added 2026-10-12, results spec, AD-31; serves the accessibility Reading time row)
 
 ## Cross-References
 

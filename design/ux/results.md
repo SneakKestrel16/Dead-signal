@@ -68,11 +68,13 @@ There is no "skip" or "continue" button: the return is server-timed so every pla
 │  Ben   Eliminated (Bled out)     │  Fuses installed   2/2   6:30  │
 │        downs 2 · rescues 0       │  Evacuation active Yes   7:44  │
 │  Cy    Did not escape            │  Drives extracted  2/2   8:12  │
+│        downs 0 · rescues 1       │                                │
 │  Dee   Disconnected              │                                │
-│                                  │                                │
+│        downs 1 · rescues 0       │                                │
 │  Shapeshifter: Eli               │                                │
 ├──────────────────────────────────┴────────────────────────────────┤
-│ [Z4 STATS]  Match 8:12 │ Takedowns 3  Eliminations 1  Lunges 4/7  │
+│ [Z4 STATS]  Match 8:12 │ Takedowns 3  Eliminations 1              │
+│  Lunges landed 4  Lunges missed 3                                 │
 │  Stunned 2  Form changes 5  False Signals 3  Blackouts 1          │
 │  Survivor stuns landed 2  Rescues 3                               │
 ├───────────────────────────────────────────────────────────────────┤
@@ -103,7 +105,7 @@ All zones keep a 48 px safe margin at 1920 × 1080; at 21:9 the content sits in 
 | R5 | Objective line | — (text) | Label, x/2 or Yes/No, completion time or "—" | rule 25 |
 | R6 | Stats block | — (text grid) | Rule 26 counts, each with a word label | rule 26 |
 | R7 | Countdown | — (text) | "Returning to lobby in N" | `results_duration_s` |
-| R8 | Leave session | P19 secondary button | Opens a P16 confirm ("Leave this session?") | AD-30 |
+| R8 | Leave session | P19 secondary button | Opens a P29 confirm ("Leave this session?", Leave / Stay, focus on Stay) | AD-30 |
 | R9 | Back (Last round view) | P19 secondary button | Replaces R7 and R8 in the lobby view | AD-31 |
 
 ### Information Hierarchy
@@ -122,6 +124,7 @@ All zones keep a 48 px safe margin at 1920 × 1080; at 21:9 the content sits in 
 | State | Trigger | What changes |
 |---|---|---|
 | Survivors win | Outcome survivors | R1 "SURVIVORS WIN"; reason "Evidence escaped" |
+| Escaped with no drives | Fate Escaped, drives 0 | Row shows "Escaped" with no drive phrase |
 | Shapeshifter wins | Outcome shapeshifter | R1 "SHAPESHIFTER WINS"; reason one of "All survivors eliminated", "Evidence lost", "Evacuation deadline expired" |
 | Forfeit | Reason "Shapeshifter forfeited" | R1 "SURVIVORS WIN"; R4 reads "Shapeshifter: [name] (disconnected)" |
 | Populated (normal) | Payload complete | As wireframe |
@@ -132,7 +135,7 @@ All zones keep a 48 px safe margin at 1920 × 1080; at 21:9 the content sits in 
 | Loading | — | None: the payload arrives with `RoundEnded`; the 1 s round-end fade covers the transition |
 | Host left during Results | `server_disconnected` | Screen closes at once; main menu with P16 "Host left"; the Last round copy is discarded |
 | Last round view | Opened from lobby | No R7/R8; R9 Back shown; title "Last round" above R1 |
-| Leave confirm open | R8 activated | P16 dialog over the screen; countdown keeps running; if it reaches 0 the dialog closes and the player goes to the lobby |
+| Leave confirm open | R8 activated | P29 dialog over the screen; countdown keeps running; if it reaches 0 the dialog closes and the player goes to the lobby |
 
 Timer: the countdown is driven by the server's return; R7 counts down from `results_duration_s` using the client tick estimate and is cosmetic (the server's move to the lobby wins if they disagree).
 
@@ -142,13 +145,13 @@ Timer: the countdown is driven by the server's return; R7 counts down from `resu
 
 | Action | Mouse | Keyboard | Gamepad (Partial) | Result |
 |---|---|---|---|---|
-| Read / scroll | Wheel over Z2–Z4 | Up/Down, PgUp/PgDn | Left stick / D-pad | P28 scroll |
-| Focus rows | Hover | Tab / Shift+Tab through R3 rows, then R8 | D-pad | Focus ring on row (screen reader reads the row) |
-| Leave session | Click R8 | Focus R8, Enter | Focus R8, A | P16 confirm: Leave / Stay |
+| Read / scroll | Wheel over Z2–Z4 | PgUp/PgDn; focus moves scroll the focused stop into view (P28) | Right stick | P28 scroll |
+| Move focus | Hover | Up/Down or Tab / Shift+Tab through the focus stops | D-pad / left stick | Focus ring on the stop; screen reader reads its name |
+| Leave session | Click R8 | Focus R8, Enter | Focus R8, A | P29 confirm: Leave / Stay |
 | Back (Last round view) | Click R9 | Esc | B | Return to lobby |
 | Esc on the live screen | — | Esc does nothing | B does nothing | Prevents accidental leave (AD-30) |
 
-Focus order: R3 rows top to bottom, R8 (or R9). Initial focus: none on the live screen (no accidental activation from a held key at round end); R9 in the Last round view.
+Focus stops, in order: the outcome group (R1 + R2, read as one), each R3 row, R4, the objectives group (Z3), the stats group (Z4), R8 (or R9). Groups are focusable containers with one accessible name each; Up/Down always moves focus, never scrolls. Initial focus: none on the live screen (no accidental activation from a held key at round end); R9 in the Last round view.
 
 ---
 
@@ -218,7 +221,7 @@ Committed tier: Standard.
 - **Contrast**: body ≥ 4.5:1, R1 ≥ 3:1 as large text, verified on retained screenshots.
 - **No colour-only state**: outcome and fates are words; win/lose colour is decoration only.
 - **Reading time**: the screen does not wait for input, but the full results stay readable afterwards through the lobby's Last round view (`accessibility-requirements.md` Reading time row; AD-31).
-- **Screen reader** (constraint taken although not committed at Standard): stock `Control` nodes; every row and button has an accessible name ("Ana, Escaped with 2 drives, 1 down, 2 rescues").
+- **Screen reader** (constraint taken although not committed at Standard): stock `Control` nodes; every focus stop has an accessible name. Examples: outcome "Survivors win. Evidence escaped at 8 minutes 12"; rows "Ana, escaped with 2 drives, 1 down, 2 rescues", "Ana, escaped, 0 downs, 0 rescues" (no drives: no drive phrase), "Ben, eliminated, bled out, 2 downs, 0 rescues", "Cy, did not escape, 0 downs, 1 rescue", "Dee, disconnected, 1 down, 0 rescues"; R4 "Shapeshifter: Eli" or, on forfeit, "Shapeshifter: Eli, disconnected, forfeited"; Z3 and Z4 read every line. The countdown R7 is not a live region and is never announced; R8 announces "Leave session, returning to lobby in N seconds" when focused.
 - **Reduced motion**: fades become cuts.
 
 ---
@@ -241,8 +244,8 @@ No string is concatenated from fragments; counts use plural-aware formats.
 
 ## Acceptance Criteria
 
-- [ ] With 5 clients, every client shows the results screen within 500 ms of `RoundEnded`, with identical outcome, reason, fates, objective lines and stats.
-- [ ] Each of the five rule 23 reasons produces the matching R1 and R2 text (one forced round per reason).
+- [ ] With 5 clients, every client shows the results screen within 500 ms of the server's `RoundEnded` send (measured from the server's send log time to each client's first rendered results frame, clocks aligned by the client tick estimate), with identical outcome, reason, fates, objective lines and stats.
+- [ ] Each reason produces the matching R1 and R2 text, one forced round per reason: "Evidence escaped" → SURVIVORS WIN; "Shapeshifter forfeited" → SURVIVORS WIN; "All survivors eliminated", "Evidence lost", "Evacuation deadline expired" → SHAPESHIFTER WINS.
 - [ ] A survivor who disconnected shows "Disconnected"; one who bled out shows "Eliminated (Bled out)"; an escaped carrier shows the drive count.
 - [ ] Objectives never completed show "—" in the time column and 0 or "No" in the count; no field is blank.
 - [ ] After 20 s every client is in the lobby with Ready cleared; no input is needed.

@@ -53,6 +53,7 @@ Accessibility minimums (text size, contrast, colour backups, toggles) come from 
 | P26 | Input Field | Standard control | Single-line text entry with validation | Host/join address, port, display name |
 | P27 | Tab Bar | Standard control | Top-level sections of one screen | Settings (Video, Audio, Controls, Accessibility) |
 | P28 | Scroll Container | Standard control | Vertical scrolling region | Settings pages, help, results |
+| P29 | Confirm Dialog | Modal | Two-button confirm for a destructive action, safe option focused | Leave session (results, lobby), Leave match, Kick |
 
 ---
 
@@ -401,7 +402,7 @@ All standard controls are stock Godot `Control` nodes styled by one project `The
 
 | Pattern | States | Behaviour | Accessibility | Implementation | When NOT to Use |
 |---|---|---|---|---|---|
-| P19 Button | Normal, focused, pressed, disabled (with reason tooltip) | Activates on release; destructive buttons (Leave match, Kick) confirm once with a P16-style dialog | Label text always; a disabled button says why | `Button` | Settings that hold a value (P20–P22) |
+| P19 Button | Normal, focused, pressed, disabled (with reason tooltip) | Activates on release; destructive buttons (Leave match, Kick, Leave session) confirm once with a P29 dialog | Label text always; a disabled button says why | `Button` | Settings that hold a value (P20–P22) |
 | P20 Toggle | Off, on, focused, disabled | Confirm flips; "On" / "Off" shown as text beside the switch | State as text, not colour | `CheckButton` | More than two values (P22) |
 | P21 Slider | Value, focused, dragging | Left/right or D-pad in 5% steps; mouse drag; live preview where safe (volumes, flash scale) | Numeric readout always visible | `HSlider` + `Label` | Discrete choices (P22) |
 | P22 Dropdown | Closed, open, focused | Confirm opens; up/down moves; confirm selects; back closes unchanged | Current value shown as text when closed | `OptionButton` | Two values (P20) |
@@ -411,6 +412,7 @@ All standard controls are stock Godot `Control` nodes styled by one project `The
 | P26 Input Field | Empty (placeholder), focused, valid, invalid (inline reason) | Validates on change (name 1–16 chars, port range); Enter submits the form | Error text beside the field, not colour alone | `LineEdit` | In-round text (none exists) |
 | P27 Tab Bar | Tab normal, focused, current | Q/E or LB/RB switch tabs; click selects | Current tab marked by underline shape and weight | `TabContainer` / `TabBar` | Fewer than three sections |
 | P28 Scroll Container | At top, scrolled, at bottom | Focus moving off-screen scrolls into view; mouse wheel; right stick | Scrollbar visible whenever content overflows | `ScrollContainer` | Content that fits one screen |
+| P29 Confirm Dialog | Open, focus on safe button, focus on destructive button | Question plus two buttons (destructive named by its action, e.g. "Leave", safe "Stay"); focus starts on the safe button; Esc / B = safe; closes itself without acting if its context ends (e.g. the results countdown reaches 0) | Dialog title and buttons announced; destructive button never default | `ConfirmationDialog` | Acknowledge-only reasons (P16) |
 
 ### Animation Standards
 

@@ -230,7 +230,7 @@ Not applicable: Match Flow has no character animation.
 | Time remaining | HUD, top centre | 1 Hz (server-corrected) | Infiltration–Evacuation |
 | Current phase | HUD, under clock | On `RoundPhaseChanged` | Always in round |
 | Escape / disconnect feed | HUD feed | On event | Always in round |
-| Results payload (rules 23–26) | Results screen | Once | Results |
+| Results payload (rules 23–26) | Results screen; lobby Last round view (client copy, kept until the session ends) | Once | Results |
 
 ## Cross-References
 
