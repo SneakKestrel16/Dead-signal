@@ -1,0 +1,29 @@
+; VERTICAL SLICE - NOT FOR PRODUCTION
+; Validation Question: does one networked greybox round deliver "you can't be sure the person next to you is a person"?
+; Date: 2026-10-13
+; Separate Godot project; prototypes/.gdignore hides it from the main project.
+
+config_version=5
+
+[application]
+
+config/name="Dead Signal Vertical Slice"
+run/main_scene="res://menu.tscn"
+config/features=PackedStringArray("4.7")
+
+[autoload]
+
+Knobs="*res://knobs.gd"
+Sfx="*res://sfx.gd"
+Net="*res://net.gd"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[physics]
+
+3d/physics_engine="Jolt Physics"
