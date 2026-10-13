@@ -6,7 +6,7 @@
 - Last Updated: 2026-10-12
 - Engine: Godot 4.7.2 (GDScript)
 - GDDs Covered: `lobby-role-assignment`, `first-person-controller`, `match-flow`, `survivor-objectives`, `downing-and-rescue`, `survivor-defense`, `borrowed-face`, `monster-abilities`, `pings-and-callouts`, `scare-events`, plus the Facility Map in `design/levels/research-facility.md`. Not covered (no GDD yet): HUD & Results Screen, Accessibility Options, Match Telemetry.
-- ADRs Referenced: ADR-0001 to ADR-0008, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
+- ADRs Referenced: ADR-0001 to ADR-0009, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
 - Evidence beyond the GDDs: `prototypes/networking-spike/README.md` (single-machine results, 2026-10-12).
 - TD-ARCHITECTURE: 2026-10-12 — skipped — Lean mode
 - LP-FEASIBILITY: 2026-10-12 — skipped — Lean mode
@@ -315,6 +315,7 @@ Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet c
 | [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Digest on a second machine (export load verified) |
 | [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Nothing outstanding; verification passed (floor angle and same-tick queries amended) |
 | [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Nothing outstanding beyond the lock test written with `HoldService` |
+| [ADR-0009](adr-0009-lighting-states-and-blackout.md) | Facility Map owns per-volume lighting (base, overlays, Blackout) with its own tick step; replicated under visibility sets like doors; dynamic lights from presets; seeded client flicker; one live surveillance feed with relevance extended | Greybox rendering and profiling spike (Verification 1–10) |
 
 **Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 91 covered by a Proposed ADR, 28 partial, 16 gaps, 3 need no ADR. All 16 gaps fall to the should-have ADRs below. Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
 
@@ -387,7 +388,7 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 ### Should have before the relevant system is built
 
 - Borrowed Face rendering and replication (shared rig or separate models, footstep-set copy) — rend-003 — MEDIUM
-- Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
+- **Written: [ADR-0009](adr-0009-lighting-states-and-blackout.md) (Proposed).** Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
 - Spatial audio and cue pipeline (buses, `area_mask`, ducking, bearing accuracy) — audio-001, audio-002, audio-004 — HIGH
 - Objective candidate selection and discovery filter (seeded RNG) — core-006 — Low
 - Scare replication scoping and view offset — net-008, input-002 — Low

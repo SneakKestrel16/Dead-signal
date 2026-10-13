@@ -123,6 +123,18 @@ state_ownership:
     added: 2026-10-12
     revised: ""
 
+  - state: lighting_state
+    status: active
+    owner_system: facility-map
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    interface: "LightingView (registry key &\"lighting\"): base(), overlays(volume), is_dark(volume), blackout_able(volume); read-only"
+    write_access: facility-map-only
+    referenced_by:
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md   # tick step 4a
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -258,7 +270,7 @@ interfaces:
     revised: ""
 
   - contract: feature_tick_order
-    status: active
+    status: "superseded_by: ADR-0009"   # FacilityMap step inserted after MonsterAbilities
     pattern: direct_call
     producer: network-authority   # TickRunner phase 4
     consumers:
@@ -340,6 +352,37 @@ interfaces:
     adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
     signal_signature: "reliable introduce(handle, appearance) before any event or snapshot use; reliable retire(handle); clients ignore snapshot entries with unintroduced handles"
     referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: feature_tick_order
+    status: active
+    pattern: direct_call
+    producer: network-authority   # TickRunner phase 4
+    consumers:
+      - all-feature-systems
+      - first-person-controller   # HoldService.server_tick
+      - facility-map              # Blackout expiry
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    signal_signature: "MatchFlow.begin -> SurvivorDefense -> BorrowedFace -> MonsterAbilities -> FacilityMap -> Downing -> Holds -> SurvivorObjectives -> PingsCallouts -> ScareEvents -> MatchFlow.resolve, bus.flush() after each"
+    referenced_by:
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: lighting_replication
+    status: active
+    pattern: rpc
+    producer: network-authority   # send phase, from FacilityMap.lighting_record
+    consumers:
+      - client-lighting           # LightVolume.apply
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    signal_signature: "per peer, reliable batch: {volume, base, overlays, dark, dark_until_tick} for volumes in the peer's visibility set (plus a viewed camera's set) whose record changed; re-sent on re-entry, reconnect and spectator switch"
+    referenced_by:
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
       - docs/architecture/adr-0004-replication-scope-information-hiding.md
     added: 2026-10-12
     revised: ""
@@ -465,14 +508,15 @@ api_decisions:
 
   - purpose: world_line_of_sight
     status: active
-    api: PhysicsDirectSpaceState3D.intersect_ray with a static-geometry-only collision_mask; doors and barricades tested analytically from Facility Map state
-    not: ray masks that include doors or player bodies
+    # was (2026-10-12): intersect_ray with a static-geometry-only collision_mask
+    api: "PhysicsDirectSpaceState3D.intersect_ray with PhysicsLayers.SIGHT (world) for line of sight and PhysicsLayers.PROJECTILE (world | glass) for taser and dash; doors and barricades tested analytically from Facility Map (door) and Survivor Defense (barricade) state"
+    not: ray masks that include the doors or players layers
     adr: docs/architecture/adr-0003-lag-compensation-rewind.md
     reason: "A door toggled this tick may not yet be reflected in the physics space; authoritative state never lags"
     referenced_by:
       - docs/architecture/adr-0003-lag-compensation-rewind.md
     added: 2026-10-12
-    revised: ""
+    revised: "2026-10-12"   # ADR-0003 amended after ADR-0007 named the masks
 
   - purpose: per_peer_entity_visibility
     status: active
@@ -561,6 +605,40 @@ api_decisions:
     referenced_by:
       - docs/architecture/adr-0006-data-driven-configuration.md
       - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: volume_lighting_render
+    status: active
+    api: "dynamic Light3D per volume in fixture groups; visible / light_energy / light_color set from LightingPresets data; ranges clipped to the volume; pre-warmed at load"
+    not: baked LightmapGI per state; server-sent per-light values
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    reason: "Per-volume Blackout needs runtime control; looks stay data; Light3D behaviour NOT SOURCEABLE, settled by the ADR-0009 spike"
+    referenced_by:
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: scare_flicker
+    status: active
+    api: "client-generated from a ScareTriggered payload seed; pure function of (seed, elapsed server ticks); clamped to max_flashes_per_s and the flash scale"
+    not: server messages per flicker step
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    reason: "One message per scare, identical on every recipient, no network jitter in the pattern"
+    referenced_by:
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: surveillance_feed
+    status: active
+    api: "one SubViewport sharing the main World3D, own Camera3D cull_mask, UPDATE_ALWAYS only while viewing; viewer relevance += viewed camera's visibility set"
+    not: one live SubViewport per camera; feeds rendered from client-local knowledge beyond relevance
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    reason: "A feed can show only what the server sent; extending relevance keeps the feed true without leaking beyond the camera's view"
+    referenced_by:
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
     added: 2026-10-12
     revised: ""
 
@@ -762,6 +840,20 @@ forbidden_patterns:
     description: "Modules must never write knob fields; knobs are frozen for the round."
     why: "Writes break host-client agreement (the digest) and determinism, and would leak across rounds through a shared resource."
     adr: docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+
+  - pattern: lighting_state_broadcast
+    status: active
+    description: "Lighting records must not be sent to peers whose visibility set (plus a viewed camera's set) excludes the volume."
+    why: "A Blackout zone is within 15 m of the monster; broadcasting it tells a modified client where the monster is."
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+
+  - pattern: client_local_lighting_state
+    status: active
+    description: "Clients must not change lighting state locally; they render received records plus seeded flicker only."
+    why: "Every client that can see a volume must show the server's state (research-facility.md ACs 8, 12)."
+    adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
     added: 2026-10-12
 
 # Example:

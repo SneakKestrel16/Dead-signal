@@ -104,6 +104,7 @@ A new event needs a `systems-index.md` row first.
 2. `SurvivorDefense` — non-hold timers only: stun, immunity and shock lock, rebarricade lockout, hide cue; taser resolution. Hiding, barricading, removing and breaking barricades are holds, timed only by `HoldService` in step 5a (ADR-0008 §1); Defense receives their `on_start`, `on_complete` and `on_cancel` calls.
 3. `BorrowedFace` — observation; transformation progress and completion.
 4. `MonsterAbilities` — lunge wind-up, dash and hit test (ADR-0003); False Signal; Blackout.
+4a. `FacilityMap` — Blackout expiry; lighting reactions arrive by handler (added by ADR-0009).
 5. `Downing` — takedown commit; bleed-out; rescue.
 5a. `Holds` — every hold is checked, started, advanced and completed here (added by ADR-0008), so the same tick's interrupts beat completions.
 6. `SurvivorObjectives` — countdown, extraction.
@@ -138,7 +139,7 @@ Composition root (round server)
                                 Downing · Objectives · Pings · ScareEvents
 
 TickRunner phase 4, one tick:
-  MatchFlow.begin ─flush─▶ Defense ─flush─▶ BorrowedFace ─flush─▶ MonsterAbilities ─flush─▶
+  MatchFlow.begin ─flush─▶ Defense ─flush─▶ BorrowedFace ─flush─▶ MonsterAbilities ─flush─▶ FacilityMap ─flush─▶
   Downing ─flush─▶ Holds ─flush─▶ Objectives ─flush─▶ Pings ─flush─▶ ScareEvents ─flush─▶ MatchFlow.resolve ─flush
   flush = drain queue (≤ 8 rounds) → subscribers in subscribe order → collect for projection
 phase 6: NetAuthority projects collected events per peer (ADR-0004)

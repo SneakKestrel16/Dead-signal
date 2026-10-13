@@ -79,7 +79,8 @@ A body entry in a snapshot carries:
 - **Relevance test.** A body is relevant to a viewer if its volume is in the viewer's volume's set, or it is within `relevance_near_m` = 6 m.
 - **Linger.** A body stays relevant for `relevance_linger_s` = 0.5 after it stops qualifying.
 - **Doors.** A door that is closed or barricaded removes the volumes behind it from the set.
-- **Map state.** Door and barricade state is replicated under the same rule, with current state re-sent on re-entry.
+- **Map state.** Door and barricade state is replicated under the same rule, with current state re-sent on re-entry. Lighting state follows the same rule (amended by ADR-0009).
+- **Surveillance.** While a peer views a surveillance camera, its relevance set also includes that camera's authored visibility set (amended by ADR-0009).
 - **Timing.** Relevance is computed in the TickRunner send phase.
 - **Hidden survivors.** They are never relevant to the monster's client. Their relevance to other survivors follows Survivor Defense's occupancy rules.
 
