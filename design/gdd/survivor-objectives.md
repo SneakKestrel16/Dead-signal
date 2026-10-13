@@ -202,6 +202,7 @@ The real box is always within `alert_area_radius_m` of the centre, so the marked
 | alert_duration_s **(proposed)** | 5 | 3–10 | Monster tracks longer | Easier to miss |
 | install_noise_radius_m **(proposed)** | 25 | 15–40 | More players hear it | Quieter |
 | discover_range_m **(proposed)** | 8 | 4–15 | Faster discovery | More searching |
+| discover_fov_deg **(proposed; ADR-0012, matches Borrowed Face `observe_fov_deg` so "in view" is one rule)** | 90 | 60–120 | Discovered at a glance | Must face the point |
 | drive_candidates / fuse_candidates / fuse_box_candidates / terminal_candidates **(proposed)** | 6 / 7 / 3 / 3 | 4–8 / 4–9 / 2–4 / 1–3 | More variety | Rounds feel the same |
 
 ## Visual/Audio Requirements

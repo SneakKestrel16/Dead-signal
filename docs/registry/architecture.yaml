@@ -664,6 +664,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: server_sight_test
+    status: active
+    api: "SightTest.sees(space, eye, yaw, targets, range_m, fov_deg, doors): distance, then horizontal cone, then intersect_ray on PhysicsLayers.SIGHT + analytic doors; shared by objective discovery and Borrowed Face observation; runs only in TickRunner physics phases"
+    not: client-reported visibility; proximity-only or room-entry discovery
+    adr: docs/architecture/adr-0012-objective-discovery.md
+    reason: "One server rule for 'in view'; a client claim would reveal the route to a cheat"
+    referenced_by:
+      - docs/architecture/adr-0012-objective-discovery.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
