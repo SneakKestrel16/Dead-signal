@@ -170,7 +170,7 @@ interfaces:
     revised: ""
 
   - contract: event_projection
-    status: active
+    status: "superseded_by: ADR-0005"   # signature changed: Variant/null -> Dictionary/{}
     pattern: rpc
     producer: every-event-emitter   # each catalog event implements project()
     consumers:
@@ -179,6 +179,59 @@ interfaces:
     signal_signature: "project(peer: int, handles: HandleTable) -> Variant (Dictionary payload or null = not sent)"
     referenced_by:
       - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: "2026-10-12"
+
+  - contract: event_projection
+    status: active
+    pattern: rpc
+    producer: every-event-emitter   # @abstract project() on ServerEvent
+    consumers:
+      - network-authority           # batches projected payloads per peer, reliable event channel
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    signal_signature: "project(peer: int, handles: HandleTable) -> Dictionary ({} = not sent to this peer)"
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: event_bus
+    status: active
+    pattern: event_bus
+    producer: catalog-event-emitters   # only the emitter named in systems-index.md
+    consumers:
+      - all-feature-systems
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    signal_signature: "EventBus.emit(e: ServerEvent); subscribe(type: StringName, handler: Callable); flush() drains after each module phase (<= 8 rounds), subscribers in subscribe order; handlers change only their own module's state"
+    referenced_by:
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: state_views
+    status: active
+    pattern: shared_resource
+    producer: each-state-owner         # rows of the systems-index.md state table
+    consumers:
+      - all-feature-systems
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    signal_signature: "StateRegistry.register_view(key, owner, view) once per key; view(key, ViewClass) asserts type; *View classes expose getters only"
+    referenced_by:
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: feature_tick_order
+    status: active
+    pattern: direct_call
+    producer: network-authority   # TickRunner phase 4
+    consumers:
+      - all-feature-systems
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    signal_signature: "MatchFlow.begin -> SurvivorDefense -> BorrowedFace -> MonsterAbilities -> Downing -> SurvivorObjectives -> PingsCallouts -> ScareEvents -> MatchFlow.resolve, bus.flush() after each"
+    referenced_by:
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
     added: 2026-10-12
     revised: ""
 
@@ -436,6 +489,27 @@ forbidden_patterns:
     description: "Spawned nodes must use opaque counter names (E%d) and identity-free spawn payloads; never a player ID, role or character in a node name or path."
     why: "Node names and paths reach every peer that receives the node."
     adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+
+  - pattern: gameplay_autoload_service
+    status: active
+    description: "Gameplay services (TickRunner, EventBus, StateRegistry, Knobs, NetAuthority) and modules must not be autoloads read by name; the round's composition root injects them through setup()."
+    why: "Autoloads carry state across rounds and make modules untestable in isolation (coding standard: dependency injection over singletons)."
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+
+  - pattern: direct_cross_system_state_write
+    status: active
+    description: "A module or event handler must never write another module's state; it reads views and emits events."
+    why: "The single-owner rule in systems-index.md; cross writes make tick order and ownership meaningless."
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+
+  - pattern: elementwise_collection_write
+    status: active
+    description: "Owners must replace collection values exposed through views (packed arrays, arrays, dictionaries) whole; never set an element in place."
+    why: "Godot 4.7: setting a packed-array element no longer calls the property setter, so change tracking and replication would miss it."
+    adr: docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
     added: 2026-10-12
 
 # Example:

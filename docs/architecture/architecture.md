@@ -142,25 +142,24 @@ Controller: apply modifier stack ─▶ move_and_slide (Jolt) for every capsule
    ▼
 Network: push positions into snapshot history (rewind source)
    ▼
-Feature tick, FIXED ORDER:
-  Match Flow clock ▶ Defense timers (stun/immunity) ▶ Borrowed Face (observe, transform)
+Feature tick, FIXED ORDER (ADR-0005), event queue drained after each step:
+  Match Flow begin (clock, phase) ▶ Defense (stun/immunity) ▶ Borrowed Face (observe, transform)
   ▶ Monster Abilities (hit test on rewound positions) ▶ Downing (commit, bleed, rescue)
-  ▶ Objectives (holds, countdown) ▶ Scare gating
-   ▼
-Event queue flushed (events emitted this tick are delivered after all modules ran)
+  ▶ Objectives (holds, countdown, extraction) ▶ Pings ▶ Scare gating
+  ▶ Match Flow resolve (evidence escaped, then eliminations, then deadline)
    ▼
 Network: per-peer snapshot + event projection ─▶ send
 ```
 
 Client frame: sample input, predict locally, send intent, receive snapshot, reconcile (under 1 m smoothed over 100 ms, larger snaps), interpolate remote players 100 ms behind, render.
 
-The fixed order is a requirement. Three GDD rules are tick-order rules: a stun on the tick a transform completes wins (`borrowed-face.md` rule 9); an extraction in the same tick as the deadline wins (`match-flow.md` edge cases); a stun since wind-up cancels the hit (`monster-abilities.md` rule 7).
+The fixed order is a requirement. Four GDD rules are tick-order rules: a stun on the tick a transform completes wins (`borrowed-face.md` rule 9); `SurvivorHit` starts the commit and `MonsterStunned` cancels it on the same tick (`downing-and-rescue.md` rule 4); an extraction in the same tick as the deadline wins (`match-flow.md` edge cases); a stun since wind-up cancels the hit (`monster-abilities.md` rule 7). ADR-0005 shows how the order satisfies each.
 
 ### Event and signal path
 
 | Flow | Producer → Consumer | Mode | Notes |
 |---|---|---|---|
-| Server-internal event | emitter module → subscribers | Deferred queue, delivered at end of tick | Clients can never emit |
+| Server-internal event | emitter module → subscribers | Queue drained after each module phase (ADR-0005) | Clients can never emit |
 | Registry state read | owner → reader | Shared state, read-only | Only the owner writes |
 | Client intent | client → Network → owning module | Reliable RPC (`any_peer`), server validates | A forged "done" message is dropped |
 | Event to clients | emitter → Network → each recipient | Reliable RPC, per-recipient payload projection | See below |
@@ -214,23 +213,27 @@ func send_event(event: ServerEvent, project: Callable) -> void      # project(ev
 
 ### Event Catalog and State Registry (Foundation)
 
+Superseded in detail by ADR-0005 (typed read-only views, drain-flush after each module phase, composition-root wiring).
+
 ```gdscript
-class_name ServerEvent extends RefCounted           # base; one subclass per catalog event
+@abstract class_name ServerEvent extends RefCounted   # one Ev<EventName> subclass per catalog event
 var tick: int
 var server_time: float
+@abstract func type() -> StringName
+@abstract func project(peer: int, handles: HandleTable) -> Dictionary   # {} = not sent (ADR-0004)
 
-class_name EventBus extends Node
-func emit(event: ServerEvent) -> void               # server only; queued, delivered at end of tick
-func subscribe(event_type: StringName, handler: Callable) -> void
+class_name EventBus extends RefCounted
+func emit(e: ServerEvent) -> void                   # server only; queued
+func subscribe(type: StringName, handler: Callable) -> void
+func flush() -> void                                # drained after each module phase, ≤ 8 rounds
 
-class_name StateRegistry extends Node
-func declare(key: StringName, owner: StringName) -> void   # exactly one owner per key
-func write(key: StringName, owner: StringName, value: Variant) -> void  # asserts caller is owner
-func read(key: StringName) -> Variant                       # any module; never mutate the result
+class_name StateRegistry extends RefCounted
+func register_view(key: StringName, owner: StringName, view: Object) -> void   # one owner per key
+func view(key: StringName, expected: Script) -> Object                         # asserts type; getters only
 ```
 
-- Invariants: a second `declare` for a key fails loudly; `write` by a non-owner asserts in debug and is ignored in release; values are replaced whole, never edited in place (4.7: packed-array element writes no longer fire setters).
-- Guarantees: events emitted during tick N are delivered after every module has run tick N, in emit order.
+- Invariants: a second registration for a key asserts; views expose getters only; owners replace collection values whole (4.7: packed-array element writes no longer fire setters); services are injected by the composition root, never autoloads.
+- Guarantees: a handler reacts on the same tick its event is emitted; delivery is in emit order, subscribers in subscribe order.
 
 ### Controller modifiers and interactables (Core)
 

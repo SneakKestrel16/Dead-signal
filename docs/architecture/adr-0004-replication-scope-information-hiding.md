@@ -81,7 +81,7 @@ A body entry in a snapshot carries:
 - **Timing.** Relevance is computed in the TickRunner send phase.
 - **Hidden survivors.** They are never relevant to the monster's client. Their relevance to other survivors follows Survivor Defense's occupancy rules.
 
-**5. Event projection.** Each event's emitter supplies `project(event, peer) -> Dictionary or null`. Network batches the tick's projected events into one reliable message per peer, on the event channel. Client-facing payloads refer to bodies by that peer's handle and to players by player ID only for public facts: names, roster, survivors' life states, escapes, connections, results.
+**5. Event projection.** Each event's emitter supplies `project(event, peer) -> Dictionary`, where `{}` means the peer receives nothing (signature amended by ADR-0005; was `Dictionary or null`). Network batches the tick's projected events into one reliable message per peer, on the event channel. Client-facing payloads refer to bodies by that peer's handle and to players by player ID only for public facts: names, roster, survivors' life states, escapes, connections, results.
 
 | Event | Survivor clients (and their spectators) | Shapeshifter client |
 |---|---|---|
@@ -132,7 +132,7 @@ func retire(peer: int, player_id: int) -> void                  # queues retire 
 func reset_peer(peer: int) -> void                              # reconnect / spectator switch
 
 # Each catalog event (ADR-0005) implements:
-func project(peer: int, handles: HandleTable) -> Variant        # Dictionary payload or null
+func project(peer: int, handles: HandleTable) -> Dictionary     # {} = not sent (amended by ADR-0005)
 ```
 
 ### Implementation Guidelines
