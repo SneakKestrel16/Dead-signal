@@ -6,10 +6,10 @@ extends "res://lib.gd"
 const WINDUP_S := 0.6
 const DASH_S := 0.3
 const DASH_M := 4.0
-const WINDUP_TURN := 15.0
+var WINDUP_TURN := 15.0
 const DASH_TURN := 30.0
-const HIT_RADIUS := 1.2
-const CONE_DEG := 60.0
+var HIT_RADIUS := 1.2
+var CONE_DEG := 60.0
 const BODY_R := 0.3
 const START_DIST := 3.0
 
@@ -105,4 +105,26 @@ func _pursuit() -> void:
 			lo = mid
 		else:
 			hi = mid
+	_ceilings()
 	rec("0003-4c", "OBSERVED", "controller Open Question, strafe from 0.43 s: accel_time_s 0.1 dodges=%s; largest accel_time_s that still dodges over 20 seeds = %.4f s" % [accel01, lo])
+
+
+## monster-abilities.md Open Question: safe-range ceilings at the 0.43 s strafe, accel 0.05,
+## one knob at a time, others at their proposed values. Ceiling = largest value that still dodges.
+func _ceilings() -> void:
+	var fine := 0.0005
+	var out: Array[String] = []
+	for knob in [["WINDUP_TURN", 15.0, 90.0], ["HIT_RADIUS", 1.2, 3.0], ["CONE_DEG", 60.0, 180.0]]:
+		var base: float = get(knob[0])
+		var lo: float = knob[1]
+		var hi: float = knob[2]
+		for i in 16:
+			var mid := (lo + hi) / 2.0
+			set(knob[0], mid)
+			if _all_seeds_dodge(0.43, 4.0, 0.05, fine):
+				lo = mid
+			else:
+				hi = mid
+		set(knob[0], base)
+		out.append("%s %.2f" % [knob[0], lo])
+	rec("0003-4d", "OBSERVED", "ceilings at strafe 0.43 s, accel 0.05, walk 4.0, r 0.3, 20 seeds (largest value that still dodges): " + ", ".join(out))

@@ -196,13 +196,13 @@ The dodge_margin formula is defined as:
 | lunge_windup_turn_deg_s, lunge_dash_turn_deg_s | float deg/s | 15, 30 | owned by Monster Abilities | Monster's maximum turn rate during wind-up and dash; inputs to the pursuit simulation |
 | v_dodge_min | float m/s | 2.65–3.6 | calculated (pursuit simulation) | Slowest strafe that dodges when started 0.40 s after the cue: r 0 → 2.65, 0.3 → 3.2, 0.35 → 3.3, 0.5 → 3.6. Worked at 0.40 s; ADR-0003 (2026-10-12) moved the strafe start to 0.43 s, so rerun |
 | player_radius_m | float m | 0.25–0.35 | data file | **0.3**: standard human capsule that still dodges with margin |
-| accel_time_s | float s | 0–0.1 | data file | **0.05**: time to reach full ground speed. A linear ramp delays displacement by `accel_time_s` / 2 |
+| accel_time_s | float s | 0–0.09 | data file | **0.05**: time to reach full ground speed. A linear ramp delays displacement by `accel_time_s` / 2 |
 
 **Output Range:** 1.25 at walk 4.0 and r 0.3; keep it at or above 1.15. Below 1 when crouched (2.0 / 3.2 = 0.63) or at walk ≤ 3.2. A rooted actor (e.g. rescuing) has 0, by design.
 
 **Example:** 4.0 / 3.2 = 1.25, so a walking strafe dodges. A crouched strafe at 2.0 does not: crouch trades the dodge for quiet.
 
-**Acceleration limit (inference):** the critical moment is about 0.37 s into the strafe, and 4.0 m/s leaves about 0.07 s of slack, so `accel_time_s` should stay at or below 0.1. To settle it, rerun the simulation with the strafe starting at 0.40 + `accel_time_s` / 2. Monster Abilities now uses this same steering model (designer decision, 2026-10-12).
+**Acceleration limit (measured):** with the acceleration ramp simulated directly and the strafe starting at 0.43 s (ADR-0003), the dodge holds up to `accel_time_s` 0.095 s and fails at 0.1; at 0.05 the latest safe start is 0.457 s, a 27 ms margin (`prototypes/adr-verification/README.md`, 0003-4). The safe range ends at 0.09 (designer decision, 2026-10-12; was 0.1 from the earlier inference). Monster Abilities now uses this same steering model (designer decision, 2026-10-12).
 
 ### Interaction targeting and body geometry
 
@@ -378,7 +378,7 @@ Not covered here: reconciliation smoothness (waits on the Network Authority ADR)
 |---|---|---|---|
 | Monster Abilities' dodge example (lines 138, 142; AC at line 298) uses a 4.5 m/s strafe and zero radius. Update it to the 4.0 m/s walk strafe and `player_radius_m` 0.3, and rerun its straight-line check | SneakKestrel16 | Before Monster Abilities' next review | Resolved 2026-10-12: updated; the straight-line model catches the strafe, so Monster Abilities adopts this GDD's steering pursuit model, which dodges (designer decision) |
 | False Signal footsteps need a gait for their audible range. Proposed: walk (6 m) | SneakKestrel16 | Before Monster Abilities' next review | Resolved 2026-10-12: walk gait, `footstep_radius_walk_m` 6 m, fake path up to `walk_speed` × `false_signal_footstep_duration_s` (12 m at defaults) (designer decision, cross-review 12d); `monster-abilities.md` rules 14-15 |
-| Does `accel_time_s` up to 0.1 s keep the dodge? Rerun the pursuit simulation with the strafe starting at 0.43 + `accel_time_s` / 2 (was 0.40; ADR-0003) | SneakKestrel16 | Before Milestone 3 | Answered 2026-10-12, not yet decided: no. With the acceleration ramp simulated directly, a 0.43 s strafe dodges up to `accel_time_s` 0.095 s and is caught at 0.1; at 0.05 the margin is 27 ms (`prototypes/adr-verification/README.md`, 0003-4). The safe range above (0–0.1) needs a designer decision to end below 0.095 |
+| Does `accel_time_s` up to 0.1 s keep the dodge? Rerun the pursuit simulation with the strafe starting at 0.43 + `accel_time_s` / 2 (was 0.40; ADR-0003) | SneakKestrel16 | Before Milestone 3 | Resolved 2026-10-12: no. With the acceleration ramp simulated directly, a 0.43 s strafe dodges up to `accel_time_s` 0.095 s and is caught at 0.1; at 0.05 the margin is 27 ms (`prototypes/adr-verification/README.md`, 0003-4). Safe range set to 0–0.09 (designer decision) |
 | Prediction and reconciliation method, and the controller's server performance budget | technical-director | Network Authority ADR | — |
 | The flinch toggle is client-declared (sent on join and on change), so a modified client can claim "off" and opt out of the flinch. Harmless by design (it is an accessibility setting, not a cheat vector) | technical-director | Network Authority ADR | Name it in the ADR scope as an accepted client-declared flag (designer decision, 2026-10-12, cross-review 12f) |
 | Match Flow dependency direction (the Controller's link is event-only) | SneakKestrel16 | Phase 5 of this authoring session | Resolved 2026-10-12: row added to `match-flow.md` Dependencies |

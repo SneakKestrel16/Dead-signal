@@ -12,9 +12,11 @@ engine reference does not cover.
 ## How to run
 
 ```bash
-bash run.sh          # every ADR, about 1 minute
+bash run.sh          # every ADR, about 1.5 minutes
 bash run.sh 0004     # one ADR
 ```
+
+Mouse-look check (ADR-0007 (8), opens a window and moves the real cursor): for each of `1152x648 none`, `576x324 stretch`, `576x324 none`, start `godot --path . res://mouse_look.tscn --resolution <WxH> -- <mode> <tag>` and run `powershell -File inject_mouse.ps1 -ReadyFile logs/mouse_<tag>.txt`; the result replaces the READY line in that file.
 
 Export check (ADR-0006 (3)): `godot --headless --path . --export-debug "Windows Desktop" build/verify.exe`, then `build/verify.console.exe --headless`; it writes `build/export_result.txt`. Needs the 4.7.2 export templates. `export_presets.cfg` is gitignored repo-wide (presets can hold signing credentials); recreate it with:
 
@@ -67,7 +69,8 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 | 0002-7 | PASS | `apply_floor_snap()` after restoring position and velocity re-finds the floor; replay error 17 mm without it, 1.6 mm with it |
 | 0003-1 | OBSERVED | Ray defaults: `hit_from_inside` false, `hit_back_faces` **true**, `collide_with_areas` false, `collide_with_bodies` true |
 | 0003-4 | PASS | Steering pursuit (GDD model): walk strafe from 0.43 s dodges over 20 seeds at 60 Hz and 0.5 ms tests; crouch strafe is hit. Latest safe start: 0.486 s with no acceleration (GDD: ~0.49), 0.457 s with `accel_time_s` 0.05: margin **27 ms** (ADR inferred ~35) |
-| 0003-4c | **finding** | `accel_time_s` 0.1 no longer dodges; ceiling 0.095 s |
+| 0003-4c | **finding** | `accel_time_s` 0.1 no longer dodges; ceiling 0.095 s. Controller safe range set to 0–0.09 |
+| 0003-4d | **finding** | Monster Abilities ceilings at 0.43 s (one knob at a time): wind-up turn 26.5°/s, hit radius 1.33 m, cone 69.8°. The cone range 40–70 tops out above the ceiling |
 | 0004-1 | PASS | Hidden spawn granted to one client only: the other gets no node, no `spawned` signal, and 36 B over 1 s (44 B idle) while the entity moves |
 | 0004-2 | PASS | `set_visibility_for` right after `spawn()` in the same frame delivers the spawn |
 | 0004-3 | OBSERVED | Visibility filters re-run every frame by default (`visibility_update_mode` 0); a flipped filter takes effect in 1 frame |
@@ -90,13 +93,13 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 | 0007-6 | PASS | No speed loss crossing a seam between coplanar boxes |
 | 0007-7 | **FAIL** | Jolt queries and `move_and_slide` see other bodies where they were after the **last physics step**: a teleport or move this frame is invisible until the next step. Disabling or shrinking a shape is seen at once |
 | 0007-9 | **finding** | The floor limit is `floor_max_angle` + about 0.5°: at 40.5° a 41° ramp is climbable. At 40.0°, 40.4° climbs and 40.6° blocks, so 40° climbs and 41° blocks, with or without `floor_block_on_wall` |
+| 0007-8 | PASS | Windowed, mouse captured, 200 px of OS-injected motion (`inject_mouse.ps1`, `mouse_event`): half-size window with `canvas_items` stretch reads `relative` 400, `screen_relative` 200; unscaled or without stretch, both 200. `relative` is stretch-scaled; `screen_relative` is not |
 | 0008-1 | PASS | A `void` override needs no `return`; a typed one missing a branch return fails |
 | 0008-2 | PASS | `PROJECTILE` ray stops at glass, `SIGHT` passes it, door blockers are ignored by both (left to the analytic test) |
 
 ## NOT RUN (owner: designer, with a second PC or later work)
 
 - Real network, second PC: ADR-0001/0002/0003 deferred list in `../networking-spike/README.md`; 0002-5 cross-machine drift; 0003-2 rewind against measured RTT; 0003-3 remote smoothness; 0006-4 digest on a second machine.
-- Window and real mouse: 0007-8 `screen_relative` under stretch.
 - Not yet written: 0008-3 `HoldService` lock contest (a unit test of production code).
 - Slow host: 0002-2 behaviour when the host cannot hold 60 Hz.
 
