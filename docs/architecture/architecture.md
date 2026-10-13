@@ -420,12 +420,12 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 
 Each blocks the ADR named in brackets.
 
-- **Real networks.** Real WAN latency and loss, home upload, NAT and port forwarding, clock drift and Wi-Fi spikes are untested (the spike's deferred list). They gate acceptance of ADR-0001 to ADR-0003. [ADR-0001]
-- **Borrowed Face rendering.** Shared rig or separate models is in no GDD. [Should-have ADR]
 - **NOT SOURCEABLE gaps.** `Light3D` and lighting volumes, proximity voice transport, engine-internal threading, 4.7 networking beyond the spike. The networking module doc needs a 4.7 refresh. [lighting, voice, ADR-0001]
 - **Missing GDDs.** HUD & Results Screen (`/ux-design`), Accessibility Options and Match Telemetry have no design doc, so their requirements are not in the baseline.
 
 Resolved since version 1:
+- **Real networks** (2026-10-13): a WAN run with 6 clients on a phone hotspot matched the simulated rows; players connect over Tailscale (designer decision), so NAT reachability is settled for MVP; drift and Wi-Fi tests were skipped. ADR-0001 to ADR-0008 Accepted.
+- **Borrowed Face rendering**: separate true-form model, appearance-child swap (ADR-0010, Proposed).
 - **Rewind budget**: 50 ms interpolation and a 180 ms cap bounded by measured RTT (ADR-0003); the pursuit simulation still needs its rerun at 0.43 s.
 - **Hosting model**: listen server for MVP with a separable server role; dedicated hosting stays possible but is not built (ADR-0001).
 - **Monster identity leak**: per-peer handles re-issued on re-entry and per-event projection (ADR-0004).
