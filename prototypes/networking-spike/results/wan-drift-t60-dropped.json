@@ -1,0 +1,68 @@
+{
+  "client_counts": {},
+  "clients": {},
+  "clients_reported": 0,
+  "engine": "4.7.2-stable (official)",
+  "host_download_kbps_per_client": 2.0,
+  "host_packets_per_s": 28.4,
+  "host_upload_kbps_per_client": 6.4,
+  "host_upload_kbps_total": 38.5,
+  "jitter_ms": 0.0,
+  "lat_ms_one_way": 0.0,
+  "loss": 0.0,
+  "mode": "move",
+  "physics_engine": "Jolt Physics",
+  "players": 6,
+  "seconds": 540.0,
+  "send_us_per_tick": 6.8,
+  "server": {
+    "capped150_err_m": {
+      "max": 0.7297,
+      "mean": 0.1903,
+      "n": 268,
+      "p50": 0.1723,
+      "p95": 0.3489,
+      "p99": 0.5139
+    },
+    "norewind_err_m": {
+      "max": 1.4797,
+      "mean": 0.8033,
+      "n": 268,
+      "p50": 0.7951,
+      "p95": 1.0488,
+      "p99": 1.2639
+    },
+    "rewind_err_m": {
+      "max": 0.0,
+      "mean": 0.0,
+      "n": 268,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rewind_ms": {
+      "max": 295.9417,
+      "mean": 193.5007,
+      "n": 268,
+      "p50": 191.857,
+      "p95": 227.8843,
+      "p99": 270.744
+    },
+    "tick_us": {
+      "max": 521.0,
+      "mean": 20.2178,
+      "n": 32400,
+      "p50": 14.0,
+      "p95": 60.0,
+      "p99": 130.0
+    }
+  },
+  "server_counts": {
+    "late_packets": 5557,
+    "rewind_over_150ms": 268,
+    "starved": 9912
+  },
+  "server_ticks_per_s": 60.0,
+  "tag": "wan-drift-t60",
+  "tick_hz": 60
+}

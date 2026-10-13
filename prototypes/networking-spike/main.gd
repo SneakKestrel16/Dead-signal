@@ -314,7 +314,7 @@ func _begin() -> void:
 	host.pop_statistic(ENetConnection.HOST_TOTAL_SENT_PACKETS)
 	for id in players:
 		_later(func(): s2c_start.rpc_id(id), false)
-	get_tree().create_timer(duration + 3.0).timeout.connect(_finish)
+	get_tree().create_timer(duration + 3.0).timeout.connect(_finish_after_summaries)
 	print("SERVER begin with %d clients" % players.size())
 
 
@@ -577,12 +577,22 @@ func _send_summary() -> void:
 	_later(func(): c2s_summary.rpc_id(1, payload), false)
 	_log_c("done slot=%d pred_err_p95=%s corrections=%s" % [
 		my_slot, _pct(cstats.get("pred_err", []), 0.95), ccounts.get("corrections", 0)])
-	get_tree().create_timer(lat_ms / 1000.0 + 2.0).timeout.connect(func(): get_tree().quit())
+	# Long runs make summaries of several hundred KB; a slow uplink needs time to deliver.
+	# The server closing first ends this sooner (server_disconnected).
+	get_tree().create_timer(lat_ms / 1000.0 + 30.0).timeout.connect(func(): get_tree().quit())
 
 
 @rpc("any_peer", "reliable")
 func c2s_summary(payload: String) -> void:
 	client_summaries.append(JSON.parse_string(payload))
+
+
+func _finish_after_summaries() -> void:
+	for i in 30:
+		if client_summaries.size() >= players.size():
+			break
+		await get_tree().create_timer(1.0).timeout
+	_finish()
 
 
 # ---------------------------------------------------------------- vis mode
