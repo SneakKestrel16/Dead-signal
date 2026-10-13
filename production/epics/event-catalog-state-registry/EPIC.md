@@ -5,7 +5,7 @@
 > **Architecture Module**: Event Catalog + State Registry (`docs/architecture/architecture.md` Module Ownership)
 > **Status**: Ready (governing ADRs are Proposed; stories block until they are Accepted)
 > **Control Manifest**: 2026-10-12
-> **Stories**: Not yet created — run `/create-stories event-catalog-state-registry`
+> **Stories**: 6 stories (all Blocked on Proposed ADRs)
 
 ## Overview
 
@@ -28,6 +28,19 @@ The server-side contract every gameplay system talks through. Fifteen named even
 | TR-index-010 | No upward layer references; Controller consumes only `RoundEnded` and `PlayerConnectionChanged` | ADR-0005 composition root (Proposed); no build check yet |
 | TR-index-011 | One deterministic tick pipeline with defined phase order (hits, downs, objectives, then win check) | ADR-0005, ADR-0008 (Proposed) |
 | TR-index-012 | Every system exposes stat and telemetry hooks for Results and Telemetry | ❌ No ADR (stats/results interface ADR, TR-matchflow-008) |
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [ServerEvent base and the 15-event catalog](story-001-server-event-catalog.md) | Logic | Blocked | ADR-0005 |
+| 002 | [EventBus emit, subscribe and flush](story-002-event-bus.md) | Logic | Blocked | ADR-0005 |
+| 003 | [StateRegistry and typed views](story-003-state-registry.md) | Logic | Blocked | ADR-0005 |
+| 004 | [Composition root and feature tick order](story-004-composition-root-tick-order.md) | Integration | Blocked | ADR-0005, ADR-0002, ADR-0008 |
+| 005 | [ClientEventRouter](story-005-client-event-router.md) | Integration | Blocked | ADR-0005, ADR-0004 |
+| 006 | [Layer boundary check](story-006-layer-boundary-check.md) | Logic | Blocked | ADR-0005 |
+
+TR-index-012 (stat hooks) has no story: it waits for the stats/results interface ADR (TR-matchflow-008).
 
 ## Definition of Done
 
