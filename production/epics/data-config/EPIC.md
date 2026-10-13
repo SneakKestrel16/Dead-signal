@@ -3,9 +3,9 @@
 > **Layer**: Foundation
 > **GDD**: none (every GDD's Tuning Knobs section is its input)
 > **Architecture Module**: Data/Config loader (`docs/architecture/architecture.md` Module Ownership)
-> **Status**: Ready (governing ADR is Proposed; stories block until it is Accepted)
-> **Control Manifest**: 2026-10-12
-> **Stories**: 5 stories (all Blocked on Proposed ADRs)
+> **Status**: Ready (governing ADRs Accepted 2026-10-13)
+> **Control Manifest**: 2026-10-13
+> **Stories**: 5 stories
 
 ## Overview
 
@@ -22,18 +22,18 @@ Loads every tuning knob from data and refuses to host on a bad value. Each syste
 
 | TR-ID | Requirement | ADR Coverage |
 |-------|-------------|--------------|
-| TR-config-003 | Gameplay values data-driven, never hardcoded; gdUnit4 test framework | ADR-0006 (Proposed) |
-| TR-config-001 | 60 fps / 16.6 ms frame, 2000 draw calls; memory ceiling unset | ADR-0002 (sim side, Proposed); no client render budget |
+| TR-config-003 | Gameplay values data-driven, never hardcoded; gdUnit4 test framework | ADR-0006 (Accepted) |
+| TR-config-001 | 60 fps / 16.6 ms frame, 2000 draw calls; memory ceiling unset | ADR-0002 (sim side, Accepted); no client render budget |
 
 ## Stories
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Knob sections, range and unset validation](story-001-knob-section-validation.md) | Logic | Blocked | ADR-0006 |
-| 002 | [All knob sections and the shipped files](story-002-sections-and-shipped-files.md) | Integration | Blocked | ADR-0006 |
-| 003 | [Cross-knob rules](story-003-cross-knob-rules.md) | Logic | Blocked | ADR-0006 |
-| 004 | [Refuse to host on bad knobs; freeze per round](story-004-refuse-to-host-and-freeze.md) | Integration | Blocked | ADR-0006, ADR-0005 |
-| 005 | [Knob digest in the join version check](story-005-digest-version-check.md) | Integration | Blocked | ADR-0006, ADR-0001 |
+| 001 | [Knob sections, range and unset validation](story-001-knob-section-validation.md) | Logic | Ready | ADR-0006 |
+| 002 | [All knob sections and the shipped files](story-002-sections-and-shipped-files.md) | Integration | Ready | ADR-0006 |
+| 003 | [Cross-knob rules](story-003-cross-knob-rules.md) | Logic | Ready | ADR-0006 |
+| 004 | [Refuse to host on bad knobs; freeze per round](story-004-refuse-to-host-and-freeze.md) | Integration | Ready | ADR-0006, ADR-0005 |
+| 005 | [Knob digest in the join version check](story-005-digest-version-check.md) | Integration | Ready | ADR-0006, ADR-0001 |
 
 ## Definition of Done
 

@@ -3,9 +3,9 @@
 > **Layer**: Foundation
 > **GDD**: none (system #10 is defined by its ADRs; requirements from `design/gdd/systems-index.md` and `design/gdd/lobby-role-assignment.md`)
 > **Architecture Module**: Network Authority & Replication (`docs/architecture/architecture.md` Module Ownership)
-> **Status**: Ready (governing ADRs are Proposed; stories block until they are Accepted)
-> **Control Manifest**: 2026-10-12
-> **Stories**: 10 stories (all Blocked on Proposed ADRs)
+> **Status**: Ready (governing ADRs Accepted 2026-10-13)
+> **Control Manifest**: 2026-10-13
+> **Stories**: 10 stories
 
 ## Overview
 
@@ -24,28 +24,28 @@ The authoritative server that every rule depends on. It hosts a listen-server se
 
 | TR-ID | Requirement | ADR Coverage |
 |-------|-------------|--------------|
-| TR-index-001 | Server authoritative for attacks, stuns, cooldowns, objectives, downing, rescue, results; clients send intent only | ADR-0002, ADR-0005 (Proposed) |
-| TR-index-003 | Event replication scoped per event, not broadcast | ADR-0004 (Proposed) |
-| TR-index-005 | Shapeshifter form and Transforming flag are server-owned replicated state | ADR-0004 (Proposed) |
-| TR-index-006 | Per-player state rows read across systems (life state, eligibility, hidden, lunge, commit, stun, roster, positions) | ADR-0004, ADR-0005 (Proposed) |
-| TR-config-004 | PC first; 4–6 players, MVP 5; ~9 min rounds; no AI actors | ADR-0001, ADR-0002 (Proposed) |
-| TR-lobby-001 | Listen-server direct join over ENet; no matchmaking, no host migration | ADR-0001 (Proposed) |
-| TR-lobby-002 | Server validates every join (full, in progress except reconnect, version) and sends the reason | ADR-0001 (Proposed) |
+| TR-index-001 | Server authoritative for attacks, stuns, cooldowns, objectives, downing, rescue, results; clients send intent only | ADR-0002, ADR-0005 (Accepted) |
+| TR-index-003 | Event replication scoped per event, not broadcast | ADR-0004 (Accepted) |
+| TR-index-005 | Shapeshifter form and Transforming flag are server-owned replicated state | ADR-0004 (Accepted) |
+| TR-index-006 | Per-player state rows read across systems (life state, eligibility, hidden, lunge, commit, stun, roster, positions) | ADR-0004, ADR-0005 (Accepted) |
+| TR-config-004 | PC first; 4–6 players, MVP 5; ~9 min rounds; no AI actors | ADR-0001, ADR-0002 (Accepted) |
+| TR-lobby-001 | Listen-server direct join over ENet; no matchmaking, no host migration | ADR-0001 (Accepted) |
+| TR-lobby-002 | Server validates every join (full, in progress except reconnect, version) and sends the reason | ADR-0001 (Accepted) |
 
 ## Stories
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Host, join and join validation](story-001-host-join-auth.md) | Integration | Blocked | ADR-0001 |
-| 002 | [Session tokens and reconnect rebinding](story-002-tokens-reconnect.md) | Integration | Blocked | ADR-0001 |
-| 003 | [Disconnect detection and host leaving](story-003-disconnect-host-left.md) | Integration | Blocked | ADR-0001 |
-| 004 | [TickRunner and the server clock](story-004-tick-runner.md) | Logic | Blocked | ADR-0002 |
-| 005 | [Input frames and the server input queue](story-005-input-frames-queue.md) | Logic | Blocked | ADR-0002 |
-| 006 | [Snapshots, owner prediction and reconciliation](story-006-snapshots-prediction.md) | Integration | Blocked | ADR-0002, ADR-0007 |
-| 007 | [Rewind history and lag compensation](story-007-rewind-lag-compensation.md) | Logic | Blocked | ADR-0003 |
-| 008 | [Per-peer handles and relevance](story-008-handles-relevance.md) | Integration | Blocked | ADR-0004 |
-| 009 | [Event projection batches and positional sounds](story-009-event-projection-sounds.md) | Integration | Blocked | ADR-0004, ADR-0005 |
-| 010 | [Hidden entities, RPC paths, spectators and reconnect re-issue](story-010-hidden-entities-spectators.md) | Integration | Blocked | ADR-0004 |
+| 001 | [Host, join and join validation](story-001-host-join-auth.md) | Integration | Ready | ADR-0001 |
+| 002 | [Session tokens and reconnect rebinding](story-002-tokens-reconnect.md) | Integration | Ready | ADR-0001 |
+| 003 | [Disconnect detection and host leaving](story-003-disconnect-host-left.md) | Integration | Ready | ADR-0001 |
+| 004 | [TickRunner and the server clock](story-004-tick-runner.md) | Logic | Ready | ADR-0002 |
+| 005 | [Input frames and the server input queue](story-005-input-frames-queue.md) | Logic | Ready | ADR-0002 |
+| 006 | [Snapshots, owner prediction and reconciliation](story-006-snapshots-prediction.md) | Integration | Ready | ADR-0002, ADR-0007 |
+| 007 | [Rewind history and lag compensation](story-007-rewind-lag-compensation.md) | Logic | Ready | ADR-0003 |
+| 008 | [Per-peer handles and relevance](story-008-handles-relevance.md) | Integration | Ready | ADR-0004 |
+| 009 | [Event projection batches and positional sounds](story-009-event-projection-sounds.md) | Integration | Ready | ADR-0004, ADR-0005 |
+| 010 | [Hidden entities, RPC paths, spectators and reconnect re-issue](story-010-hidden-entities-spectators.md) | Integration | Ready | ADR-0004 |
 
 ## Definition of Done
 

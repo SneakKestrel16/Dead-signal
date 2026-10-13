@@ -152,7 +152,7 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12d.md);
 | TR-facility-008 | research-facility.md | facility | Zone-based audio: ambience per zone, B3 machinery masks footsteps, wall occlusion of positional sounds is audio-implementation work; room IDs exposed for callout vocabulary | ADR-0013 (Proposed) | 🟡 |
 | TR-facility-009 | research-facility.md | facility | Terminal zone and exit volume as authored zone volumes read by the server (analytic boxes from map data per ADR-0007, not Area3D); zone occupancy counts only Healthy non-hidden survivors | ADR-0007 | 🟡 |
 | TR-facility-010 | research-facility.md | facility | Reduced-flash variants of beacons/pulses and non-flashing light changes supplied for accessibility | ADR-0009 §6 (preset reduced-flash variants) | 🟡 |
-| TR-facility-011 | research-facility.md | facility | Per-volume visibility table (itself, volumes through open doorways/archways, volumes through glass; door entries cut while closed or barricaded) authored as map data for per-peer relevance | ADR-0004 (table not authored) | 🟡 |
+| TR-facility-011 | research-facility.md | facility | Per-volume visibility table (itself, volumes through open doorways/archways, volumes through glass; door entries cut while closed or barricaded) authored as map data for per-peer relevance | ADR-0004 (table authored 2026-10-13, research-facility.md) | 🟡 |
 | TR-facility-012 | research-facility.md | facility | Collision authoring limits: an invisible ramp collider no steeper than 40 degrees on every step up to 0.35 m, large box floor colliders, and an exit point plus alternate exit points per hiding spot | ADR-0007 | 🟡 |
 
 ## Known Gaps
