@@ -675,6 +675,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: game_audio
+    status: active
+    api: "AudioDirector plays ADR-0004 positional events from a pooled AudioStreamPlayer3D set via AudioCatalog (max_distance = server send radius); fixed bus tree in default_bus_layout.tres; scripted ducking writes only Ambience and ScareDuck; occlusion by one SIGHT ray routing to *Occluded sub-buses; footstep masking via per-volume footstep_radius_scale on the server"
+    not: sidechain-compressor ducking; Area3D audio bus overrides; mix-only masking of information
+    adr: docs/architecture/adr-0013-spatial-audio-pipeline.md
+    reason: "Gameplay cues and callouts must never be masked (scare-events rule 18); information masking must change what is sent"
+    referenced_by:
+      - docs/architecture/adr-0013-spatial-audio-pipeline.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:

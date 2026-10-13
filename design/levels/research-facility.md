@@ -42,7 +42,7 @@ IDs are also the callout vocabulary: Pings & Callouts should name these rooms, s
 | H-S | South Service Corridor | link | 50x4 | East-west route; orange floor stripe; fuse candidate; camera |
 | B1 | Server Hall | B | 18x16 | Central objective area; "The Core" landmark; fuse box candidate; four entrances, one per side |
 | B2 | Power Room | B | 18x8 | Breaker wall landmark; fuse box candidate |
-| B3 | Cooling Plant | B | 18x8 | Fuse box candidate and fuse candidate; loud machinery masks footsteps **(proposed)** |
+| B3 | Cooling Plant | B | 18x8 | Fuse box candidate and fuse candidate; loud machinery masks footsteps **(proposed)**: the volume's `footstep_radius_scale` < 1 shrinks the server's footstep send radius (ADR-0013 §7) |
 | C1 | Security Office | C | 12x12 | Camera monitor station; fuse candidate; barricadable doors |
 | C2 | Checkpoint | C | 10x14 | Gate between B and C; terminal candidate; the non-barricadable archway into C4 |
 | C3 | Records Archive | C | 20x8 | Only Zone C evidence candidate; terminal candidate |
@@ -436,6 +436,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Question | Owner | Deadline |
 |----------|-------|----------|
 | What makes a room "secured" for data drives (locked door, timed hack, nothing extra)? | SneakKestrel16 | Before Milestone 2 |
+| B3 `footstep_radius_scale` value (ADR-0013 §7; every other volume 1.0) | SneakKestrel16 | First greybox playtest |
 | Are fuse boxes randomized (2 of 3 proposed) or fixed in B1/B2? (rule owned by Survivor Objectives) | SneakKestrel16 | Before Milestone 2 |
 | Is the exit fixed at C4, or does it follow the active terminal? | SneakKestrel16 | Before Milestone 2 |
 | What do C5's "backup controls" do beyond per-room switches (zone light reset, camera power, nothing)? | SneakKestrel16 | Before Milestone 3 |
