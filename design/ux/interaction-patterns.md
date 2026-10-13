@@ -454,7 +454,7 @@ UI sounds play on the **UI** bus (independent volume, accessibility Auditory), n
 | Hide peek view | `survivor-defense.md` rules 19–21 | Restricted cone framing, exit prompt, what HUD remains |
 | Surveillance monitor view | `research-facility.md`, ADR-0009 §8 | Camera cycling (press cycles 1→4→off), feed framing, leaving the monitor |
 | Lobby character picker and rotation queue display | `lobby-role-assignment.md` UI Requirements | Belongs to the lobby screen spec |
-| Results screen layout | `match-flow.md` rules 23–26 | Needs the stats interface ADR (TR-matchflow-008) |
+| Results screen layout | `match-flow.md` rules 23–26 | Specced in `design/ux/results.md` (no new pattern); payload still needs the stats interface ADR (TR-matchflow-008) |
 | First-launch flow (photosensitivity warning, gamma calibration, input choice) | `design/accessibility-requirements.md` Visual | No onboarding is designed |
 
 Next screen specs: `/ux-design hud`, `/ux-design lobby`, `/ux-design results`, `/ux-design settings`.

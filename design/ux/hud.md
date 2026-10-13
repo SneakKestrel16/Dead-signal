@@ -281,5 +281,5 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 | Hide peek view HUD | SneakKestrel16 | Before Survivor Defense implementation | Gap (patterns) |
 | Does the shapeshifter see the survivor roster with life states (Downing GDD says "Survivors only")? | SneakKestrel16 | Before HUD implementation | Assumed no; the shapeshifter's Z1 shows its face list instead |
 | Player journey map does not exist; first-round onboarding of the HUD is undesigned | SneakKestrel16 | Before first playtest | Unresolved |
-| Results screen (systems-index #13, shared with this HUD) has no spec | SneakKestrel16 | Before Match Flow implementation | Gap (patterns); `/ux-design results` |
+| Results screen (systems-index #13, shared with this HUD) has no spec | SneakKestrel16 | Before Match Flow implementation | Resolved: `design/ux/results.md` |
 | Final visual treatment (fonts, plates, icons) | art-director | Art bible | Layout only here; greybox mock: `production/qa/evidence/hud-mock/01-survivor-holding-investigation.png` (`prototypes/hud-mock/`) |
