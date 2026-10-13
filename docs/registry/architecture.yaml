@@ -642,6 +642,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: body_appearance
+    status: active
+    api: "one BodyPuppet Node3D per handle; appearance = child scene from AppearanceSet (res://data/appearances.tres, id 0 true form, 1-5 C1-C5), preloaded and render-warmed at load, swapped in place on FormChanged; C1-C5 share one Skeleton3D bone set and one AnimationLibrary .tres"
+    not: despawn/respawn a puppet on form change; all six models per puppet toggled by visible; per-player tint on a shared model
+    adr: docs/architecture/adr-0010-borrowed-face-rendering.md
+    reason: "A disguise must be structurally identical to the real survivor on every client and keep its handle in view (ADR-0004)"
+    referenced_by:
+      - docs/architecture/adr-0010-borrowed-face-rendering.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -854,6 +865,20 @@ forbidden_patterns:
     description: "Clients must not change lighting state locally; they render received records plus seeded flicker only."
     why: "Every client that can see a volume must show the server's state (research-facility.md ACs 8, 12)."
     adr: docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+
+  - pattern: role_branch_in_presentation
+    status: active
+    description: "Client presentation code must never branch on role, player ID or 'is monster'; puppet animation and look come only from snapshot fields and the appearance id."
+    why: "Any role-dependent client path makes a disguised body render or behave differently from the survivor it copies."
+    adr: docs/architecture/adr-0010-borrowed-face-rendering.md
+    added: 2026-10-12
+
+  - pattern: puppet_recreated_on_form_change
+    status: active
+    description: "A form change swaps only the appearance child; the BodyPuppet node is never freed, renamed or re-parented."
+    why: "A recreated puppet pops visibly and marks the body as the one that changed form."
+    adr: docs/architecture/adr-0010-borrowed-face-rendering.md
     added: 2026-10-12
 
 # Example:
