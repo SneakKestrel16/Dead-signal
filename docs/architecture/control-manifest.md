@@ -188,7 +188,8 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`; the five ADR-only lighting knobs live in `FacilityKnobs`** — source: ADR-0009, ADR-0006
 - **Each body is one `BodyPuppet` per handle; a form change swaps only the `AppearanceSlot` child (remove + `queue_free` + add in one frame); appearances come from `res://data/appearances.tres`, preloaded and render-warmed at load** — source: ADR-0010
 - **C1–C5 share one skeleton bone set and one `AnimationLibrary` `.tres`; animation comes only from snapshot fields; `LookAtModifier3D.relative` set explicitly; trees enabled with `AnimationTree.active`** — source: ADR-0010
-- **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; body flashlights shadowless** — source: ADR-0010
+- **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; a lit body flashlight casts shadows, and per view only the own flashlight and the nearest `max_shadowed_flashlights` others emit light** — source: ADR-0010, ADR-0009
+- **Survivor-to-survivor swap: `start(state, false)`, an `AnimationNodeTimeSeek` to the same fraction of the dominant clip, then `advance(0.0)`; the warp overlay is fragment-only and never displaces `VERTEX`** — source: ADR-0010
 - **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius** — source: ADR-0013
 - **Ducking writes only `Ambience` and `ScareDuck`; gameplay cues and callouts are never ducked or stolen by scare or ambience sounds** — source: ADR-0013
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
