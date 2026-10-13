@@ -175,8 +175,11 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Clients render lighting only from received records and `LightingPresets`; flicker is a pure function of payload seed and elapsed server ticks, clamped to `max_flashes_per_s` and the player's flash scale** — source: ADR-0009
 - **`emergency_strip` lights stay on in every state, Blackout included** — source: ADR-0009
 - **Set the surveillance `SubViewport` to `UPDATE_DISABLED` whenever its client is not viewing** — source: ADR-0009
-- **Keep each light's range inside its own volume; pre-warm lights at load** — source: ADR-0009
-- **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`** — source: ADR-0009
+- **Keep each light's range inside its own volume; pre-warm every preset at load with a camera sweep through each volume** — source: ADR-0009
+- **Apply the `max_flashes_per_s` clamp in the per-tick flicker precompute; apply only the flash scale at render time** — source: ADR-0009
+- **Count `max_shadowed_omni` / `max_shadowed_spot` per rendered view (the feed is a second view)** — source: ADR-0009
+- **The feed `SubViewport` sets its own `positional_shadow_atlas_size`; the feed `Camera3D` has its own cheap `Environment`** — source: ADR-0009
+- **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`; the five ADR-only lighting knobs live in `FacilityKnobs`** — source: ADR-0009, ADR-0006
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
 
 ### Forbidden Approaches
@@ -184,6 +187,7 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Never change lighting state locally on a client** (seeded flicker on top is allowed) [client_local_lighting_state] — source: ADR-0009
 - **Never send flicker steps as individual messages; never replicate per-light values; never use baked lightmaps per state (revisit in M4)** — source: ADR-0009
 - **Never set light looks from code** — source: ADR-0009
+- **Never rely on Shader Baker to prevent mid-round hitches** — the reference only says it shortens startup — source: ADR-0009
 
 ### Performance Guardrails
 - **Lighting network**: about 6 bytes per changed visible volume, on change only; one flicker message per scare — source: ADR-0009
