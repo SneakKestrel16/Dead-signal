@@ -111,7 +111,7 @@ Jolt queries and `move_and_slide` see other bodies where they were after the pre
 
 **11. Input.** Keyboard and mouse first; gamepad is deferred.
 - **Named actions:** `move_forward`, `move_back`, `move_left`, `move_right`, `sprint`, `crouch`, `interact`, `use_item`, `ping`, `callout_wheel`, `flashlight`. There is no jump action.
-- **Mouse look.** It comes from `InputEventMouseMotion.screen_relative`, not scaled by delta, with the mouse captured. Not `relative`: that is scaled by the content stretch, and 4.7 new projects default to stretch mode `canvas_items` (`breaking-changes.md`, 4.7 Project row), so sensitivity would change with window size. `screen_relative` is training data (4.3+), NOT SOURCEABLE from `modules/input.md`; Verification Required item 8. The stretch mode stays free for the UI. Yaw and pitch are accumulated and applied at the physics tick for prediction, with pitch clamped to ±85°. The mouse is re-captured when the window regains focus.
+- **Mouse look.** It comes from `InputEventMouseMotion.screen_relative`, not scaled by delta, with the mouse captured. Not `relative`: that is scaled by the content stretch, and 4.7 new projects default to stretch mode `canvas_items` (`breaking-changes.md`, 4.7 Project row), so sensitivity would change with window size. `screen_relative` is not in `modules/input.md`; Verification results (8) PASS on 4.7.2. The stretch mode stays free for the UI. Yaw and pitch are accumulated and applied at the physics tick for prediction, with pitch clamped to ±85°. The mouse is re-captured when the window regains focus.
 - **Device checks.** They use the event type, never `device == 0`.
 
 ### Architecture Diagram

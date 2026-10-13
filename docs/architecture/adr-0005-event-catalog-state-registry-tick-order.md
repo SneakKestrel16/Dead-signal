@@ -91,7 +91,7 @@ A new event needs a `systems-index.md` row first.
 
 **2. EventBus.** A plain `RefCounted`, injected:
 - `emit(e)` appends to a queue. It is server only.
-- `subscribe(type, handler)` adds a named method to a `Dictionary[StringName, Array]` of handler lists; readers cast elements to `Callable`. GDScript does not nest typed collections, so `Dictionary[StringName, Array[Callable]]` does not compile (`godot-specialist`, 2026-10-12 review; NOT SOURCEABLE from `current-best-practices.md`, Verification Required item 6 settles it).
+- `subscribe(type, handler)` adds a named method to a `Dictionary[StringName, Array]` of handler lists; readers cast elements to `Callable`. GDScript does not nest typed collections, so `Dictionary[StringName, Array[Callable]]` does not compile (`godot-specialist`, 2026-10-12 review; not in `current-best-practices.md`; confirmed by Verification results (6)).
 - `flush()` drains the queue. Each event is delivered to its subscribers in subscribe order, iterating over a copy of the list and skipping callables that are no longer valid.
 - Events emitted by handlers during a flush join the same drain, so the whole cascade resolves on that tick. A flush that needs more than `max_flush_rounds` = 8 rounds asserts in debug and logs in release.
 - Every event delivered during the tick is also collected for NetAuthority's per-peer projection at the end of the tick (ADR-0002 phase 6).

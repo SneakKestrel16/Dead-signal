@@ -96,12 +96,12 @@ The client never sends position, speed or progress.
 **6. Owner-only prediction and reconciliation.** The owning client runs the same movement step as the server on its own `CharacterBody3D`, and keeps every frame the server has not yet acknowledged.
 
 On each snapshot the client:
-1. restores the server's position and velocity at the acknowledged `seq`, then, if the snapshot's on-floor flag is set, calls `apply_floor_snap()` so the body re-finds its floor before the first replayed step. `CharacterBody3D` has no floor-state setter, so the floor is recomputed from geometry, not copied. `apply_floor_snap()` is training data only (NOT SOURCEABLE from `modules/physics.md`); Verification Required item 7 settles it;
+1. restores the server's position and velocity at the acknowledged `seq`, then, if the snapshot's on-floor flag is set, calls `apply_floor_snap()` so the body re-finds its floor before the first replayed step. `CharacterBody3D` has no floor-state setter, so the floor is recomputed from geometry, not copied. `apply_floor_snap()` is not in `modules/physics.md`; Verification results (7) PASS on 4.7.2 (replay error 17 mm to 1.6 mm);
 2. replays the unacknowledged frames inside `_physics_process`;
 3. corrects only if the replayed position differs from the predicted one by more than `correction_deadzone_m` = 0.005. (Amended 2026-10-12 from 0.001: replay on a 40° ramp lip differs from the recorded path by up to 1.6 mm even with the floor restored, `prototypes/adr-verification/README.md`; 5 mm is far below anything visible.)
 
 How a correction shows:
-- Under `correction_smooth_max_m` = 1.0, it is hidden by an offset on a non-interpolated visual child that decays over `correction_smooth_s` = 0.1. "Non-interpolated" means `physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_OFF` on that child and on the camera node, whose yaw and pitch render from local input (rule 8); otherwise interpolation would smooth the offset and camera a second time. The OFF behaviour is NOT SOURCEABLE (`breaking-changes.md` 4.5 Physics row says only that 3D interpolation moved to SceneTree); Verification Required item 3 covers it.
+- Under `correction_smooth_max_m` = 1.0, it is hidden by an offset on a non-interpolated visual child that decays over `correction_smooth_s` = 0.1. "Non-interpolated" means `physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_OFF` on that child and on the camera node, whose yaw and pitch render from local input (rule 8); otherwise interpolation would smooth the offset and camera a second time. The OFF behaviour is not in the engine reference (`breaking-changes.md` 4.5 Physics row says only that 3D interpolation moved to SceneTree); Verification results (3) PASS on 4.7.2 (pixels not checked).
 - At or above that, the body snaps and `reset_physics_interpolation()` is called.
 
 Scope of prediction:
