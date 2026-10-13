@@ -126,7 +126,7 @@ check positions at: server_tick - clamp(server_tick - attacker_view_tick, 0, min
 | Variable | Type | Range | Source | Description |
 |---|---|---|---|---|
 | lunge_hit_radius_m | float | 0.8–1.25 | data | Reach beyond the dash path **(proposed 1.2)**; above ~1.29 the 0.40 s strafe is caught |
-| lunge_cone_deg | float | 40–70 | data | Forward cone **(proposed 60)**; from ~72 the 0.40 s strafe is caught |
+| lunge_cone_deg | float | 40–69 | data | Forward cone **(proposed 60)**; above ~69.8 the 0.43 s strafe is caught (measured 2026-10-12; was 40–70 from the 0.40 s upper-bound model) |
 | lunge_dash_s | float | 0.2–0.5 | data | Dash duration **(proposed 0.3)** |
 | lunge_dash_turn_deg_s | float | 0–30 | data | Steering during the dash **(proposed 30)** |
 | lunge_distance_m | float | 2–6 | data | Dash length **(proposed 4)** |
@@ -208,7 +208,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | lunge_dash_turn_deg_s | 30 (proposed) | 0–30 | Dash tracks strafes; breaks the dodge window | Dash straight; strafing safer |
 | lunge_cue_radius_m | 20 (proposed) | 15–30 | More survivors warned | Cue missed at range |
 | lunge_hit_radius_m | 1.2 (proposed) | 0.8–1.25 | Forgiving for monster; above ~1.29 the 0.40 s strafe is caught | Whiffs feel unfair to monster |
-| lunge_cone_deg | 60 (proposed) | 40–70 | Sideways dodge weaker; from ~72 the 0.40 s strafe is caught | Too precise |
+| lunge_cone_deg | 60 (proposed) | 40–69 | Sideways dodge weaker; above ~69.8 the 0.43 s strafe is caught | Too precise |
 | miss_slow_multiplier / miss_slow_s | 0.5 / 1.5 (proposed) | 0.3–0.8 / 0.5–3 | Misses punished harder | Misses nearly free |
 | max_rewind_ms | 180 (ADR-0003; was 150) | 0–250 | Favors high-ping monster; above ~210 breaks the dodge window (inference) | Favors survivors |
 | false_signal_cooldown_s | 25 (source) | 15–60 | Fake sounds rarer, more credible | Noise spam; real sounds devalued |
@@ -331,5 +331,5 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | Proposed at activation (rule 21); confirm in playtest |
 | Does the lunge dodge survive a 0.40 s strafe once the survivor collision radius is set? | SneakKestrel16 | With the Controller GDD | Resolved 2026-10-12: yes under the steering pursuit model (4.0 m/s, r 0.3, latest safe start ~0.49 s); the straight-line upper bound no longer governs (designer decision) |
 | Latency rewind cap (150 ms) — acceptable for the chosen hosting model? | SneakKestrel16 | Before Milestone 1 | **Resolved 2026-10-12 by ADR-0003:** 180 ms cap with 50 ms interpolation; dodge budget 0.43 s |
-| Recompute the safe-range ceilings (wind-up turn, hit radius, cone) and the worked 18° figures at the 0.43 s strafe start, including `accel_time_s` | SneakKestrel16 | Before ADR-0003 is Accepted | Ceilings measured 2026-10-12 (steering model, strafe 0.43 s, `accel_time_s` 0.05, walk 4.0, r 0.3, 20 seeds, one knob at a time; `prototypes/adr-verification/README.md`, 0003-4d): wind-up turn 26.5°/s, hit radius 1.33 m, cone 69.8°. Ranges 0–17 and 0.8–1.25 hold; the cone range's top (70) is caught, so it needs a designer decision to end at or below 69. The worked 18° figures belong to the superseded upper-bound model. Open for the cone decision |
+| Recompute the safe-range ceilings (wind-up turn, hit radius, cone) and the worked 18° figures at the 0.43 s strafe start, including `accel_time_s` | SneakKestrel16 | Before ADR-0003 is Accepted | Ceilings measured 2026-10-12 (steering model, strafe 0.43 s, `accel_time_s` 0.05, walk 4.0, r 0.3, 20 seeds, one knob at a time; `prototypes/adr-verification/README.md`, 0003-4d): wind-up turn 26.5°/s, hit radius 1.33 m, cone 69.8°. Ranges 0–17 and 0.8–1.25 hold; the cone range's top (70) is caught, so it now ends at 69 (designer decision 2026-10-12). The worked 18° figures belong to the superseded upper-bound model. Resolved 2026-10-12 |
 | Is a ~0.15 s reaction acceptable for a survivor at 100 ms RTT? (survivor RTT comes out of the 0.25 s budget) | SneakKestrel16 | Network Authority ADR | Accepted for now (2026-10-11); revisit with the hosting model |
