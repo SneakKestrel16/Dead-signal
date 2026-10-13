@@ -56,17 +56,18 @@ The HUD must never tell a player something their character could not perceive, a
 | I30 | Hold bar with cancel cause | first-person-controller | Actor |
 | I31 | Crosshair (minimal dot) | first-person-controller | All |
 | I32 | Lunge wind-up and transform cue indicators | accessibility-requirements | Players in audible range |
+| I33 | Captions for PA countdown and scare voice lines (off by default) | accessibility-requirements | Players who hear the line, captions on |
 
 ### Categorization
 
 | Category | Items | Why |
 |---|---|---|
 | **Must Show** | I1, I2, I4, I5, I10, I31; shapeshifter: I19, I21 | Pillar 4: "what next" and the clock are never hidden; the shapeshifter's core decisions are its form and cooldowns |
-| **Contextual** | I6, I7, I8, I9, I11, I12, I13, I14, I15, I16, I17, I20, I22, I23, I24, I25, I27, I28, I29, I30, I32 | Appear only when the rule that owns them is active |
+| **Contextual** | I6, I7, I8, I9, I11, I12, I13, I14, I15, I16, I17, I20, I22, I23, I24, I25, I27, I28, I29, I30, I32, I33 | Appear only when the rule that owns them is active |
 | **On Demand** | Feed scrollback (I26 history), I18 face list (shapeshifter hold), Help in the overlay | Re-reading and planning, never needed mid-chase |
 | **Hidden** | Footsteps, interaction noise, False Signal, hide cue, monster position, other players' roles | Audio-only or deliberately unknown (information parity) |
 
-I3 and I26 are Contextual feeds (they show only while lines are live). The Must Show list has 6 survivor items, consistent with "minimal but present".
+I3, I26 and I33 are Contextual feeds (they show only while lines are live). The Must Show list has 6 survivor items, consistent with "minimal but present".
 
 ---
 
@@ -104,7 +105,7 @@ World markers (pings, Downed, points) are anchored in the world and clamp to the
 | Z3 Objectives | Top right | Checklist (P12) |
 | Z4 Centre | Screen centre, within 6% of height | Crosshair, hold ring (P3), prompt (P2) below |
 | Z5 Feedback | Below the prompt | Reject reason (P10), hold cancel cause |
-| Z6 Feed | Bottom left | Callout feed and escape/disconnect lines (P9) |
+| Z6 Feed | Bottom left | Callout feed, escape/disconnect lines (P9) and captions (H18) |
 | Z7 Kit | Bottom right | Taser cartridges (survivor); ability cooldowns (shapeshifter) |
 | Z8 Edge cues | All four edges | Cue indicators (P8), clamped world markers (P7) |
 
@@ -116,32 +117,33 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 
 ## HUD Element Specifications
 
-| ID | Element | Category | Zone | Content | Visual form | Update | Trigger | Animation | Pattern |
-|---|---|---|---|---|---|---|---|---|---|
-| H1 | Clock | Must Show | Z2 | mm:ss remaining | Number | 1 Hz, server-corrected | Infiltration–Evacuation | Final 30 s: pulse in scale + ticking layer | P13 style |
-| H2 | Phase label | Must Show | Z2 | "INFILTRATION" / "INVESTIGATION" / "EVACUATION" | Text | On `RoundPhaseChanged` | Always in round | 150 ms fade on change | — |
-| H3 | Activation countdown | Contextual | Z2 | 15 s countdown, "Paused" when nobody holds | Number + text | Continuous | Terminal Activating | None | P4 |
-| H4 | Roster | Must Show | Z1 | Name, life-state icon + word, drive carrier mark | Text list | On change | Survivors, in round | 150 ms fade per row change | P12 |
-| H5 | Objective checklist | Must Show | Z3 | Drives x/2 with state, fuses x/2, terminal state | Text list | On `ObjectiveProgressChanged` | Survivors and shapeshifter | Changed line highlights 1 s (no flash) | P12 |
-| H6 | Crosshair | Must Show | Z4 | Dot | Icon | — | Always (hidden while Downed or hidden) | None | — |
-| H7 | Interaction prompt | Contextual | Z4 | Verb, object, glyph, Hold/Press | Text | Per frame | Valid target | 150 ms fade | P2 |
-| H8 | Hold ring | Contextual | Z4 | Progress, cancel cause | Radial bar | Per frame | Holding | 200 ms cancel/complete | P3 |
-| H9 | Reject / cause label | Contextual | Z5 | Short reason | Text | On reject | Refused action | 150 ms fade, 1.5 s | P10 |
-| H10 | Callout and event feed | Contextual | Z6 | `[Name]: [text]` + arrow; escapes, disconnects | Text lines | On event | Lines live | 150 ms fade, ≥ 8 s per line | P9 |
-| H11 | Taser cartridges | Contextual | Z7 | Icon × count | Icon + number | On change | Survivor holding the item | Count change 150 ms | P13 |
-| H12 | World markers | Contextual | World / Z8 | Pings, Downed + bleed-out ring, points, dropped items | Icon + label + metres | Per frame | Owning rule | Fade in 150 ms | P7 |
-| H13 | World progress bars | Contextual | World | Server progress, "Paused" | Bar + % | Per tick | Object in progress | Linear | P4 |
-| H14 | Edge cue indicators | Contextual | Z8 | Lunge chevron, transform arc, flinch-off pulse | Shape | On cue | In audible range | 150 in / 300 out | P8 |
-| H15 | Own state vignette | Contextual | Full screen | Seized / Downed / shocked + label | Edge treatment + word | On change | Own state | 250 ms | P11 |
-| H16 | Own bleed-out | Contextual | Z4 (replaces prompt) | Seconds remaining, rescue progress when rescued | Number + ring | Per tick | Own Downed | None | P3/P13 |
-| H17 | Callout wheel | Contextual | Centre | 8 lines | Radial menu | On open | Wheel input | 100 ms open | P6 |
-| S1 | Face list | Must Show (shapeshifter) | Z1 | Survivor names, observation progress, available mark | Text + bars | On change | Shapeshifter | None | P12 |
-| S2 | Form and form cooldown | Must Show (shapeshifter) | Z7 | Current form name, cooldown | Text + sweep | 1 Hz | Shapeshifter | None | P13 |
-| S3 | Ability cooldowns | Must Show (shapeshifter) | Z7 | Lunge, False Signal, Blackout | Icons + sweep + seconds | 0.1 s | Shapeshifter | Ready: shape change | P13 |
-| S4 | Transforming bar | Contextual (shapeshifter) | Z4 | 2 s progress | Bar | Continuous | Transforming | Linear | P3 |
-| S5 | Stun / immunity remaining | Contextual (shapeshifter) | Z4 | Seconds | Number + label | Per tick | Stunned or immune | None | P13 |
-| S6 | Install alert | Contextual (shapeshifter) | World / Z8 | Randomised-centre area marker | Marker | 5 s | Fuse install alert | Fade | P7 |
-| S7 | Placement preview | Contextual (shapeshifter) | World | False Signal point/path, Blackout volume | Preview | Per frame | Aiming | None | P14 |
+| ID | Element | Source | Category | Zone | Content | Visual form | Update | Trigger | Animation | Pattern |
+|---|---|---|---|---|---|---|---|---|---|---|
+| H1 | Clock | I1 | Must Show | Z2 | mm:ss remaining | Number | 1 Hz, server-corrected | Infiltration–Evacuation | Final 30 s: pulse in scale + ticking layer | P13 style |
+| H2 | Phase label | I2 | Must Show | Z2 | "INFILTRATION" / "INVESTIGATION" / "EVACUATION" | Text | On `RoundPhaseChanged` | Always in round | 150 ms fade on change | — |
+| H3 | Activation countdown | I8 | Contextual | Z2 | 15 s countdown, "Paused" when nobody holds | Number + text | Continuous | Terminal Activating | None | P4 |
+| H4 | Roster | I10, I5 | Must Show | Z1 | Name, life-state icon + word, drive carrier mark | Text list | On change | Survivors, in round | 150 ms fade per row change | P12 |
+| H5 | Objective checklist | I4 | Must Show | Z3 | Drives x/2 with state, fuses x/2, terminal state | Text list | On `ObjectiveProgressChanged` | Survivors and shapeshifter | Changed line highlights 1 s (no flash) | P12 |
+| H6 | Crosshair | I31 | Must Show | Z4 | Dot | Icon | — | Always (hidden while Downed or hidden) | None | — |
+| H7 | Interaction prompt | I29 | Contextual | Z4 | Verb, object, glyph, Hold/Press | Text | Per frame | Valid target | 150 ms fade | P2 |
+| H8 | Hold ring | I30, I13, I17 | Contextual | Z4 | Progress, cancel cause | Radial bar | Per frame | Holding | 200 ms cancel/complete | P3 |
+| H9 | Reject / cause label | I27 + any refusal | Contextual | Z5 | Short reason | Text | On reject | Refused action | 150 ms fade, 1.5 s | P10 |
+| H10 | Callout and event feed | I26, I3 | Contextual | Z6 | `[Name]: [text]` + arrow; escapes, disconnects | Text lines | On event | Lines live | 150 ms fade, ≥ 8 s per line | P9 |
+| H11 | Taser cartridges | I15 | Contextual | Z7 | Icon × count | Icon + number | On change | Survivor holding the item | Count change 150 ms | P13 |
+| H12 | World markers | I6, I11, I24 | Contextual | World / Z8 | Pings, Downed + bleed-out ring, points, dropped items | Icon + label + metres | Per frame | Owning rule | Fade in 150 ms | P7 |
+| H13 | World progress bars | I7 | Contextual | World | Server progress, "Paused" | Bar + % | Per tick | Object in progress | Linear | P4 |
+| H14 | Edge cue indicators | I32, I28 | Contextual | Z8 | Lunge chevron, transform arc, flinch-off pulse | Shape | On cue | In audible range | 150 in / 300 out | P8 |
+| H15 | Own state vignette | I14 | Contextual | Full screen | Seized / Downed / shocked + label | Edge treatment + word | On change | Own state | 250 ms | P11 |
+| H16 | Own bleed-out | I12, I13 | Contextual | Z4 (replaces prompt) | Seconds remaining, rescue progress when rescued | Number + ring | Per tick | Own Downed | None | P3/P13 |
+| H18 | Caption line | I33 | Contextual | Z6 | `PA: [text]` or `[Voice]: [text]`, no direction arrow | Text line | On voice line | Captions on, line heard | 150 ms fade, ≥ 8 s | P9 |
+| H17 | Callout wheel | I25 | Contextual | Centre | 8 lines | Radial menu | On open | Wheel input | 100 ms open | P6 |
+| S1 | Face list | I18 | Must Show (shapeshifter) | Z1 | Survivor names, observation progress, available mark | Text + bars | On change | Shapeshifter | None | P12 |
+| S2 | Form and form cooldown | I19 | Must Show (shapeshifter) | Z7 | Current form name, cooldown | Text + sweep | 1 Hz | Shapeshifter | None | P13 |
+| S3 | Ability cooldowns | I21 | Must Show (shapeshifter) | Z7 | Lunge, False Signal, Blackout | Icons + sweep + seconds | 0.1 s | Shapeshifter | Ready: shape change | P13 |
+| S4 | Transforming bar | I20 | Contextual (shapeshifter) | Z4 | 2 s progress | Bar | Continuous | Transforming | Linear | P3 |
+| S5 | Stun / immunity remaining | I16 | Contextual (shapeshifter) | Z4 | Seconds | Number + label | Per tick | Stunned or immune | None | P13 |
+| S6 | Install alert | I9 | Contextual (shapeshifter) | World / Z8 | Randomised-centre area marker | Marker | 5 s | Fuse install alert | Fade | P7 |
+| S7 | Placement preview | I22, I23 | Contextual (shapeshifter) | World | False Signal point/path, Blackout volume | Preview | Per frame | Aiming | None | P14 |
 
 ---
 
@@ -169,12 +171,15 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 | Element | Tier | Why | When hidden, carried by |
 |---|---|---|---|
 | H1 Clock, H2 Phase, H5 Checklist | MUST KEEP | Pillar 4 | — |
-| H6 Crosshair, H7 Prompt, H8 Ring, H16 Bleed-out | MUST KEEP (when active) | Required to act | — |
+| H6 Crosshair, H7 Prompt, H8 Ring, H16 Bleed-out, H17 Wheel | MUST KEEP (when active) | Required to act | — |
+| H3 Activation countdown | MUST KEEP (when active) | Pillar 4: the escape window | Terminal screen, PA countdown |
 | H14 Edge cues, H15 Vignette | MUST KEEP (when active) | Fair Fear warnings | Audio |
 | S1–S3 shapeshifter core | MUST KEEP | Its core decisions | — |
+| S4 Transforming, S5 Stun/immunity, S7 Placement preview | MUST KEEP (when active) | Required to act or wait | — |
+| S6 Install alert | SHOULD KEEP | Pressure on survivors | Fuse install noise (25 m) |
 | H4 Roster | SHOULD KEEP | Rescue decisions | Downed markers (H12) |
 | H12 Markers, H13 World bars | SHOULD KEEP | Team coordination, fake detection | Callouts |
-| H10 Feed | SHOULD KEEP | Communication | Callout audio |
+| H10 Feed, H18 Captions | SHOULD KEEP | Communication; captions are an accessibility opt-in | Callout and PA audio |
 | H11 Kit | CAN HIDE | Count rarely changes | Item model in hand |
 | H9 Reject label | CAN HIDE | Rare | Deny sound |
 | Monster position, roles, real/fake | ALWAYS HIDE | Pillar 1, information parity | Nothing |
@@ -183,7 +188,7 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 
 ## Visual Budget
 
-- Exploration: at most **8** HUD elements at once (Must Show 6 + 2 contextual) and at most **8%** of the screen area outside world markers.
+- Exploration: at most **8** HUD elements at once (5 Must Show elements carrying the 6 Must Show items, + 3 contextual) and at most **8%** of the screen area outside world markers.
 - Busiest state (holding during an Evacuation with feed lines and markers): at most **14** elements and **12%** of the screen.
 - At most 6 world markers at once (2 per sender × 3 senders typical, `pings-and-callouts.md`); further markers keep the newest.
 - When over budget, drop in reverse tier order: CAN HIDE first (H11, then H9), then the oldest feed line, then roster rows collapse to icons with names on focus.
@@ -197,6 +202,7 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 |---|---|---|---|---|---|---|
 | Callout line | Pings & Callouts | Z6 | ≥ 8 s | 4 visible (10 in scrollback) | High | Arrival order; never merged or dropped (`pings-and-callouts.md` edge case); the oldest scrolls off into scrollback |
 | Escape / disconnect line | Match Flow | Z6 | 8 s | Shares the 4 | Medium | Same queue as callouts, arrival order |
+| Caption line | Match Flow (PA), Scare Events | Z6 | ≥ 8 s | Shares the 4 | Medium | Same queue, arrival order; off by default |
 | Reject reason | Any | Z5 | 1.5 s | 1 | Low | Newest replaces current |
 | Hold cancel cause | Controller | Z5 | 1 s | 1 | High | Replaces a reject reason |
 | Checklist change highlight | Survivor Objectives | Z3 | 1 s | All lines | Medium | Simultaneous; never queued |
@@ -246,6 +252,7 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 | Crosshair | Dot / Off | Dot | |
 | Marker distance labels | On/Off | On | |
 | Cue indicators (H14) | On/Off | On | Off only removes visuals; audio unchanged |
+| Captions (H18) | On/Off | Off | PA and scare voice lines; callout feed is always on |
 | Colourblind palette | Off / Red-green | Off | Accessibility Visual |
 | Reduced motion | On/Off | Off | Shared with accessibility settings |
 
@@ -274,4 +281,5 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 | Hide peek view HUD | SneakKestrel16 | Before Survivor Defense implementation | Gap (patterns) |
 | Does the shapeshifter see the survivor roster with life states (Downing GDD says "Survivors only")? | SneakKestrel16 | Before HUD implementation | Assumed no; the shapeshifter's Z1 shows its face list instead |
 | Player journey map does not exist; first-round onboarding of the HUD is undesigned | SneakKestrel16 | Before first playtest | Unresolved |
+| Results screen (systems-index #13, shared with this HUD) has no spec | SneakKestrel16 | Before Match Flow implementation | Gap (patterns); `/ux-design results` |
 | Final visual treatment (fonts, plates, icons) | art-director | Art bible | Layout only here; greybox mock: `production/qa/evidence/hud-mock/01-survivor-holding-investigation.png` (`prototypes/hud-mock/`) |
