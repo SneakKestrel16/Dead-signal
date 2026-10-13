@@ -1,7 +1,8 @@
 # Networking Spike
 
-**Status**: concluded for single-machine tests, 2026-10-12. Tests that need a second
-PC on another network are still open (see [Deferred](#deferred-needs-a-second-pc-on-another-network)).
+**Status**: concluded, 2026-10-13. Single-machine tests 2026-10-12; WAN movement run
+2026-10-13. Remaining two-network tests skipped by designer decision (see
+[Deferred](#deferred-needs-a-second-pc-on-another-network)).
 
 Throwaway prototype. Its numbers feed the Network Authority ADR. No production
 code may import from here.
@@ -109,7 +110,15 @@ token `t3` left and rejoined under a new peer ID and got slot 2 back
 
 ## Deferred: needs a second PC on another network
 
-Run these before the Network Authority ADR is accepted (they can follow its draft):
+**Designer decision 2026-10-13:** players will connect over Tailscale, which the designer
+has already used for another game, so no port forwarding is needed. Tests 1–3 ran (WAN run
+below). Tests 4 and 5 are skipped. Inference: clock drift (test 4) does not depend on the
+transport, so it stays unmeasured. It would show up as a starvation rate that keeps rising
+over a long round, and the server input buffer recommended under H1 is the mitigation.
+The one attempt (`results/wan-drift-t60-dropped.json`) lost its clients after about 40 s;
+the cause is not known.
+
+The original list:
 
 1. **Real WAN latency, jitter and loss:** host here, a client on another network
    (a friend's PC or a mobile hotspot). Compare measured RTT, starvation and

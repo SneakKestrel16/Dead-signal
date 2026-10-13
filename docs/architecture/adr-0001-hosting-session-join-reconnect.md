@@ -141,7 +141,7 @@ Reject reasons are `StringName` codes (`&"lobby_full"`, `&"round_in_progress"`, 
 - **Description**: Join through a platform service with built-in NAT traversal.
 - **Pros**: No port forwarding.
 - **Cons**: New dependency and platform lock-in; outside the engine reference.
-- **Rejection Reason**: Deferred until the real-network tests show whether port forwarding is a real barrier.
+- **Rejection Reason**: Not needed for MVP. Designer decision 2026-10-13: players connect over Tailscale (the designer's group already uses it for another game), so no port forwarding. A plain port forward also worked in the spike's WAN run (`prototypes/networking-spike/README.md`).
 
 ### Alternative 4 (sub-decision): Reject a reconnect while the old peer lives
 - **Description**: Refuse with `token_in_use` until ENet times out the stale peer (the spike's behaviour).
@@ -160,12 +160,12 @@ Reject reasons are `StringName` codes (`&"lobby_full"`, `&"round_in_progress"`, 
 ### Negative
 - The host has zero latency to the server; remote players do not.
 - The host leaving ends the session for everyone.
-- Players behind NAT need the host to forward a port until a traversal option exists.
+- Players need Tailscale (or a host port forward) to reach the host; there is no in-game NAT traversal.
 - Real time from a drop to a forfeit is the ENet timeout plus 60 s.
 
 ## Risks
-- **Token hijack.** ENet traffic is not encrypted, so anyone who can sniff the path can take a token and, under the eviction rule, kick the real player. Accepted for MVP (friends' sessions, direct IP). Mitigation later: DTLS or a per-round secret.
-- **NAT reachability.** Port forwarding may block casual groups. Mitigation: the deferred reachability test decides whether UPnP or a relay is needed before Alpha.
+- **Token hijack.** ENet traffic is not encrypted, so anyone who can sniff the path can take a token and, under the eviction rule, kick the real player. Accepted for MVP (friends' sessions, direct IP). Over Tailscale the path is WireGuard-encrypted, which covers the MVP setup. Mitigation for public play later: DTLS or a per-round secret.
+- **NAT reachability.** Settled for MVP by Tailscale (designer decision 2026-10-13). The host's router answered no UPnP in the spike probe, so a public release would need a relay or platform networking (Alternative 3).
 - **ENet timeout defaults.** Unverified; a long default delays grace. Mitigation: set the timeout explicitly from data and verify on 4.7.2.
 - **Lost reject reason.** A disconnect too soon after `send_auth` may drop the reason. Mitigation: the 0.2 s delay, verified in a test.
 - **4.7 networking unverified by docs.** Mitigation: the spike ran on 4.7.2; refresh `modules/networking.md` for 4.7.
