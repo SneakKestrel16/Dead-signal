@@ -1,0 +1,101 @@
+{
+  "client_counts": {
+    "corrections": 43,
+    "dropped_sim": 150,
+    "render_holds": 7,
+    "render_ticks": 7141,
+    "stale_states": 426,
+    "states": 7055
+  },
+  "clients": {
+    "pred_err": {
+      "max": 0.3231,
+      "mean": 0.0011,
+      "n": 5019,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rtt_ms": {
+      "max": 158.79,
+      "mean": 158.6944,
+      "n": 120,
+      "p50": 158.697,
+      "p95": 158.734,
+      "p99": 158.757
+    },
+    "snap": {
+      "max": 0.3231,
+      "mean": 0.1279,
+      "n": 43,
+      "p50": 0.1322,
+      "p95": 0.2936,
+      "p99": 0.3231
+    }
+  },
+  "clients_reported": 6,
+  "engine": "4.7.2-stable (official)",
+  "host_download_kbps_per_client": 39.3,
+  "host_packets_per_s": 389.8,
+  "host_upload_kbps_per_client": 85.2,
+  "host_upload_kbps_total": 511.1,
+  "jitter_ms": 30.0,
+  "lat_ms_one_way": 75.0,
+  "loss": 0.02,
+  "mode": "move",
+  "physics_engine": "Jolt Physics",
+  "players": 6,
+  "seconds": 20.0,
+  "send_us_per_tick": 102.3,
+  "server": {
+    "capped150_err_m": {
+      "max": 0.4653,
+      "mean": 0.2884,
+      "n": 189,
+      "p50": 0.2987,
+      "p95": 0.3822,
+      "p99": 0.4309
+    },
+    "norewind_err_m": {
+      "max": 1.1809,
+      "mean": 0.8982,
+      "n": 189,
+      "p50": 0.9057,
+      "p95": 1.1321,
+      "p99": 1.1808
+    },
+    "rewind_err_m": {
+      "max": 0.0624,
+      "mean": 0.0003,
+      "n": 189,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rewind_ms": {
+      "max": 243.054,
+      "mean": 216.0489,
+      "n": 189,
+      "p50": 216.12,
+      "p95": 236.169,
+      "p99": 236.322
+    },
+    "tick_us": {
+      "max": 564.0,
+      "mean": 61.4,
+      "n": 1200,
+      "p50": 58.0,
+      "p95": 79.0,
+      "p99": 114.0
+    }
+  },
+  "server_counts": {
+    "dropped_sim": 139,
+    "late_packets": 1641,
+    "rewind_over_150ms": 187,
+    "starved": 1645
+  },
+  "server_ticks_per_s": 60.0,
+  "tag": "i50-rtt150-bad",
+  "tick_hz": 60
+}

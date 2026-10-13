@@ -246,11 +246,44 @@ All door anchors are ordinary `D` doors, never a barricadable `B` door or exit E
 
 Each lighting volume carries a **`blackout_able`** flag that Monster Abilities rule 17 reads (cross-review re-review R4, 2026-10-11). Every volume is `blackout_able` except the room holding the active evacuation terminal (T1 C4, T2 C2 or T3 C3), which is not `blackout_able` once the Evacuation phase starts **(proposed; settles W8)**. This keeps the rule below that lighting never fully darkens the route to the active terminal during Evacuation. Before Evacuation the terminal room can be blacked out like any other. A Blackout already active in that room when Evacuation starts ends at that moment and the room returns to its normal Evacuation lighting **(proposed; settles cross-review second re-review S2; costs the monster at most 6 s of darkness)**.
 
-**Visibility sets** (ADR-0004, 2026-10-12). The server sends a client only the bodies its player could plausibly see, using a per-volume visibility table this map owns. For each lighting volume (rooms and corridor segments above), list: the volume itself, every volume seen through an open doorway or archway from it, and every volume seen through glass. Entries through a door are cut while that door is closed or barricaded; entries through glass and archways are not. A missing entry makes bodies pop in late; an extra entry sends bodies a player cannot see. The table is not yet authored (Open Questions).
+**Visibility sets** (ADR-0004, 2026-10-12). The server sends a client only the bodies its player could plausibly see, using a per-volume visibility table this map owns. For each lighting volume (rooms and corridor segments above), list: the volume itself, every volume seen through an open doorway or archway from it, and every volume seen through glass. Entries through a door are cut while that door is closed or barricaded; entries through glass and archways are not. A missing entry makes bodies pop in late; an extra entry sends bodies a player cannot see.
 
-| Volume | Visible through doorways/archways | Visible through glass |
-|--------|-----------------------------------|-----------------------|
-| *(to be authored for all 17 room volumes and corridor segments)* | | |
+Authored 2026-10-13 from the sketch above **(proposed)**. Auto-accepted (recommended option: author from the sketch now, refine on the greybox), 2026-10-13. Corridor segments, x measured from the west wall: H-N1 0–12, H-N2 12–24, H-N3 24–36, H-N4 36–48 m; H-S1 10–22.5, H-S2 22.5–35, H-S3 35–47.5, H-S4 47.5–60 m. A2 segments, y measured south from H-N: A2-N 0–10, A2-M 10–20, A2-S 20–32 m.
+
+These rules come from the sketch and are an inference. A sightline pass on the greybox settles them:
+- A straight corridor sees all of its own segments.
+- A2 sees down its whole length and into H-N1 and H-S1 at its ends. H-N1 and H-S1 see each other through it.
+- A room whose door opens onto a corridor segment sees that segment and its neighbours, for angled views along the corridor.
+- The table is symmetric: if X lists Y, Y lists X.
+- Door entries are cut while that door is closed or barricaded. Archway, open-corridor and glass entries never are.
+
+| Volume | Through a door (door: volumes) | Always (archway, open corridor, glass) |
+|--------|--------------------------------|----------------------------------------|
+| A1 | A1=A2: A2-S · A1=A3: A3 | archway A1~H-S: H-S1, H-S2 |
+| A2-N | A2=A7: A7 | open: A2-M, A2-S, H-N1, H-N2, H-S1 |
+| A2-M | A2=A3: A3 · A2=A4: A4 | open: A2-N, A2-S, H-N1, H-S1 · glass: A3, A4 |
+| A2-S | A1=A2: A1 | open: A2-N, A2-M, H-N1, H-S1, H-S2 · glass: A3 |
+| A3 | A1=A3: A1 · A2=A3: A2-M · A3=A6: A6 | glass: A2-M, A2-S |
+| A4 | A2=A4: A2-M · A4=A5: A5 · A4=B1: B1 | glass: A2-M, A7 |
+| A5 | A4=A5: A4 · A5=H-S: H-S1, H-S2 | — |
+| A6 | A3=A6: A3 · A6=H-N: H-N1, H-N2 | — |
+| A7 | A2=A7: A2-N · A7=H-N: H-N1, H-N2, H-N3 | glass: A4 |
+| H-N1 | A6=H-N: A6 · A7=H-N: A7 | open: H-N2, H-N3, H-N4, A2-N, A2-M, A2-S, H-S1 |
+| H-N2 | A6=H-N: A6 · A7=H-N: A7 · B2=H-N: B2 | open: H-N1, H-N3, H-N4, A2-N |
+| H-N3 | A7=H-N: A7 · B2=H-N: B2 · H-N=C5: C5 · H-N#C1: C1 | open: H-N1, H-N2, H-N4 |
+| H-N4 | B2=H-N: B2 · H-N=C5: C5 · H-N#C1: C1 | open: H-N1, H-N2, H-N3 |
+| H-S1 | A5=H-S: A5 · B3=H-S: B3 | open: H-S2, H-S3, H-S4, A2-N, A2-M, A2-S, H-N1 · archway: A1 |
+| H-S2 | A5=H-S: A5 · B3=H-S: B3 | open: H-S1, H-S3, H-S4, A2-S · archway: A1 |
+| H-S3 | B3=H-S: B3 · C3#H-S: C3 | open: H-S1, H-S2, H-S4 |
+| H-S4 | C3#H-S: C3 | open: H-S1, H-S2, H-S3 |
+| B1 | A4=B1: A4 · B1=B2: B2 · B1=B3: B3 · B1#C2: C2 | — |
+| B2 | B1=B2: B1 · B2=H-N: H-N2, H-N3, H-N4 | — |
+| B3 | B1=B3: B1 · B3=H-S: H-S1, H-S2, H-S3 | — |
+| C1 | H-N#C1: H-N3, H-N4 · C5=C1: C5 · C1#C4: C4 | — |
+| C2 | B1#C2: B1 · C5=C2: C5 · C2=C3: C3 | archway C2~C4: C4 |
+| C3 | C2=C3: C2 · C3#C4: C4 · C3#H-S: H-S3, H-S4 | — |
+| C4 | C1#C4: C1 · C3#C4: C3 | archway C2~C4: C2 |
+| C5 | H-N=C5: H-N3, H-N4 · C5=C1: C1 · C5=C2: C2 | — |
 
 ## Dimensions and Traversal
 
@@ -445,4 +478,4 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Is a 60 x 40 m single floor the right size for 4–6 players, or too tight for hiding and deception? | SneakKestrel16 | Before Milestone 5 |
 | Should survivors have more than one spawn group to vary the openings? | SneakKestrel16 | Before Milestone 5 |
 | Is 6 hiding spots the right density? | SneakKestrel16 | Before Milestone 5 |
-| Author the visibility-set table for every lighting volume (ADR-0004 relevance) | SneakKestrel16 / level-designer | Before ADR-0004 is Accepted |
+| ~~Author the visibility-set table for every lighting volume (ADR-0004 relevance)~~ Authored 2026-10-13 (proposed). Remaining: sightline pass on the greybox | SneakKestrel16 / level-designer | Greybox build |

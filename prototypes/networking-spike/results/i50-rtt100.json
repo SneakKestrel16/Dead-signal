@@ -1,0 +1,97 @@
+{
+  "client_counts": {
+    "corrections": 6,
+    "render_ticks": 7147,
+    "states": 7194
+  },
+  "clients": {
+    "pred_err": {
+      "max": 0.1415,
+      "mean": 0.0001,
+      "n": 6170,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rtt_ms": {
+      "max": 124.209,
+      "mean": 117.5537,
+      "n": 120,
+      "p50": 117.45,
+      "p95": 117.549,
+      "p99": 124.2
+    },
+    "snap": {
+      "max": 0.1415,
+      "mean": 0.092,
+      "n": 6,
+      "p50": 0.1329,
+      "p95": 0.1415,
+      "p99": 0.1415
+    }
+  },
+  "clients_reported": 6,
+  "engine": "4.7.2-stable (official)",
+  "host_download_kbps_per_client": 40.3,
+  "host_packets_per_s": 396.7,
+  "host_upload_kbps_per_client": 86.9,
+  "host_upload_kbps_total": 521.1,
+  "jitter_ms": 10.0,
+  "lat_ms_one_way": 50.0,
+  "loss": 0.0,
+  "mode": "move",
+  "physics_engine": "Jolt Physics",
+  "players": 6,
+  "seconds": 19.98,
+  "send_us_per_tick": 100.9,
+  "server": {
+    "capped150_err_m": {
+      "max": 0.1322,
+      "mean": 0.0718,
+      "n": 187,
+      "p50": 0.0781,
+      "p95": 0.1319,
+      "p99": 0.1322
+    },
+    "norewind_err_m": {
+      "max": 0.8822,
+      "mean": 0.6894,
+      "n": 187,
+      "p50": 0.6788,
+      "p95": 0.8819,
+      "p99": 0.8822
+    },
+    "rewind_err_m": {
+      "max": 0.0,
+      "mean": 0.0,
+      "n": 187,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rewind_ms": {
+      "max": 176.5093,
+      "mean": 166.5578,
+      "n": 187,
+      "p50": 169.5133,
+      "p95": 176.4153,
+      "p99": 176.4343
+    },
+    "tick_us": {
+      "max": 619.0,
+      "mean": 72.407,
+      "n": 1199,
+      "p50": 65.0,
+      "p95": 125.0,
+      "p99": 160.0
+    }
+  },
+  "server_counts": {
+    "late_packets": 191,
+    "rewind_over_150ms": 186,
+    "starved": 191
+  },
+  "server_ticks_per_s": 60.0,
+  "tag": "i50-rtt100",
+  "tick_hz": 60
+}

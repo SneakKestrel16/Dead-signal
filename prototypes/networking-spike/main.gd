@@ -454,6 +454,15 @@ func _client_tick() -> void:
 		next_ping = el + 1.0
 		var t := Time.get_ticks_usec()
 		_later(func(): c2s_ping.rpc_id(1, t), false)
+	if snapshots.size() > 8:
+		# Render check every tick: would a remote player be interpolated, or held/extrapolated?
+		var rt := _est_server_tick() - interp_ms / 1000.0 * tick_hz
+		for sl in snapshots[-1][1]:
+			if sl != my_slot:
+				_count("render_ticks")
+				if _interp(snapshots, sl, rt) == null:
+					_count("render_holds")
+				break
 	if el >= next_lunge and snapshots.size() > 8:
 		next_lunge = el + rng.randf_range(0.4, 0.8)
 		_lunge_probe()

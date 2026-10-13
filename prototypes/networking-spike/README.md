@@ -177,3 +177,16 @@ Run `Get-ChildItem -Recurse | Unblock-File` in the unzipped folder first.
 
 Verified on one LAN on 2026-10-13: 2 clients via `10.0.0.73`, RTT p50 7 ms
 (`results/lan-verify-2026-10-13.json`). Not yet run across two networks.
+
+### Interpolation-delay check for ADR-0003 (simulated, 2026-10-13)
+
+Added a per-tick render check on clients (`render_ticks`, `render_holds`): a hold is a
+rendered tick with no snapshot pair around the render time for a remote player, so
+the client would extrapolate or hold. 6 clients, 20 s, 60 Hz:
+
+| Run | Interpolation | Simulated network | Holds |
+|---|---|---|---|
+| i50-rtt150-bad | 50 ms | 75 ms one-way, 30 ms jitter, 2% loss | 7/7141 (0.10%) |
+| i66-rtt150-bad | 66 ms | same | 0/7140 |
+| i100-rtt150-bad | 100 ms | same | 0/7146 |
+| i50-rtt100 | 50 ms | 50 ms one-way, 10 ms jitter | 0/7147 |

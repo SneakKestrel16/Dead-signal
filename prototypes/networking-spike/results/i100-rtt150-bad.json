@@ -1,0 +1,100 @@
+{
+  "client_counts": {
+    "corrections": 26,
+    "dropped_sim": 148,
+    "render_ticks": 7146,
+    "stale_states": 427,
+    "states": 7056
+  },
+  "clients": {
+    "pred_err": {
+      "max": 0.3326,
+      "mean": 0.0007,
+      "n": 4865,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rtt_ms": {
+      "max": 159.182,
+      "mean": 158.7094,
+      "n": 120,
+      "p50": 158.704,
+      "p95": 158.74,
+      "p99": 158.972
+    },
+    "snap": {
+      "max": 0.3326,
+      "mean": 0.128,
+      "n": 26,
+      "p50": 0.128,
+      "p95": 0.1661,
+      "p99": 0.3326
+    }
+  },
+  "clients_reported": 6,
+  "engine": "4.7.2-stable (official)",
+  "host_download_kbps_per_client": 39.2,
+  "host_packets_per_s": 389.9,
+  "host_upload_kbps_per_client": 85.2,
+  "host_upload_kbps_total": 511.1,
+  "jitter_ms": 30.0,
+  "lat_ms_one_way": 75.0,
+  "loss": 0.02,
+  "mode": "move",
+  "physics_engine": "Jolt Physics",
+  "players": 6,
+  "seconds": 20.0,
+  "send_us_per_tick": 84.8,
+  "server": {
+    "capped150_err_m": {
+      "max": 0.7154,
+      "mean": 0.4854,
+      "n": 191,
+      "p50": 0.514,
+      "p95": 0.632,
+      "p99": 0.6464
+    },
+    "norewind_err_m": {
+      "max": 1.4654,
+      "mean": 1.0672,
+      "n": 191,
+      "p50": 1.1057,
+      "p95": 1.382,
+      "p99": 1.3964
+    },
+    "rewind_err_m": {
+      "max": 0.0476,
+      "mean": 0.0002,
+      "n": 191,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rewind_ms": {
+      "max": 293.076,
+      "mean": 266.9019,
+      "n": 191,
+      "p50": 269.4703,
+      "p95": 279.535,
+      "p99": 286.411
+    },
+    "tick_us": {
+      "max": 546.0,
+      "mean": 58.9908,
+      "n": 1200,
+      "p50": 57.0,
+      "p95": 78.0,
+      "p99": 98.0
+    }
+  },
+  "server_counts": {
+    "dropped_sim": 139,
+    "late_packets": 907,
+    "rewind_over_150ms": 191,
+    "starved": 809
+  },
+  "server_ticks_per_s": 60.0,
+  "tag": "i100-rtt150-bad",
+  "tick_hz": 60
+}

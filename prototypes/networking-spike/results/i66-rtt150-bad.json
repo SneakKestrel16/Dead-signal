@@ -1,0 +1,100 @@
+{
+  "client_counts": {
+    "corrections": 52,
+    "dropped_sim": 148,
+    "render_ticks": 7140,
+    "stale_states": 414,
+    "states": 7055
+  },
+  "clients": {
+    "pred_err": {
+      "max": 0.4012,
+      "mean": 0.0011,
+      "n": 5043,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0186
+    },
+    "rtt_ms": {
+      "max": 159.019,
+      "mean": 158.7026,
+      "n": 120,
+      "p50": 158.7,
+      "p95": 158.762,
+      "p99": 158.854
+    },
+    "snap": {
+      "max": 0.5888,
+      "mean": 0.1121,
+      "n": 52,
+      "p50": 0.1122,
+      "p95": 0.1661,
+      "p99": 0.4012
+    }
+  },
+  "clients_reported": 6,
+  "engine": "4.7.2-stable (official)",
+  "host_download_kbps_per_client": 39.3,
+  "host_packets_per_s": 389.9,
+  "host_upload_kbps_per_client": 85.2,
+  "host_upload_kbps_total": 511.1,
+  "jitter_ms": 30.0,
+  "lat_ms_one_way": 75.0,
+  "loss": 0.02,
+  "mode": "move",
+  "physics_engine": "Jolt Physics",
+  "players": 6,
+  "seconds": 19.98,
+  "send_us_per_tick": 92.6,
+  "server": {
+    "capped150_err_m": {
+      "max": 0.5119,
+      "mean": 0.3418,
+      "n": 190,
+      "p50": 0.3535,
+      "p95": 0.4622,
+      "p99": 0.5108
+    },
+    "norewind_err_m": {
+      "max": 1.2609,
+      "mean": 0.9191,
+      "n": 190,
+      "p50": 0.9422,
+      "p95": 1.2121,
+      "p99": 1.2276
+    },
+    "rewind_err_m": {
+      "max": 0.0566,
+      "mean": 0.0005,
+      "n": 190,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0
+    },
+    "rewind_ms": {
+      "max": 259.076,
+      "mean": 230.1404,
+      "n": 190,
+      "p50": 228.9093,
+      "p95": 252.161,
+      "p99": 252.328
+    },
+    "tick_us": {
+      "max": 547.0,
+      "mean": 62.8065,
+      "n": 1199,
+      "p50": 57.0,
+      "p95": 87.0,
+      "p99": 220.0
+    }
+  },
+  "server_counts": {
+    "dropped_sim": 139,
+    "late_packets": 1181,
+    "rewind_over_150ms": 187,
+    "starved": 1204
+  },
+  "server_ticks_per_s": 60.0,
+  "tag": "i66-rtt150-bad",
+  "tick_hz": 60
+}
