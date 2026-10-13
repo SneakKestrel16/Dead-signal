@@ -283,7 +283,7 @@ Sharp and short. The player always keeps control. A scare should leave the playe
 | Fuse alarm, power restored | `design/gdd/survivor-objectives.md` | `ObjectiveProgressChanged` | State trigger |
 | Lighting states, scare anchors, emergency lights, monitors | `design/levels/research-facility.md` | Lighting States (owner), Scare anchors table, authored placements | Data dependency |
 | Callout ducking priority | `design/gdd/pings-and-callouts.md` | Callouts and pings | Rule dependency |
-| Reduced flash/volume settings | `design/accessibility-requirements.md` (not yet authored) | Settings consuming rules 24–29 | Ownership handoff |
+| Reduced flash/volume settings | `design/accessibility-requirements.md` (Standard tier, 2026-10-12) | Settings consuming rules 24–29 | Ownership handoff |
 
 ## Acceptance Criteria
 

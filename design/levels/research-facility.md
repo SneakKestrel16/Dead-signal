@@ -413,7 +413,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 - design/gdd/monster-abilities.md
 - design/gdd/pings-and-callouts.md
 - design/gdd/scare-events.md
-- design/accessibility-requirements.md (not yet written)
+- design/accessibility-requirements.md (Standard tier; reduced-flash presets)
 - design/source/DEAD_SIGNAL_Game_Design_Document.md §9 (map brief)
 
 ## Acceptance Criteria
