@@ -72,7 +72,7 @@ Every GDD rule assumes a server that simulates the round and a client that only 
 
 Feature modules must not run rules from their own `_physics_process`.
 
-**3. Intent transport.** Every physics tick the client sends one unreliable RPC to the server holding its last 3 input frames, as packed arrays: `seq` (`PackedInt32Array`), `move` (`PackedVector2Array`), flags (`PackedByteArray`: sprint, crouch), `yaw` and `pitch` (`PackedFloat32Array`). Discrete intents (interaction start and stop, item use, ping, callout) go by a reliable RPC carrying the `seq` of the frame they belong to, so the server applies them on the same tick as that frame.
+**3. Intent transport.** Every physics tick the client sends one unreliable RPC to the server holding its last 3 input frames, as packed arrays: `seq` (`PackedInt32Array`), `move` (`PackedVector2Array`), flags (`PackedByteArray`: sprint, crouch), `yaw` and `pitch` (`PackedFloat32Array`). Interaction start and stop travel in the frame itself as an `interact` flag and a target (amended by ADR-0008). Other discrete intents (item use, ping, callout) go by a reliable RPC carrying the `seq` of the frame they belong to, so the server applies them on the same tick as that frame.
 
 Traffic uses three transfer channels, so unreliable input or state never waits behind a lost reliable packet:
 - input frames;
@@ -140,6 +140,9 @@ var yaw: float
 var pitch: float           # clamped to ±85° by the server
 var view_tick: float       # added by ADR-0003: server tick the client was rendering remote players at
 var ack_snapshot_tick: int # added by ADR-0003: newest snapshot received; server measures RTT from it
+var interact: bool         # added by ADR-0008: flags byte; rising edge = Start, falling = Stop
+var interact_target: int   # added by ADR-0008: net id, or body handle when target_is_body
+var target_is_body: bool   # added by ADR-0008: flags byte
 
 class_name TickRunner extends Node
 signal tick_started(tick: int)

@@ -101,6 +101,17 @@ state_ownership:
     added: 2026-10-12
     revised: ""
 
+  - state: active_holds
+    status: active
+    owner_system: first-person-controller   # HoldService
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    interface: "HoldService.hold_of(actor) -> Dictionary {net_id, elapsed_ticks, fake, roots}; {} when idle. Locks keyed by Interactable.lock_key"
+    write_access: first-person-controller-only   # owners request cancel(actor, reason); they never write hold state
+    referenced_by:
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -223,7 +234,7 @@ interfaces:
     revised: ""
 
   - contract: feature_tick_order
-    status: active
+    status: "superseded_by: ADR-0008"   # Holds step inserted between Downing and SurvivorObjectives
     pattern: direct_call
     producer: network-authority   # TickRunner phase 4
     consumers:
@@ -232,6 +243,51 @@ interfaces:
     signal_signature: "MatchFlow.begin -> SurvivorDefense -> BorrowedFace -> MonsterAbilities -> Downing -> SurvivorObjectives -> PingsCallouts -> ScareEvents -> MatchFlow.resolve, bus.flush() after each"
     referenced_by:
       - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: feature_tick_order
+    status: active
+    pattern: direct_call
+    producer: network-authority   # TickRunner phase 4
+    consumers:
+      - all-feature-systems
+      - first-person-controller   # HoldService.server_tick
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    signal_signature: "MatchFlow.begin -> SurvivorDefense -> BorrowedFace -> MonsterAbilities -> Downing -> Holds -> SurvivorObjectives -> PingsCallouts -> ScareEvents -> MatchFlow.resolve, bus.flush() after each"
+    referenced_by:
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: hold_lifecycle
+    status: active
+    pattern: direct_call
+    producer: first-person-controller   # HoldService
+    consumers:
+      - survivor-objectives
+      - downing-and-rescue
+      - survivor-defense
+      - monster-abilities             # backup switch
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    signal_signature: "Owners -> HoldService: register(i: Interactable) -> int; unregister(net_id); cancel(actor, reason). HoldService -> Interactable: eligible(actor) -> bool; start_progress_s() -> float; on_start(actor); on_complete(actor); on_cancel(actor, progress_s, reason). Owners emit their own catalog events; HoldService emits none"
+    referenced_by:
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: interact_intent
+    status: active
+    pattern: rpc
+    producer: all-clients
+    consumers:
+      - first-person-controller
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    signal_signature: "InputFrame.interact (flags byte; rising edge = Start, falling = Stop); interact_target: int (net id, or per-peer body handle); target_is_body (flags byte). Target read only on the rising edge"
+    referenced_by:
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
     added: 2026-10-12
     revised: ""
 
@@ -246,6 +302,7 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0007-movement-physics-collision-layers.md
       - docs/architecture/adr-0003-lag-compensation-rewind.md
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
     added: 2026-10-12
     revised: ""
 
@@ -444,6 +501,18 @@ api_decisions:
     reason: "Same analytic style as ADR-0003; fewer physics objects"
     referenced_by:
       - docs/architecture/adr-0007-movement-physics-collision-layers.md
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: contested_interaction_lock
+    status: active
+    api: first actor in ADR-0007's rotated player-ID order within the Holds step takes the lock
+    not: real-time press order or nearest actor
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    reason: "Deterministic and testable; rotation spreads wins evenly; contests inside one 16.7 ms tick are rare"
+    referenced_by:
+      - docs/architecture/adr-0008-hold-to-interact-protocol.md
     added: 2026-10-12
     revised: ""
 
@@ -589,6 +658,34 @@ forbidden_patterns:
     description: "Never detect mouse or keyboard input with event.device == 0; test the event type or compare to InputEvent.DEVICE_ID_MOUSE / DEVICE_ID_KEYBOARD."
     why: "Godot 4.7 changed mouse/keyboard device IDs from 0 (docs/engine-reference/godot/breaking-changes.md)."
     adr: docs/architecture/adr-0007-movement-physics-collision-layers.md
+    added: 2026-10-12
+
+  - pattern: owner_timed_hold
+    status: active
+    description: "Owners must never count hold progress themselves; only HoldService times holds. Owners keep stored progress between holds only."
+    why: "Seven owners timing holds would drift on range, sight, lock and cancel rules (first-person-controller.md rule 11)."
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+
+  - pattern: client_hold_complete
+    status: active
+    description: "No client message may complete or advance a hold; the protocol carries only the interact bit and target."
+    why: "first-person-controller.md rule 15: a client done message is ignored; completion is server-timed."
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+
+  - pattern: hold_service_events
+    status: active
+    description: "HoldService must never emit EventBus events; owners emit their own catalog events from on_complete and on_cancel."
+    why: "Keeps the catalog to the designed events and keeps owner-emits intact (ADR-0005)."
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+
+  - pattern: fake_hold_lock
+    status: active
+    description: "A shapeshifter fake hold must never take a lock, change progress or call the owner."
+    why: "survivor-objectives.md rule 25: a survivor can always start a real interaction, and real state is never corrupted."
+    adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
     added: 2026-10-12
 
 # Example:

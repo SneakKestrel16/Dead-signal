@@ -103,7 +103,8 @@ A new event needs a `systems-index.md` row first.
 3. `BorrowedFace` — observation; transformation progress and completion.
 4. `MonsterAbilities` — lunge wind-up, dash and hit test (ADR-0003); False Signal; Blackout.
 5. `Downing` — takedown commit; bleed-out; rescue.
-6. `SurvivorObjectives` — holds, countdown, extraction.
+5a. `Holds` — every hold is checked, started, advanced and completed here (added by ADR-0008), so the same tick's interrupts beat completions.
+6. `SurvivorObjectives` — countdown, extraction.
 7. `PingsCallouts` — rate limits; delivery.
 8. `ScareEvents` — gating; view-offset writes.
 9. `MatchFlow.resolve` — win checks in the order evidence escaped, then eliminations, then deadline; then the outcome lock.
@@ -136,7 +137,7 @@ Composition root (round server)
 
 TickRunner phase 4, one tick:
   MatchFlow.begin ─flush─▶ Defense ─flush─▶ BorrowedFace ─flush─▶ MonsterAbilities ─flush─▶
-  Downing ─flush─▶ Objectives ─flush─▶ Pings ─flush─▶ ScareEvents ─flush─▶ MatchFlow.resolve ─flush
+  Downing ─flush─▶ Holds ─flush─▶ Objectives ─flush─▶ Pings ─flush─▶ ScareEvents ─flush─▶ MatchFlow.resolve ─flush
   flush = drain queue (≤ 8 rounds) → subscribers in subscribe order → collect for projection
 phase 6: NetAuthority projects collected events per peer (ADR-0004)
 ```

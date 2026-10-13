@@ -145,7 +145,7 @@ Network: push positions into snapshot history (rewind source)
 Feature tick, FIXED ORDER (ADR-0005), event queue drained after each step:
   Match Flow begin (clock, phase) ▶ Defense (stun/immunity) ▶ Borrowed Face (observe, transform)
   ▶ Monster Abilities (hit test on rewound positions) ▶ Downing (commit, bleed, rescue)
-  ▶ Objectives (holds, countdown, extraction) ▶ Pings ▶ Scare gating
+  ▶ Holds (every hold timed, ADR-0008) ▶ Objectives (countdown, extraction) ▶ Pings ▶ Scare gating
   ▶ Match Flow resolve (evidence escaped, then eliminations, then deadline)
    ▼
 Network: per-peer snapshot + event projection ─▶ send

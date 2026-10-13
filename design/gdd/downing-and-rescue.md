@@ -287,7 +287,7 @@ team has at least 1.5 s to stun the monster after a hit lands, if a teammate is 
 | Victim disconnects while Downed | Handled by Match Flow's disconnect rule. The bleed-out timer keeps running during reconnect grace; if it expires, the survivor is Eliminated ("Bled out") while still disconnected | Disconnecting must not stall the round (Match Flow rule 19) |
 | Downed survivor crawls into a hiding spot | Not allowed; hiding requires Healthy | Hiding a downed body would stall the round |
 | Two survivors try to rescue the same person | First valid starter is the rescuer; second gets "already being rescued" | One rescuer counts |
-| Rescue completes on the same tick the rescuer is hit | Hit processed first; rescue interrupted | Server orders hit resolution before interactions **(proposed)** |
+| Rescue completes on the same tick the rescuer is hit | Hit processed first; rescue interrupted | Server orders hit resolution before interactions (ADR-0008: the Holds step runs after Monster Abilities and Downing) |
 | Downed survivor carried a data drive | Survivor Objectives decides drop behavior | Ownership of item rules |
 | All living survivors Downed, one has escaped | Escaped survivors are not counted; Match Flow evaluates win | Escape state is Match Flow's |
 | Round timer expires mid-commit or mid-rescue | All timers freeze; Match Flow decides the outcome | Round end overrides |

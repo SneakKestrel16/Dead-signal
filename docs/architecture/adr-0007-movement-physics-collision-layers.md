@@ -144,7 +144,7 @@ func set_hidden(hidden: bool, spot: HidingSpotData) -> bool
 class_name MapQueries extends RefCounted
 func volume_at(point: Vector3) -> StringName
 func in_zone(zone_id: StringName, point: Vector3) -> bool
-func interactable_on_ray(origin: Vector3, dir: Vector3) -> StringName   # &"" if none
+func interactable_on_ray(origin: Vector3, dir: Vector3) -> int   # net id, -1 if none (amended by ADR-0008; was StringName)
 func capsule_overlaps_swing(door_id: StringName, capsule_center: Vector3, height: float, radius: float) -> bool
 ```
 
