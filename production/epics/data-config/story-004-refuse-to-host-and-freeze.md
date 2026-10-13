@@ -5,7 +5,7 @@
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
-> **Manifest Version**: 2026-10-12
+> **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs `NetAuthority.host()` from the network-authority epic.

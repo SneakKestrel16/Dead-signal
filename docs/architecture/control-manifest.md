@@ -1,10 +1,10 @@
 # Control Manifest
 
 > **Engine**: Godot 4.7.2
-> **Last Updated**: 2026-10-12
-> **Manifest Version**: 2026-10-12
-> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015
-> **Status**: Active, built from **Proposed** ADRs (none Accepted yet; autonomous decision AD-27). Regenerate with `/create-control-manifest update` when any ADR is accepted or revised.
+> **Last Updated**: 2026-10-13
+> **Manifest Version**: 2026-10-13
+> **ADRs Covered**: Accepted: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008. Proposed (rules tagged `(Proposed)`): ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015
+> **Status**: Active. Foundation and Core rules come from Accepted ADRs (2026-10-13). Rules tagged `(Proposed)` come from ADRs not yet accepted and may still change; they are kept so Feature and Presentation stories have guidance (AD-52). Regenerate with `/create-control-manifest update` when an ADR is accepted or revised.
 
 `Manifest Version` is the date this manifest was generated. Story files embed
 this date when created. `/story-readiness` compares a story's embedded version
@@ -152,22 +152,22 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Implement `server_tick(tick)` and register with `TickRunner`; never rely on `_physics_process`** — source: ADR-0002
 - **Hold owners emit their own catalog events from `on_complete` and `on_cancel`** — source: ADR-0008
 - **Fake holds (shapeshifter) take no lock, change no progress and never call the owner** — source: ADR-0008
-- **Monster Abilities validates a Blackout target through `LightingView` before emitting `AbilityUsed`** — source: ADR-0009
+- **Monster Abilities validates a Blackout target through `LightingView` before emitting `AbilityUsed`** — source: ADR-0009 (Proposed)
 - **Every `duration_s`, `range_m`, `hold_range_tolerance_m` and `interact_ray_max_m` comes from data** — source: ADR-0008
-- **Each results field has one owner that counts it and exposes a getter-only `*StatsView` under `stats.<system>`; `MatchFlow.resolve` reads them once on the outcome tick into `RoundResults` on `RoundEnded`** — source: ADR-0011
-- **`RoundResults.to_dict()` builds fresh untyped containers (`assign`, `merge`); telemetry consumes the `RoundEnded` payload, never the views** — source: ADR-0011
-- **Objective discovery and Borrowed Face observation use the one server `SightTest` (distance, then cone, then `SIGHT` rays + analytic doors), only in TickRunner physics phases; sample points sit ≥ 5 cm off surfaces, and both ray ends outside every `SIGHT` collider** — source: ADR-0012
-- **Active objective points are drawn from the load-time list of rule-6-valid placements with the injected, seeded `RandomNumberGenerator`; never the global `randi()`** — source: ADR-0012
-- **An undiscovered point stays ungranted on every survivor peer until discovery; the shapeshifter and hidden survivors never discover** — source: ADR-0012
-- **Footstep masking scales the server's send radius by the volume's `footstep_radius_scale`** — source: ADR-0013
+- **Each results field has one owner that counts it and exposes a getter-only `*StatsView` under `stats.<system>`; `MatchFlow.resolve` reads them once on the outcome tick into `RoundResults` on `RoundEnded`** — source: ADR-0011 (Proposed)
+- **`RoundResults.to_dict()` builds fresh untyped containers (`assign`, `merge`); telemetry consumes the `RoundEnded` payload, never the views** — source: ADR-0011 (Proposed)
+- **Objective discovery and Borrowed Face observation use the one server `SightTest` (distance, then cone, then `SIGHT` rays + analytic doors), only in TickRunner physics phases; sample points sit ≥ 5 cm off surfaces, and both ray ends outside every `SIGHT` collider** — source: ADR-0012 (Proposed)
+- **Active objective points are drawn from the load-time list of rule-6-valid placements with the injected, seeded `RandomNumberGenerator`; never the global `randi()`** — source: ADR-0012 (Proposed)
+- **An undiscovered point stays ungranted on every survivor peer until discovery; the shapeshifter and hidden survivors never discover** — source: ADR-0012 (Proposed)
+- **Footstep masking scales the server's send radius by the volume's `footstep_radius_scale`** — source: ADR-0013 (Proposed)
 
 ### Forbidden Approaches
 - **Never let `HoldService` emit events** [hold_service_events] — source: ADR-0008
 - **Never let a fake hold take a lock** [fake_hold_lock] — source: ADR-0008
 - **Never have each owner run its own hold logic** — copies drift — source: ADR-0008
 - **Never emit an event from a client** — source: ADR-0005
-- **Never let Match Flow tally other systems' stats or call into their modules; never compute results on a client** — source: ADR-0011
-- **Never decide discovery from a client report, proximity alone or room entry** — source: ADR-0012
+- **Never let Match Flow tally other systems' stats or call into their modules; never compute results on a client** — source: ADR-0011 (Proposed)
+- **Never decide discovery from a client report, proximity alone or room entry** — source: ADR-0012 (Proposed)
 
 ---
 
@@ -178,46 +178,46 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 ### Required Patterns
 - **Render remote players `interp_delay_ms` (50) behind the estimated server tick; extrapolate at most `max_extrapolation_ms`, then hold** — source: ADR-0003
 - **The local body uses physics interpolation; camera yaw and pitch render at frame rate from local input** — source: ADR-0002
-- **Only `FacilityMap` writes lighting state; everything else reads `LightingView`** — source: ADR-0009
-- **Send lighting records only for volumes in the peer's visibility set (plus a viewed camera's set); re-send on re-entry, reconnect and spectator switch** — source: ADR-0009
-- **Clients render lighting only from received records and `LightingPresets`; flicker is a pure function of payload seed and elapsed server ticks, clamped to `max_flashes_per_s` and the player's flash scale** — source: ADR-0009
-- **`emergency_strip` lights stay on in every state, Blackout included** — source: ADR-0009
-- **Set the surveillance `SubViewport` to `UPDATE_DISABLED` whenever its client is not viewing** — source: ADR-0009
-- **Keep each light's range inside its own volume; pre-warm every preset at load with a camera sweep through each volume** — source: ADR-0009
-- **Apply the `max_flashes_per_s` clamp in the per-tick flicker precompute; apply only the flash scale at render time** — source: ADR-0009
-- **Count `max_shadowed_omni` / `max_shadowed_spot` per rendered view (the feed is a second view)** — source: ADR-0009
-- **The feed `SubViewport` sets its own `positional_shadow_atlas_size`; the feed `Camera3D` has its own cheap `Environment`** — source: ADR-0009
-- **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`; the five ADR-only lighting knobs live in `FacilityKnobs`** — source: ADR-0009, ADR-0006
-- **Each body is one `BodyPuppet` per handle; a form change swaps only the `AppearanceSlot` child (remove + `queue_free` + add in one frame); appearances come from `res://data/appearances.tres`, preloaded and render-warmed at load** — source: ADR-0010
-- **C1–C5 share one skeleton bone set and one `AnimationLibrary` `.tres`; animation comes only from snapshot fields; `LookAtModifier3D.relative` set explicitly; trees enabled with `AnimationTree.active`** — source: ADR-0010
-- **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; a lit body flashlight casts shadows, and per view only the own flashlight and the nearest `max_shadowed_flashlights` others emit light** — source: ADR-0010, ADR-0009
-- **Survivor-to-survivor swap: `start(state, false)`, an `AnimationNodeTimeSeek` to the same fraction of the dominant clip, then `advance(0.0)`; the warp overlay is fragment-only and never displaces `VERTEX`** — source: ADR-0010
-- **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius, except masked footsteps keep the unscaled radius** — source: ADR-0013
-- **Ducking writes only `Ambience` and `ScareDuck`; gameplay cues and callouts are never ducked or stolen by scare or ambience sounds** — source: ADR-0013
-- **The duck counter counts only non-looping sounds and decrements on finish, steal and stop; own footsteps never duck; footstep ids are `<set>.<gait>`** — source: ADR-0013
-- **Occlusion uses `SightTest.line_clear` (doors occlude), queued to `AudioDirector._physics_process`, source lifted `occlusion_floor_lift_m`** — source: ADR-0013, ADR-0012
+- **Only `FacilityMap` writes lighting state; everything else reads `LightingView`** — source: ADR-0009 (Proposed)
+- **Send lighting records only for volumes in the peer's visibility set (plus a viewed camera's set); re-send on re-entry, reconnect and spectator switch** — source: ADR-0009 (Proposed)
+- **Clients render lighting only from received records and `LightingPresets`; flicker is a pure function of payload seed and elapsed server ticks, clamped to `max_flashes_per_s` and the player's flash scale** — source: ADR-0009 (Proposed)
+- **`emergency_strip` lights stay on in every state, Blackout included** — source: ADR-0009 (Proposed)
+- **Set the surveillance `SubViewport` to `UPDATE_DISABLED` whenever its client is not viewing** — source: ADR-0009 (Proposed)
+- **Keep each light's range inside its own volume; pre-warm every preset at load with a camera sweep through each volume** — source: ADR-0009 (Proposed)
+- **Apply the `max_flashes_per_s` clamp in the per-tick flicker precompute; apply only the flash scale at render time** — source: ADR-0009 (Proposed)
+- **Count `max_shadowed_omni` / `max_shadowed_spot` per rendered view (the feed is a second view)** — source: ADR-0009 (Proposed)
+- **The feed `SubViewport` sets its own `positional_shadow_atlas_size`; the feed `Camera3D` has its own cheap `Environment`** — source: ADR-0009 (Proposed)
+- **Lighting values (`blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `feed_resolution`) come from data; looks come from `LightingPresets`; the five ADR-only lighting knobs live in `FacilityKnobs`** — source: ADR-0009 (Proposed), ADR-0006
+- **Each body is one `BodyPuppet` per handle; a form change swaps only the `AppearanceSlot` child (remove + `queue_free` + add in one frame); appearances come from `res://data/appearances.tres`, preloaded and render-warmed at load** — source: ADR-0010 (Proposed)
+- **C1–C5 share one skeleton bone set and one `AnimationLibrary` `.tres`; animation comes only from snapshot fields; `LookAtModifier3D.relative` set explicitly; trees enabled with `AnimationTree.active`** — source: ADR-0010 (Proposed)
+- **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; a lit body flashlight casts shadows, and per view only the own flashlight and the nearest `max_shadowed_flashlights` others emit light** — source: ADR-0010 (Proposed), ADR-0009 (Proposed)
+- **Survivor-to-survivor swap: `start(state, false)`, an `AnimationNodeTimeSeek` to the same fraction of the dominant clip, then `advance(0.0)`; the warp overlay is fragment-only and never displaces `VERTEX`** — source: ADR-0010 (Proposed)
+- **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius, except masked footsteps keep the unscaled radius** — source: ADR-0013 (Proposed)
+- **Ducking writes only `Ambience` and `ScareDuck`; gameplay cues and callouts are never ducked or stolen by scare or ambience sounds** — source: ADR-0013 (Proposed)
+- **The duck counter counts only non-looping sounds and decrements on finish, steal and stop; own footsteps never duck; footstep ids are `<set>.<gait>`** — source: ADR-0013 (Proposed)
+- **Occlusion uses `SightTest.line_clear` (doors occlude), queued to `AudioDirector._physics_process`, source lifted `occlusion_floor_lift_m`** — source: ADR-0013 (Proposed), ADR-0012 (Proposed)
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
-- **`InputContextStack` is the only writer of `Input.mouse_mode`; the input sampler masks every frame by the top context; `_unhandled_input` gameplay handlers check `allows_actions()`** — source: ADR-0014
-- **Every screen pushes its context when shown and pops the same one when hidden; push shows the layer before `grab_focus`; pop hides the layer, then restores the remembered focus owner only if valid and visible; the stack resets to `MENU` at round end** — source: ADR-0014
-- **HUD widgets read only `HudModel`; HUD and marker `Control`s use `FOCUS_NONE` and `MOUSE_FILTER_IGNORE`; layers come from `UiLayers`** — source: ADR-0014
-- **Every focusable `Control` without visible text sets `accessibility_name` from `tr()` and refreshes it on locale change; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014
-- **Only the Controller writes a `FlinchRecord`; server and client use the one `FlinchRecord.offset_at` (float tick, `maxi(ramp_ticks, 1)`); the server evaluates the frame's own `record_id` record at its `offset_tick` and adds `base[view_epoch]`; resets use the epoch handshake; the ±85° clamp applies to the sum** — source: ADR-0015, ADR-0002
-- **Client camera effects live under `CameraFx` (physics interpolation off on head, `CameraFx`, `Camera3D`) and never change sent yaw/pitch; every luminance flash passes `FlashLimiter`** — source: ADR-0015
+- **`InputContextStack` is the only writer of `Input.mouse_mode`; the input sampler masks every frame by the top context; `_unhandled_input` gameplay handlers check `allows_actions()`** — source: ADR-0014 (Proposed)
+- **Every screen pushes its context when shown and pops the same one when hidden; push shows the layer before `grab_focus`; pop hides the layer, then restores the remembered focus owner only if valid and visible; the stack resets to `MENU` at round end** — source: ADR-0014 (Proposed)
+- **HUD widgets read only `HudModel`; HUD and marker `Control`s use `FOCUS_NONE` and `MOUSE_FILTER_IGNORE`; layers come from `UiLayers`** — source: ADR-0014 (Proposed)
+- **Every focusable `Control` without visible text sets `accessibility_name` from `tr()` and refreshes it on locale change; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014 (Proposed)
+- **Only the Controller writes a `FlinchRecord`; server and client use the one `FlinchRecord.offset_at` (float tick, `maxi(ramp_ticks, 1)`); the server evaluates the frame's own `record_id` record at its `offset_tick` and adds `base[view_epoch]`; resets use the epoch handshake; the ±85° clamp applies to the sum** — source: ADR-0015 (Proposed), ADR-0002
+- **Client camera effects live under `CameraFx` (physics interpolation off on head, `CameraFx`, `Camera3D`) and never change sent yaw/pitch; every luminance flash passes `FlashLimiter`** — source: ADR-0015 (Proposed)
 
 ### Forbidden Approaches
-- **Never broadcast lighting state to every peer** [lighting_state_broadcast] — source: ADR-0009
-- **Never change lighting state locally on a client** (seeded flicker on top is allowed) [client_local_lighting_state] — source: ADR-0009
-- **Never send flicker steps as individual messages; never replicate per-light values; never use baked lightmaps per state (revisit in M4)** — source: ADR-0009
-- **Never set light looks from code** — source: ADR-0009
-- **Never branch presentation on role, player ID or "is monster"** [role_branch_in_presentation] — source: ADR-0010
-- **Never free, rename or re-parent a `BodyPuppet` on a form change** [puppet_recreated_on_form_change] — source: ADR-0010
-- **Never instantiate an appearance from disk mid-round** — source: ADR-0010
-- **Never use sidechain ducking, `Area3D` audio overrides, or mix-only masking of information** — source: ADR-0013
-- **Never rely on Shader Baker to prevent mid-round hitches** — the reference only says it shortens startup — source: ADR-0009
+- **Never broadcast lighting state to every peer** [lighting_state_broadcast] — source: ADR-0009 (Proposed)
+- **Never change lighting state locally on a client** (seeded flicker on top is allowed) [client_local_lighting_state] — source: ADR-0009 (Proposed)
+- **Never send flicker steps as individual messages; never replicate per-light values; never use baked lightmaps per state (revisit in M4)** — source: ADR-0009 (Proposed)
+- **Never set light looks from code** — source: ADR-0009 (Proposed)
+- **Never branch presentation on role, player ID or "is monster"** [role_branch_in_presentation] — source: ADR-0010 (Proposed)
+- **Never free, rename or re-parent a `BodyPuppet` on a form change** [puppet_recreated_on_form_change] — source: ADR-0010 (Proposed)
+- **Never instantiate an appearance from disk mid-round** — source: ADR-0010 (Proposed)
+- **Never use sidechain ducking, `Area3D` audio overrides, or mix-only masking of information** — source: ADR-0013 (Proposed)
+- **Never rely on Shader Baker to prevent mid-round hitches** — the reference only says it shortens startup — source: ADR-0009 (Proposed)
 
 ### Performance Guardrails
-- **Lighting network**: about 6 bytes per changed visible volume, on change only; one flicker message per scare — source: ADR-0009
-- **Shadowed lights**: capped by `max_shadowed_omni` / `max_shadowed_spot` (Forward+ limits NOT SOURCEABLE; verify in the lighting spike) — source: ADR-0009
+- **Lighting network**: about 6 bytes per changed visible volume, on change only; one flicker message per scare — source: ADR-0009 (Proposed)
+- **Shadowed lights**: capped by `max_shadowed_omni` / `max_shadowed_spot` (Forward+ limits NOT SOURCEABLE; verify in the lighting spike) — source: ADR-0009 (Proposed)
 
 ---
 
