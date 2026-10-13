@@ -85,7 +85,7 @@ event. Only the owner writes it. Readers never change it.
 
 | # | System Name | Category | Priority | Status | Design Doc | Depends On |
 |---|-------------|----------|----------|--------|------------|------------|
-| 1 | Network Authority & Replication | Core | MVP | ADRs Proposed | docs/architecture/adr-0001 to adr-0005 (no GDD; designed by ADR) | — |
+| 1 | Network Authority & Replication | Core | MVP | ADRs Accepted (2026-10-13) | docs/architecture/adr-0001 to adr-0005 (no GDD; designed by ADR) | — |
 | 2 | Lobby & Role Assignment | Core | MVP | Approved | design/gdd/lobby-role-assignment.md | Network Authority |
 | 3 | First-Person Controller & Interaction (inferred) | Core | MVP | Approved | design/gdd/first-person-controller.md | Network Authority (Match Flow events only) |
 | 4 | Match Flow & Win Conditions | Gameplay | MVP | Approved | design/gdd/match-flow.md | Network Authority, Lobby & Role Assignment, Survivor Objectives, Downing, Rescue & Elimination, Borrowed Face, Facility Map |

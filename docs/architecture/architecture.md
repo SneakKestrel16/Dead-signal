@@ -426,7 +426,7 @@ Each blocks the ADR named in brackets.
 Resolved since version 1:
 - **Real networks** (2026-10-13): a WAN run with 6 clients on a phone hotspot matched the simulated rows; players connect over Tailscale (designer decision), so NAT reachability is settled for MVP; drift and Wi-Fi tests were skipped. ADR-0001 to ADR-0008 Accepted.
 - **Borrowed Face rendering**: separate true-form model, appearance-child swap (ADR-0010, Proposed).
-- **Rewind budget**: 50 ms interpolation and a 180 ms cap bounded by measured RTT (ADR-0003); the pursuit simulation still needs its rerun at 0.43 s.
+- **Rewind budget**: 50 ms interpolation and a 180 ms cap bounded by measured RTT (ADR-0003); the pursuit simulation passed at a 0.43 s strafe start with a 27 ms margin (ADR-0003 Verification (4), 2026-10-12).
 - **Hosting model**: listen server for MVP with a separable server role; dedicated hosting stays possible but is not built (ADR-0001).
 - **Monster identity leak**: per-peer handles re-issued on re-entry and per-event projection (ADR-0004).
 - **Spectator scope**: a spectator receives the stream projected for the watched survivor; switching re-issues every handle (ADR-0004 §8).
