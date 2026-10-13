@@ -305,16 +305,16 @@ Per-event payload schemas (15 events) belong to the Event Catalog ADR. Borrowed 
 
 Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet covered by an accepted decision.
 
-| ADR | Decision | Acceptance waits on |
+| ADR | Decision | Acceptance waits on ([verification results](../../prototypes/adr-verification/README.md)) |
 |---|---|---|
-| [ADR-0001](adr-0001-hosting-session-join-reconnect.md) | Listen server over direct ENet, separable server role, `auth_callback` join check, session-token reconnect | Spike's deferred real-network tests |
-| [ADR-0002](adr-0002-authoritative-sim-tick-input.md) | 60 Hz `TickRunner`, redundant unreliable input frames, adaptive 1–2 frame queue, per-peer snapshots, owner-only prediction and replay | Real-network tests; replay with gravity and floor snap (Verification 4, 7) |
-| [ADR-0003](adr-0003-lag-compensation-rewind.md) | 50 ms interpolation, 180 ms rewind cap bounded by measured RTT, analytic hit tests on rewound capsules | Real-network tests; pursuit-simulation rerun at 0.43 s |
-| [ADR-0004](adr-0004-replication-scope-information-hiding.md) | Bodies only through per-peer snapshots, per-peer handles re-issued on re-entry, authored room PVS, per-event projection | Spawner-leak spike case; authored visibility table |
-| [ADR-0005](adr-0005-event-catalog-state-registry-tick-order.md) | `@abstract` event classes with `project()`, drain-flush after each module phase, typed read-only views, fixed module order, composition root | Headless verification scripts |
-| [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Headless verification scripts |
-| [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Replay with gravity and floor snap |
-| [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Headless verification scripts |
+| [ADR-0001](adr-0001-hosting-session-join-reconnect.md) | Listen server over direct ENet, separable server role, `auth_callback` join check, session-token reconnect | Spike's deferred real-network tests (single-machine items done) |
+| [ADR-0002](adr-0002-authoritative-sim-tick-input.md) | 60 Hz `TickRunner`, redundant unreliable input frames, adaptive 1–2 frame queue, per-peer snapshots, owner-only prediction and replay | Real-network tests; windowed check of interpolation OFF (replay and floor restore verified) |
+| [ADR-0003](adr-0003-lag-compensation-rewind.md) | 50 ms interpolation, 180 ms rewind cap bounded by measured RTT, analytic hit tests on rewound capsules | Real-network tests (pursuit rerun passed, 27 ms margin) |
+| [ADR-0004](adr-0004-replication-scope-information-hiding.md) | Bodies only through per-peer snapshots, per-peer handles re-issued on re-entry, authored room PVS, per-event projection | Authored visibility table (spawner-leak case passed) |
+| [ADR-0005](adr-0005-event-catalog-state-registry-tick-order.md) | `@abstract` event classes with `project()`, drain-flush after each module phase, typed read-only views, fixed module order, composition root | Nothing outstanding; verification passed |
+| [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Exported-build load by path; digest on a second machine |
+| [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Windowed `screen_relative` check (floor angle and same-tick queries amended) |
+| [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Nothing outstanding beyond the lock test written with `HoldService` |
 
 **Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 91 covered by a Proposed ADR, 28 partial, 16 gaps, 3 need no ADR. All 16 gaps fall to the should-have ADRs below. Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
 

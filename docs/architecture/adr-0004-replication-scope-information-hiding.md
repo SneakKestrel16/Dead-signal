@@ -28,6 +28,8 @@ The GDDs require that no client learns what its player could not perceive, and a
 
 **API coverage.** In the repo reference: `rpc_id`, `@rpc` modes, `SceneMultiplayer.server_relay`. Spike-verified on 4.7.2: `MultiplayerSynchronizer.public_visibility = false`, `set_visibility_for` grant and revoke (revoke despawns on that peer), `update_visibility`, `MultiplayerSpawner.spawn_function` / `spawn_path` / `spawn()`. Training data only: `add_visibility_filter`, spawner-level visibility rules, exact `update_visibility` timing.
 
+**Verification results (2026-10-12, single machine, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) **PASS**: a hidden spawn granted to one client only never reaches the other (no node, no `spawned` signal, idle-level traffic while the entity moves). (2) PASS: `set_visibility_for` right after `spawn()` in the same frame delivers. (3) filters re-run every frame by default; a flipped filter takes effect in 1 frame. (4) see ADR-0002 (6). (5) the first RPC to a node named `Player_4242` carries that name in clear, confirming Decision 7a.
+
 ## ADR Dependencies
 
 | Field | Value |

@@ -1,0 +1,13 @@
+; Throwaway ADR verification project. Separate Godot project; prototypes/.gdignore
+; hides it from the main project.
+
+config_version=5
+
+[application]
+
+config/name="Dead Signal ADR Verification"
+config/features=PackedStringArray("4.7")
+
+[physics]
+
+3d/physics_engine="Jolt Physics"

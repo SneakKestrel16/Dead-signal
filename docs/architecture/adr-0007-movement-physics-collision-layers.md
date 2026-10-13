@@ -28,6 +28,8 @@ Every player moves through one shared movement step, and every system that casts
 
 **API coverage.** In the repo reference: Jolt as the default, `CharacterBody3D.move_and_slide`, `get_gravity`, `PhysicsRayQueryParameters3D` / `intersect_ray`, `Input.get_vector`, device-ID rule. Spike-verified on 4.7.2: Jolt `CharacterBody3D` with `collision_layer` and `move_and_slide` (no gravity). Training data only: the items under Verification Required, `floor_*` properties, `Input.use_accumulated_input`.
 
+**Verification results (2026-10-12, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) answered. (2) `safe_margin` 0.001, `max_slides` 6, `wall_min_slide_angle` 15°. (3) see ADR-0002 (4). (4), (5), (6) PASS. (7) **FAIL**: queries and `move_and_slide` see other bodies at their positions after the last physics step; a teleport or move this frame is invisible until the next step, while disabling or shrinking a shape is seen at once (Decisions 6 and 7 amended). (8) NOT RUN (needs a window). (9) the floor limit is `floor_max_angle` plus about 0.5°: at 40.5° a 41° ramp climbs; at 40.0° 40° climbs and 41° blocks, with or without `floor_block_on_wall` (Decision 3 amended).
+
 ## ADR Dependencies
 
 | Field | Value |
@@ -64,12 +66,12 @@ Every player moves through one shared movement step, and every system that casts
 
 `height` includes the caps. On each swap the `CollisionShape3D` is placed at y = height / 2.
 
-Standing up uses `PhysicsDirectSpaceState3D.intersect_shape` with the standing capsule raised 0.01 m, `margin = 0`, the player's own RID excluded, and the movement mask. The player stays low until it reports no overlap.
+Standing up uses `PhysicsDirectSpaceState3D.intersect_shape` with the standing capsule raised 0.01 m, `margin = 0`, the player's own RID excluded, and mask `world | glass | doors`; other players are tested analytically (Decision 6a). The player stays low until it reports no overlap.
 
 **3. Movement step.** One function, shared by the server and the owning client, run inside `_physics_process`:
 - **Horizontal.** Velocity moves toward `input_dir × effective_speed` over `accel_time_s` = 0.05; `effective_speed` comes from the Controller's gait and modifier rules.
 - **Vertical.** Velocity comes from `get_gravity()` and is reset to 0 while on the floor.
-- **Fixed settings, all from data:** `floor_max_angle = deg_to_rad(40.5)` (just above the 40° limit, so 40° climbs and 41° does not); `floor_snap_length` = 0.4 m (above the 0.35 m step); `floor_stop_on_slope = true`; `floor_constant_speed = true`; `floor_block_on_wall = true`, so a slope above `floor_max_angle` acts as a wall and the 41° block AC holds (`godot-specialist`, 2026-10-12 review; Verification Required item 9); and `safe_margin`, `max_slides` and `wall_min_slide_angle` set explicitly.
+- **Fixed settings, all from data:** `floor_max_angle = deg_to_rad(40.0)`: the engine accepts slopes up to about 0.5° above `floor_max_angle`, so 40.0 lets 40° climb and blocks 41° (measured: 40.4° climbs, 40.6° blocks; the original 40.5 let 41° climb. Verification results (9)); `floor_snap_length` = 0.4 m (above the 0.35 m step); `floor_stop_on_slope = true`; `floor_constant_speed = true`; `floor_block_on_wall = true`, so a slope above `floor_max_angle` acts as a wall and the 41° block AC holds (`godot-specialist`, 2026-10-12 review; Verification Required item 9); and `safe_margin`, `max_slides` and `wall_min_slide_angle` set explicitly.
 - **Read-back.** After `move_and_slide()`, `is_on_floor()` is read for ADR-0002's snapshot. On reconciliation the owning client restores position and velocity, then calls `apply_floor_snap()` when that flag is set (ADR-0002 rule 6); the floor is recomputed, never copied, because `CharacterBody3D` has no floor-state setter. (Amended after the 2026-10-12 architecture review; was "the floor flag and normal are read", which assumed a restore the engine does not offer.)
 - **No jump.** No jump action exists.
 
@@ -93,7 +95,11 @@ Standing up uses `PhysicsDirectSpaceState3D.intersect_shape` with the standing c
 
 Shape `disabled` and `collision_layer` changes are made directly from TickRunner phases and network handlers. `set_deferred` is used only inside physics callbacks.
 
-**6. Player against player.** Each tick the server moves players in ascending player-ID order, rotated by one position per tick, so no player always wins a head-on contest. The order is deterministic.
+**6. Player against player.** Each tick the server moves players in ascending player-ID order, rotated by one position per tick. The order is deterministic.
+
+Jolt queries and `move_and_slide` see other bodies where they were after the previous physics step, not where an earlier mover put them this tick (Verification results (7)). So within a tick every player moves against the others' start-of-tick positions, and two players closing head-on can overlap by up to one tick of motion (about 0.15 m at sprint, inference) until the next tick's `move_and_slide` separates them. This is accepted; the rotation keeps the outcome deterministic. (Amended 2026-10-12; the original premise was that a later mover sees an earlier one's new position.)
+
+**6a. Placement checks test players analytically.** The stand-up check (Decision 2) and hide-exit placement (Decision 7) cannot rely on the physics space for other players, because a player who moved this tick is not there yet. They query the physics space for `world | glass | doors` only, and test other players' capsules analytically at their current-tick positions from ADR-0003's history (pushed in ADR-0002 phase 3), with the same capsule maths as ADR-0003 §6.
 
 **7. Hidden survivors.** While hidden, a survivor's `collision_layer` and `collision_mask` are 0 and the body sits at the spot's hide point. On exit, the server places it at the spot's exit point if the standing capsule fits there; otherwise it tries the spot's alternate exit points in order, and if none fits the exit waits.
 
@@ -116,7 +122,7 @@ Player (CharacterBody3D, layer players)
   └─ movement step (server + owner prediction):
        velocity.xz → input × effective_speed (accel 0.05 s)
        velocity.y  ← gravity, 0 on floor
-       move_and_slide()  floor_max_angle 40.5°, snap 0.4, constant speed
+       move_and_slide()  floor_max_angle 40.0°, snap 0.4, constant speed
 Masks:  server move  = world|glass|doors|players
         prediction   = world|glass|doors (replicated door state)
         sight rays   = world            (+ analytic doors, ADR-0003)
@@ -195,11 +201,12 @@ func capsule_overlaps_swing(door_id: StringName, capsule_center: Vector3, height
 ### Negative
 - Every step in the greybox needs a ramp collider; feet and camera follow the ramp, not the stairs.
 - Low player IDs still win contests on even ticks of the rotation.
+- Players moving in the same tick do not see each other's new positions; brief overlaps of up to one tick of motion are possible (Decision 6).
 - Door blockers are toggled from state, so a door that changes this tick may block one tick late on the client.
 
 ## Risks
 - **Replay with gravity untested.** Mitigation: Verification Required item 3 in the spike before acceptance.
-- **Same-tick query visibility.** If Jolt applies position or shape changes only at the next step, the stand-up check, rotated move order and hide-exit placement read stale state. Mitigation: Verification Required item 7; fallback is a forced space update or deferring those checks one tick.
+- **Same-tick query visibility (confirmed).** Jolt applies moves only at the next step. Mitigation: placement checks test players analytically (Decision 6a); player-player overlap within a tick is accepted (Decision 6). Disabling or shrinking a shape is visible at once, so door opening and crouching are not affected.
 - **Seam snagging on Jolt.** Mitigation: large box floor colliders; a walk-every-room test in the greybox.
 - **Missing ramp collider.** A step without one blocks a player. Mitigation: a build-time check that every authored step has a ramp no steeper than 40°.
 - **Unhide with nowhere to stand.** Mitigation: alternate exit points per spot, authored in the Facility Map.

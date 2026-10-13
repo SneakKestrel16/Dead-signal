@@ -26,6 +26,8 @@ Every interaction in Dead Signal (objectives, rescue, barricades, hiding, search
 | **Post-Cutoff APIs Used** | `@abstract` (4.5) on `Interactable`; Jolt `intersect_ray` (default since 4.6) for the line-of-sight check |
 | **Verification Required** | A headless script per item, before acceptance: (1) does an `Interactable` subclass whose `void` `on_cancel` override has no `return` compile (unverified: the reference is silent on `void`)? And does one whose `eligible` override misses a branch's `return` fail to compile? (2) the line-of-sight check (`intersect_ray` on `PhysicsLayers.PROJECTILE` plus the analytic door test) is blocked by a glass pane and by a closed door between eye and point, and not blocked once the door opens; with `collide_with_areas = false` (not in the engine reference). This replaces the original item, which tested that the actor's own capsule is skipped: `PROJECTILE` excludes the `players` layer, so it cannot be hit (2026-10-12 review); (3) two actors started on one `lock_key` on the same tick in a scripted queue order; the first in rotated order holds the lock |
 
+**Verification results (2026-10-12, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) a `void` override needs no `return`; a typed override missing a branch `return` fails. (2) PASS: `PROJECTILE` stops at glass, `SIGHT` passes it, the door blocker is left to the analytic test. (3) NOT RUN until `HoldService` exists.
+
 ## ADR Dependencies
 
 | Field | Value |

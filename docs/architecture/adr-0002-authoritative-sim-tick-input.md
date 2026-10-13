@@ -28,6 +28,8 @@ Every GDD rule assumes a server that simulates the round and a client that only 
 
 **API coverage.** In the repo reference: ENet, `@rpc` modes, `CharacterBody3D.move_and_slide`, Jolt as default. Exercised by the spike on 4.7.2: setting `Engine.physics_ticks_per_second` at boot, `_physics_process` as the server tick, unreliable RPCs carrying `PackedInt32Array` / `PackedVector2Array` / `PackedByteArray` / `PackedVector3Array` / `PackedFloat32Array`, several `move_and_slide` calls in one physics frame, a server that consumes two inputs in one tick, and a client tick estimate. Training data only: everything under Verification Required.
 
+**Verification results (2026-10-12, single machine, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) a lost reliable packet held back no unreliable traffic, on separate channels and on one shared channel alike; the three channels stay, as harmless isolation. (2) `max_physics_steps_per_frame` default 8. (3) the API exists; rendered effect NOT RUN. (4) PASS at the amended 5 mm deadzone: 15 frames replayed in one physics frame on a 40° ramp match within 1.6 mm. (5) identical on one machine; cross-machine NOT RUN. (6) 6-body snapshot 144 B, one 165 B datagram. (7) PASS: `apply_floor_snap()` re-finds the floor and cuts replay error from 17 mm to 1.6 mm.
+
 ## ADR Dependencies
 
 | Field | Value |
@@ -96,7 +98,7 @@ The client never sends position, speed or progress.
 On each snapshot the client:
 1. restores the server's position and velocity at the acknowledged `seq`, then, if the snapshot's on-floor flag is set, calls `apply_floor_snap()` so the body re-finds its floor before the first replayed step. `CharacterBody3D` has no floor-state setter, so the floor is recomputed from geometry, not copied. `apply_floor_snap()` is training data only (NOT SOURCEABLE from `modules/physics.md`); Verification Required item 7 settles it;
 2. replays the unacknowledged frames inside `_physics_process`;
-3. corrects only if the replayed position differs from the predicted one by more than `correction_deadzone_m` = 0.001.
+3. corrects only if the replayed position differs from the predicted one by more than `correction_deadzone_m` = 0.005. (Amended 2026-10-12 from 0.001: replay on a 40° ramp lip differs from the recorded path by up to 1.6 mm even with the floor restored, `prototypes/adr-verification/README.md`; 5 mm is far below anything visible.)
 
 How a correction shows:
 - Under `correction_smooth_max_m` = 1.0, it is hidden by an offset on a non-interpolated visual child that decays over `correction_smooth_s` = 0.1. "Non-interpolated" means `physics_interpolation_mode = PHYSICS_INTERPOLATION_MODE_OFF` on that child and on the camera node, whose yaw and pitch render from local input (rule 8); otherwise interpolation would smooth the offset and camera a second time. The OFF behaviour is NOT SOURCEABLE (`breaking-changes.md` 4.5 Physics row says only that 3D interpolation moved to SceneTree); Verification Required item 3 covers it.

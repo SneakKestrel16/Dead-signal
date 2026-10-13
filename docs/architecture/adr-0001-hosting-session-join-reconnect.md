@@ -28,6 +28,8 @@ Dead Signal needs a hosting topology, a join path that validates players before 
 
 **API coverage.** In the reference: `ENetMultiplayerPeer.create_server` / `create_client`, `SceneMultiplayer.auth_callback`, `server_relay`, `peer_connected` / `peer_disconnected`. Verified only by the spike on 4.7.2: `send_auth`, `complete_auth`, `peer_authenticating`, `disconnect_peer`, `var_to_bytes` / `bytes_to_var`, token rebinding. Training data only: the items under Verification Required.
 
+**Verification results (2026-10-12, single machine, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) default dead-peer detection 5.8 s on loopback; `set_timeout(32, 1000, 2000)` gives 3.0 s. (2) `auth_timeout` default 3.0 s; a silent client fails auth at the timeout. (3) `server_relay` default `true`, so setting `false` is required. (4) PASS. (5) the default bind accepts IPv4 and IPv6 loopback. (6) a reason sent by `send_auth` immediately before `disconnect_peer` is **lost**; with `reject_close_delay_s` 0.2 s it arrives, so the delay is required, not a spike habit. Still open: the real-network list in `prototypes/networking-spike/README.md`.
+
 ## ADR Dependencies
 
 | Field | Value |

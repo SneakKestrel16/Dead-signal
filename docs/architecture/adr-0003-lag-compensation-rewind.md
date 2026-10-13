@@ -28,6 +28,8 @@ The lunge and the taser must hit what the attacker saw. The networking spike sho
 
 **API coverage.** In the repo reference: `PhysicsDirectSpaceState3D.intersect_ray`, `PhysicsRayQueryParameters3D.create`, `collision_mask`, `CharacterBody3D`. Spike-verified on 4.7.2: an interpolated position history and rewind probe (`_interp_hist`, 150 ms cap). Training data only: ray query defaults, and that `direct_space_state` is safe to query inside `_physics_process`.
 
+**Verification results (2026-10-12, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) `hit_from_inside` false, `hit_back_faces` **true**, `collide_with_areas` false. (4) PASS: the GDD's steering pursuit at a 0.43 s strafe dodges over 20 seeds and a crouched strafe is hit; latest safe start 0.457 s with `accel_time_s` 0.05, a **27 ms** margin (was inferred as ~35 ms); `accel_time_s` above 0.095 s loses the dodge. (2) and (3) need a real network.
+
 ## ADR Dependencies
 
 | Field | Value |
@@ -171,7 +173,7 @@ func ray_first_hit(origin: Vector3, dir: Vector3, max_dist: float, targets: Arra
 - Analytic capsule and box tests are custom maths to own and test.
 
 ## Risks
-- **Dodge margin (inference).** About 35 ms against a latest safe start of about 0.465 s with acceleration. Mitigation: rerun the pursuit simulation at 0.43 s with `accel_time_s` before Acceptance; recompute the safe-range ceilings in `monster-abilities.md`.
+- **Dodge margin (measured).** 27 ms: the latest safe strafe start is 0.457 s with `accel_time_s` 0.05 (pursuit simulation rerun 2026-10-12, `prototypes/adr-verification/README.md`; was inferred as ~35 ms). `accel_time_s` above 0.095 s loses the dodge. Mitigation: the dodge AC is a regression test; still recompute the safe-range ceilings in `monster-abilities.md` at 0.43 s.
 - **Remote stutter at 50 ms interpolation.** Mitigation: if the real-network test shows visible holds, move to 66 ms (4 snapshots); the cap then stays 180 and full compensation drops to about 97 ms RTT.
 - **Clock drift.** `view_tick` relies on the client's tick estimate (ADR-0002). Mitigation: the server-measured `rtt_bound` caps any error.
 - **Ray defaults on Jolt.** Mitigation: a test that fires a ray grazing a wall corner and one starting at a capsule's chest.

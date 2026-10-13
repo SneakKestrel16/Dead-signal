@@ -28,6 +28,8 @@ The systems index defines 15 server events and a table of read-only replicated s
 
 **API coverage.** In the repo reference: `@abstract` (bodyless abstract methods), the 4.7 typed-return rule, lambda capture by value. Training data only: everything under Verification Required.
 
+**Verification results (2026-10-12, [`prototypes/adr-verification/README.md`](../../prototypes/adr-verification/README.md)).** (1) PASS: constructing an `@abstract` class by name is a parse error in both the own-line and one-line forms; `load(path).new()` at runtime still instantiates, so construct only by class name. (2) PASS: a typed override missing a branch `return` fails, annotated or not. (3) PASS. (4) a named-method `Callable` does **not** keep its `RefCounted` alive, so the bus is not a cycle; module and view do form one until `registry.clear()`. (5) PASS. (6) PASS: the engine reports "Nested typed collections are not supported".
+
 ## ADR Dependencies
 
 | Field | Value |
