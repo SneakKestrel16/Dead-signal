@@ -1,0 +1,9 @@
+[gd_resource type="Resource" format=3]
+
+[ext_resource type="Script" path="res://fixtures/knob_section.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stun_duration_s = 2.0
+stun_item_charges = 2
+extra_s = nan

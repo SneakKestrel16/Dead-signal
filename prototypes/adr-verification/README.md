@@ -16,6 +16,8 @@ bash run.sh          # every ADR, about 1 minute
 bash run.sh 0004     # one ADR
 ```
 
+Export check (ADR-0006 (3)): `godot --headless --path . --export-debug "Windows Desktop" build/verify.exe`, then `build/verify.console.exe --headless`; it writes `build/export_result.txt`. Needs the 4.7.2 export templates.
+
 Needs Godot 4.7.2 (path in `run.sh`, override with `GODOT=`). It runs `--import` once
 (the class-name fixtures need the global class cache), then `run.gd` headless. Each
 check prints `RESULT <id> <verdict> <observation>`; full output goes to `logs/run.log`.
@@ -40,7 +42,7 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 | 0001-6 | **finding** | `send_auth` immediately followed by `disconnect_peer` loses the reason; with the ADR's 0.2 s delay it arrives. The delay is required |
 | 0002-1 | PASS | A lost reliable packet (resent after ~150 ms) holds back no unreliable traffic: delay stays 7 ms, on separate channels **and** on one shared channel, for both `UNRELIABLE` and `UNRELIABLE_ORDERED` |
 | 0002-2 | OBSERVED | `max_physics_steps_per_frame` default 8 |
-| 0002-3 | OBSERVED | `reset_physics_interpolation()` exists; `PHYSICS_INTERPOLATION_MODE_OFF` = 2. Rendered effect NOT RUN |
+| 0002-3 | PASS | With `SceneTree.physics_interpolation` on, a child with mode OFF shows a local offset change at once (145/145 frames) while riding the parent's interpolated position; an inheriting child smooths the same change over a tick. OFF does **not** detach the child from the parent's interpolation, which is what the correction offset and camera need. Measured on `get_global_transform_interpolated()` in `_process`; pixels not checked |
 | 0002-4 / 0007-3 | PASS at 5 mm | Gravity and floor snap: 40° ramp climbed; 15 frames replayed in one physics frame match the recorded path within 1.6 mm (worst, at the ramp lip). Over the old 1 mm deadzone |
 | 0002-5 | OBSERVED | Same machine: two identical runs match exactly. Cross-machine NOT RUN |
 | 0002-6 / 0004-4 | PASS | 6-body snapshot: 144 B payload, 165 B datagram |
@@ -60,7 +62,7 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 | 0005-6 | PASS | `Dictionary[StringName, Array[Callable]]`: "Nested typed collections are not supported"; `Dictionary[StringName, Array]` with a cast works |
 | 0006-1 | PASS | `@export_range` gives `PROPERTY_HINT_RANGE` with `"1.0,4.0"` (int fields too: `"1.0,3.0"`) |
 | 0006-2 | PASS | `CACHE_MODE_IGNORE` loads are independent |
-| 0006-3 | PASS / **finding** | A field left at `NAN` is **written** (`extra_s = nan`), not omitted, and loads as NAN: the unset check still works. Export path NOT RUN |
+| 0006-3 | PASS / **finding** | A field left at `NAN` is **written** (`extra_s = nan`), not omitted, and loads as NAN: the unset check still works. In a Windows debug export (`export_main.tscn`, preset in `export_presets.cfg`) `res://data/knobs/defense.tres` loads by path: the pack holds only the `.remap`, values and NAN survive the binary conversion |
 | 0006-4 | PASS | Digest identical across loads and across two runs. Cross-machine NOT RUN |
 | 0006-5 | PASS | A misspelled key loads without error and the real field stays NAN |
 | 0007-1 | PASS | `3d/physics_engine="Jolt Physics"` |
@@ -76,8 +78,7 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 ## NOT RUN (owner: designer, with a second PC or later work)
 
 - Real network, second PC: ADR-0001/0002/0003 deferred list in `../networking-spike/README.md`; 0002-5 cross-machine drift; 0003-2 rewind against measured RTT; 0003-3 remote smoothness; 0006-4 digest on a second machine.
-- Window: 0002-3 rendered interpolation OFF; 0007-8 `screen_relative` under stretch.
-- Export: 0006-3 binary `.res` + `.remap` load by path.
+- Window and real mouse: 0007-8 `screen_relative` under stretch.
 - Not yet written: 0008-3 `HoldService` lock contest (a unit test of production code).
 - Slow host: 0002-2 behaviour when the host cannot hold 60 Hz.
 

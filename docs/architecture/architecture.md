@@ -308,11 +308,11 @@ Eight ADRs exist, all **Proposed**; none is Accepted, so no requirement is yet c
 | ADR | Decision | Acceptance waits on ([verification results](../../prototypes/adr-verification/README.md)) |
 |---|---|---|
 | [ADR-0001](adr-0001-hosting-session-join-reconnect.md) | Listen server over direct ENet, separable server role, `auth_callback` join check, session-token reconnect | Spike's deferred real-network tests (single-machine items done) |
-| [ADR-0002](adr-0002-authoritative-sim-tick-input.md) | 60 Hz `TickRunner`, redundant unreliable input frames, adaptive 1–2 frame queue, per-peer snapshots, owner-only prediction and replay | Real-network tests; windowed check of interpolation OFF (replay and floor restore verified) |
+| [ADR-0002](adr-0002-authoritative-sim-tick-input.md) | 60 Hz `TickRunner`, redundant unreliable input frames, adaptive 1–2 frame queue, per-peer snapshots, owner-only prediction and replay | Real-network tests (replay, floor restore and interpolation OFF verified) |
 | [ADR-0003](adr-0003-lag-compensation-rewind.md) | 50 ms interpolation, 180 ms rewind cap bounded by measured RTT, analytic hit tests on rewound capsules | Real-network tests (pursuit rerun passed, 27 ms margin) |
 | [ADR-0004](adr-0004-replication-scope-information-hiding.md) | Bodies only through per-peer snapshots, per-peer handles re-issued on re-entry, authored room PVS, per-event projection | Authored visibility table (spawner-leak case passed) |
 | [ADR-0005](adr-0005-event-catalog-state-registry-tick-order.md) | `@abstract` event classes with `project()`, drain-flush after each module phase, typed read-only views, fixed module order, composition root | Nothing outstanding; verification passed |
-| [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Exported-build load by path; digest on a second machine |
+| [ADR-0006](adr-0006-data-driven-configuration.md) | Typed knob `Resource` sections, load-time validation, refuse to host on a bad config | Digest on a second machine (export load verified) |
 | [ADR-0007](adr-0007-movement-physics-collision-layers.md) | Jolt `CharacterBody3D`, ramp colliders, four collision layers with named masks, analytic zones and interactables | Windowed `screen_relative` check (floor angle and same-tick queries amended) |
 | [ADR-0008](adr-0008-hold-to-interact-protocol.md) | One `HoldService` times every hold from the input frame's hold bit, as one tick step | Nothing outstanding beyond the lock test written with `HoldService` |
 

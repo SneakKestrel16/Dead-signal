@@ -9,6 +9,7 @@ func run() -> void:
 	var n := Node3D.new()
 	rec("0002-3", "OBSERVED", "Node3D.reset_physics_interpolation exists=%s; physics_interpolation_mode default=%d (OFF=%d). Rendered smoothing with OFF: NOT RUN (needs a window)" % [n.has_method("reset_physics_interpolation"), n.physics_interpolation_mode, Node.PHYSICS_INTERPOLATION_MODE_OFF])
 	n.free()
+	await _interp_off()
 	await _replay()
 	await _head_of_line(1, 2, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
 	await _head_of_line(0, 0, MultiplayerPeer.TRANSFER_MODE_UNRELIABLE)
@@ -213,3 +214,54 @@ func _snapshot_size() -> void:
 	close_api(c.cli, tag + "_C")
 	close_api(c.srv, tag + "_S")
 	await frames(5)
+
+
+## (3) Physics interpolation, as ADR-0002 uses it: the correction offset and camera are local
+## changes on children of the interpolated body. A child with mode OFF must show a local change
+## at once (riding the parent's interpolation); an inheriting child smooths it over a tick.
+func _interp_off() -> void:
+	tree.physics_interpolation = true
+	var w := make_world("InterpWorld")
+	var body := Node3D.new()
+	w.add_child(body)
+	var ref := Node3D.new()
+	body.add_child(ref)
+	var inherit := Node3D.new()
+	body.add_child(inherit)
+	var off := Node3D.new()
+	off.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	body.add_child(off)
+	var probe: Node = preload("res://interp_probe.gd").new()
+	w.add_child(probe)
+	await physics_frames(2)
+	body.reset_physics_interpolation()
+	var tick := [0]
+	var on_tick := func() -> void:
+		tick[0] += 1
+		body.position.x += 0.1
+		# Every 10 ticks, step both children's local offset by 1 m.
+		if tick[0] % 10 == 0:
+			inherit.position.x += 1.0
+			off.position.x += 1.0
+	tree.physics_frame.connect(on_tick)
+	probe.parent_ref = ref
+	probe.inherit = inherit
+	probe.off = off
+	await until(func() -> bool: return false, 1.0)
+	tree.physics_frame.disconnect(on_tick)
+	tree.physics_interpolation = false
+	var off_exact := 0
+	var inherit_between := 0
+	var parent_between := 0
+	for smp in probe.samples:
+		if is_equal_approx(smp[1], smp[3]):
+			off_exact += 1
+		if absf(smp[0] - roundf(smp[0])) > 0.01:
+			inherit_between += 1
+		if smp[2] > 0.05 and smp[2] < 0.95:
+			parent_between += 1
+	var n: int = probe.samples.size()
+	var ok: bool = n > 0 and off_exact == n and inherit_between > 0 and parent_between > 0
+	rec("0002-3b", "PASS" if ok else "FAIL", "%d _process samples (%d mid-tick): mode-OFF child shows its local offset exactly in %d/%d frames while riding the interpolated parent; inheriting child is mid-transition in %d frames. Pixels: NOT RUN (headless)" % [n, parent_between, off_exact, n, inherit_between])
+	w.queue_free()
+	await physics_frames(2)
