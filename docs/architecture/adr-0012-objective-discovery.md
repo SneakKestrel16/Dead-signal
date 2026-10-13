@@ -30,7 +30,7 @@ Drive rooms and fuse spawns stay hidden from survivor clients until any survivor
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): server-held view direction from consumed input frames. ADR-0004 (Proposed): undiscovered points are hidden spawned entities granted per peer; `ObjectiveProgressChanged` projection omits undiscovered points. ADR-0005 (Proposed): tick step, events. ADR-0006 (Proposed): knobs. ADR-0007 (Proposed): `PhysicsLayers.SIGHT`, analytic doors |
+| **Depends On** | ADR-0002 (Accepted): server-held view direction from consumed input frames. ADR-0004 (Accepted): undiscovered points are hidden spawned entities granted per peer; `ObjectiveProgressChanged` projection omits undiscovered points. ADR-0005 (Accepted): tick step, events. ADR-0006 (Accepted): knobs. ADR-0007 (Accepted): `PhysicsLayers.SIGHT`, analytic doors |
 | **Enables** | Survivor Objectives discovery stories; Borrowed Face observation reuses `SightTest`; ADR-0013 audio occlusion reuses `SightTest.line_clear` |
 | **Blocks** | Survivor Objectives discovery story |
 | **Ordering Note** | None |

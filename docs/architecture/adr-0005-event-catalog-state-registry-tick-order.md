@@ -1,7 +1,7 @@
 # ADR-0005: Event Catalog, State Registry and Tick Order
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -34,7 +34,7 @@ The systems index defines 15 server events and a table of read-only replicated s
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): TickRunner phases, `server_tick(tick)`. ADR-0004 (Proposed): `project()` per event, handle table |
+| **Depends On** | ADR-0002 (Accepted): TickRunner phases, `server_tick(tick)`. ADR-0004 (Accepted): `project()` per event, handle table |
 | **Enables** | Every Feature system's server code; ADR-0008 (hold protocol) |
 | **Blocks** | All Feature implementation (Match Flow, Objectives, Downing, Defense, Borrowed Face, Monster Abilities, Pings, Scare Events) |
 | **Ordering Note** | Amends ADR-0004's `project` signature (`Dictionary`, `{}` = hidden) and supersedes the registry and tick-order sketches in `architecture.md` |

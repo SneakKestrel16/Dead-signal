@@ -30,7 +30,7 @@ A disguise must look and move exactly like the copied survivor on every client, 
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): snapshots, interpolation, gait. ADR-0004 (Proposed): per-peer handles, appearance in introduce and snapshot, form change in view keeps the handle, positional footstep events. ADR-0006 (Proposed): knobs for warp timing. ADR-0007 (Proposed): one capsule for every form. ADR-0009 (Proposed): flashlight counts against light and shadow caps |
+| **Depends On** | ADR-0002 (Accepted): snapshots, interpolation, gait. ADR-0004 (Accepted): per-peer handles, appearance in introduce and snapshot, form change in view keeps the handle, positional footstep events. ADR-0006 (Accepted): knobs for warp timing. ADR-0007 (Accepted): one capsule for every form. ADR-0009 (Proposed): flashlight counts against light and shadow caps |
 | **Enables** | Borrowed Face presentation stories; character art production (C1–C5 and true form share the rig contract below) |
 | **Blocks** | Borrowed Face epic presentation stories; any story that builds a client body puppet |
 | **Ordering Note** | Acceptance waits on Verification Required items 1–5 and on the Foundation ADRs it depends on |

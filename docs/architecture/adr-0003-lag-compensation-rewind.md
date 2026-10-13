@@ -1,7 +1,7 @@
 # ADR-0003: Lag Compensation and Rewind Budget
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -34,7 +34,7 @@ The lunge and the taser must hit what the attacker saw. The networking spike sho
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): 60 Hz TickRunner, `InputFrame`, snapshot history phase, per-peer snapshots |
+| **Depends On** | ADR-0002 (Accepted): 60 Hz TickRunner, `InputFrame`, snapshot history phase, per-peer snapshots |
 | **Enables** | ADR-0007 (movement, physics and collision layers): collision layers for static geometry |
 | **Blocks** | Monster Abilities Predatory Lunge hit validation; Survivor Defense taser hit-scan |
 | **Ordering Note** | Acceptance waits on the spike's real-network tests and on the pursuit simulation rerun at 0.43 s. This ADR amends ADR-0002's `InputFrame` (adds `view_tick` and `ack_snapshot_tick`) |

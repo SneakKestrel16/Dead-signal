@@ -1,14 +1,14 @@
 # Story 003: StateRegistry and typed views
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-12
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0005 is Proposed — accept it with `/architecture-decision accept ADR-0005` once decided.
+Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
 ## Context
 

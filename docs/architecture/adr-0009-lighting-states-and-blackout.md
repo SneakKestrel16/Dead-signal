@@ -32,7 +32,7 @@ The Facility Map owns per-volume lighting state (a base phase, overlays, local B
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): tick-counted timers. ADR-0004 (Proposed): visibility sets, per-peer relevance, re-send on re-entry, `ScareTriggered` projection. ADR-0005 (Proposed): registry views, event handlers, tick order. ADR-0006 (Proposed): knobs and `Knobs.ticks()`. ADR-0007 (Proposed): analytic lighting volumes (`MapQueries.volume_at`). ADR-0008 (Proposed): backup switch and monitor interactables |
+| **Depends On** | ADR-0002 (Accepted): tick-counted timers. ADR-0004 (Accepted): visibility sets, per-peer relevance, re-send on re-entry, `ScareTriggered` projection. ADR-0005 (Accepted): registry views, event handlers, tick order. ADR-0006 (Accepted): knobs and `Knobs.ticks()`. ADR-0007 (Accepted): analytic lighting volumes (`MapQueries.volume_at`). ADR-0008 (Accepted): backup switch and monitor interactables |
 | **Enables** | Spatial audio ADR (Blackout and Evacuation audio follow these states); UI and accessibility ADR (reduced-flash setting consumer) |
 | **Blocks** | Facility Map lighting implementation; Monster Abilities Blackout (Vertical Slice); Scare Events client presentation; surveillance monitor |
 | **Ordering Note** | Amends ADR-0005 §4 (adds a `FacilityMap` step after `MonsterAbilities`) and ADR-0004 §4 (lighting state follows the door rule; a viewer's relevance grows by the viewed camera's set). Acceptance waits on the Verification Required spike |

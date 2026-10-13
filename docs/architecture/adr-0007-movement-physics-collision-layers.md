@@ -1,7 +1,7 @@
 # ADR-0007: Movement, Physics and Collision Layers
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -34,7 +34,7 @@ Every player moves through one shared movement step, and every system that casts
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): shared movement step, prediction and replay, 60 Hz. ADR-0003 (Proposed): sight rays on static geometry, doors tested analytically for hits |
+| **Depends On** | ADR-0002 (Accepted): shared movement step, prediction and replay, 60 Hz. ADR-0003 (Accepted): sight rays on static geometry, doors tested analytically for hits |
 | **Enables** | ADR-0008 (hold protocol): interaction targeting; Should-have lighting and objective-candidate ADRs: analytic volumes |
 | **Blocks** | First-Person Controller implementation; greybox collision authoring |
 | **Ordering Note** | Amends ADR-0002 rule 6: client prediction also collides with doors from replicated state |

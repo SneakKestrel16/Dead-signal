@@ -1,7 +1,7 @@
 # ADR-0008: Hold-to-Interact Protocol
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -32,7 +32,7 @@ Every interaction in Dead Signal (objectives, rescue, barricades, hiding, search
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): `InputFrame`, TickRunner phases, input starvation release. ADR-0004 (Proposed): per-peer body handles for body targets. ADR-0005 (Proposed): tick order, EventBus, owner-emits rule. ADR-0007 (Proposed): `MapQueries.interactable_on_ray`, masks, rotated player order |
+| **Depends On** | ADR-0002 (Accepted): `InputFrame`, TickRunner phases, input starvation release. ADR-0004 (Accepted): per-peer body handles for body targets. ADR-0005 (Accepted): tick order, EventBus, owner-emits rule. ADR-0007 (Accepted): `MapQueries.interactable_on_ray`, masks, rotated player order |
 | **Enables** | ADR "Objective candidate selection and discovery" (should-have); UI/input-focus ADR (prompt and bar) |
 | **Blocks** | Every epic with an interaction: Survivor Objectives, Downing (rescue), Survivor Defense (hide, barricade, search, break, doors), Monster Abilities (backup switch) |
 | **Ordering Note** | Amends ADR-0002: Start and Stop move from the reliable intent channel into `InputFrame` (two fields). Amends ADR-0005's tick order: a `Holds` step between `Downing` and `SurvivorObjectives`. Amends ADR-0007's `MapQueries.interactable_on_ray` to return a net id |

@@ -30,7 +30,7 @@ Sound is information in Dead Signal (footsteps, lunge cues, callouts), and scare
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0004 (Proposed): sounds are positional events with no handle, sent within the sound's radius; `ScareTriggered` projection. ADR-0005 (Proposed): client event routing (`ClientEventRouter`). ADR-0006 (Proposed): knobs. ADR-0007 (Proposed): `PhysicsLayers.SIGHT`; analytic zones from map data. ADR-0009 (Proposed): lighting volumes as the zone unit. ADR-0012 (Proposed): `SightTest.line_clear` for occlusion |
+| **Depends On** | ADR-0004 (Accepted): sounds are positional events with no handle, sent within the sound's radius; `ScareTriggered` projection. ADR-0005 (Accepted): client event routing (`ClientEventRouter`). ADR-0006 (Accepted): knobs. ADR-0007 (Accepted): `PhysicsLayers.SIGHT`; analytic zones from map data. ADR-0009 (Proposed): lighting volumes as the zone unit. ADR-0012 (Proposed): `SightTest.line_clear` for occlusion |
 | **Enables** | Scare Events audio stories; Facility Map ambience; settings volume sliders; proximity voice (TR-pings-007) later routes onto `ProximityVoice` |
 | **Blocks** | Any story that plays game audio |
 | **Ordering Note** | None |

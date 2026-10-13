@@ -1,7 +1,7 @@
 # ADR-0001: Hosting Model, Session, Join Auth and Reconnect
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12

@@ -1,7 +1,7 @@
 # ADR-0004: Replication Scope and Information Hiding
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -34,7 +34,7 @@ The GDDs require that no client learns what its player could not perceive, and a
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (Proposed): player IDs, `server_relay = false`, reconnect rebind. ADR-0002 (Proposed): custom per-peer snapshots, TickRunner send phase, reliable event channel |
+| **Depends On** | ADR-0001 (Accepted): player IDs, `server_relay = false`, reconnect rebind. ADR-0002 (Accepted): custom per-peer snapshots, TickRunner send phase, reliable event channel |
 | **Enables** | ADR-0005 (event catalog): every catalog event declares its projection. Should-have ADRs on Borrowed Face rendering, objective discovery and scare scoping |
 | **Blocks** | Borrowed Face, Survivor Defense presentation, Scare Events delivery, Survivor Objectives discovery, Pings & Callouts delivery, spectator view |
 | **Ordering Note** | Acceptance waits on Verification Required item 1 and on the Facility Map visibility table (`design/levels/research-facility.md`, Visibility Sets) |

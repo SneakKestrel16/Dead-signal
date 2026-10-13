@@ -1,14 +1,14 @@
 # Story 003: Cross-knob rules
 
 > **Epic**: Data/Config Loader
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-12
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0006 is Proposed — accept it with `/architecture-decision accept ADR-0006` once decided.
+Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
 ## Context
 

@@ -1,14 +1,14 @@
 # Story 005: Knob digest in the join version check
 
 > **Epic**: Data/Config Loader
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-12
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0006 and ADR-0001 are Proposed — accept them with `/architecture-decision accept ADR-0006` and `ADR-0001` once decided. Also needs the network-authority join story.
+Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs the network-authority join story.
 
 ## Context
 

@@ -1,7 +1,7 @@
 # ADR-0006: Data-Driven Configuration (Knobs)
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -32,7 +32,7 @@ About 120 tuning knobs across the 10 system GDDs must live outside code, be vali
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0005 (Proposed): composition root injects `Knobs` through `setup()`. ADR-0001 (Proposed): join auth carries the version string. ADR-0002 (Proposed): `sim_tick_hz` and tick-counted timers |
+| **Depends On** | ADR-0005 (Accepted): composition root injects `Knobs` through `setup()`. ADR-0001 (Accepted): join auth carries the version string. ADR-0002 (Accepted): `sim_tick_hz` and tick-counted timers |
 | **Enables** | Every Feature and Core epic (each reads knobs); `/test-setup` fixtures |
 | **Blocks** | None beyond the epics above |
 | **Ordering Note** | Amends architecture.md §Data/Config: `Knobs` becomes a `RefCounted` with typed sections, not a `Node` with `get_float(key)`, and a bad config refuses to host instead of falling back to defaults. Amends ADR-0001 §3: the client's `version` string gains the knob hash |

@@ -1,7 +1,7 @@
 # ADR-0002: Authoritative Simulation, Tick Rate and Input Handling
 
 ## Status
-Proposed
+Accepted
 
 ## Date
 2026-10-12
@@ -34,7 +34,7 @@ Every GDD rule assumes a server that simulates the round and a client that only 
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0001 (Proposed): state keyed by player ID; host input through the same queue; `server_relay = false` |
+| **Depends On** | ADR-0001 (Accepted): state keyed by player ID; host input through the same queue; `server_relay = false` |
 | **Enables** | ADR-0003 (lag compensation and rewind budget), ADR-0004 (replication scope and information hiding), ADR-0005 (event catalog, state registry and tick order), ADR-0007 (movement, physics and collision layers) |
 | **Blocks** | First-Person Controller implementation; every Feature system's server logic |
 | **Ordering Note** | ADR-0005 defines the order of Feature modules inside the tick phase this ADR reserves for them. ADR-0003 owns the interpolation delay and rewind budget. Acceptance waits on the spike's deferred clock-drift and Wi-Fi tests |

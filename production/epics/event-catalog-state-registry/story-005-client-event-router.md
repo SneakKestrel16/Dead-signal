@@ -1,14 +1,14 @@
 # Story 005: ClientEventRouter
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-12
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0005 and ADR-0004 are Proposed — accept them with `/architecture-decision accept` once decided. Also needs the network-authority projection story.
+Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs the network-authority projection story.
 
 ## Context
 

@@ -30,7 +30,7 @@ The camera flinch is the one rotation the game may apply to a player's view, so 
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0013 (Proposed): stingers through `AudioDirector`. ADR-0002 (Proposed): input frame, server view direction = yaw/pitch + view offset, pitch clamp. ADR-0004 (Proposed): owner-only projection, `ScareTriggered` payload. ADR-0005 (Proposed): registry views, events, `ClientEventRouter`. ADR-0009 (Proposed): flicker clamp and flash scale. ADR-0014 (Proposed): `UiLayers`, P8 edge indicator |
+| **Depends On** | ADR-0013 (Proposed): stingers through `AudioDirector`. ADR-0002 (Accepted): input frame, server view direction = yaw/pitch + view offset, pitch clamp. ADR-0004 (Accepted): owner-only projection, `ScareTriggered` payload. ADR-0005 (Accepted): registry views, events, `ClientEventRouter`. ADR-0009 (Proposed): flicker clamp and flash scale. ADR-0014 (Proposed): `UiLayers`, P8 edge indicator |
 | **Enables** | Scare Events client stories; Controller flinch story; Accessibility Options reduced-motion and photosensitivity hooks |
 | **Blocks** | Scare Events flinch and presentation stories; Controller view-offset story |
 | **Ordering Note** | None |

@@ -30,7 +30,7 @@ The HUD, callout wheel, in-round overlay, lobby, results and dialogs all compete
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0002 (Proposed): client input frame sampling and send. ADR-0011 (Proposed): results payload the results screen shows. ADR-0004 (Proposed): projected per-peer state is all the client knows. ADR-0005 (Proposed): `ClientEventRouter`, no gameplay autoloads, composition root. ADR-0007 (Proposed): device-ID rule. ADR-0008 (Proposed): hold start and predicted hold bar |
+| **Depends On** | ADR-0002 (Accepted): client input frame sampling and send. ADR-0011 (Proposed): results payload the results screen shows. ADR-0004 (Accepted): projected per-peer state is all the client knows. ADR-0005 (Accepted): `ClientEventRouter`, no gameplay autoloads, composition root. ADR-0007 (Accepted): device-ID rule. ADR-0008 (Accepted): hold start and predicted hold bar |
 | **Enables** | HUD, lobby, results, settings and in-round overlay stories; Accessibility Options (VS) hooks; Pings & Callouts presentation (TR-pings-004/-005 feed and markers) |
 | **Blocks** | Any story that builds a screen, the HUD or the callout wheel |
 | **Ordering Note** | None |

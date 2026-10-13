@@ -18,8 +18,8 @@ Estimates are first guesses for a solo developer working with agents; story file
 ### Must Have (Critical Path)
 | ID | Task | Agent/Owner | Est. Days | Dependencies | Acceptance Criteria |
 |----|------|-------------|-----------|-------------|-------------------|
-| U1 | Two-PC real-network test (list in `prototypes/networking-spike/README.md`) | SneakKestrel16 + network-programmer | 1 | A second PC | Results recorded in `prototypes/networking-spike/README.md`; ADR-0001/0002/0003 verification rows updated |
-| U2 | Accept ADR-0001..0006 (`/architecture-decision accept`), regenerate the control manifest | SneakKestrel16 + technical-director | 0.5 | U1 | Status lines read Accepted; manifest version re-stamped; story Status lines flip to Ready |
+| U1 | Two-PC real-network test (list in `prototypes/networking-spike/README.md`) | SneakKestrel16 + network-programmer | 1 | A second PC | Results recorded in `prototypes/networking-spike/README.md`; ADR-0001/0002/0003 verification rows updated. **Done 2026-10-13**: WAN movement run; drift and Wi-Fi tests skipped (designer decision, Tailscale) |
+| U2 | Accept ADR-0001..0006 (`/architecture-decision accept`), regenerate the control manifest | SneakKestrel16 + technical-director | 0.5 | U1 | Status lines read Accepted; manifest version re-stamped; story Status lines flip to Ready. **Done 2026-10-13**: ADR-0001..0008 Accepted, 21 stories Ready |
 | DC-1 | [Knob sections, range and unset validation](../epics/data-config/story-001-knob-section-validation.md) | gameplay-programmer | 1 | U2 (ADR-0006) | Story ACs |
 | EC-1 | [ServerEvent base and the 15-event catalog](../epics/event-catalog-state-registry/story-001-server-event-catalog.md) | godot-gdscript-specialist | 0.5 | U2 (ADR-0005) | Story ACs |
 | EC-2 | [EventBus emit, subscribe and flush](../epics/event-catalog-state-registry/story-002-event-bus.md) | godot-gdscript-specialist | 1 | EC-1, DC-1 | Story ACs |

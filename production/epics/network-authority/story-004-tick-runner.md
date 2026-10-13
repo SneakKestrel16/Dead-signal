@@ -1,14 +1,14 @@
 # Story 004: TickRunner and the server clock
 
 > **Epic**: Network Authority & Replication
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-12
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0002 is Proposed — accept with `/architecture-decision accept` once the two-PC real-network test passes.
+Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
 ## Context
 

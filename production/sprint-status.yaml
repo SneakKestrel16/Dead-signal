@@ -14,87 +14,87 @@ goal: "Unblock the Foundation layer and land its pure-logic core: two-PC network
 start: "2026-10-13"
 end: "2026-10-26"
 generated: "2026-10-12"
-updated: "2026-10-12"
+updated: "2026-10-13"
 
 stories:
   - id: "data-config-1"
     name: "Knob sections, range and unset validation"
     file: "production/epics/data-config/story-001-knob-section-validation.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
-    blocker: "ADR-0006 Proposed"
+    blocker: ""
     completed: ""
   - id: "event-catalog-1"
     name: "ServerEvent base and the 15-event catalog"
     file: "production/epics/event-catalog-state-registry/story-001-server-event-catalog.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
-    blocker: "ADR-0005 Proposed"
+    blocker: ""
     completed: ""
   - id: "event-catalog-2"
     name: "EventBus emit, subscribe and flush"
     file: "production/epics/event-catalog-state-registry/story-002-event-bus.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
-    blocker: "ADR-0005 Proposed"
+    blocker: ""
     completed: ""
   - id: "event-catalog-3"
     name: "StateRegistry and typed views"
     file: "production/epics/event-catalog-state-registry/story-003-state-registry.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
-    blocker: "ADR-0005 Proposed"
+    blocker: ""
     completed: ""
   - id: "network-authority-4"
     name: "TickRunner and the server clock"
     file: "production/epics/network-authority/story-004-tick-runner.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
-    blocker: "ADR-0002 Proposed (two-PC test)"
+    blocker: ""
     completed: ""
   - id: "network-authority-5"
     name: "Input frames and the server input queue"
     file: "production/epics/network-authority/story-005-input-frames-queue.md"
     priority: must-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1.5
-    blocker: "ADR-0002 Proposed (two-PC test)"
+    blocker: ""
     completed: ""
   - id: "data-config-2"
     name: "All knob sections and the shipped files"
     file: "production/epics/data-config/story-002-sections-and-shipped-files.md"
     priority: should-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
-    blocker: "ADR-0006 Proposed"
+    blocker: ""
     completed: ""
   - id: "event-catalog-4"
     name: "Composition root and feature tick order"
     file: "production/epics/event-catalog-state-registry/story-004-composition-root-tick-order.md"
     priority: should-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
-    blocker: "ADR-0005, ADR-0002 Proposed"
+    blocker: ""
     completed: ""
   - id: "network-authority-1"
     name: "Host, join and join validation"
     file: "production/epics/network-authority/story-001-host-join-auth.md"
     priority: nice-to-have
-    status: blocked
+    status: ready-for-dev
     owner: ""
     estimate_days: 1.5
-    blocker: "ADR-0001 Proposed (two-PC test)"
+    blocker: ""
     completed: ""

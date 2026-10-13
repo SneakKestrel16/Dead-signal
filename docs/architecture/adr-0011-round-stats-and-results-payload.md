@@ -30,7 +30,7 @@ Match Flow's results screen needs counts and times owned by six other systems (`
 
 | Field | Value |
 |-------|-------|
-| **Depends On** | ADR-0005 (Proposed): State Registry views, tick order, `RoundEnded` emitter. ADR-0004 (Proposed): `RoundEnded` projection is Full to every client |
+| **Depends On** | ADR-0005 (Accepted): State Registry views, tick order, `RoundEnded` emitter. ADR-0004 (Accepted): `RoundEnded` projection is Full to every client |
 | **Enables** | Match Telemetry (Alpha) consumes the `RoundEnded` payload; results screen data contract (`design/ux/results.md`) |
 | **Blocks** | Match Flow results stories; each Feature epic's "stats" story |
 | **Ordering Note** | None |
