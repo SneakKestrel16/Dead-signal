@@ -61,7 +61,20 @@ Clients send intent, never position. Each tick a client sends its last 3 input f
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Valid packet of 3 frames enqueues new `seq` values only.
+- Clamp `move` to length 1 and pitch to ±85°.
+- Starvation repeats the last frame; after `intent_timeout_ms` (in ticks) input is released.
+- Backlog > target + 1 consumes two per tick; target rises above `starvation_high`, falls below `starvation_low`; cap drops oldest.
+
+**Edge cases to cover**:
+- Mismatched array lengths, 4 frames, NaN or Inf in any float, `seq` beyond `max_seq_ahead` → packet dropped and logged, queue unchanged.
+- Duplicate and out-of-order `seq`.
+- Empty packet.
+
+**Estimated test count**: ~10 unit tests
 
 ---
 

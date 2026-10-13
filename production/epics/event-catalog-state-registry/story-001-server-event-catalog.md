@@ -61,7 +61,17 @@ Every cross-system fact in a round is one of 15 named events. This story builds 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- The set of `type()` values over all `Ev*` classes equals the 15 names in the `systems-index.md` table.
+- Each subclass implements `type()` and `project()`; each file header names an emitter.
+- `project()` returns a `Dictionary` on every branch.
+
+**Edge cases to cover**:
+- A 16th or missing event fails the test (mutation check: add or remove a class in a fixture).
+
+**Estimated test count**: ~4 unit tests
 
 ---
 

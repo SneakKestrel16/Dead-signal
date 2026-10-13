@@ -67,7 +67,21 @@ The core of the loader: a typed `Resource` per system whose fields cannot ship w
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- A `.new()` section with every field in range: `errors()` empty.
+- Float field left `NAN` → error names `<section>.<field>` as unset; int field left `KnobUnset.INT` → same.
+- Value below min and above max → error names value and range, read from the `@export_range` hint.
+- Three bad fields → three errors.
+- `Knobs.ticks(0.5)` at `sim_tick_hz` 60 → 30; `ticks(0.0)` → 0.
+
+**Edge cases to cover**:
+- Value exactly at min and exactly at max: valid.
+- Int field hint reported as floats (`"1.0,3.0"`, Verification result 1).
+- Hint string with trailing `or_greater` flag: only first two entries used.
+
+**Estimated test count**: ~8 unit tests
 
 ---
 

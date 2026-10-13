@@ -60,7 +60,17 @@ One server clock in ticks drives every rule. A single TickRunner runs the six ph
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- `current_tick()` +1 per physics step; server time = tick / `sim_tick_hz`.
+- Phase 4 stubs run after movement and history, before flush and snapshots.
+- `physics_ticks_per_second` set once from knobs.
+
+**Edge cases to cover**:
+- Two features with the same `phase_order` → assert at registration.
+
+**Estimated test count**: ~4 unit tests
 
 ---
 

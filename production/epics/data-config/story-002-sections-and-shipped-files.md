@@ -63,7 +63,18 @@ Every tuning knob in the GDDs becomes a field in its owning section, with its va
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Every knob name in each GDD Tuning Knobs table has a field in its owning section; ADR-only knobs in `NetKnobs`, `CoreKnobs`, `FacilityKnobs`.
+- `Knobs.load_all()` on the shipped files → `errors()` empty.
+- A copy with one misspelled key loads without a fatal error and reports the real field unset.
+
+**Edge cases to cover**:
+- A GDD knob marked "(proposed)" still needs a field.
+- No file is loaded from outside `res://data/knobs/` (assert the loaded paths).
+
+**Estimated test count**: ~4 integration tests
 
 ---
 

@@ -61,7 +61,20 @@ The bus queues server events and drains them at defined points so that cause and
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Two subscribers receive in subscribe order.
+- A handler that emits during `flush()`: the new event is delivered in the same flush.
+- `take_tick_events()` returns delivered events in order and resets.
+- `clear()` empties queue, subscribers and collected events.
+
+**Edge cases to cover**:
+- Subscriber freed before flush → skipped, no error.
+- Handler subscribes another handler mid-flush → not called for the current event (iteration over a copy).
+- Cascade needing 9 rounds with `max_flush_rounds` 8 → assert/log path taken.
+
+**Estimated test count**: ~7 unit tests
 
 ---
 

@@ -59,7 +59,18 @@ Systems read each other's state only through the rows of the `systems-index.md` 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- `view(key, ViewClass)` returns the registered view.
+- Wrong class → assert; second registration of a key → assert.
+- Owner replaces a collection whole → view getter returns the new value.
+
+**Edge cases to cover**:
+- Unregistered key → assert with the key name.
+- A `*View` class with a setter fails the reflection test.
+
+**Estimated test count**: ~5 unit tests
 
 ---
 

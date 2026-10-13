@@ -63,7 +63,18 @@ One round-server node builds every service and module, injects them, registers m
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Stub modules log calls; one tick runs them in the ADR-0005 order with a flush after each.
+- An event emitted in step 2 is handled before step 3 runs.
+- After teardown: no live module, view or service; gdUnit4 orphan count 0.
+- `project.godot` has no gameplay autoloads.
+
+**Edge cases to cover**:
+- A stub that registers out of order is still run by `phase_order`, not registration order.
+
+**Estimated test count**: ~4 integration tests
 
 ---
 

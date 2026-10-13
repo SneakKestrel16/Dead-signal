@@ -64,7 +64,20 @@ A player hosts a listen server on a data-configured port and others join by addr
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-001-2026-10-12.md` (/qa-plan, 2026-10-12). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Two local instances: valid join gets a player ID.
+- Rejections with `lobby_full`, `round_in_progress`, `version_mismatch` (both strings), `bad_name`, `bad_payload`.
+- Reason arrives in 20 of 20 rejects with the 0.2 s delay.
+- `create_server` on a used port → error shown, nothing half-initialised.
+- Server role runs headless with no local player.
+
+**Edge cases to cover**:
+- Name of 0 and 17 characters; name with control or bidi-override characters stripped to empty.
+- Oversized auth payload rejected before decoding.
+
+**Estimated test count**: ~8 integration tests
 
 ---
 
