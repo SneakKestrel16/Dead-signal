@@ -1,5 +1,6 @@
 @echo off
-rem Client side of the two-network tests. Unzip spike-client.zip, then:
+rem Client side of the two-network tests. Unzip spike-client.zip, run
+rem "Get-ChildItem -Recurse | Unblock-File" in it (PowerShell), then:
 rem   client.bat <host-ip> [move|drift] [clients]
 rem The host must already be running: bash run_remote.sh move|drift
 setlocal

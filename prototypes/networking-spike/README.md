@@ -149,5 +149,22 @@ Probe 2026-10-13 (host network): router answers no UPnP discovery, so the
 mapping attempt fails here; manual UDP 24680 forward works, shown by a client on
 the host connecting via the public IP (NAT hairpin). Public IP is not CGNAT.
 A friend's router without UPnP would need the same manual forward (test 3).
+**WAN run 2026-10-13** (`results/wan-move-t60.json`): host on home cable, 6 bot
+clients on one PC tethered to a phone hotspot, 60 s, 60 Hz, manual port forward.
+
+| Run | RTT p50/p95/p99/max (ms) | Host up total (kbps) | Corrections / states | Snap p95/max (m) | Server input starvation | Rewind needed p50/p95 (ms) | Probes over 150 ms | 150 ms-capped err p95 (m) |
+|---|---|---|---|---|---|---|---|---|
+| wan-move-t60 | 97/120/256/296 | 519 | 264/21509 | 0.32/0.52 | 21.8% | 193/219 | 577/577 | 0.31 |
+
+Matches the simulated t60-rtt100 row on upload and RTT. Real-network jitter
+roughly doubles input starvation (21.8% against 10.4%) and corrections (1.2% of
+states against 0.4%). That strengthens the server input-buffer recommendation
+under H1. Every rewind probe needed more than 150 ms, as H3 predicted. Tests 4
+(9-minute drift) and 5 (Wi-Fi with background traffic) are still open.
+
+Before the client PC could connect, Windows had to unblock the downloaded zip.
+Run `Get-ChildItem -Recurse | Unblock-File` in the unzipped folder first.
+`client.bat` starts its clients in the background, so a blocked exe shows no error.
+
 Verified on one LAN on 2026-10-13: 2 clients via `10.0.0.73`, RTT p50 7 ms
 (`results/lan-verify-2026-10-13.json`). Not yet run across two networks.
