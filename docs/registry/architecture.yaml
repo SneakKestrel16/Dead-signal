@@ -112,6 +112,17 @@ state_ownership:
     added: 2026-10-12
     revised: ""
 
+  - state: tuning_knobs
+    status: active
+    owner_system: data-config   # Knobs
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    interface: "knobs.<section>.<name> (typed Resource fields, GDD names unchanged); loaded and validated once at boot; frozen per round"
+    write_access: data-config-only   # modules never write knob fields
+    referenced_by:
+      - docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -288,6 +299,20 @@ interfaces:
     referenced_by:
       - docs/architecture/adr-0002-authoritative-sim-tick-input.md
       - docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: knob_access
+    status: active
+    pattern: direct_call
+    producer: data-config
+    consumers:
+      - all-systems
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    signal_signature: "Knobs injected through setup(); read knobs.<section>.<name>; Knobs.ticks(seconds) -> int = roundi(seconds * sim_tick_hz); Knobs.load_all() -> Knobs; errors() -> PackedStringArray; digest() -> String"
+    referenced_by:
+      - docs/architecture/adr-0006-data-driven-configuration.md
+      - docs/architecture/adr-0005-event-catalog-state-registry-tick-order.md
     added: 2026-10-12
     revised: ""
 
@@ -516,6 +541,29 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: knob_storage
+    status: active
+    api: "one typed Resource class per system (@export_range fields, NAN / KnobUnset.INT defaults), one .tres per section in res://data/knobs/, loaded by fixed name list with CACHE_MODE_IGNORE; export preset includes data/knobs/*"
+    not: JSON or ConfigFile key-value store read by get_float(key); DirAccess enumeration of the knob folder
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    reason: "Knob-name typos fail at parse time; ranges written once in @export_range; exports remap .tres to binary with .remap entries"
+    referenced_by:
+      - docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: knob_agreement
+    status: active
+    api: "SHA-256 (HashingContext) over var_to_bytes of sorted script-variable names and values; first 8 hex appended to the ADR-0001 auth version string"
+    not: host sending knob values to clients; hashing file bytes
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    reason: "Reuses the existing version_mismatch reject; editor .tres and exported binary differ in bytes but not values"
+    referenced_by:
+      - docs/architecture/adr-0006-data-driven-configuration.md
+      - docs/architecture/adr-0001-hosting-session-join-reconnect.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -686,6 +734,34 @@ forbidden_patterns:
     description: "A shapeshifter fake hold must never take a lock, change progress or call the owner."
     why: "survivor-objectives.md rule 25: a survivor can always start a real interaction, and real state is never corrupted."
     adr: docs/architecture/adr-0008-hold-to-interact-protocol.md
+    added: 2026-10-12
+
+  - pattern: tuning_literal_in_code
+    status: active
+    description: "Gameplay code must never contain a tuning value; it reads knobs.<section>.<name>. Knob fields default to NAN or KnobUnset.INT, never a real value."
+    why: "Coding standard: gameplay values are data-driven; a script default would silently become the shipped value."
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+
+  - pattern: knob_default_fallback
+    status: active
+    description: "A knob validation error (range, unset, cross-knob rule) must refuse to host; never fall back to defaults."
+    why: "Defaults would be a second source of truth, and a typo would ship a quietly different game."
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+
+  - pattern: user_path_resource_load
+    status: active
+    description: "Never load .tres or .res files from user:// or any player-supplied path; knob files load only from res://data/knobs/."
+    why: "A resource file can embed a script, so loading one from an untrusted path executes untrusted code."
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
+    added: 2026-10-12
+
+  - pattern: knob_write
+    status: active
+    description: "Modules must never write knob fields; knobs are frozen for the round."
+    why: "Writes break host-client agreement (the digest) and determinism, and would leak across rounds through a shared resource."
+    adr: docs/architecture/adr-0006-data-driven-configuration.md
     added: 2026-10-12
 
 # Example:

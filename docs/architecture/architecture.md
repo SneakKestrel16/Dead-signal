@@ -271,12 +271,15 @@ var session_id: String; var round_index: int; var player_count: int; var entries
 ### Data/Config (Foundation)
 
 ```gdscript
-class_name Knobs extends Node
-func get_float(key: StringName) -> float            # asserts key exists; no silent default
-func get_int(key: StringName) -> int
+class_name Knobs extends RefCounted                 # ADR-0006; was Node with get_float(key)
+var defense: DefenseKnobs                           # one typed Resource section per system
+static func load_all() -> Knobs
+func errors() -> PackedStringArray                  # [] = valid
+func digest() -> String                             # joins the build version in ADR-0001's join check
+func ticks(seconds: float) -> int
 ```
 
-- Invariants: no gameplay literal in code; cross-knob constraints are validated at load, and a bad config falls back to defaults with a logged error.
+- Invariants: no gameplay literal in code; ranges and cross-knob constraints are validated at load, and a bad config refuses to host (ADR-0006; was fall back to defaults). Frozen per round.
 
 ### Not specified here
 
