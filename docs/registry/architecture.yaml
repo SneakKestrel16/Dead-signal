@@ -664,6 +664,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: objective_candidate_selection
+    status: active
+    api: "Survivor Objectives enumerates every rule-6-valid placement at map load (load fails if none) and draws one per round with an injected RandomNumberGenerator seeded from the logged round seed"
+    not: global randi()/randf(); per-type draws with retry loops
+    adr: docs/architecture/adr-0012-objective-discovery.md
+    reason: "Fixed-seed tests (survivor-objectives AC) and no placement can fail at runtime"
+    referenced_by:
+      - docs/architecture/adr-0012-objective-discovery.md
+    added: 2026-10-12
+    revised: ""
+
   - purpose: server_sight_test
     status: active
     api: "SightTest.sees(space, eye, yaw, targets, range_m, fov_deg, doors): distance, then horizontal cone, then intersect_ray on PhysicsLayers.SIGHT + analytic doors; shared by objective discovery and Borrowed Face observation; runs only in TickRunner physics phases; SightTest.line_clear(space, from, to, doors) is the ray-plus-doors part alone, reused by ADR-0013 occlusion"

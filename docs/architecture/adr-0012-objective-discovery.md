@@ -1,4 +1,4 @@
-# ADR-0012: Objective Discovery (Server Sight Test)
+# ADR-0012: Objective Selection and Discovery (Server Sight Test)
 
 ## Status
 Proposed
@@ -13,7 +13,7 @@ Proposed
 Designer (SneakKestrel16), with Claude Code (`/architecture-decision`, autonomous mode, AD-40) and `godot-specialist` engine validation. TD-ADR skipped — Lean mode.
 
 ## Summary
-Drive rooms and fuse spawns stay hidden from survivor clients until any survivor has had one "in view within 8 m" (`survivor-objectives.md` rule 7), and no ADR defined that test or how a discovery reaches clients. The server runs one shared `SightTest` (range, horizontal cone, multi-point line of sight on the `SIGHT` mask plus analytic doors, the same model Borrowed Face observation uses) in the Survivor Objectives tick step; on first success the point is marked discovered for the round and its hidden entity is granted to every survivor peer.
+Drive rooms and fuse spawns stay hidden from survivor clients until any survivor has had one "in view within 8 m" (`survivor-objectives.md` rule 7), and no ADR defined that test or how a discovery reaches clients. The server runs one shared `SightTest` (range, horizontal cone, multi-point line of sight on the `SIGHT` mask plus analytic doors, the same model Borrowed Face observation uses) in the Survivor Objectives tick step; on first success the point is marked discovered for the round and its hidden entity is granted to every survivor peer. Active points are chosen at round start by a seeded pick among every placement that satisfies rule 6, enumerated once at map load (amended 2026-10-12 for architecture review 12c, AD-48).
 
 ## Engine Compatibility
 
@@ -63,6 +63,8 @@ Rule 7 makes the route readable without handing it out: fuse boxes and the termi
 
 **5. On discovery.** Survivor Objectives marks the point discovered (its own state), calls `set_visibility_for(peer, true)` on the point's hidden entity for every survivor peer and their spectators, and emits `ObjectiveProgressChanged`, whose survivor projection now includes the point. A survivor who reconnects or joins spectating later gets every discovered point through ADR-0004 §9's re-grant.
 
+**6. Candidate selection (amended 2026-10-12 for architecture review 12c, AD-48).** At map load Survivor Objectives enumerates every combination of active points (1 terminal, 2 fuse boxes, 2 drive rooms, 2 fuse spawns from the Facility Map candidate sets) that satisfies rule 6, and fails the load if there are none. At round start it draws one combination with `rng.randi_range(0, count - 1)` from a `RandomNumberGenerator` injected by the composition root and seeded from the round seed, which the server logs; tests pass a fixed seed. With 3 × 3 × 15 × 21 = 2 835 raw combinations the enumeration is trivially small. Uniform over valid combinations is how this ADR reads rule 5's "uniformly at random" (inference; a designer reading per-type uniformity would change only the draw). The chosen points are spawned as hidden entities (ADR-0004 §7) before the first snapshot.
+
 ### Architecture Diagram
 
 ```
@@ -87,6 +89,8 @@ static func line_clear(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vect
 
 # Survivor Objectives (own state)
 func is_discovered(point_id: int) -> bool
+static func valid_placements(c: ObjectiveCandidates) -> Array[PackedInt32Array]   # map load; rule 6 filter
+func pick_active(rng: RandomNumberGenerator) -> PackedInt32Array               # round start; one draw
 ```
 
 ### Implementation Guidelines
@@ -96,6 +100,7 @@ func is_discovered(point_id: int) -> bool
 - `discover_range_m` and `discover_fov_deg` **must** come from `ObjectivesKnobs`; sample points **must** come from Facility Map data.
 - An undiscovered point's entity **must** stay ungranted on every survivor peer until discovery.
 - `SightTest` **must** run only inside TickRunner physics phases.
+- Active points **must** be drawn only from the load-time list of rule-6-valid placements, with the injected, seeded `RandomNumberGenerator`; the global `randi()` / `randf()` **must never** be used for selection.
 - Both ray ends **must** lie outside every `SIGHT` collider: authored sample points sit at least 5 cm off any surface, because `hit_back_faces` defaults to true on 4.7.2 (ADR-0003 Verification results (1)) and a point on or inside a wall blocks its own ray. The eye starts inside no collider: the body capsule keeps it out of world geometry, and if a test shows otherwise the query sets `hit_from_inside = true` (`godot-specialist`, 2026-10-12) (amended 2026-10-12 for architecture review 12c, AD-45).
 
 ## Alternatives Considered
@@ -137,6 +142,7 @@ func is_discovered(point_id: int) -> bool
 |------------|-------------|--------------------------|
 | survivor-objectives.md | TR-objectives-003, rule 7: a drive room or fuse spawn is marked for all survivors once any survivor has had it in view within 8 m | §1–5 |
 | survivor-objectives.md | AC: not before, and a survivor client receives no data for an undiscovered point | §5 grant only on discovery; ADR-0004 §7 |
+| survivor-objectives.md | TR-objectives-002, rules 5–6: active points picked at round start from authored candidates under placement constraints; fixed-seed AC over 20 rounds | §6 |
 | borrowed-face.md | Observation cone and multi-point line of sight (TR-borrowedface-003) | §1 shared `SightTest` |
 
 ## Performance Implications

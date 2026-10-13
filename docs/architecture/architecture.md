@@ -394,7 +394,7 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 - **Written: [ADR-0010](adr-0010-borrowed-face-rendering.md) (Proposed).** Borrowed Face rendering and appearance swap — rend-003 — MEDIUM
 - **Written: [ADR-0009](adr-0009-lighting-states-and-blackout.md) (Proposed).** Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
 - **Written: [ADR-0013](adr-0013-spatial-audio-pipeline.md) (Proposed).** Spatial audio and cue pipeline (buses, ducking, occlusion) — audio-001, audio-002, audio-004 — HIGH
-- **Written (discovery half): [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Seeded candidate selection (TR-objectives-002) is still open — core-006 — Low
+- **Written: [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Objective discovery and seeded candidate selection (§6, TR-objectives-002) — core-006 — Low
 - **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Proposed).** Round stats and results payload — Low
 - Scare replication scoping and view offset — net-008, input-002 — Low
 - **Written: [ADR-0014](adr-0014-ui-and-input-focus.md) (Proposed).** UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
