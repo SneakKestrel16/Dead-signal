@@ -3,7 +3,7 @@
 > **Engine**: Godot 4.7.2
 > **Last Updated**: 2026-10-12
 > **Manifest Version**: 2026-10-12
-> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013
+> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014
 > **Status**: Active, built from **Proposed** ADRs (none Accepted yet; autonomous decision AD-27). Regenerate with `/create-control-manifest update` when any ADR is accepted or revised.
 
 `Manifest Version` is the date this manifest was generated. Story files embed
@@ -196,6 +196,10 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **The duck counter counts only non-looping sounds and decrements on finish, steal and stop; own footsteps never duck; footstep ids are `<set>.<gait>`** — source: ADR-0013
 - **Occlusion uses `SightTest.line_clear` (doors occlude), queued to `AudioDirector._physics_process`, source lifted `occlusion_floor_lift_m`** — source: ADR-0013, ADR-0012
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
+- **`InputContextStack` is the only writer of `Input.mouse_mode`; the input sampler masks every frame by the top context; `_unhandled_input` gameplay handlers check `allows_actions()`** — source: ADR-0014
+- **Every screen pushes its context when shown and pops the same one when hidden; pop hides the layer, then restores the remembered focus owner only if valid and visible** — source: ADR-0014
+- **HUD widgets read only `HudModel`; HUD and marker `Control`s use `FOCUS_NONE` and `MOUSE_FILTER_IGNORE`; layers come from `UiLayers`** — source: ADR-0014
+- **Every focusable `Control` sets `accessibility_name` from `tr()`; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014
 
 ### Forbidden Approaches
 - **Never broadcast lighting state to every peer** [lighting_state_broadcast] — source: ADR-0009

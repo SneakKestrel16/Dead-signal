@@ -397,7 +397,7 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 - **Written (discovery half): [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Seeded candidate selection (TR-objectives-002) is still open — core-006 — Low
 - **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Proposed).** Round stats and results payload — Low
 - Scare replication scoping and view offset — net-008, input-002 — Low
-- UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
+- **Written: [ADR-0014](adr-0014-ui-and-input-focus.md) (Proposed).** UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
 - Server-sim testability (injectable clock and RNG, headless server), which the unit-test acceptance criteria in the GDDs assume — Low
 
 ### Can defer

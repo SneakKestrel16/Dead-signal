@@ -677,12 +677,23 @@ api_decisions:
 
   - purpose: game_audio
     status: active
-    api: "AudioDirector plays ADR-0004 positional events from a pooled AudioStreamPlayer3D set via AudioCatalog (max_distance = server send radius); fixed bus tree in default_bus_layout.tres; scripted ducking writes only Ambience and ScareDuck; occlusion by one SIGHT ray routing to *Occluded sub-buses; footstep masking via per-volume footstep_radius_scale on the server"
+    api: "AudioDirector plays ADR-0004 positional events from a pooled AudioStreamPlayer3D set via AudioCatalog (max_distance = server send radius); fixed bus tree in default_bus_layout.tres; scripted ducking writes only Ambience and ScareDuck; occlusion by SightTest.line_clear (SIGHT ray plus analytic doors) in the physics step, routing to *Occluded sub-buses; duck counter over non-looping sounds only; footstep masking via per-volume footstep_radius_scale on the server"
     not: sidechain-compressor ducking; Area3D audio bus overrides; mix-only masking of information
     adr: docs/architecture/adr-0013-spatial-audio-pipeline.md
     reason: "Gameplay cues and callouts must never be masked (scare-events rule 18); information masking must change what is sent"
     referenced_by:
       - docs/architecture/adr-0013-spatial-audio-pipeline.md
+    added: 2026-10-12
+    revised: "2026-10-12 (review 12c, AD-46)"
+
+  - purpose: ui_input_focus
+    status: active
+    api: "InputContextStack (GAMEPLAY, WHEEL, OVERLAY, MENU, MODAL) is the sole writer of Input.mouse_mode and masks every input frame by the top context's move/look/actions flags; UI on fixed UiLayers CanvasLayers; stock Control focus, grab_focus on push and validated restore on pop; HUD widgets read only HudModel (fed by snapshot handler and ClientEventRouter)"
+    not: per-screen mouse-mode writes; relying on GUI event consumption to stop polled movement; HUD widgets reading the router, snapshot or gameplay modules; custom-drawn focus
+    adr: docs/architecture/adr-0014-ui-and-input-focus.md
+    reason: "Nested screens (overlay then confirm) must restore input and focus exactly; polling ignores GUI consumption"
+    referenced_by:
+      - docs/architecture/adr-0014-ui-and-input-focus.md
     added: 2026-10-12
     revised: ""
 
@@ -912,6 +923,13 @@ forbidden_patterns:
     description: "A form change swaps only the appearance child; the BodyPuppet node is never freed, renamed or re-parented."
     why: "A recreated puppet pops visibly and marks the body as the one that changed form."
     adr: docs/architecture/adr-0010-borrowed-face-rendering.md
+    added: 2026-10-12
+
+  - pattern: ui_writes_mouse_mode
+    status: active
+    description: "No code other than InputContextStack writes Input.mouse_mode or blocks gameplay input."
+    why: "Two writers leave the cursor and the input mask in whichever state the last screen to close wrote."
+    adr: docs/architecture/adr-0014-ui-and-input-focus.md
     added: 2026-10-12
 
 # Example:
