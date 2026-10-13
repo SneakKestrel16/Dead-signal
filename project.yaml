@@ -8,7 +8,7 @@ framework:
   last_upgraded: 2026-09-25
 
 project:
-  stage: Technical Setup
+  stage: Pre-Production
 
 # Dead Signal has several interacting systems (deception, combat, objectives,
 # networking), so it runs at `standard`: per-system GDDs before code.
