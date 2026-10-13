@@ -9,11 +9,11 @@ cd "$(dirname "$0")"
 GODOT="${GODOT:-C:/Users/Ockey/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe}"
 mkdir -p logs
 "$GODOT" --headless --path . --import > logs/import.log 2>&1
-"$GODOT" --headless --path . -- --host --name=Host --monster=1 --autostart=3 --scenario=full > logs/host.log 2>&1 &
+"$GODOT" --headless --path . -- --host --name=Host --monster=1 --autostart=3 --scenario=full --port=24799 > logs/host.log 2>&1 &
 HOST=$!
 sleep 2
 for n in A B; do
-	"$GODOT" --headless --path . -- --join=127.0.0.1 --name=Bot$n --bot=idle > "logs/bot$n.log" 2>&1 &
+	"$GODOT" --headless --path . -- --join=127.0.0.1 --port=24799 --name=Bot$n --bot=idle > "logs/bot$n.log" 2>&1 &
 	sleep 0.5
 done
 ( sleep 150; kill $HOST 2>/dev/null ) &

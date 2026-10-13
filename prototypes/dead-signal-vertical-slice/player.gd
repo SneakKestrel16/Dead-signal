@@ -121,7 +121,8 @@ func forward() -> Vector3:
 	return -head_basis().z
 
 
-func _unhandled_input(event: InputEvent) -> void:
+## _input, not _unhandled_input: HUD controls under the captured cursor must never eat mouse look.
+func _input(event: InputEvent) -> void:
 	if not is_local:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:

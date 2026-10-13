@@ -13,6 +13,11 @@ signal roster_changed
 signal status(text: String)
 
 const PORT := 24690
+
+
+## --port overrides the default so tests can run beside a live session.
+func port() -> int:
+	return int(args.get("port", str(PORT)))
 const VERSION := "slice-1"
 ## Survivor characters C1-C5: colour and silhouette are the whole identity a disguise copies.
 const CHARACTERS := [
@@ -47,14 +52,14 @@ func _ready() -> void:
 ## Starts a listen server; the host is player 1. Returns an Error code.
 func host(display_name: String) -> int:
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(PORT, Knobs.i("max_players"))
+	var err := peer.create_server(port(), Knobs.i("max_players"))
 	if err != OK:
-		status.emit("Could not host on port %d (error %d)" % [PORT, err])
+		status.emit("Could not host on port %d (error %d)" % [port(), err])
 		return err
 	multiplayer.multiplayer_peer = peer
 	my_name = _clean_name(display_name)
 	players = {1: {"name": my_name, "role": "", "character": -1}}
-	status.emit("Hosting on port %d" % PORT)
+	status.emit("Hosting on port %d" % port())
 	roster_changed.emit()
 	return OK
 
@@ -62,7 +67,7 @@ func host(display_name: String) -> int:
 ## Connects to a host at `address`. Returns an Error code.
 func join(address: String, display_name: String) -> int:
 	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address, PORT)
+	var err := peer.create_client(address, port())
 	if err != OK:
 		status.emit("Bad address (error %d)" % err)
 		return err

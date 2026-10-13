@@ -38,6 +38,7 @@ func _ready() -> void:
 	_roster = _label(root, 15, Control.PRESET_TOP_LEFT, Vector2(18, 110), Vector2(320, 160))
 	_cross = ColorRect.new()
 	_cross.color = Color(1, 1, 1, 0.6)
+	_cross.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cross.size = Vector2(4, 4)
 	_cross.set_anchors_preset(Control.PRESET_CENTER)
 	_cross.position = Vector2(-2, -2)
@@ -49,6 +50,7 @@ func _ready() -> void:
 	_bar.position = Vector2(-150, 85)
 	_bar.size = Vector2(300, 16)
 	_bar.show_percentage = false
+	_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_bar)
 	_status = _label(root, 20, Control.PRESET_CENTER_BOTTOM, Vector2(-350, -110), Vector2(700, 60))
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -59,6 +61,7 @@ func _ready() -> void:
 	_feed.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_feed.position = Vector2(-460, 14)
 	_feed.size = Vector2(440, 200)
+	_feed.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_feed)
 	_banner = _label(root, 30, Control.PRESET_CENTER, Vector2(-500, -160), Vector2(1000, 120))
 	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
