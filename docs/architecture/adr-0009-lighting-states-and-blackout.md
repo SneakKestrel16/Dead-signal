@@ -145,7 +145,7 @@ func flicker(start_tick: int, duration_ticks: int, seed: int, intensity: float, 
 - Flicker **must** be generated from the payload seed and clamped to `max_flashes_per_s` and the player's flash scale. Flicker on/off **must never** be sent as individual messages.
 - The surveillance `SubViewport` **must** be `UPDATE_DISABLED` whenever its client is not viewing.
 - Every light's range **must** stay inside its own volume. Lights **must** be pre-warmed at load.
-- Flicker **must** be a pure function of seed and elapsed server ticks.
+- Flicker **must** be a pure function of seed and elapsed server ticks. The precompute's flash clamp counts against the client's shared `FlashLimiter`, so flicker and scare screen flashes together stay under `max_flashes_per_s` (amended 2026-10-12 for ADR-0015, AD-49).
 - `blackout_duration_s`, `backup_switch_hold_s`, `light_fade_s`, `max_flashes_per_s`, `max_shadowed_omni`, `max_shadowed_spot`, `max_shadowed_flashlights` and `feed_resolution` **must** come from data. Light looks **must** come from `LightingPresets`, never from code.
 
 ## Alternatives Considered

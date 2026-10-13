@@ -675,6 +675,30 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: flinch_view_offset
+    status: active
+    api: "Controller owns a per-player FlinchRecord (from, target, start_tick, ramp_ticks); FlinchRecord.offset_at is shared by server and client; ViewOffsetChanged is reliable, owner and spectators only; server evaluates at the frame's offset_tick and adds base[view_epoch]; resets use the epoch handshake; pitch clamp on the sum"
+    not: offset in unreliable snapshots; zeroing the offset without a handshake; client camera effects writing yaw/pitch
+    adr: docs/architecture/adr-0015-scare-presentation-and-view-offset.md
+    reason: "The aim ray uses the server view direction, so the owner must render exactly what the server computes"
+    referenced_by:
+      - docs/architecture/adr-0015-scare-presentation-and-view-offset.md
+      - docs/architecture/adr-0002-authoritative-sim-tick-input.md
+    added: 2026-10-12
+    revised: ""
+
+  - purpose: scare_client_presentation
+    status: active
+    api: "ScarePresenter plays ScareCatalog effect lists from ScareTriggered: stinger via AudioDirector, additive ColorRect flash on UiLayers.SCARE_FX, CameraFx shake (client only), P8 edge pulse when flinch is off; every luminance flash passes the shared FlashLimiter (max_flashes_per_s)"
+    not: Compositor post-processing flashes; per-source flash caps
+    adr: docs/architecture/adr-0015-scare-presentation-and-view-offset.md
+    reason: "One 3 flashes/s cap across scare flashes and light flicker (scare-events rule 25)"
+    referenced_by:
+      - docs/architecture/adr-0015-scare-presentation-and-view-offset.md
+      - docs/architecture/adr-0009-lighting-states-and-blackout.md
+    added: 2026-10-12
+    revised: ""
+
   - purpose: server_sight_test
     status: active
     api: "SightTest.sees(space, eye, yaw, targets, range_m, fov_deg, doors): distance, then horizontal cone, then intersect_ray on PhysicsLayers.SIGHT + analytic doors; shared by objective discovery and Borrowed Face observation; runs only in TickRunner physics phases; SightTest.line_clear(space, from, to, doors) is the ray-plus-doors part alone, reused by ADR-0013 occlusion"

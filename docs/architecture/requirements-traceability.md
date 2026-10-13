@@ -159,7 +159,7 @@ Written by `/architecture-review` ([report](architecture-review-2026-10-12c.md);
 - TR-pings-007: Optional proximity voice (lobby setting, off by default, 20 m, positional); no rule may require voice (Deferred, NOT SOURCEABLE; ADR-0013 reserves the `ProximityVoice` bus only)
 - TR-pings-010: Voice transport is undecided (inference: Godot has no built-in VoIP) (Deferred, NOT SOURCEABLE)
 
-Partial rows with no ADR yet for the open half: TR-index-012 and TR-pings-005 now point at ADR-0014 (UI and input-focus framework); TR-objectives-002 at ADR-0012 §6. Still open: TR-scare-009 and TR-scare-012 (screen flash, camera reaction, flinch-toggle transport), TR-scare-006, TR-controller-010, TR-index-008 (view offset), TR-defense-006 (hide peek view).
+Partial rows with no ADR yet for the open half: TR-index-012 and TR-pings-005 now point at ADR-0014 (UI and input-focus framework); TR-objectives-002 at ADR-0012 §6. TR-scare-006, -009, -012, TR-controller-010 and TR-index-008 now point at ADR-0015. Still open: TR-defense-006 (hide peek view).
 
 ## Superseded Requirements
 None. Third review (2026-10-12c): no GDD requirement reworded. Earlier: reworded on 2026-10-12 (second review): TR-controller-009 (accel ≤ 0.09 s), TR-index-004 (row count dropped), TR-scare-007 (requests no lighting).

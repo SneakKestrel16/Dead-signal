@@ -70,7 +70,7 @@ Three UX specs (`hud.md`, `results.md`, `interaction-patterns.md`) describe scre
 
 **3. Mouse mode.** `InputContextStack` is the only code that writes `Input.mouse_mode`: `MOUSE_MODE_CAPTURED` when the top context has `cursor` off, `MOUSE_MODE_VISIBLE` otherwise. The first relative motion after a switch back to captured is discarded (Verification 4; the jump is NOT SOURCEABLE in the reference). Event-driven gameplay handlers (`_unhandled_input`) also check `allows_actions()`, so a menu key that the GUI did not consume cannot reach gameplay.
 
-**4. Layers.** UI lives on fixed `CanvasLayer`s, numbered in one `UiLayers` constants class like `PhysicsLayers`: `WORLD_MARKERS` (1), `HUD` (2), `CAPTIONS` (3), `OVERLAY` (10), `MODAL` (20). A context push shows its layer's root and a pop hides it before focus is restored; nothing else changes layer visibility. Hiding a `CanvasLayer` hides its whole subtree, and focus inside it is lost.
+**4. Layers.** UI lives on fixed `CanvasLayer`s, numbered in one `UiLayers` constants class like `PhysicsLayers`: `WORLD_MARKERS` (1), `HUD` (2), `SCARE_FX` (3, ADR-0015), `CAPTIONS` (4), `OVERLAY` (10), `MODAL` (20); captions sit above scare flashes so they stay readable (amended for ADR-0015, AD-49). A context push shows its layer's root and a pop hides it before focus is restored; nothing else changes layer visibility. Hiding a `CanvasLayer` hides its whole subtree, and focus inside it is lost.
 
 **5. Focus.** Menus use stock `Control` focus (P17): `focus_neighbor_*`, one theme-level `focus` stylebox (shape, not colour alone), and `grab_focus()` on the screen's declared default control when its context is pushed. On push the stack remembers `get_viewport().gui_get_focus_owner()`; on pop it restores that control only if `is_instance_valid` and `is_visible_in_tree()`, else the lower screen's default control, because a hidden control loses focus and a mouse click may have moved it. HUD and world-marker `Control`s set `focus_mode = FOCUS_NONE` and `mouse_filter = MOUSE_FILTER_IGNORE`, so they never take focus or clicks. Mouse hover and keyboard focus are separate since 4.6; nothing moves keyboard focus on hover.
 
@@ -93,7 +93,7 @@ ClientRoot (client composition root, no autoloads)
  ├─ HudModel ◀── snapshot handler, ClientEventRouter (ADR-0005 §7)
  │        │ typed signals + getters
  │        ▼
- └─ CanvasLayers: WORLD_MARKERS(1) HUD(2) CAPTIONS(3) OVERLAY(10) MODAL(20)
+ └─ CanvasLayers: WORLD_MARKERS(1) HUD(2) SCARE_FX(3) CAPTIONS(4) OVERLAY(10) MODAL(20)
           HUD widgets / markers (FOCUS_NONE, MOUSE_FILTER_IGNORE)
           screens push/pop contexts and grab_focus on push
 ```
@@ -113,7 +113,8 @@ func allows_actions() -> bool
 class_name UiLayers extends RefCounted
 const WORLD_MARKERS := 1
 const HUD := 2
-const CAPTIONS := 3
+const SCARE_FX := 3
+const CAPTIONS := 4
 const OVERLAY := 10
 const MODAL := 20
 

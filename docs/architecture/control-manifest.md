@@ -3,7 +3,7 @@
 > **Engine**: Godot 4.7.2
 > **Last Updated**: 2026-10-12
 > **Manifest Version**: 2026-10-12
-> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014
+> **ADRs Covered**: ADR-0001, ADR-0002, ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015
 > **Status**: Active, built from **Proposed** ADRs (none Accepted yet; autonomous decision AD-27). Regenerate with `/create-control-manifest update` when any ADR is accepted or revised.
 
 `Manifest Version` is the date this manifest was generated. Story files embed
@@ -201,6 +201,8 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Every screen pushes its context when shown and pops the same one when hidden; pop hides the layer, then restores the remembered focus owner only if valid and visible** — source: ADR-0014
 - **HUD widgets read only `HudModel`; HUD and marker `Control`s use `FOCUS_NONE` and `MOUSE_FILTER_IGNORE`; layers come from `UiLayers`** — source: ADR-0014
 - **Every focusable `Control` sets `accessibility_name` from `tr()`; countdowns are never live regions; every visible string goes through `tr()`** — source: ADR-0014
+- **Only the Controller writes a `FlinchRecord`; server and client use the one `FlinchRecord.offset_at` (float tick, `maxi(ramp_ticks, 1)`); the server evaluates at the frame's `offset_tick` and adds `base[view_epoch]`; resets use the epoch handshake; the ±85° clamp applies to the sum** — source: ADR-0015, ADR-0002
+- **Client camera effects live under `CameraFx` (physics interpolation off on head, `CameraFx`, `Camera3D`) and never change sent yaw/pitch; every luminance flash passes `FlashLimiter`** — source: ADR-0015
 
 ### Forbidden Approaches
 - **Never broadcast lighting state to every peer** [lighting_state_broadcast] — source: ADR-0009

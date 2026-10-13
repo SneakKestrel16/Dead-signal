@@ -396,7 +396,7 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 - **Written: [ADR-0013](adr-0013-spatial-audio-pipeline.md) (Proposed).** Spatial audio and cue pipeline (buses, ducking, occlusion) — audio-001, audio-002, audio-004 — HIGH
 - **Written: [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Objective discovery and seeded candidate selection (§6, TR-objectives-002) — core-006 — Low
 - **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Proposed).** Round stats and results payload — Low
-- Scare replication scoping and view offset — net-008, input-002 — Low
+- **Written: [ADR-0015](adr-0015-scare-presentation-and-view-offset.md) (Proposed).** Scare presentation and view offset (flinch record, epoch re-baseline, client effects, flash limiter) — net-008, input-002 — Low
 - **Written: [ADR-0014](adr-0014-ui-and-input-focus.md) (Proposed).** UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
 - Server-sim testability (injectable clock and RNG, headless server), which the unit-test acceptance criteria in the GDDs assume — Low
 
