@@ -260,7 +260,7 @@ No string is concatenated from fragments; counts use plural-aware formats.
 | Question | Owner | Deadline | Resolution |
 |---|---|---|---|
 | Player journey map not yet created. Author it from the template at `.claude/docs/templates/player-journey.md` to establish player context for this screen. | SneakKestrel16 | Before first playtest | Unresolved |
-| Stats/results interface ADR (TR-matchflow-008) not written; the payload shape is assumed | technical-director | Before Match Flow implementation | Unresolved |
+| Stats/results interface (TR-matchflow-008) | technical-director | Before Match Flow implementation | Resolved: ADR-0011 (Proposed) |
 | Should survivors' own disguise encounters ("Ben was the monster at 4:10") be shown? Not in any GDD | SneakKestrel16 | Before Milestone 2 | Not shown (no GDD requirement) |
 | Must every menu be fully gamepad-navigable (Input checklist, unticked)? | SneakKestrel16 | Before UI ADR | Project-wide open question; this screen already is |
 | Final visual treatment | art-director | Art bible | Layout only |

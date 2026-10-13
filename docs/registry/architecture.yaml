@@ -653,6 +653,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: round_stats
+    status: active
+    api: "each owner registers a getter-only *StatsView under stats.<system> (downing, abilities, defense, borrowed_face, objectives, match); MatchFlow.resolve reads them once on the outcome tick into RoundResults, sent on RoundEnded as a plain Dictionary"
+    not: Match Flow tallying other systems' stats from events; collect_stats() calls on module references; one shared mutable stats store
+    adr: docs/architecture/adr-0011-round-stats-and-results-payload.md
+    reason: "One owner per number; no module references (ADR-0005); telemetry reads the same views"
+    referenced_by:
+      - docs/architecture/adr-0011-round-stats-and-results-payload.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:

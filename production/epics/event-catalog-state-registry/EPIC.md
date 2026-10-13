@@ -27,7 +27,7 @@ The server-side contract every gameplay system talks through. Fifteen named even
 | TR-index-004 | Cross-system reads only through the state table; single writer per key | ADR-0005 (Proposed) |
 | TR-index-010 | No upward layer references; Controller consumes only `RoundEnded` and `PlayerConnectionChanged` | ADR-0005 composition root (Proposed); no build check yet |
 | TR-index-011 | One deterministic tick pipeline with defined phase order (hits, downs, objectives, then win check) | ADR-0005, ADR-0008 (Proposed) |
-| TR-index-012 | Every system exposes stat and telemetry hooks for Results and Telemetry | ❌ No ADR (stats/results interface ADR, TR-matchflow-008) |
+| TR-index-012 | Every system exposes stat and telemetry hooks for Results and Telemetry | ADR-0011 (Proposed) |
 
 ## Stories
 
@@ -40,7 +40,7 @@ The server-side contract every gameplay system talks through. Fifteen named even
 | 005 | [ClientEventRouter](story-005-client-event-router.md) | Integration | Blocked | ADR-0005, ADR-0004 |
 | 006 | [Layer boundary check](story-006-layer-boundary-check.md) | Logic | Blocked | ADR-0005 |
 
-TR-index-012 (stat hooks) has no story: it waits for the stats/results interface ADR (TR-matchflow-008).
+TR-index-012 (stat hooks) is now governed by ADR-0011 (Proposed); each Feature epic gets its own stats story.
 
 ## Definition of Done
 
