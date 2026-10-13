@@ -15,7 +15,7 @@ optional parameters are omitted here; see the guide.
 | GDScript | Overrides inherit the parent's typed return | An override of a method with a typed return now needs an explicit `return` (e.g. `return null`). Compile error until fixed. |
 | GDScript | Setting a packed-array element no longer calls the property setter | `arr_prop[i] = x` used to fire the whole property's setter; it no longer does. Behaviour change. |
 | Input | Mouse/keyboard device IDs no longer `0` | Compare `InputEvent.device` to `InputEvent.DEVICE_ID_MOUSE` / `InputEvent.DEVICE_ID_KEYBOARD`, or check the event type. |
-| Audio | `AudioStreamPlayer` `area_mask` default is `0` (was layer 1) | Projects using `audio_bus_override` on `Area3D` must set the mask back to layer 1. |
+| Audio | `AudioStreamPlayer3D` `area_mask` default is `0` (was layer 1; the property exists only on the 3D player) | Projects using `audio_bus_override` on `Area3D` must set the mask back to layer 1. |
 | Audio | `AudioEffectSpectrumAnalyzer.tap_back_pos` removed | Source break. |
 | Physics (Jolt) | `WorldBoundaryShape3D.plane.d` sign inverted | Flip the sign to match 4.6 behaviour. |
 | Physics (Jolt) | `SoftBody3D` mass default 1 kg for whole body; `linear_stiffness` applied like Godot Physics | Retune `linear_stiffness` and `damping_coefficient`. |

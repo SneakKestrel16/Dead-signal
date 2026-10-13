@@ -191,8 +191,10 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **C1–C5 share one skeleton bone set and one `AnimationLibrary` `.tres`; animation comes only from snapshot fields; `LookAtModifier3D.relative` set explicitly; trees enabled with `AnimationTree.active`** — source: ADR-0010
 - **Own body: `cast_shadow = SHADOWS_ONLY` plus the first-person model; a lit body flashlight casts shadows, and per view only the own flashlight and the nearest `max_shadowed_flashlights` others emit light** — source: ADR-0010, ADR-0009
 - **Survivor-to-survivor swap: `start(state, false)`, an `AnimationNodeTimeSeek` to the same fraction of the dominant clip, then `advance(0.0)`; the warp overlay is fragment-only and never displaces `VERTEX`** — source: ADR-0010
-- **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius** — source: ADR-0013
+- **All audio goes through `AudioDirector` and `AudioCatalog`; the pool is built once in `_ready`; a positional sound's `max_distance` equals its server send radius, except masked footsteps keep the unscaled radius** — source: ADR-0013
 - **Ducking writes only `Ambience` and `ScareDuck`; gameplay cues and callouts are never ducked or stolen by scare or ambience sounds** — source: ADR-0013
+- **The duck counter counts only non-looping sounds and decrements on finish, steal and stop; own footsteps never duck; footstep ids are `<set>.<gait>`** — source: ADR-0013
+- **Occlusion uses `SightTest.line_clear` (doors occlude), queued to `AudioDirector._physics_process`, source lifted `occlusion_floor_lift_m`** — source: ADR-0013, ADR-0012
 - **UI and HUD read only projected client state; the HUD never distinguishes real from fake** — source: ADR-0004 (projection), `design/ux/hud.md`
 
 ### Forbidden Approaches

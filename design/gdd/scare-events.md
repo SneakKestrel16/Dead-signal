@@ -215,6 +215,14 @@ require scare_max_control_loss_s < lunge wind-up (Monster Abilities)
 | hallucination_max_per_client | 2 (proposed) | 0–4 | More paranoia | Less individual horror |
 | stinger_max_db_rel | +6 dB (proposed) | 0–9 | Louder jolts, masks info | Subtler |
 | ambush_unseen_s | 3 (proposed) | 1–10 | Fewer lunges count as ambushes | More lunges count as ambushes; scare noise (cross-review B1) |
+| duck_db | −8 dB (proposed, inference; ADR-0013) | −18 to −3 | Smaller duck, scares mask cues | Scares vanish under every cue |
+| duck_attack_s | 0.05 (proposed, inference; ADR-0013) | 0.02–0.2 | Cue onset masked briefly | Audible pumping |
+| duck_release_s | 0.6 (proposed, inference; ADR-0013) | 0.2–2.0 | Scares stay quiet longer | Pumping between footsteps |
+| sfx_pool_size | 24 (proposed; ADR-0013 Verification 1) | 16–32 | CPU cost | Sounds stolen in chaos |
+| occlusion_lowpass_hz | 1200 (proposed, inference; ADR-0013) | 600–4000 | Walls barely muffle | Occluded sounds unreadable |
+| occlusion_db | −6 dB (proposed, inference; ADR-0013) | −15 to 0 | Walls barely quieten | Occluded sounds too faint |
+| occlusion_recheck_s | 0.25 (proposed, inference; ADR-0013) | 0.1–1.0 | Looping sources lag behind doors | Ray cost |
+| occlusion_floor_lift_m | 0.3 (proposed; ADR-0013) | 0.1–0.5 | Low obstacles stop occluding | Floor-level sources read as occluded |
 
 ## Visual/Audio Requirements
 

@@ -19,7 +19,7 @@ notes would settle them.
   setter; reassign the whole array (`prop = arr`) when the setter must run.
 - **Input device checks**: test the event type (`event is InputEventMouse`) or
   compare to `InputEvent.DEVICE_ID_MOUSE` / `DEVICE_ID_KEYBOARD`, never `0`.
-- **Area audio overrides**: set `AudioStreamPlayer` `area_mask` explicitly when
+- **Area audio overrides**: set `AudioStreamPlayer3D` `area_mask` explicitly when
   using `audio_bus_override` on `Area3D`; the default is now `0`.
 
 ## GDScript (4.5+)
