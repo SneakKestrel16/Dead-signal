@@ -30,7 +30,7 @@
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
 
-version: 2
+version: 3
 last_updated: "2026-10-12"
 
 requirements:
@@ -94,9 +94,9 @@ requirements:
     system: index
     gdd: design/gdd/systems-index.md
     domain: Core
-    requirement: "A system may read another system's state only if listed in the read-only replicated state table (14 rows); otherwise it must use an event. Only the owner writes; readers never mutate. Needs a state-ownership mechanism that enforces a single writer"
+    requirement: "A system may read another system's state only if listed in the read-only replicated state table; otherwise it must use an event. Only the owner writes; readers never mutate. Needs a state-ownership mechanism that enforces a single writer"
     created: 2026-10-12
-    revised: ""
+    revised: "2026-10-12"
     status: active
   - id: TR-index-005
     system: index
@@ -310,9 +310,9 @@ requirements:
     system: controller
     gdd: design/gdd/first-person-controller.md
     domain: Physics
-    requirement: "Server correction: player found inside geometry is moved to last valid position; accel ramp 0.05 s (<= 0.1 s) is dodge-critical"
+    requirement: "Server correction: player found inside geometry is moved to last valid position; accel ramp 0.05 s (<= 0.09 s) is dodge-critical"
     created: 2026-10-12
-    revised: ""
+    revised: "2026-10-12"
     status: active
   - id: TR-controller-010
     system: controller
@@ -998,9 +998,9 @@ requirements:
     system: scare
     gdd: design/gdd/scare-events.md
     domain: Rendering
-    requirement: "Facility scare state machine (Low, Rising, Emergency, Results + Blackout and Power Restored overlays) driven by RoundPhaseChanged / ObjectiveProgressChanged; Facility Map owns lighting, this system only requests states and adds flicker"
+    requirement: "Facility scare state machine (Low, Rising, Emergency, Results + Blackout and Power Restored overlays) driven by RoundPhaseChanged / ObjectiveProgressChanged; Facility Map owns lighting, this system requests no lighting state and adds only flicker"
     created: 2026-10-12
-    revised: ""
+    revised: "2026-10-12"
     status: active
   - id: TR-scare-008
     system: scare

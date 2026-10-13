@@ -84,7 +84,7 @@ Survivor: "That made me jump, and it told me something: the sound came from the 
 
 **Phase lighting/audio states**
 
-22. On `RoundPhaseChanged` the server sets the facility scare state; all clients present it. The Facility Map owns per-volume lighting state (`research-facility.md` Lighting States): this system only requests those states and adds flicker and stingers on top (designer decision, 2026-10-12, cross-review B2).
+22. On `RoundPhaseChanged` the server sets the facility scare state; all clients present it. The Facility Map owns per-volume lighting state (`research-facility.md` Lighting States): this system adds only flicker and stingers on top (designer decision, 2026-10-12, cross-review B2). It requests nothing from the map: both systems react to the same `RoundPhaseChanged` and `ObjectiveProgressChanged` (ADR-0009 §7; architecture review 2026-10-12, N3).
 
 | State | When | Lighting | Audio bed | Scare budget |
 |---|---|---|---|---|

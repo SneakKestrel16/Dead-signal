@@ -113,7 +113,7 @@ Engine API tags: **V** = covered by the engine reference or proven by the networ
 | Survivor Defense | Charges, stun and immunity, shock lock, hiding spots, barricade state (barricaded, break progress, lockout), door interaction rules, flashlight | `MonsterStunned`, `PlayerShocked`, `BarricadeBroken`; hidden and shock-lock state | Controller view ray, Borrowed Face form, Lunge state |
 | Monster Abilities | Lunge, False Signal and Blackout state, cooldowns, hit resolution | `SurvivorHit`, `AbilityUsed` (server-only); Lunge state | Network rewind, Borrowed Face, Downing eligibility, Facility Map volumes |
 | Pings & Callouts | Ping tokens, callout cooldowns, markers, displayed-identity attribution | Per-recipient presentation messages | Borrowed Face identity, `AbilityUsed`, Controller view ray |
-| Scare Events (server half) | Scare gating, cooldowns, budgets, recipients, view-offset writes | `ScareTriggered`, view offset | Many events; Facility Map lighting requests |
+| Scare Events (server half) | Scare gating, cooldowns, budgets, recipients, view-offset writes | `ScareTriggered`, view offset | Many events; Facility Map `LightingView` (ambush test, Blackout blocking); requests no lighting (ADR-0009 §7) |
 
 Feature modules are mostly GDScript over Foundation and Core. Exceptions: `intersect_ray` hit-scan (V), `AudioStreamPlayer3D` spatial cues (V), and proximity voice (NOT SOURCEABLE).
 
@@ -144,7 +144,7 @@ Network: push positions into snapshot history (rewind source)
    ▼
 Feature tick, FIXED ORDER (ADR-0005), event queue drained after each step:
   Match Flow begin (clock, phase) ▶ Defense (stun/immunity) ▶ Borrowed Face (observe, transform)
-  ▶ Monster Abilities (hit test on rewound positions) ▶ Downing (commit, bleed, rescue)
+  ▶ Monster Abilities (hit test on rewound positions) ▶ Facility Map (Blackout expiry, ADR-0009) ▶ Downing (commit, bleed, rescue)
   ▶ Holds (every hold timed, ADR-0008) ▶ Objectives (countdown, extraction) ▶ Pings ▶ Scare gating
   ▶ Match Flow resolve (evidence escaped, then eliminations, then deadline)
    ▼
