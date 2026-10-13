@@ -16,7 +16,25 @@ bash run.sh          # every ADR, about 1 minute
 bash run.sh 0004     # one ADR
 ```
 
-Export check (ADR-0006 (3)): `godot --headless --path . --export-debug "Windows Desktop" build/verify.exe`, then `build/verify.console.exe --headless`; it writes `build/export_result.txt`. Needs the 4.7.2 export templates.
+Export check (ADR-0006 (3)): `godot --headless --path . --export-debug "Windows Desktop" build/verify.exe`, then `build/verify.console.exe --headless`; it writes `build/export_result.txt`. Needs the 4.7.2 export templates. `export_presets.cfg` is gitignored repo-wide (presets can hold signing credentials); recreate it with:
+
+```ini
+[preset.0]
+
+name="Windows Desktop"
+platform="Windows Desktop"
+runnable=true
+dedicated_server=false
+custom_features=""
+export_filter="all_resources"
+include_filter="data/knobs/*"
+exclude_filter=""
+export_path="build/verify.exe"
+
+[preset.0.options]
+
+binary_format/embed_pck=true
+```
 
 Needs Godot 4.7.2 (path in `run.sh`, override with `GODOT=`). It runs `--import` once
 (the class-name fixtures need the global class cache), then `run.gd` headless. Each
@@ -62,7 +80,7 @@ Expected noise in the log: parse errors from the compile probes (ADR-0005, 0008)
 | 0005-6 | PASS | `Dictionary[StringName, Array[Callable]]`: "Nested typed collections are not supported"; `Dictionary[StringName, Array]` with a cast works |
 | 0006-1 | PASS | `@export_range` gives `PROPERTY_HINT_RANGE` with `"1.0,4.0"` (int fields too: `"1.0,3.0"`) |
 | 0006-2 | PASS | `CACHE_MODE_IGNORE` loads are independent |
-| 0006-3 | PASS / **finding** | A field left at `NAN` is **written** (`extra_s = nan`), not omitted, and loads as NAN: the unset check still works. In a Windows debug export (`export_main.tscn`, preset in `export_presets.cfg`) `res://data/knobs/defense.tres` loads by path: the pack holds only the `.remap`, values and NAN survive the binary conversion |
+| 0006-3 | PASS / **finding** | A field left at `NAN` is **written** (`extra_s = nan`), not omitted, and loads as NAN: the unset check still works. In a Windows debug export (`export_main.tscn`, preset under How to run) `res://data/knobs/defense.tres` loads by path: the pack holds only the `.remap`, values and NAN survive the binary conversion |
 | 0006-4 | PASS | Digest identical across loads and across two runs. Cross-machine NOT RUN |
 | 0006-5 | PASS | A misspelled key loads without error and the real field stays NAN |
 | 0007-1 | PASS | `3d/physics_engine="Jolt Physics"` |
