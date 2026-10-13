@@ -30,7 +30,7 @@
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
 
-version: 4
+version: 5
 last_updated: "2026-10-12"
 
 requirements:

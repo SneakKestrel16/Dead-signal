@@ -6,7 +6,7 @@
 - Last Updated: 2026-10-12
 - Engine: Godot 4.7.2 (GDScript)
 - GDDs Covered: `lobby-role-assignment`, `first-person-controller`, `match-flow`, `survivor-objectives`, `downing-and-rescue`, `survivor-defense`, `borrowed-face`, `monster-abilities`, `pings-and-callouts`, `scare-events`, plus the Facility Map in `design/levels/research-facility.md`. Not covered (no GDD yet): HUD & Results Screen, Accessibility Options, Match Telemetry.
-- ADRs Referenced: ADR-0001 to ADR-0013, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
+- ADRs Referenced: ADR-0001 to ADR-0015, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
 - Evidence beyond the GDDs: `prototypes/networking-spike/README.md` (single-machine results, 2026-10-12).
 - TD-ARCHITECTURE: 2026-10-12 — skipped — Lean mode
 - LP-FEASIBILITY: 2026-10-12 — skipped — Lean mode
@@ -320,8 +320,10 @@ Thirteen ADRs exist, all **Proposed**; none is Accepted, so no requirement is ye
 | [ADR-0011](adr-0011-round-stats-and-results-payload.md) | Owners keep counters, expose `*StatsView`s; `MatchFlow.resolve` builds `RoundResults` once | Verification 1 (payload size) |
 | [ADR-0012](adr-0012-objective-discovery.md) | One server `SightTest`; discovery grants the hidden entity to survivor peers | Verification 1-2 |
 | [ADR-0013](adr-0013-spatial-audio-pipeline.md) | Fixed bus tree, catalog-driven pooled 3D players, scripted ducking, server-side footstep masking, client occlusion ray | Verification 1-4 |
+| [ADR-0014](adr-0014-ui-and-input-focus.md) | `InputContextStack` (sole writer of mouse mode and input mask), fixed `UiLayers`, stock `Control` focus, `HudModel` as the HUD's only source | Verification 1-6 |
+| [ADR-0015](adr-0015-scare-presentation-and-view-offset.md) | Controller-owned `FlinchRecord` sent reliably to the owner, epoch re-baseline, client `ScarePresenter` and shared `FlashLimiter` | Verification 1-3 |
 
-**Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 114 covered by a Proposed ADR, 19 partial, 2 gaps (deferred voice), 3 need no ADR (third review, `architecture-review-2026-10-12c.md`). Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
+**Traceability coverage** (from [`architecture-review-2026-10-12.md`](architecture-review-2026-10-12.md), 138 registry requirements): 0 covered by an Accepted ADR, 122 covered by a Proposed ADR, 11 partial, 2 gaps (deferred voice), 3 need no ADR (fourth review, `architecture-review-2026-10-12d.md`). Full matrix: [`requirements-traceability.md`](requirements-traceability.md).
 
 The table below is version 1's condensed baseline of 41 architecture-driving requirements, kept because the ADR column shows which planned ADR each was assigned to. The baseline was extracted from 10 system GDDs plus the Facility Map level doc; `first-person-controller.md` has no `## Tuning Knobs` heading, so it was read from Formulas and Dependencies.
 
