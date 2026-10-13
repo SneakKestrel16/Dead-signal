@@ -79,6 +79,28 @@ state_ownership:
     added: 2026-10-12
     revised: ""
 
+  - state: body_handles
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    interface: "HandleTable.handle_for(peer, player_id) -> int (server-side only; issues and queues an introduce message); retire(peer, player_id); reset_peer(peer) on reconnect or spectator switch"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: ""
+
+  - state: relevance
+    status: active
+    owner_system: network-authority
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    interface: "Relevance.relevant_bodies(viewer_peer) -> PackedInt32Array (server-side only); computed in the TickRunner send phase from Facility Map visibility sets, 6 m near radius, 0.5 s linger"
+    write_access: network-authority-only
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # state_ownership:
@@ -144,6 +166,32 @@ interfaces:
     signal_signature: "LagCompensation.rewind_ticks(attacker_id, tick) -> float (clamped to min(max_rewind_ms 180, server-measured RTT bound)); ray_first_hit(origin, dir, max_dist, targets, skip) -> Dictionary"
     referenced_by:
       - docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: event_projection
+    status: active
+    pattern: rpc
+    producer: every-event-emitter   # each catalog event implements project()
+    consumers:
+      - network-authority           # batches projected payloads per peer, reliable event channel
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    signal_signature: "project(peer: int, handles: HandleTable) -> Variant (Dictionary payload or null = not sent)"
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: ""
+
+  - contract: handle_lifecycle
+    status: active
+    pattern: rpc
+    producer: network-authority
+    consumers:
+      - all-clients                 # puppet map keyed by handle
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    signal_signature: "reliable introduce(handle, appearance) before any event or snapshot use; reliable retire(handle); clients ignore snapshot entries with unintroduced handles"
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
     added: 2026-10-12
     revised: ""
 
@@ -277,6 +325,17 @@ api_decisions:
     added: 2026-10-12
     revised: ""
 
+  - purpose: per_peer_entity_visibility
+    status: active
+    api: "player bodies: ADR-0002 custom per-peer snapshots only; non-body hidden entities: MultiplayerSpawner + MultiplayerSynchronizer (public_visibility = false, set_visibility_for(peer, true))"
+    not: MultiplayerSpawner or MultiplayerSynchronizer for player bodies
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    reason: "Spawned node paths are the same on every peer, so they cannot carry per-peer handles; synchronizer visibility is spike-verified (H4) for the few non-body hidden entities"
+    referenced_by:
+      - docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+    revised: ""
+
 # Example:
 #
 # api_decisions:
@@ -356,6 +415,27 @@ forbidden_patterns:
     description: "The rewind amount must be clamped by the server-measured RTT bound (from ack_snapshot_tick), never taken from a client's view_tick or latency claim alone."
     why: "A client claiming high latency would always get the maximum rewind."
     adr: docs/architecture/adr-0003-lag-compensation-rewind.md
+    added: 2026-10-12
+
+  - pattern: shapeshifter_id_in_client_payload
+    status: active
+    description: "During a round, no client-bound payload may contain the shapeshifter's player ID or a stable body ID; bodies are named by per-peer handles."
+    why: "Roles are public, so a stable link from a body to the shapeshifter tells a modified client which body is the monster through every disguise."
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+
+  - pattern: unprojected_client_event
+    status: active
+    description: "An event must implement project(peer, handles) to reach any client; broadcasting a server event's raw payload is forbidden."
+    why: "One unprojected event leaks per-role secrets (shock identity, scare source, bleed-out state, undiscovered points)."
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
+    added: 2026-10-12
+
+  - pattern: identifying_node_names
+    status: active
+    description: "Spawned nodes must use opaque counter names (E%d) and identity-free spawn payloads; never a player ID, role or character in a node name or path."
+    why: "Node names and paths reach every peer that receives the node."
+    adr: docs/architecture/adr-0004-replication-scope-information-hiding.md
     added: 2026-10-12
 
 # Example:

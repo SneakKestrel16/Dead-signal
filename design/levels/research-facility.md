@@ -246,6 +246,12 @@ All door anchors are ordinary `D` doors, never a barricadable `B` door or exit E
 
 Each lighting volume carries a **`blackout_able`** flag that Monster Abilities rule 17 reads (cross-review re-review R4, 2026-10-11). Every volume is `blackout_able` except the room holding the active evacuation terminal (T1 C4, T2 C2 or T3 C3), which is not `blackout_able` once the Evacuation phase starts **(proposed; settles W8)**. This keeps the rule below that lighting never fully darkens the route to the active terminal during Evacuation. Before Evacuation the terminal room can be blacked out like any other. A Blackout already active in that room when Evacuation starts ends at that moment and the room returns to its normal Evacuation lighting **(proposed; settles cross-review second re-review S2; costs the monster at most 6 s of darkness)**.
 
+**Visibility sets** (ADR-0004, 2026-10-12). The server sends a client only the bodies its player could plausibly see, using a per-volume visibility table this map owns. For each lighting volume (rooms and corridor segments above), list: the volume itself, every volume seen through an open doorway or archway from it, and every volume seen through glass. Entries through a door are cut while that door is closed or barricaded; entries through glass and archways are not. A missing entry makes bodies pop in late; an extra entry sends bodies a player cannot see. The table is not yet authored (Open Questions).
+
+| Volume | Visible through doorways/archways | Visible through glass |
+|--------|-----------------------------------|-----------------------|
+| *(to be authored for all 17 room volumes and corridor segments)* | | |
+
 ## Dimensions and Traversal
 
 **Geometry limits** (from `first-person-controller.md`: capsule `player_radius_m` 0.3, `step_height_m` 0.35, slope limit 40 degrees; cross-review 12d W4). The greybox must respect them: every doorway and archway at least 0.8 m clear width; steps no higher than `step_height_m` 0.35 m; slopes no steeper than 40 degrees; each door's swing area kept clear of fixtures and props, since a door close is rejected while a capsule overlaps the swing area. The map has no jumps and no drops.
@@ -438,3 +444,4 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 | Is a 60 x 40 m single floor the right size for 4–6 players, or too tight for hiding and deception? | SneakKestrel16 | Before Milestone 5 |
 | Should survivors have more than one spawn group to vary the openings? | SneakKestrel16 | Before Milestone 5 |
 | Is 6 hiding spots the right density? | SneakKestrel16 | Before Milestone 5 |
+| Author the visibility-set table for every lighting volume (ADR-0004 relevance) | SneakKestrel16 / level-designer | Before ADR-0004 is Accepted |
