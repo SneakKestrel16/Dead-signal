@@ -23,7 +23,7 @@ Drive rooms and fuse spawns stay hidden from survivor clients until any survivor
 | **Domain** | Physics (queries), Networking (visibility) |
 | **Knowledge Risk** | HIGH: Jolt is the default 3D engine since 4.6; `modules/physics.md` and `modules/networking.md` are 4.6 snapshots |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `modules/physics.md`, `modules/networking.md`, `breaking-changes.md`, `deprecated-apis.md`; ADR-0003, ADR-0004, ADR-0005, ADR-0007, ADR-0008 |
-| **Post-Cutoff APIs Used** | Jolt `intersect_ray` (default since 4.6) |
+| **Post-Cutoff APIs Used** | None; `intersect_ray` is pre-cutoff, run on the Jolt backend (default since 4.6) (amended 2026-10-12 for architecture review 12c, AD-45) |
 | **Verification Required** | (1) worst case on the greybox (every point undiscovered, 4 survivors standing within 8 m of 3 points each, all cones passing) costs under 0.2 ms per tick on the server; (2) a granted `MultiplayerSynchronizer` visibility for an already-spawned hidden point reaches a survivor peer within one network poll (ADR-0004 Verification 2 covered grant right after spawn, not a later grant), and a re-grant on reconnect does not spawn the node twice |
 
 ## ADR Dependencies
@@ -31,7 +31,7 @@ Drive rooms and fuse spawns stay hidden from survivor clients until any survivor
 | Field | Value |
 |-------|-------|
 | **Depends On** | ADR-0002 (Proposed): server-held view direction from consumed input frames. ADR-0004 (Proposed): undiscovered points are hidden spawned entities granted per peer; `ObjectiveProgressChanged` projection omits undiscovered points. ADR-0005 (Proposed): tick step, events. ADR-0006 (Proposed): knobs. ADR-0007 (Proposed): `PhysicsLayers.SIGHT`, analytic doors |
-| **Enables** | Survivor Objectives discovery stories; Borrowed Face observation reuses `SightTest` |
+| **Enables** | Survivor Objectives discovery stories; Borrowed Face observation reuses `SightTest`; ADR-0013 audio occlusion reuses `SightTest.line_clear` |
 | **Blocks** | Survivor Objectives discovery story |
 | **Ordering Note** | None |
 
@@ -53,7 +53,7 @@ Rule 7 makes the route readable without handing it out: fuse boxes and the termi
 
 ## Decision
 
-**1. One sight test.** `SightTest.sees(eye, yaw, target_points, range_m, fov_deg) -> bool` is a pure helper: true when any target point is within `range_m` of the eye, inside the horizontal cone of `fov_deg` centred on `yaw` (angle measured in the horizontal plane, no vertical limit), and an `intersect_ray` on `PhysicsLayers.SIGHT` from the eye to that point hits nothing and crosses no closed door or barricade box (analytic, from authoritative state). Borrowed Face observation (`observe_range`, `observe_fov_deg`, body points) uses the same helper.
+**1. One sight test.** `SightTest.sees(eye, yaw, target_points, range_m, fov_deg) -> bool` is a pure helper: true when any target point is within `range_m` of the eye, inside the horizontal cone of `fov_deg` centred on `yaw` (angle measured in the horizontal plane, no vertical limit), and an `intersect_ray` on `PhysicsLayers.SIGHT` from the eye to that point hits nothing and crosses no closed door or barricade box (analytic, from authoritative state). Borrowed Face observation (`observe_range`, `observe_fov_deg`, body points) uses the same helper. The ray-plus-doors part is exposed alone as `SightTest.line_clear(space, from, to, doors)`, with no range or cone, for ADR-0013 occlusion (amended 2026-10-12 for architecture review 12c, AD-45).
 
 **2. "In view" for discovery.** A survivor sees a point when `SightTest.sees` passes with `discover_range_m` (8) and `discover_fov_deg` (90, matching `observe_fov_deg`; new knob, proposed) against the point's authored sample points (1–3 per drive room or fuse spawn, in Facility Map data). The eye is the server body's eye position; the yaw is from the survivor's last consumed input frame.
 
@@ -82,6 +82,8 @@ class_name SightTest extends RefCounted   # pure; shared with Borrowed Face obse
 static func sees(space: PhysicsDirectSpaceState3D, eye: Vector3, yaw: float,
 		targets: PackedVector3Array, range_m: float, fov_deg: float,
 		doors: DoorBoxes) -> bool   # player bodies are not on SIGHT, so no exclude list; returns bool on every branch
+static func line_clear(space: PhysicsDirectSpaceState3D, from: Vector3, to: Vector3,
+		doors: DoorBoxes) -> bool   # one SIGHT ray + analytic door and barricade boxes; used by sees() and ADR-0013
 
 # Survivor Objectives (own state)
 func is_discovered(point_id: int) -> bool
@@ -94,7 +96,7 @@ func is_discovered(point_id: int) -> bool
 - `discover_range_m` and `discover_fov_deg` **must** come from `ObjectivesKnobs`; sample points **must** come from Facility Map data.
 - An undiscovered point's entity **must** stay ungranted on every survivor peer until discovery.
 - `SightTest` **must** run only inside TickRunner physics phases.
-- Authored sample points **must** sit at least 5 cm off any surface: `hit_back_faces` defaults to true on 4.7.2 (ADR-0003 Verification results (1)), so a point on or inside a wall blocks its own ray (`godot-specialist`, 2026-10-12).
+- Both ray ends **must** lie outside every `SIGHT` collider: authored sample points sit at least 5 cm off any surface, because `hit_back_faces` defaults to true on 4.7.2 (ADR-0003 Verification results (1)) and a point on or inside a wall blocks its own ray. The eye starts inside no collider: the body capsule keeps it out of world geometry, and if a test shows otherwise the query sets `hit_from_inside = true` (`godot-specialist`, 2026-10-12) (amended 2026-10-12 for architecture review 12c, AD-45).
 
 ## Alternatives Considered
 
