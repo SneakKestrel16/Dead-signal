@@ -117,7 +117,7 @@ time_remaining_s = max(0, round_duration_s − elapsed_s)
 | evacuation_window_s | int | 60–180 | data | 120 (source "final two minutes") |
 | terminal_armed | bool | — | Survivor Objectives | Both drives docked and both fuses installed **(proposed trigger)** |
 
-**Expected output**: with defaults, Investigation spans 120–420 s. **Constraint**: `infiltration_end_s < evac_start_s`. A config that breaks this is rejected at load and defaults are used.
+**Expected output**: with defaults, Investigation spans 120–420 s. **Constraint**: `infiltration_end_s < evac_start_s`. A config that breaks this fails load-time validation and the game refuses to host until it is fixed; there is no fallback to defaults (ADR-0006 §4, architecture review 2026-10-12).
 **Example**: `elapsed_s` = 300, not armed → Investigation, 240 s left. If the terminal is armed at 300 → Evacuation at 300; the deadline is still 540.
 
 ### Post-escape end time

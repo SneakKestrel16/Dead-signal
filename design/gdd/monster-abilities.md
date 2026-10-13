@@ -120,7 +120,7 @@ hit = is_valid_takedown_target(survivor)   # Downing rule 3: Healthy, not hidden
       and line_of_sight(monster_chest, survivor_chest)
       and not stunned_since(windup_start)
 evaluated: every server tick of Active; first tick with any hit → closest wins, dash ends
-check positions at: server_tick - min(server_tick - attacker_view_tick, max_rewind_ms)   # ADR-0003; eligibility and stun: current state
+check positions at: server_tick - clamp(server_tick - attacker_view_tick, 0, min(max_rewind_ticks, rtt_bound_ticks))   # ADR-0003 §3, all in ticks (max_rewind_ticks = max_rewind_ms × 60 / 1000); eligibility and stun: current state
 ```
 
 | Variable | Type | Range | Source | Description |

@@ -30,33 +30,1112 @@
 #
 # STATUS VALUES: active | deprecated | "superseded-by: TR-[system]-NNN"
 
-version: 1
-last_updated: ""
+version: 2
+last_updated: "2026-10-12"
 
-requirements: []
+requirements:
+  - id: TR-config-001
+    system: config
+    gdd: project.yaml; .claude/docs/technical-preferences.md; design/gdd/game-concept.md
+    domain: Rendering
+    requirement: "Target 60 fps (16.6 ms frame), 2000 draw calls per frame starting budget; memory ceiling and target hardware unset (open: game-concept \"visual performance budget\")"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-config-002
+    system: config
+    gdd: project.yaml; .claude/docs/technical-preferences.md; design/gdd/game-concept.md
+    domain: Core
+    requirement: "Naming: classes PascalCase, variables snake_case, constants SCREAMING_SNAKE, signals past_tense, files and scenes snake_case; static typing with doc comments on public APIs"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-config-003
+    system: config
+    gdd: project.yaml; .claude/docs/technical-preferences.md; design/gdd/game-concept.md
+    domain: Data
+    requirement: "Forbidden patterns and allowed addons lists are empty; gdUnit4 is the test framework; gameplay values must be data-driven (external config), not hardcoded"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-config-004
+    system: config
+    gdd: project.yaml; .claude/docs/technical-preferences.md; design/gdd/game-concept.md
+    domain: Core
+    requirement: "Platform PC first (unconfirmed); 4-6 players, MVP config exactly 5 (1 shapeshifter + 4 survivors); ~9 min rounds; 1 hand-authored map; no AI actors of any kind (monster, survivor or bot)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-001
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Networking
+    requirement: "Server is authoritative for attacks, stuns, cooldowns, objectives, downing, rescue, match results; clients send intent only and never emit events"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-002
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Core
+    requirement: "A server-side event bus carries 15 named events (RoundPhaseChanged, RoundEnded, SurvivorEscaped, SurvivorHit, SurvivorDowned, SurvivorRescued, SurvivorEliminated, MonsterStunned, PlayerShocked, FormChanged, ObjectiveProgressChanged, ScareTriggered, AbilityUsed, BarricadeBroken, PlayerConnectionChanged); events are emitted by the server after validation, with exact names, and each has one emitter"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-003
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Networking
+    requirement: "Event replication is per-event scoped, not blanket broadcast: ScareTriggered goes to recipient clients only; AbilityUsed is server-internal (carries monster position); MonsterStunned reaches all clients only when the monster is in true form, otherwise survivor clients get PlayerShocked; FormChanged and PlayerShocked go to all clients"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-004
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Core
+    requirement: "A system may read another system's state only if listed in the read-only replicated state table (14 rows); otherwise it must use an event. Only the owner writes; readers never mutate. Needs a state-ownership mechanism that enforces a single writer"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-005
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Networking
+    requirement: "Shapeshifter form state (true or disguised-as-whom) and Transforming flag (target form, start time) are server-owned replicated state read by all clients for rendering, and by Defense, Abilities, Controller, Pings"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-006
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Networking
+    requirement: "Per-player state rows read across systems: life state (Healthy/Seized/Downed/Eliminated), takedown eligibility with grace, hidden and item-use, lunge state, committing state, shock/stun lock, player roster (fixed for the round), player positions"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-007
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Physics
+    requirement: "Movement modifiers (root, slow, lock) are added and removed by their owning system (Defense, Downing, Abilities); the Controller applies only the most restrictive. Needs a modifier registry keyed by owner, not a shared mutable speed"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-008
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Input
+    requirement: "Per-player view offset (yaw/pitch, flinch) is written by Scare Events, applied and reset only by the Controller; per-player flinch toggle is client-set, server-held"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-009
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Rendering
+    requirement: "blackout_able per lighting volume is Facility Map state; flips false for the active terminal room on RoundPhaseChanged to Evacuation; read by Monster Abilities"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-010
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Core
+    requirement: "Layering: Network Authority and Controller are Foundation with no dependency on Feature systems (Controller consumes only RoundEnded and PlayerConnectionChanged as events); Scare Events writes Controller input, not vice versa. Build must not allow upward references"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-011
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: Core
+    requirement: "Same-tick ordering matters: hits, downs, eliminations and objective completions are processed in received order, then the win check runs in fixed order; stun beats commit completion; hit beats rescue completion. Needs one deterministic server tick pipeline with defined phase order"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-index-012
+    system: index
+    gdd: design/gdd/systems-index.md
+    domain: UI
+    requirement: "Not-yet-designed systems depend on these contracts: HUD and Results Screen (MVP, no GDD), Accessibility Options (VS), Match Telemetry (Alpha); every system exposes stat/telemetry hooks (stun, lunge, ping, scare, dispute logs)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-001
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Networking
+    requirement: "Listen-server direct join by address and port (ENet); the host process is the server; dedicated server is left to the Network Authority ADR; no matchmaking, no host migration (host leaving closes the session for all)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-002
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Networking
+    requirement: "Server validates every join: reject when lobby full, round in progress (except Match Flow reconnect within grace), or game version string differs; reject reason is sent to the client. Fits SceneMultiplayer auth_callback"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-003
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Data
+    requirement: "Display names 1-16 chars, case-insensitive uniqueness by suffix (\" (2)\"), validated server-side"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-004
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Networking
+    requirement: "Persistent per-session player token (not peer id) keys the rotation queue, character preference and reconnect identity; tokens held by server for the session; lost token means new joiner"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-005
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Core
+    requirement: "Server-only role assignment from a shuffled rotation queue (advances on Ended, not Cancelled; absent players skipped but keep position); clients cannot request a role"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-006
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Data
+    requirement: "Character assignment (C1-C5, survivors distinct, clash resolution by uniform random) is server-side at roster lock; the character defines look, colour and voice set, and is what a disguise copies"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-007
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Core
+    requirement: "Ready/countdown state machine (Waiting, Countdown 5 s, In Match, Closed) on server clock; countdown re-validated at lock; clients display only"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-008
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Core
+    requirement: "Locked roster handed to Match Flow (session id, round index, player_count 4-6, per-player peer id/name/role/character) and published as read-only roster state, fixed for the round; MVP config min=max=5, code must support 4-6"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-009
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: Data
+    requirement: "Lobby config (min/max players, countdown, name length) in a data file; host-only proximity voice setting and host kick are server-validated actions"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-lobby-010
+    system: lobby
+    gdd: design/gdd/lobby-role-assignment.md
+    domain: UI
+    requirement: "Roles are public; no name tags or role indicators on bodies in a round. Delivery is phased: M1 random role and characters, queue/preference persistence/kick later"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-001
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Networking
+    requirement: "Server-authoritative movement: client sends intent only per tick (move vector, sprint/crouch flags, yaw/pitch, interaction start/stop); server simulates and owns all positions; owning client predicts and reconciles"
+    created: 2026-10-12
+    revised: "2026-10-12"
+    status: active
+  - id: TR-controller-002
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "CharacterBody3D-style capsule for every player in every form: radius 0.3, 1.8 m standing / 1.2 m crouched, step_height 0.35, slope 40 degrees, no jump, mutual capsule solidity for all pairs; Downed and Out bodies do not block"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-003
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Data
+    requirement: "Gait speeds from data (walk 4.0, sprint x1.25, crouch x0.5, crawl x0.25, true-form sprint x1.15); sprint only within 45 degrees of facing; load-time asserts on sprint cap 5.4 and catch_gap >= 2*radius"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-004
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "Effective speed = most restrictive of lock > root > lowest slow (no multiplication); applied from a per-owner modifier set"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-005
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Core
+    requirement: "Hold-to-interact framework: interactable definition (range, duration, roots_actor, cancel behaviour, exclusive lock, fakeable); server checks Start (range, LOS, lock, eligibility), per-tick Holding (input, range+0.25 tolerance, LOS), completion; client \"done\" ignored; one hold per actor; arrival-order lock"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-006
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "Server keeps a per-player view direction = client yaw/pitch + server view offset, pitch clamped +-85; the aim ray from eye position is used for taser, pings and interaction targeting and validated on the server's copy"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-007
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "Interaction targeting by ray: nearest interactable within interact_ray_max_m 3.0 and its own range; geometry blocks; load-time check interact_ray_max >= max owner range + 0.7"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-008
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Networking
+    requirement: "Input timeout: no intent for 500 ms releases input, cancels holds, stops movement; RoundEnded freezes movement and holds; PlayerConnectionChanged cancels holds"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-009
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "Server correction: player found inside geometry is moved to last valid position; accel ramp 0.05 s (<= 0.1 s) is dodge-critical"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-010
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Input
+    requirement: "Camera effects other than the sanctioned flinch are client-only visual offsets that never change the server view direction; flinch re-baseline on reset (no visible snap)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-011
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Audio
+    requirement: "Footstep audio from each player's replicated gait and the disguise target's footstep set; audible radii from data (sprint 20, walk 6, crouch/crawl 2) with occlusion by audio implementation"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-012
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Physics
+    requirement: "Doors are instant interactions; a close is rejected while any capsule overlaps the door swing area (needs a swing-area overlap query on the server)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-controller-013
+    system: controller
+    gdd: design/gdd/first-person-controller.md
+    domain: Input
+    requirement: "Input bindings via InputMap actions (move, sprint, crouch, interact, ping, callout wheel, use item); mouse look and keyboard device IDs must not be assumed 0 (Godot 4.7); Out state spectator view"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-001
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Core
+    requirement: "Server-only round clock and phase state machine (Loading, Infiltration, Investigation, Evacuation, Ended, Results, Cancelled); clients display a replicated value and never advance phase; each phase change sends exactly one RoundPhaseChanged; Infiltration may skip to Evacuation"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-002
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Data
+    requirement: "Round parameters from data with load-time validation (round_duration 540, infiltration_end 120, evacuation window 120, post_escape 45, reconnect_grace 60, load_timeout 60, results 20); an invalid config refuses to host (no fallback to defaults)"
+    created: 2026-10-12
+    revised: "2026-10-12"
+    status: active
+  - id: TR-matchflow-003
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Loading barrier: server waits for all clients to report map loaded (60 s) before spawning at S1-S5 / M1-M3 and starting the clock; timeout cancels with no result"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-004
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Core
+    requirement: "Win evaluation: run on relevant events plus once per tick, fixed priority order (evidence escaped, all eliminated, evidence lost, deadline, shapeshifter forfeit); outcome locks when both drives are Extracted; hard deadline, no overtime"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-005
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Reconnect support: survivor disconnect drops carried items, character removed, 60 s grace, respawn at disconnect position in prior state with same down count and running bleed-out; monster reconnect returns in true form; grace expiry rules differ by role; no AI replacement"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-006
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Reconnecting client must receive full current state (form, lighting, objective state, roster, clock, scare state; missed scares not replayed) before rendering"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-007
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Emits PlayerConnectionChanged (disconnect, reconnect, grace expired), SurvivorEscaped and RoundEnded with outcome, reason and results payload; client never declares a result"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-008
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Data
+    requirement: "Results payload aggregates stats from other systems (outcome, per-survivor state, downs, rescues, objective times, lunges, stuns, form changes, abilities); a stats-collection interface must exist on each system"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-009
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Spectator mode for Eliminated and Escaped players who see through a living survivor and receive exactly that survivor's pings/callouts"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-010
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Networking
+    requirement: "Host leaving closes the session for all; round ends with no result (listen-server consequence)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-matchflow-011
+    system: matchflow
+    gdd: design/gdd/match-flow.md
+    domain: Core
+    requirement: "Return to lobby on Results/Cancelled; all gameplay state is reset per round (observation, cooldowns, scare cooldowns, ping buckets, lighting)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-001
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Networking
+    requirement: "All objective interactions are server-completed holds (extract 5 s, pickup 1, dock 2, fuse install 8, activation start 1, activation countdown 15 s hold-the-zone); client messages only start/stop"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-002
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Networking
+    requirement: "Server picks active points at round start from authored candidate sets (6 drive, 7 fuse, 3 fuse box, 3 terminal; fixed exit) under placement constraints; replication is need-to-know: monster gets all active points, survivors get fuse boxes and terminal at start, drive rooms and fuse spawns only after discovery"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-003
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Networking
+    requirement: "Discovery tracking: a drive room or fuse spawn becomes visible to all survivors once any survivor has it in view within 8 m (server-side visibility test)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-004
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Core
+    requirement: "Item model for drives and fuses (Secured/Carried/Dropped/Docked/Extracted; Unfound/Carried/Dropped/Installed) with carry caps (2 drives, 1 fuse), drops at last position on down/eliminate/disconnect, placed at nearest valid floor point with no physics, never despawn"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-005
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Physics
+    requirement: "Terminal state machine (Locked, Armed, Activating, Activated) with activation countdown that counts only while >= 1 Healthy non-hidden survivor is in the authored terminal zone (zone occupancy query; pauses, keeps progress)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-006
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Physics
+    requirement: "Extraction rule: drive Extracted when a Healthy carrier enters the exit volume after activation; win needs both drives; exit volume trigger evaluated on server"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-007
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Animation
+    requirement: "Shapeshifter fake interactions: same animation and quiet loop, no state change, no lock, no noise; server must still replicate a plausible hold pose with no progress-bar movement"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-008
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Networking
+    requirement: "Install noise: spatialised sound for all within 25 m plus a monster-only alert marker (radius 10 m, randomised centre, 5 s); per-recipient targeted messages"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-009
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Networking
+    requirement: "ObjectiveProgressChanged is the single outward event (carry, drop, dock, install, power restored, armed, activated, ejected, extracted); HUD checklist/progress from server state only; round end freezes state"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-010
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Data
+    requirement: "All timings and counts are data (knobs table); candidate counts must be authored in the map"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-objectives-011
+    system: objectives
+    gdd: design/gdd/survivor-objectives.md
+    domain: Rendering
+    requirement: "Carried drive visible on the carrier model and on all survivor HUDs by carrier name; a disguise never shows a carried item (tell T3)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-001
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Networking
+    requirement: "Server holds per-survivor life state (Healthy, Seized, Downed, Eliminated), downs_taken, commit timers, rescue progress; clients send only intent"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-002
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Core
+    requirement: "Takedown commit (1.5 s): SurvivorHit -> Seized victim + Committing monster (rooted, no abilities); cancelled by MonsterStunned or monster disconnect; victim disconnect does not stop it; second completed commit eliminates directly"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-003
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Core
+    requirement: "Grace windows (post-rescue 3 s, post-release 2 s) make a survivor ineligible; eligibility is published as read-only state and read by Monster Abilities before producing SurvivorHit"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-004
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Physics
+    requirement: "Bleed-out timer (60 s) pauses during active rescue and runs at 0.25 rate while any non-Downed player (any form) is within 10 m straight-line, only if a Healthy survivor exists; requires a per-tick proximity query over all player positions"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-005
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Core
+    requirement: "Rescue as hold (6 s, range 1.5, rooted both); single rescuer; progress persists and decays 0.5 s/s; interrupts by hit, shock, release, range, LOS"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-006
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: UI
+    requirement: "Downed state: crawl 0.25x, no items/objectives/hide, can ping/Danger/Call for Help (Need rescue callout), shown with a marker to living survivors only (never to the monster)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-007
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Networking
+    requirement: "Emits SurvivorDowned/Rescued/Eliminated; Eliminated survivors become spectators; stats (hits, cancelled commits, rescues, interruptions) exported to telemetry/results"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-008
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Networking
+    requirement: "Disconnected players keep bleeding out and are eliminated on expiry while disconnected; a disconnected survivor is not Healthy for camp-slow purposes"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-downing-009
+    system: downing
+    gdd: design/gdd/downing-and-rescue.md
+    domain: Data
+    requirement: "Tuning knobs (commit, graces, bleed-out, camp radius/mult, rescue) are data; downs_to_eliminate fixed at 2; camp radius is playtest-gated"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-001
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Networking
+    requirement: "Server owns charges, stun/immunity timers, hide occupancy, barricade durability; client intent only (fire with aim, hide, barricade, break)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-002
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Physics
+    requirement: "Taser: 0.2 s use delay, server trace along the shooter's view ray (5 m, 10 degree tolerance), first body hit, Seized/Downed pass-through, cartridge consumed regardless; needs a hit test consistent with Abilities' rewind"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-003
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Networking
+    requirement: "Identity-hiding replication: a taser hit on a disguised monster and on a survivor emit the same PlayerShocked to survivor clients, never MonsterStunned or immunity data; MonsterStunned only when the monster is in true form, to server-side consumers and to the monster's own client; packet shape and timing must be indistinguishable"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-004
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Core
+    requirement: "One shared action lock for shocked survivor and stunned disguised monster (2 s: 1 s root then 0.5 slow), no refresh, 6 s post-lock immunity (ends early on lunge wind-up or disguise completion); implemented as owner-keyed movement modifiers plus an action-lock flag"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-005
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Core
+    requirement: "Stun cancels lunge wind-up/dash, takedown commit, transformation, search, break; stun beats same-tick completions"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-006
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Rendering
+    requirement: "Hiding spots: enter/exit 1 s, one occupant, peek view with restricted cone, noise radius 8 m, periodic cue after 20 s, monster Search 1.5 s ejects occupant; hidden state excluded from lunge, objectives, pings"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-007
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Physics
+    requirement: "Doors (anyone, instant) and barricades (3 s build, 1 s remove, 5 s monster break with persistent progress, 30 s rebarricade lockout); server-owned door state (open/closed/barricaded) with per-door exclusive lock; closed doors block lunge dash and LOS"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-008
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Rendering
+    requirement: "Flashlight: toggle replicated; cone visible to all clients; no gameplay effect on monster; disguised monster has a cosmetic flashlight copy"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-009
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Networking
+    requirement: "Emits MonsterStunned, PlayerShocked, BarricadeBroken; reads form, Transforming flag, Seized/Downed/Committing; exposes hidden/item-use and shock-lock state"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-010
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Data
+    requirement: "Interactable contract table (hide, barricade, remove, search, break, door) feeds the Controller hold framework; all durations/ranges/charges are data"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-defense-011
+    system: defense
+    gdd: design/gdd/survivor-defense.md
+    domain: Animation
+    requirement: "Shock/stun presentation per form (borrowed-body stagger and survivor grunt vs monster body and pain cry; \"resisted\" spark in true form) chosen by the body shown at that moment"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-001
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Networking
+    requirement: "Server-owned disguise state (form, target, transforming flag, start time, cooldown end, observed list); every client renders the shapeshifter solely from replicated state; a reconnecting client gets current form first"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-002
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Networking
+    requirement: "Survivor clients must receive only what is needed to render the presented form, with no marker identifying the entity as the monster (no role/class flag, no distinguishing node name/property/authority in replicated data)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-003
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Physics
+    requirement: "Per-tick server observation accumulator per survivor (range 15, 90 degree horizontal cone, multi-point LOS, not stunned/locked, 3 s cumulative); results visible only to the monster client; survivors get no indication"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-004
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Core
+    requirement: "Transform state machine (2 s transform, 12 s cooldown from completion/interrupt; accepted only if not stunned/locked/lunging/committing); no start event, observers read the replicated Transforming flag; FormChanged on completion"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-005
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Rendering
+    requirement: "Disguise copies body, outfit, colour, animations, footstep set, survivor speeds, name label, cosmetic flashlight; does not copy carried items, held item, Downed presentation, voice. Appearance must be data-driven per character (C1-C5) so a disguise swaps the same mesh/material set"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-006
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Audio
+    requirement: "Transform visual warp and spatial distortion audio (15 m, directional); needs a non-audio alternative cue for accessibility"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-007
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Core
+    requirement: "Disguise permissions are gate checks by other systems (no objective progress, no carry, no rescue, no hide/barricade; search/break stay visible); server rejects these requests"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-008
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Core
+    requirement: "Disguise persists when the copied survivor is downed, eliminated, escaped or disconnects; new transforms into ineligible survivors rejected; disguise lost on monster disconnect, observed list kept"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-009
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Networking
+    requirement: "FormChanged to true form drives the reveal scare (radius 10 m with LOS); form change must never be gated or delayed by scare suppression"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-010
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Data
+    requirement: "Observation, transform and reveal parameters are data (observe range/fov/time, durations, radii); form-change stats exported for results"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-borrowedface-011
+    system: borrowedface
+    gdd: design/gdd/borrowed-face.md
+    domain: Animation
+    requirement: "True-form model is a separate model with the same collision capsule; a form swap on the same networked entity must not leak via node/scene changes visible to clients (spawn/despawn timing, authority, visibility)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-001
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Networking
+    requirement: "Server owns all ability state (cooldowns, wind-up, hit resolution, placement); client sends activation request and aim point only; invalid requests have no effect and no cooldown cost"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-002
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Core
+    requirement: "Predatory Lunge state machine (Ready, Wind-up 0.6 s root with 15 deg/s turn, Active 0.3 s dash 4 m with 30 deg/s steer, Takedown Commit, Resolved, Cooldown 10 s); True Form only; cooldown starts at resolution"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-003
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Physics
+    requirement: "Server-side lunge hit test every tick of Active: eligibility, distance <= 1.2 to body, 60 degree cone, chest LOS, not stunned since wind-up; dash blocked by walls, closed/barricaded doors and non-target survivor bodies; needs a physics-tick-aligned sweep, deterministic at the server tick rate"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-004
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Networking
+    requirement: "Lag compensation: rewind survivor positions to the tick the attacker was viewing, capped at max_rewind_ms 180 and by a server-measured RTT bound (positions only); per-player position history (16 ticks) and per-peer RTT estimate; disputes logged"
+    created: 2026-10-12
+    revised: "2026-10-12"
+    status: active
+  - id: TR-monster-005
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Physics
+    requirement: "Dodge-window dependencies are coupled (wind-up turn rate, dash steering, hit radius, cone, capsule radius, walk speed, accel time); changes require rerunning the steering simulation, so tick rate and integration step must be fixed and testable (design model uses 0.5 ms stepping)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-006
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Networking
+    requirement: "AbilityUsed carries ability, position/facing, target and signal; it is server-internal and never replicated to survivors; consumers replicate only their own effect"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-007
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Audio
+    requirement: "False Signal: aim point within 20 m snapped to walkable floor (needs a walkable/navigation query), footsteps path 12 m truncated at first wall, callout using observed list, familiar interaction sounds; replicated as spatial one-shots with the same assets as real sounds and no visual source; 25 s cooldown"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-008
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Networking
+    requirement: "Fake and real sounds/callouts must be indistinguishable in network data (no real/fake tag sent to clients)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-009
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Rendering
+    requirement: "Blackout: target lighting volume (current or aimed within 15 m with LOS), blackout_able check, 6 s, 45 s cooldown from activation, one zone at a time; server-owned lighting state replicated to all clients; backup switch (1 s hold, per room) restores one zone"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-010
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Physics
+    requirement: "Miss slow (0.5x for 1.5 s) as a Controller modifier; stun-interrupted lunge counts as resolved; monster disconnect ends lunge without hit"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-011
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Audio
+    requirement: "Cue audio: lunge wind-up cue audible within 20 m; coil pose; all monster stats (lunges, False Signals, Blackouts) exported to results"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-monster-012
+    system: monster
+    gdd: design/gdd/monster-abilities.md
+    domain: Data
+    requirement: "MVP scope is Lunge only; False Signal and Blackout are Vertical Slice; all numbers in data with safe ranges"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-001
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Networking
+    requirement: "Every ping/callout is a client request validated by the server (alive, state not blocking, rate limit, range 40 m, LOS from view ray, target valid); sender identity attached from server-side disguise state, never from the client"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-002
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Networking
+    requirement: "Per-recipient filtering: all living survivors; monster only if the target is in its LOS (facing ignored); spectators mirror the survivor they watch; a rejected ping to the monster gives no signal to the sender"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-003
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Core
+    requirement: "Rate limits: token bucket per player (3, 2 s refill), callout global cooldown 3 s and per-line repeat block 8 s; reconnect keeps bucket state; fake callouts touch no limit state"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-004
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Audio
+    requirement: "Callouts: 8 authored lines, voice set per character (C1-C5), range 25 m (Need rescue 40 m), audio positional with wall attenuation, feed line + arrow to survivors, monster gets audio only; delivery uses distance, not walls"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-005
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: UI
+    requirement: "Marker types (location, item, warning on point or player), static positions, max 2 per sender, 8 s lifetime, visible through walls with direction and distance to survivors; item pings need a registry of pingable objects and types"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-006
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Networking
+    requirement: "Fake callout presentation parity: same line, voice, feed format; \"(not you)\" mark for impersonated survivor in range; mark on pings only if sender within callout range; no real/fake tag on the wire"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-007
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Audio
+    requirement: "Optional proximity voice (lobby setting, off by default, 20 m, positional); monster voice distortion in true form/transforming; no rule may require voice; Eliminated/Escaped muted to living players"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-008
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Core
+    requirement: "Blocking states: monster true form and transforming cannot ping; shock lock blocks; hidden survivors ping from peek view; Downed limited subset; Seized blocked"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-009
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: UI
+    requirement: "Display identity (name/colour) drawn from the disguise state; duplicates are shown, not merged"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-pings-010
+    system: pings
+    gdd: design/gdd/pings-and-callouts.md
+    domain: Audio
+    requirement: "Voice transport is undecided (inference: Godot has no built-in VoIP; needs capture, encode, relay through server with positional mixing); optional and a post-MVP candidate"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-001
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Networking
+    requirement: "Server decides every scare (validity, cooldowns, intensity, recipients) and sends ScareTriggered with scope; clients never trigger scares seen by others; source and player identity fields are server-only and stripped before sending to survivors"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-002
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Networking
+    requirement: "Scoped delivery: shared scares to clients in audible range/LOS/room; single-client hallucinations sent only to the intended client, no data to anyone else including the monster; replication visibility must be per-peer"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-003
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Core
+    requirement: "Per-recipient gating state (last_major, last_any, last_fire[scare_id, location], phase budget) with Major reduced to Minor and cooldowns reset per round; Monster-source scares never blocked"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-004
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Data
+    requirement: "Scare catalogue is data (scare_id, category, source, scope, intensity, audible range, authored lists per phase/zone, anchors); RoundScript fires only at authored anchors; no free-running ambient timer"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-005
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Physics
+    requirement: "Ambush test at lunge wind-up (AbilityUsed): per-survivor last-seen time of the monster chest (LOS test, view ignored), blackout volume check; passes for a subset of survivors"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-006
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Input
+    requirement: "Camera flinch: server-held yaw/pitch offset, ramp <= 0.3 s, cap 10 degrees (placeholder), replaced not stacked, frozen by lunge wind-up within lunge_cue_radius, written into the Controller view-offset input; per-player toggle"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-007
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Rendering
+    requirement: "Facility scare state machine (Low, Rising, Emergency, Results + Blackout and Power Restored overlays) driven by RoundPhaseChanged / ObjectiveProgressChanged; Facility Map owns lighting, this system only requests states and adds flicker"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-008
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Audio
+    requirement: "Audio: diegetic scares positional at true origin; stingers only on Major, <= +6 dB over ambient bed; ducking priority (gameplay cues and callouts never masked; ducks on PlayerShocked/MonsterStunned); separate bus scale for stinger/scare master"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-009
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: UI
+    requirement: "Accessibility hooks exposed client-side: flash intensity scale, 3 flashes/s cap, stinger/scare volume, camera flinch toggle, information parity; never alter server timing/cooldowns/recipients"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-010
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Core
+    requirement: "No scare may produce footsteps, teammate voice, ping or callout; slammed-door and glass scares are presentation only and never change real door state; False Signal never produces ScareTriggered"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-011
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Networking
+    requirement: "Reconnecting client receives current facility scare state; missed scares not replayed; client-played local scares have no effect on others"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-scare-012
+    system: scare
+    gdd: design/gdd/scare-events.md
+    domain: Rendering
+    requirement: "Visual effects: stingers/flash/camera reaction, strobe alarm, rotating beacons, impossible surveillance frame on monitor for a single client; post-processing via Compositor if used"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-001
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Core
+    requirement: "One hand-authored level loaded whole (no streaming), 60 x 40 m single floor, 17 lighting volumes, ~26 doors, 6 hiding spots, 14 switches, 19 candidate markers, 9 scare anchors, 4 cameras; scene authored with named markers for spawns S1-S5, M1-M3 and candidates"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-002
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Physics
+    requirement: "Geometry limits that gameplay depends on: doorways >= 0.8 m clear, steps <= 0.35, slopes <= 40, no jumps/drops, door swing areas free of props; traversal times assume walk 4.0 m/s"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-003
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Networking
+    requirement: "Server owns active candidate set, door state, lighting state per volume, camera feed content and exit state; clients never select or change them"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-004
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Rendering
+    requirement: "Per-volume lighting state machine with precedence (base Low Power -> Power Restored -> Evacuation, overlays Fuse Installed, Terminal Activating, Exit Open, Blackout local, Reset); blackout_able flag; emergency strips always on; replicated to all clients identically"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-005
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Rendering
+    requirement: "Rendering concerns flagged: B1 rack lanes and glass partitions (overdraw/transparency); many dim lights in Zone A; 17 independently switchable light volumes under Forward+ (lights per cluster, shadow budget) must be profiled"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-006
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Rendering
+    requirement: "Surveillance: 4 cameras viewable one at a time at the C1 monitor; feed content server-owned and may include a disguised monster; likely a SubViewport per camera (inference, cost to profile); the only place the single-client hallucination image can appear"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-007
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Physics
+    requirement: "LOS blockers authored for Borrowed Face, pings and scares: glass partitions are see-through but not walkable, sound rules differ; collision layers needed (world LOS, glass, doors, players, items, hiding)"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-008
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Audio
+    requirement: "Zone-based audio: ambience per zone, B3 machinery masks footsteps, wall occlusion of positional sounds is audio-implementation work; room IDs exposed for callout vocabulary"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-009
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Physics
+    requirement: "Terminal zone and exit volume as authored zone volumes read by the server (analytic boxes from map data per ADR-0007, not Area3D); zone occupancy counts only Healthy non-hidden survivors"
+    created: 2026-10-12
+    revised: "2026-10-12"
+    status: active
+  - id: TR-facility-010
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: UI
+    requirement: "Reduced-flash variants of beacons/pulses and non-flashing light changes supplied for accessibility"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-011
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Networking
+    requirement: "Per-volume visibility table (itself, volumes through open doorways/archways, volumes through glass; door entries cut while closed or barricaded) authored as map data for per-peer relevance"
+    created: 2026-10-12
+    revised: ""
+    status: active
+  - id: TR-facility-012
+    system: facility
+    gdd: design/levels/research-facility.md
+    domain: Physics
+    requirement: "Collision authoring limits: an invisible ramp collider no steeper than 40 degrees on every step up to 0.35 m, large box floor colliders, and an exit point plus alternate exit points per hiding spot"
+    created: 2026-10-12
+    revised: ""
+    status: active
 
-# --- EXAMPLE ENTRIES (remove when first real entries are added) ---
-#
-# - id: TR-combat-001
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Player takes damage from enemies based on attack power minus defence"
-#   created: 2026-03-10
-#   revised: ""
-#   status: active
-#
-# - id: TR-combat-002
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Combo window timing is 0.4 seconds between hits"
-#   created: 2026-03-10
-#   revised: "2026-04-01"
-#   status: active
-#
-# - id: TR-combat-003
-#   system: combat
-#   gdd: design/gdd/combat-system.md
-#   requirement: "Old damage formula using raw stats"
-#   created: 2026-03-10
-#   revised: ""
-#   status: "superseded-by: TR-combat-001"
