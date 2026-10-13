@@ -155,6 +155,7 @@ rule, see the referenced ADR. Forbidden-pattern IDs in brackets match
 - **Monster Abilities validates a Blackout target through `LightingView` before emitting `AbilityUsed`** — source: ADR-0009
 - **Every `duration_s`, `range_m`, `hold_range_tolerance_m` and `interact_ray_max_m` comes from data** — source: ADR-0008
 - **Each results field has one owner that counts it and exposes a getter-only `*StatsView` under `stats.<system>`; `MatchFlow.resolve` reads them once on the outcome tick into `RoundResults` on `RoundEnded`** — source: ADR-0011
+- **`RoundResults.to_dict()` builds fresh untyped containers (`assign`, `merge`); telemetry consumes the `RoundEnded` payload, never the views** — source: ADR-0011
 - **Objective discovery and Borrowed Face observation use the one server `SightTest` (distance, then cone, then `SIGHT` rays + analytic doors), only in TickRunner physics phases; sample points sit ≥ 5 cm off surfaces** — source: ADR-0012
 - **An undiscovered point stays ungranted on every survivor peer until discovery; the shapeshifter and hidden survivors never discover** — source: ADR-0012
 - **Footstep masking scales the server's send radius by the volume's `footstep_radius_scale`** — source: ADR-0013

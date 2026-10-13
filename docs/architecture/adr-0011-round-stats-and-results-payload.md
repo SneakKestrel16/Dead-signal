@@ -24,14 +24,14 @@ Match Flow's results screen needs counts and times owned by six other systems (`
 | **Knowledge Risk** | LOW: plain `RefCounted` classes, typed `Dictionary` and `Array`; the 4.7 typed-return override rule applies to view getters (ADR-0005) |
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `breaking-changes.md`, `current-best-practices.md`; ADR-0004, ADR-0005, ADR-0006 |
 | **Post-Cutoff APIs Used** | None |
-| **Verification Required** | (1) `var_to_bytes` of the largest `RoundResults.to_dict()` (6 players, all counters, 5 objective times) stays under one ENet datagram or is sent reliably without error |
+| **Verification Required** | (1) `var_to_bytes` of the largest `RoundResults.to_dict()` (6 players, all counters, 5 objective times, longest display names) is under 4 KB, so `RoundEnded` costs at most one reliable fragmented send per peer; (2) a unit test asserts `is_typed() == false` on every array and dictionary in `to_dict()`'s output (amended 2026-10-12 for architecture review 12c, AD-44) |
 
 ## ADR Dependencies
 
 | Field | Value |
 |-------|-------|
 | **Depends On** | ADR-0005 (Proposed): State Registry views, tick order, `RoundEnded` emitter. ADR-0004 (Proposed): `RoundEnded` projection is Full to every client |
-| **Enables** | Match Telemetry (Alpha) reads the same views; results screen data contract (`design/ux/results.md`) |
+| **Enables** | Match Telemetry (Alpha) consumes the `RoundEnded` payload; results screen data contract (`design/ux/results.md`) |
 | **Blocks** | Match Flow results stories; each Feature epic's "stats" story |
 | **Ordering Note** | None |
 
@@ -69,7 +69,7 @@ Match Flow's results screen needs counts and times owned by six other systems (`
 
 **4. Payload.** `RoundResults` is a typed `RefCounted` with `to_dict() -> Dictionary` for the wire. Players are named by player ID and display name (public facts, ADR-0004 §5). `RoundEnded.project()` returns the same dictionary to every peer.
 
-**5. Telemetry.** Match Telemetry (Alpha) reads the same views at round end and adds its own event logs; no owner adds telemetry-only counters for results.
+**5. Telemetry.** Match Telemetry (Alpha) consumes the `RoundEnded` payload, not the views, because round teardown can free the owners before a later reader runs; it adds its own event logs, and no owner adds telemetry-only counters for results (amended 2026-10-12 for architecture review 12c, AD-44).
 
 ### Architecture Diagram
 
@@ -100,7 +100,7 @@ var shapeshifter_player_id: int
 var survivors: Array[Dictionary] # {player_id, name, fate, drives_carried, downs, rescues, stuns_landed}
 var objectives: Array[Dictionary]# {line, count, of, completed_s or -1.0}
 var monster: Dictionary[StringName, int]  # takedowns, eliminations, lunges_landed, lunges_missed, times_stunned, form_changes, false_signals, blackouts
-func to_dict() -> Dictionary     # untyped copies (Array(survivors)) so the wire never depends on typed-container encoding
+func to_dict() -> Dictionary     # fresh untyped containers built field by field, so the wire never depends on typed-container encoding
 ```
 
 ### Implementation Guidelines
@@ -110,7 +110,7 @@ func to_dict() -> Dictionary     # untyped copies (Array(survivors)) so the wire
 - Counters **must** count ticks for times; conversion to seconds happens only in `RoundResults`.
 - Clients **must never** compute or alter results; they display `RoundEnded`'s payload.
 - Every view getter **must** return on every branch; an unknown `player_id` returns 0 (4.7 typed-return rule, ADR-0005 §1).
-- `to_dict()` **must** return plain `Dictionary` and untyped `Array` copies; the `RoundResults` object itself is never sent.
+- `to_dict()` **must** build fresh untyped containers (`var out: Array = []` then `out.assign(survivors)`; `var m := {}` then `m.merge(monster)`); `Array(typed)` and `duplicate()` keep the element type. The `RoundResults` object itself is never sent (amended 2026-10-12 for architecture review 12c, AD-44).
 
 ## Alternatives Considered
 
@@ -142,14 +142,14 @@ func to_dict() -> Dictionary     # untyped copies (Array(survivors)) so the wire
 - Six more view classes.
 
 ## Risks
-- **A stat changes owner later.** Mitigation: the owner table lives here and in `systems-index.md`; changing it is an ADR amendment.
+- **A stat changes owner later.** Mitigation: the owner table lives here and as `stats.*` rows of the `systems-index.md` state table (ADR-0005 §5); changing it is an ADR amendment (amended 2026-10-12 for architecture review 12c, AD-44).
 
 ## GDD Requirements Addressed
 
 | GDD System | Requirement | How This ADR Addresses It |
 |------------|-------------|--------------------------|
 | match-flow.md | TR-matchflow-008: results payload aggregates stats from other systems through a stats interface | §1–3 owner views read by `MatchFlow.resolve` |
-| systems-index.md | TR-index-012: every system exposes stat hooks for Results and Telemetry | §2 views; §5 telemetry reads the same |
+| systems-index.md | TR-index-012: every system exposes stat hooks for Results and Telemetry | §2 views; §5 telemetry consumes the payload |
 | survivor-defense.md | Stun hits/resists per player on the results screen | `stats.defense` |
 | monster-abilities.md, borrowed-face.md | Attack counts, form changes in results | `stats.abilities`, `stats.borrowed_face` |
 
