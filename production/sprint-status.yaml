@@ -9,101 +9,130 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 2
-goal: "Finish the Foundation network spine (tokens and reconnect, snapshots with owner prediction) and start Core on the player body, view and input."
-start: "2026-10-27"
-end: "2026-11-09"
-generated: "2026-10-13"
+sprint: 3
+goal: "Make real-network verification runnable and move Core to a moving body in a built level: host/join harness, host left, gaits, greybox, knob refusal."
+start: "2026-11-10"
+end: "2026-11-23"
+generated: "2026-10-14"
 updated: "2026-10-14"
 
 stories:
-  - id: "network-authority-2"
-    name: "Session tokens and reconnect rebinding"
-    file: "production/epics/network-authority/story-002-tokens-reconnect.md"
+  - id: "net-harness-1"
+    name: "Host/join harness net_check.tscn"
+    file: ""
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-  - id: "network-authority-6"
-    name: "Snapshots, owner prediction and reconciliation"
-    file: "production/epics/network-authority/story-006-snapshots-prediction.md"
+    completed: ""
+
+  - id: "network-authority-3"
+    name: "Disconnect handling and host left"
+    file: "production/epics/network-authority/story-003-disconnect-host-left.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
-    estimate_days: 2
+    estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-  - id: "data-config-3"
-    name: "Cross-knob rules"
-    file: "production/epics/data-config/story-003-cross-knob-rules.md"
+    completed: ""
+
+  - id: "controller-interaction-2"
+    name: "Movement step and gaits"
+    file: "production/epics/controller-interaction/story-002-movement-step-gaits.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-14"
-  - id: "controller-interaction-1"
-    name: "Player body, capsules and collision layers"
-    file: "production/epics/controller-interaction/story-001-body-capsule-collision.md"
-    priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: "2026-10-14"
-  - id: "controller-interaction-6"
-    name: "View direction, mouse look and input actions"
-    file: "production/epics/controller-interaction/story-006-view-direction-input-actions.md"
+    completed: ""
+
+  - id: "facility-map-2"
+    name: "Greybox geometry and collision"
+    file: "production/epics/facility-map/story-002-greybox-geometry-collision.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+
+  - id: "data-config-4"
+    name: "Refuse to host and freeze"
+    file: "production/epics/data-config/story-004-refuse-to-host-and-freeze.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-  - id: "data-config-5"
-    name: "Knob digest in the join version check"
-    file: "production/epics/data-config/story-005-digest-version-check.md"
+    completed: ""
+
+  - id: "controller-interaction-7"
+    name: "Interaction targeting"
+    file: "production/epics/controller-interaction/story-007-interaction-targeting.md"
     priority: should-have
-    status: done
+    status: backlog
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-  - id: "event-catalog-state-registry-6"
-    name: "Layer boundary check"
-    file: "production/epics/event-catalog-state-registry/story-006-layer-boundary-check.md"
+    completed: ""
+
+  - id: "network-authority-8"
+    name: "Handles and relevance"
+    file: "production/epics/network-authority/story-008-handles-relevance.md"
     priority: should-have
-    status: done
+    status: backlog
     owner: ""
-    estimate_days: 0.5
+    estimate_days: 1.5
     blocker: ""
-    completed: "2026-10-14"
-  - id: "lobby-role-assignment-1"
-    name: "Ready and countdown state machine"
-    file: "production/epics/lobby-role-assignment/story-001-ready-countdown-state-machine.md"
-    priority: nice-to-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-  - id: "facility-map-1"
-    name: "Facility map data and whole-level load"
-    file: "production/epics/facility-map/story-001-map-data-loader.md"
-    priority: nice-to-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-  - id: "network-authority-verify"
-    name: "Verify NA-1 on a real network"
-    file: ""
+    completed: ""
+
+  - id: "controller-interaction-5"
+    name: "Controller load checks"
+    file: "production/epics/controller-interaction/story-005-controller-load-checks.md"
     priority: should-have
     status: backlog
     owner: ""
     estimate_days: 0.5
-    blocker: "needs a second PC"
+    blocker: ""
+    completed: ""
+
+  - id: "na-verify"
+    name: "Verify NA-1 on a real network (carryover)"
+    file: ""
+    priority: should-have
+    status: backlog
+    owner: "SneakKestrel16"
+    estimate_days: 0.5
+    blocker: "needs NH-1 and a second PC"
+    completed: ""
+
+  - id: "facility-map-3"
+    name: "Connectivity checks"
+    file: "production/epics/facility-map/story-003-connectivity-checks.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+
+  - id: "lobby-role-assignment-3"
+    name: "Character data and M1 assignment"
+    file: "production/epics/lobby-role-assignment/story-003-character-data-m1-assignment.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "export-preset-1"
+    name: "Export preset (TD-004)"
+    file: ""
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
     completed: ""
