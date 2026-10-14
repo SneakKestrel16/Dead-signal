@@ -10,5 +10,5 @@ Engine: Godot 4.7.2
 | [Data/Config Loader](data-config/EPIC.md) | Foundation | Data/Config | none (ADR-0006) | 5 stories | Ready |
 | [First-Person Controller & Interaction](controller-interaction/EPIC.md) | Core | Controller & Interaction | first-person-controller.md | 16 stories | Ready |
 | [Lobby & Role Assignment](lobby-role-assignment/EPIC.md) | Core | Lobby & Role Assignment | lobby-role-assignment.md | 12 stories | Ready |
-| [Borrowed Face](borrowed-face/EPIC.md) | Core | Borrowed Face | borrowed-face.md | Not yet created | Ready |
+| [Borrowed Face](borrowed-face/EPIC.md) | Core | Borrowed Face | borrowed-face.md | 10 stories | Ready |
 | [Facility Map](facility-map/EPIC.md) | Core | Facility Map | design/levels/research-facility.md | Not yet created | Ready |

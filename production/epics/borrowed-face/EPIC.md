@@ -5,7 +5,7 @@
 > **Architecture Module**: Borrowed Face (`docs/architecture/architecture.md` Core layer)
 > **Status**: Ready (server logic stories are unblocked; rendering stories block on ADR-0010, Proposed)
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories borrowed-face`
+> **Stories**: 10 stories (8 Ready, 2 Blocked on Proposed ADR-0010/0013)
 
 ## Overview
 
@@ -40,6 +40,23 @@ The shapeshifter takes the appearance of a survivor it has observed. The server 
 
 TR-borrowedface-005, -006 and -011 rest partly on ADR-0010 (Proposed); stories for them will be Blocked until it is accepted.
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [Observation accumulator](story-001-observation-accumulator.md) | Logic | Ready | ADR-0007, ADR-0005, ADR-0006 |
+| 002 | [Form-change request validation and target persistence](story-002-form-change-requests.md) | Logic | Ready | ADR-0005 |
+| 003 | [Transform state machine, cooldown and FormChanged](story-003-transform-state-machine.md) | Logic | Ready | ADR-0005, ADR-0006 |
+| 004 | [Stun immunity during and after transformation](story-004-immunity-interactions.md) | Logic | Ready | ADR-0005 |
+| 005 | [Action restrictions while Disguised or Transforming](story-005-action-restrictions.md) | Integration | Ready | ADR-0008, ADR-0005 |
+| 006 | [Disguise gates on objectives, rescue and defense interactions](story-006-interaction-gates.md) | Integration | Ready | ADR-0008 |
+| 007 | [Form replication and reconnect](story-007-form-replication-reconnect.md) | Integration | Ready | ADR-0004, ADR-0005 |
+| 008 | [Stun events projected by the form shown](story-008-stun-projection-by-form.md) | Integration | Ready | ADR-0004, ADR-0005 |
+| 009 | [Disguise and true-form rendering](story-009-disguise-rendering.md) | Visual/Feel | Blocked | ADR-0010 (Proposed), ADR-0004 |
+| 010 | [Transformation warp and distortion audio](story-010-transform-warp-audio.md) | Visual/Feel | Blocked | ADR-0010 (Proposed), ADR-0013 (Proposed), ADR-0004 |
+
+Stun, taser, lunge, objective and defense owners are Feature epics; stories 004–006 and 008 test against stubs and re-run when those land.
+
 ## Definition of Done
 
 This epic is complete when:
@@ -50,4 +67,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories borrowed-face` to break this epic into implementable stories.
+Run `/story-readiness` on a story, then `/dev-story`. Start with Story 001.
