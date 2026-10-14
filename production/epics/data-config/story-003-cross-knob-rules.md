@@ -1,7 +1,7 @@
 # Story 003: Cross-knob rules
 
 > **Epic**: Data/Config Loader
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: 0.5 days
@@ -36,9 +36,9 @@ Some knobs are only valid relative to others: a hold tolerance must stay below t
 
 *From ADR-0006 §4 and Validation Criteria, scoped to this story:*
 
-- [ ] `hold_range_tolerance_m` ≥ `interact_range_m` produces a named error citing ADR-0008.
-- [ ] A rewind/interpolation set that breaks the ADR-0003 dodge budget (`max_rewind_ms`, `lunge_windup_s`, interpolation delay) produces a named error citing ADR-0003.
-- [ ] Every cross-knob check in the code has a source comment (checked by a test that greps the sections).
+- [x] `hold_range_tolerance_m` ≥ `interact_range_m` produces a named error citing ADR-0008.
+- [x] A rewind/interpolation set that breaks the ADR-0003 dodge budget (`max_rewind_ms`, `lunge_windup_s`, interpolation delay) produces a named error citing ADR-0003.
+- [x] Every cross-knob check in the code has a source comment (checked by a test that greps the sections).
 
 ---
 
@@ -82,7 +82,7 @@ Some knobs are only valid relative to others: a hold tolerance must stay below t
 **Required evidence**:
 - Logic: `tests/unit/data_config/cross_knob_rules_test.gd` — must exist and pass
 
-**Status**: [x] `tests/unit/data_config/cross_knob_rules_test.gd` passes (10 tests); 3 mutations caught; suite 163/163 (2026-10-14)
+**Status**: [x] `tests/unit/data_config/cross_knob_rules_test.gd` passes (10 tests); 3 mutations caught; suite 163/163; review fixes add citation checks (2026-10-14)
 
 ---
 
@@ -90,3 +90,16 @@ Some knobs are only valid relative to others: a hold tolerance must stay below t
 
 - Depends on: Story 001, Story 002
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing in `tests/unit/data_config/cross_knob_rules_test.gd`
+- AC1: `test_hold_tolerance_at_or_above_interact_range_is_named_error_citing_adr_0008` (equal fails, +1 mm passes). Under the shipped ranges (tolerance 0.1-0.4, range 1.5-2.3) the rule cannot fire; it guards future range changes. The strict bound is ADR-0006 §4's example; ADR-0008 itself gives only `range_m + tolerance`.
+- AC2: `test_rewind_not_covering_interpolation_plus_tick_...` (66 ms fails, 67 passes) and `test_reaction_reaching_windup_breaks_dodge_budget_...` (equal fails; the story's "boundary passes" read as just past the bound). The dodge rule is a necessary condition only (inference, AD-74).
+- AC3: `test_every_cross_check_has_a_source_comment` (the comment must name an ADR or GDD; commented-out checks ignored; count pinned at 7).
+**Deviations** (advisory): AD-74: rule set and inference; extra section rules (net, scare) beyond the two named ACs. Cross rules run only when no section has a load, range or unset error (story wording; per-rule gating considered, not done).
+**Test Evidence**: Logic: `tests/unit/data_config/cross_knob_rules_test.gd`, 10 tests; 3 mutations caught.
+**Run result**: N/A: no screen; load-time validation only (the boot scene's "0 problems" line still reads from errors()).
+**Code Review**: Complete: `/code-review` 2026-10-14, APPROVED WITH SUGGESTIONS; applied: citation check in the guard, exact unset assertion, section rule through errors(), two-rule citations, shadowed name, clearer dodge error text.

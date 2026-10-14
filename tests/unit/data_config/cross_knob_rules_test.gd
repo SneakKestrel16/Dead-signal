@@ -83,7 +83,10 @@ func test_two_broken_rules_give_two_errors() -> void:
 	var k := _knobs()
 	k.controller.hold_range_tolerance_m = 3.0
 	k.ability.lunge_windup_s = 0.4
-	assert_int(k.validate_cross().size()).is_equal(2)
+	var errs := k.validate_cross()
+	assert_int(errs.size()).is_equal(2)
+	assert_str(errs[0]).contains("ADR-0008")
+	assert_str(errs[1]).contains("dodge budget")
 
 
 func test_net_section_rules() -> void:
@@ -112,23 +115,24 @@ func test_unset_knob_reports_unset_not_a_cross_error() -> void:
 	# An unset int is a large negative sentinel, so the ADR-0003 rewind rule would fire on it if it ran
 	# (a NaN float cannot show this: every comparison with NaN is false).
 	k.ability.max_rewind_ms = KnobUnset.INT
-	var errs := k.errors()
-	assert_bool(errs.has("ability.max_rewind_ms unset")).is_true()
-	for e in errs:
-		assert_str(e).not_contains("ADR-0003")
+	assert_array(k.errors()).contains_exactly(["ability.max_rewind_ms unset"])
 
 
 func test_shipped_files_break_a_cross_rule_through_errors() -> void:
 	var k := Knobs.load_all()
 	k.ability.lunge_windup_s = 0.43
-	assert_bool(" ".join(k.errors()).contains("dodge budget")).is_true()
+	k.net.starvation_low = 0.5 ## a section rule: errors() must run net.validate_cross() too
+	var all := " ".join(k.errors())
+	assert_bool(all.contains("dodge budget")).is_true()
+	assert_bool(all.contains("net.starvation_low")).is_true()
 
 
-## Every errs.append in a validate_cross body has a "# Source:" comment since the previous append.
+## Every errs.append/push_back in a validate_cross body has a "# Source:" comment naming an ADR or GDD
+## since the previous check.
 func test_every_cross_check_has_a_source_comment() -> void:
 	var paths := RULE_SOURCES.duplicate()
-	for name in Knobs.SECTIONS:
-		paths.append("res://src/foundation/data_config/%s_knobs.gd" % name)
+	for section in Knobs.SECTIONS:
+		paths.append("res://src/foundation/data_config/%s_knobs.gd" % section)
 	var checked := 0
 	for path in paths:
 		var src := FileAccess.get_file_as_string(path)
@@ -142,8 +146,8 @@ func test_every_cross_check_has_a_source_comment() -> void:
 		for line in body.split("\n"):
 			var t := line.strip_edges()
 			if t.begins_with("# Source:"):
-				cited = true
-			elif t.contains("errs.append("):
+				cited = t.contains("ADR-") or t.contains(".md") ## names an ADR or a GDD
+			elif not t.begins_with("#") and (t.contains("errs.append") or t.contains("errs.push_back")):
 				assert_bool(cited).override_failure_message("%s: check without a source comment: %s" % [path, t]).is_true()
 				cited = false
 				checked += 1

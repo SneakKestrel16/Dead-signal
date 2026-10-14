@@ -109,7 +109,7 @@ func validate_cross() -> PackedStringArray:
 	# windup 0.6) settles the real margin.
 	var reaction_s := SURVIVOR_REACTION_BASE_S + ability.max_rewind_ms / 1000.0
 	if reaction_s >= ability.lunge_windup_s:
-		errs.append("dodge budget: 0.25 s + ability.max_rewind_ms (%.3f s) must be below ability.lunge_windup_s (%s) (ADR-0003 §7)" % [reaction_s, ability.lunge_windup_s])
+		errs.append("dodge budget: 0.25 s + ability.max_rewind_ms (%.3f s) must be below ability.lunge_windup_s (%s) (ADR-0003 §7; a necessary condition only, the pursuit simulation sets the real margin)" % [reaction_s, ability.lunge_windup_s])
 	return errs
 
 
