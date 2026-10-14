@@ -18,6 +18,20 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** keep the default channel count; any channel number up to the maximum then works. Separately, ENet's adaptive throttle also cut input under 30 ms jitter (58 to 62 corrections per ~4360 states). `NetAuthority` pins it with `throttle_configure(5000, PACKET_THROTTLE_SCALE, 0)` on each peer, and ENet forwards that to the client.
 - **Source:** network-authority story 006, 2026-10-13, `tests/integration/network/prediction_reconcile_test.gd` (5 clients, 150 ms RTT, 30 ms jitter, 2% loss). Diagnosed from `ENetPacketPeer.get_statistic` per tick.
 
+### `move_and_slide()` outside the physics frame moves by the frame delta
+
+- **Symptom:** owner reconciliation replayed the right frames but landed in the wrong place whenever a snapshot was handled from `peer_packet`.
+- **Cause:** the SceneTree polls the multiplayer API in the idle (process) frame, so `peer_packet` handlers run there. Outside the physics frame, `move_and_slide()` moves by the process delta, not the physics delta. The engine reference does not cover this; the code review raised it, and a regression test proved it on 4.7.2.
+- **Fix:** buffer the snapshot in the packet handler and replay it in the physics frame. `OwnerPredictor.receive()` only buffers; `predict()` and `apply_pending()` apply the snapshot.
+- **Source:** network-authority story 006 code review, 2026-10-14. The proof is `prediction_reconcile_test.gd::test_snapshot_received_outside_the_physics_frame_replays_with_the_physics_delta`: with the buffering removed, it fails on corrections.
+
+### A zero-motion `move_and_slide()` is not a no-op for a resting body
+
+- **Symptom:** two bodies given the same inputs ended 0.6 to 5.9 m apart in about 1 run in 6, after walking into a step corner.
+- **Cause:** one body got a few more idle steps, because its first input was still in flight. Each zero-velocity `move_and_slide()` can still move a resting body within its `safe_margin` (resting heights from -0.19 mm to +0.84 mm were measured). Corners amplify that sub-millimetre difference.
+- **Fix:** skip `move_and_slide()` when the body is on the floor with zero velocity, as `tests/helpers/test_move_step.gd` now does. The controller's real movement step (controller story 002) should do the same.
+- **Source:** network-authority story 006, 2026-10-14, `test_host_and_remote_client_end_with_identical_server_positions` (12 runs).
+
 ## UI and input
 
 ### A centred `Control` eats captured-mouse look

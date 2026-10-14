@@ -238,8 +238,10 @@ func _on_peer_connected(id: int) -> void:
 	# (story 006, prediction_reconcile_test.gd, 2026-10-13). The game has its own redundancy (3 frames
 	# per input packet, a snapshot every tick), so keep the throttle full: acceleration to the limit,
 	# no deceleration. ENet sends the command to the client, which applies it to its side.
-	(_smp.multiplayer_peer as ENetMultiplayerPeer).get_peer(id).throttle_configure(
-		THROTTLE_INTERVAL_MS, ENetPacketPeer.PACKET_THROTTLE_SCALE, 0)
+	var enet := _smp.multiplayer_peer as ENetMultiplayerPeer
+	var packet_peer := enet.get_peer(id) if enet != null else null
+	if packet_peer != null:
+		packet_peer.throttle_configure(THROTTLE_INTERVAL_MS, ENetPacketPeer.PACKET_THROTTLE_SCALE, 0)
 	player_joined.emit(player_id)
 
 

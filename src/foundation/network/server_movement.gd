@@ -7,7 +7,10 @@ class_name ServerMovement extends RefCounted
 ## child) and passes it to add_player(). Remote input arrives on SceneMultiplayer.peer_packet; the
 ## host's own player calls push_local() into the same InputQueue class (host_mode, depth 0).
 ## Rule 9: a body found inside static geometry is put back at its last valid position (the end of the
-## latest tick with no overlap) and its owner's next snapshot carries F_SNAP.
+## latest tick with no overlap) and its restore counter rises; every own snapshot entry carries the
+## counter, so the owner takes the snap path even when the snapshot right after the restore is lost.
+## A body whose position or velocity is not finite is restored the same way (a NaN would make every
+## snapshot to its owner fail decoding).
 ## The gait byte is a stand-in derived from the frame (0 idle, 1 walk, 2 sprint, 3 crouch); the
 ## controller epic owns the real gait.
 ## Usage:
@@ -46,9 +49,11 @@ class PlayerState extends RefCounted:
 	var ack_seq: int = 0
 	var modifiers := MovementModifiers.new()
 	var last_valid: Vector3
-	var snap_pending: bool = false
+	## Inside-geometry restores so far, mod 256 (SnapshotCodec `restores`).
+	var restores: int = 0
 	var probe: PhysicsShapeQueryParameters3D
-	var probe_offset: Transform3D
+	## The body's capsule node: the probe is resized from its live shape each tick (a crouch resizes it).
+	var shape_node: CollisionShape3D
 	var history_pos := PackedVector3Array()
 	var history_tick := PackedInt32Array()
 
@@ -96,15 +101,15 @@ func add_player(player_id: int, body: CharacterBody3D, host_mode: bool = false) 
 	p.history_tick.resize(n)
 	p.history_tick.fill(-1)
 	for c in body.get_children():
-		if c is CollisionShape3D and c.shape is CapsuleShape3D:
-			var cap := CapsuleShape3D.new()
-			cap.radius = c.shape.radius - PROBE_SHRINK_M
-			cap.height = c.shape.height - 2.0 * PROBE_SHRINK_M
+		var cs := c as CollisionShape3D
+		if cs != null and cs.shape is CapsuleShape3D:
+			p.shape_node = cs
 			p.probe = PhysicsShapeQueryParameters3D.new()
-			p.probe.shape = cap
+			p.probe.shape = CapsuleShape3D.new()
 			p.probe.collision_mask = _static_mask
 			p.probe.exclude = [body.get_rid()]
-			p.probe_offset = c.transform
+	if p.probe == null:
+		_record("player %d has no capsule CollisionShape3D: inside-geometry restore is off" % player_id)
 	_players[player_id] = p
 
 
@@ -142,6 +147,8 @@ func queue_of(player_id: int) -> InputQueue:
 ## The recorded position at `tick`, or null when it is older than history_ticks or never recorded.
 ## ADR-0003 reads this for lag compensation.
 func position_at(player_id: int, tick: int) -> Variant:
+	if tick < 0:
+		return null ## unrecorded slots hold tick -1
 	var p: PlayerState = _players[player_id]
 	var i := tick % p.history_tick.size()
 	return p.history_pos[i] if p.history_tick[i] == tick else null
@@ -178,7 +185,6 @@ func _history_phase(tick: int) -> void:
 
 func _snapshot_phase(tick: int) -> void:
 	for pid: int in _players:
-		var owner_state: PlayerState = _players[pid]
 		var peer := _net.peer_id_of(pid)
 		if peer != -1:
 			var bodies: Array[Dictionary] = []
@@ -186,7 +192,6 @@ func _snapshot_phase(tick: int) -> void:
 				bodies.append(_entry(other_id, other_id == pid))
 			_smp.send_bytes(SnapshotCodec.encode(tick, bodies), peer,
 				MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.STATE)
-		owner_state.snap_pending = false
 
 
 func _entry(player_id: int, own: bool) -> Dictionary:
@@ -198,7 +203,7 @@ func _entry(player_id: int, own: bool) -> Dictionary:
 		e["vel"] = p.body.velocity
 		e["on_floor"] = p.body.is_on_floor()
 		e["scale"] = p.modifiers.effective_scale()
-		e["snap"] = p.snap_pending
+		e["restores"] = p.restores
 	return e
 
 
@@ -210,17 +215,22 @@ func _gait(f: InputFrame) -> int:
 	return GAIT_SPRINT if f.sprint else GAIT_WALK
 
 
-## True (and the player restored, snap flagged) when the capsule overlaps static geometry.
+## True (and the player restored, its restore counter raised) when the capsule overlaps static
+## geometry or the body's position or velocity is not finite.
 func _restore_if_inside(p: PlayerState) -> bool:
-	if p.probe == null:
-		return false
-	p.probe.transform = p.body.global_transform * p.probe_offset
-	var hits := p.body.get_world_3d().direct_space_state.intersect_shape(p.probe, 1)
-	if hits.is_empty():
-		return false
+	if p.body.global_position.is_finite() and p.body.velocity.is_finite():
+		if p.probe == null:
+			return false
+		var live := p.shape_node.shape as CapsuleShape3D
+		var cap := p.probe.shape as CapsuleShape3D
+		cap.radius = live.radius - PROBE_SHRINK_M
+		cap.height = live.height - 2.0 * PROBE_SHRINK_M
+		p.probe.transform = p.body.global_transform * p.shape_node.transform
+		if p.body.get_world_3d().direct_space_state.intersect_shape(p.probe, 1).is_empty():
+			return false
 	p.body.global_position = p.last_valid
 	p.body.velocity = Vector3.ZERO
-	p.snap_pending = true
+	p.restores = (p.restores + 1) % 256
 	return true
 
 

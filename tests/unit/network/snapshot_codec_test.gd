@@ -1,7 +1,7 @@
 # Story network-authority/006: snapshot binary format.
 extends GdUnitTestSuite
 
-const SIX_BODY_BYTES := 146 ## 6 + 6 * 20 + 20; ADR verification 6 measured 144 B for the spike layout
+const SIX_BODY_BYTES := 147 ## 6 + 6 * 20 + 21; ADR verification 6 measured 144 B for the spike layout
 const SINGLE_DATAGRAM_BYTES := 1000
 
 
@@ -15,14 +15,14 @@ func _bodies(n: int, own_index: int = 0) -> Array[Dictionary]:
 			b["vel"] = Vector3(1.5, -2.0, 0.25)
 			b["on_floor"] = true
 			b["scale"] = 0.5
-			b["snap"] = false
+			b["restores"] = 0
 		out.append(b)
 	return out
 
 
 func test_round_trip_keeps_every_field() -> void:
 	var bodies := _bodies(3, 1)
-	bodies[1]["snap"] = true
+	bodies[1]["restores"] = 255
 	var snap := SnapshotCodec.decode(SnapshotCodec.encode(70000, bodies))
 	assert_int(snap.tick).is_equal(70000)
 	assert_int(snap.bodies.size()).is_equal(3)
@@ -36,7 +36,7 @@ func test_round_trip_keeps_every_field() -> void:
 	assert_int(own.seq).is_equal(1234)
 	assert_vector(own.vel).is_equal(Vector3(1.5, -2.0, 0.25))
 	assert_bool(own.on_floor).is_true()
-	assert_bool(own.snap).is_true()
+	assert_int(own.restores).is_equal(255)
 	assert_float(own.scale).is_equal(0.5)
 
 
@@ -89,5 +89,5 @@ func test_wrong_version_unknown_flags_and_two_own_entries_are_rejected() -> void
 	two_own[1]["vel"] = Vector3.ZERO
 	two_own[1]["on_floor"] = false
 	two_own[1]["scale"] = 1.0
-	two_own[1]["snap"] = false
+	two_own[1]["restores"] = 0
 	assert_dict(SnapshotCodec.decode(SnapshotCodec.encode(1, two_own))).is_empty()

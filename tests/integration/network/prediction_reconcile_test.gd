@@ -13,13 +13,16 @@ const LINK_DELAY_S := 0.075 ## 75 ms each way = 150 ms RTT (ADR-0002 Validation 
 const LINK_JITTER_S := 0.030
 const LINK_LOSS := 0.02
 const HORIZONTAL_TOLERANCE_M := 0.001 ## a fifth of the correction deadzone: invisible to any client
+const RESTORE_DROPPED_DATAGRAMS := 3
+const PROCESS_FRAME_PREDICTED := 30
+const PROCESS_FRAME_ACKED := 20
 const LIP_REPLAY_TOLERANCE_M := 0.01 ## see the clean-link test; the ADR spike measured 1.6 mm on a 40° lip
-const AC1_TICKS := 1100
+const AC1_TICKS := 1600 ## about 27 s; at most one snapshot applies per tick, so ~5300 states
 const AC1_CLIENTS := 5
 const AC1_MAX_CORRECTIONS := 53 ## the spike's 53 corrections ...
 const AC1_STATES := 5022 ## ... per 5022 states
 const AC1_SNAP_P95_M := 0.35
-const AC1_MIN_STATES := 3000 ## guards against a dead link passing on an empty ratio
+const AC1_MIN_STATES := 5022 ## at least the spike's sample, and no empty ratio on a dead link
 const SETTLE_TICKS := 120
 const LONG_RUNNING_MS := 60000
 
@@ -220,6 +223,7 @@ func _tick(frames: Array[InputFrame] = []) -> void:
 	_pump()
 	_poll_clients()
 	for c in _clients:
+		c.predictor.apply_pending() ## still inside the physics frame awaited above
 		c.predictor.advance_visual(_dt)
 
 
@@ -369,11 +373,13 @@ func test_host_and_remote_client_end_with_identical_server_positions() -> void:
 	assert_float(host_pos.distance_to(_spawn(_clients[0].pid))).is_greater(1.0) ## both really moved
 	assert_int(_sm.ack_seq_of(HOST_ID)).is_equal(route.size())
 	assert_int(_sm.ack_seq_of(_clients[0].pid)).is_equal(route.size())
-	# Height may differ inside the body's safe margin, where a resting CharacterBody3D settles (0.77 mm
-	# on flat floor); that changes the slope contact, so after the ramp route the horizontal positions
-	# differ by 0.19 mm (both measured 2026-10-13). Flat floor alone gives identical x and z.
+	# Not bit-identical: a resting CharacterBody3D sits anywhere within its safe margin of the contact
+	# (-0.19 mm to +0.84 mm measured), and that changes the slope contact, so after this route x and z
+	# differ by about 0.19 mm (measured 2026-10-13/14 over 12 runs). Before TestMoveStep skipped the
+	# resting step, the remote's extra idle steps while its first frames were in flight made the step
+	# corner diverge by metres in about 1 run in 6; the real controller step should keep that property.
 	assert_float(Vector2(host_pos.x, host_pos.z).distance_to(Vector2(remote_pos.x, remote_pos.z))).is_less(HORIZONTAL_TOLERANCE_M)
-	assert_float(absf(host_pos.y - remote_pos.y)).is_less_equal(_server_bodies[HOST_ID].safe_margin)
+	assert_float(absf(host_pos.y - remote_pos.y)).is_less_equal(2.0 * _server_bodies[HOST_ID].safe_margin)
 
 
 func test_player_pushed_inside_geometry_is_restored_and_owner_takes_the_snap_path() -> void:
@@ -388,15 +394,18 @@ func test_player_pushed_inside_geometry_is_restored_and_owner_takes_the_snap_pat
 	var p: OwnerPredictor = _clients[0].predictor
 	assert_int(p.snaps).is_equal(0)
 	body.global_position = Vector3(0, 0.4, 4.4) ## inside the plateau box
+	# Lose the snapshots right after the restore: the counter in every later one still carries it.
+	_clients[0].link.drop_next_down = RESTORE_DROPPED_DATAGRAMS
 	await _ticks(1)
 	assert_vector(body.global_position).is_equal_approx(valid, Vector3.ONE * 0.01)
 	assert_vector(_sm.last_valid_position_of(pid)).is_equal(valid)
 	await _ticks(SETTLE_TICKS)
-	# The client never moved, so the error is under the deadzone: only the flag can cause a snap.
+	# The client never moved, so the error is under the deadzone: only the restore counter can snap.
 	assert_int(p.snaps).is_equal(1)
 	assert_float(p.snap_magnitudes[0]).is_less(_knobs.net.correction_deadzone_m)
 	assert_vector(p.visual_offset()).is_equal(Vector3.ZERO)
-	assert_int(p.snaps).is_equal(1) ## the flag was cleared after one snapshot
+	await _ticks(SETTLE_TICKS)
+	assert_int(p.snaps).is_equal(1) ## the unchanged counter in later snapshots does not snap again
 
 
 func test_loss_burst_of_five_packets_recovers_without_a_permanent_offset() -> void:
@@ -429,11 +438,11 @@ func test_reconcile_with_an_empty_input_buffer_applies_the_server_state() -> voi
 		p.predict(_frame(Vector2(0, 1), 0.0))
 	assert_int(p.unacked_count()).is_equal(3)
 	var here := body.global_position
-	p.receive(SnapshotCodec.encode(5, [_own_entry(here, 3)] as Array[Dictionary]))
+	_deliver(p, SnapshotCodec.encode(5, [_own_entry(here, 3)] as Array[Dictionary]))
 	assert_int(p.unacked_count()).is_equal(0) ## nothing left to replay
 	assert_int(p.corrections).is_equal(0)
 	# Server says the body is 0.5 m away: smooth path, exactly one correction, the offset hides it.
-	p.receive(SnapshotCodec.encode(6, [_own_entry(here + Vector3(0.5, 0, 0), 3)] as Array[Dictionary]))
+	_deliver(p, SnapshotCodec.encode(6, [_own_entry(here + Vector3(0.5, 0, 0), 3)] as Array[Dictionary]))
 	assert_int(p.corrections).is_equal(1)
 	assert_int(p.snaps).is_equal(0)
 	assert_float(body.global_position.x).is_equal_approx(here.x + 0.5, 0.01)
@@ -441,7 +450,7 @@ func test_reconcile_with_an_empty_input_buffer_applies_the_server_state() -> voi
 	p.advance_visual(_knobs.net.correction_smooth_s)
 	assert_vector(p.visual_offset()).is_equal_approx(Vector3.ZERO, Vector3.ONE * 0.001)
 	# Beyond correction_smooth_max_m it snaps.
-	p.receive(SnapshotCodec.encode(7, [_own_entry(here + Vector3(5, 0, 0), 3)] as Array[Dictionary]))
+	_deliver(p, SnapshotCodec.encode(7, [_own_entry(here + Vector3(5, 0, 0), 3)] as Array[Dictionary]))
 	assert_int(p.snaps).is_equal(1)
 	assert_float(p.snap_magnitudes[0]).is_greater(_knobs.net.correction_smooth_max_m)
 	assert_vector(p.visual_offset()).is_equal(Vector3.ZERO)
@@ -455,18 +464,72 @@ func test_snapshot_with_an_older_or_equal_tick_is_ignored() -> void:
 	body.add_child(visual)
 	var p := OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, null)
 	var here := body.global_position
-	p.receive(SnapshotCodec.encode(10, [_own_entry(here + Vector3(0.2, 0, 0), 0)] as Array[Dictionary]))
+	_deliver(p, SnapshotCodec.encode(10, [_own_entry(here + Vector3(0.2, 0, 0), 0)] as Array[Dictionary]))
 	var after_first := body.global_position
-	p.receive(SnapshotCodec.encode(9, [_own_entry(here + Vector3(0.6, 0, 0), 0)] as Array[Dictionary]))
-	p.receive(SnapshotCodec.encode(10, [_own_entry(here + Vector3(0.6, 0, 0), 0)] as Array[Dictionary]))
-	p.receive(PackedByteArray([1, 2, 3]))
+	_deliver(p, SnapshotCodec.encode(9, [_own_entry(here + Vector3(0.6, 0, 0), 0)] as Array[Dictionary]))
+	_deliver(p, SnapshotCodec.encode(10, [_own_entry(here + Vector3(0.6, 0, 0), 0)] as Array[Dictionary]))
+	_deliver(p, PackedByteArray([1, 2, 3]))
 	assert_int(p.states_received).is_equal(1)
 	assert_int(p.stale_ignored).is_equal(2)
 	assert_int(p.bad_snapshots).is_equal(1)
 	assert_vector(body.global_position).is_equal(after_first)
+	# Two arrive before the physics frame: the newer one is kept, the older counted stale.
+	p.receive(SnapshotCodec.encode(12, [_own_entry(here + Vector3(0.3, 0, 0), 0)] as Array[Dictionary]))
+	p.receive(SnapshotCodec.encode(11, [_own_entry(here + Vector3(0.6, 0, 0), 0)] as Array[Dictionary]))
+	p.apply_pending()
+	assert_int(p.states_received).is_equal(2)
+	assert_int(p.stale_ignored).is_equal(3)
+	assert_float(body.global_position.x).is_equal_approx(here.x + 0.3, 0.01)
 	body.free()
 
 
 func _own_entry(pos: Vector3, seq: int) -> Dictionary:
 	return {"id": 0, "pos": pos, "yaw": 0.0, "gait": 0, "own": true, "seq": seq, "vel": Vector3.ZERO,
-		"on_floor": true, "scale": 1.0, "snap": false}
+		"on_floor": true, "scale": 1.0, "restores": 0}
+
+
+## Buffers `bytes` and applies it at once (these tests drive the predictor without a network).
+func _deliver(p: OwnerPredictor, bytes: PackedByteArray) -> void:
+	p.receive(bytes)
+	p.apply_pending()
+
+
+func test_snapshot_received_outside_the_physics_frame_replays_with_the_physics_delta() -> void:
+	# The tree polls the multiplayer API in the idle frame; move_and_slide() there would use the frame
+	# delta and replay the wrong distance. The predictor buffers and replays in the physics frame.
+	await _build_world()
+	var body := TestMoveStep.make_body(_world, _spawn(0))
+	var visual := Node3D.new()
+	body.add_child(visual)
+	var server := TestMoveStep.make_body(_world, _spawn(0) + Vector3(0, 0, -20))
+	var p := OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, null)
+	var mods := MovementModifiers.new()
+	for i in PROCESS_FRAME_PREDICTED:
+		await get_tree().physics_frame
+		var f := _frame(Vector2(0, 1), 0.0)
+		p.predict(f)
+		if i < PROCESS_FRAME_ACKED:
+			TestMoveStep.apply(server, f, mods)
+	var entry := _own_entry(server.global_position + Vector3(0, 0, 20), PROCESS_FRAME_ACKED)
+	entry["vel"] = server.velocity
+	await get_tree().process_frame
+	assert_bool(Engine.is_in_physics_frame()).is_false()
+	p.receive(SnapshotCodec.encode(1, [entry] as Array[Dictionary]))
+	await get_tree().physics_frame
+	p.apply_pending()
+	assert_int(p.states_received).is_equal(1)
+	assert_int(p.corrections).is_equal(0)
+	server.free()
+	body.free()
+
+
+func test_position_history_returns_null_for_unrecorded_and_negative_ticks() -> void:
+	await _build_world()
+	_start_server()
+	await _add_clients(1)
+	await _ticks(5)
+	var pid: int = _clients[0].pid
+	var now := _runner.current_tick()
+	assert_vector(_sm.position_at(pid, now)).is_equal(_server_bodies[pid].global_position)
+	assert_that(_sm.position_at(pid, -1)).is_null() ## unrecorded slots hold tick -1
+	assert_that(_sm.position_at(pid, now + 1)).is_null()

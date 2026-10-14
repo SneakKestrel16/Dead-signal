@@ -26,6 +26,8 @@ static func apply(body: CharacterBody3D, frame: InputFrame, modifiers: MovementM
 	body.velocity.z = move_toward(body.velocity.z, target.z, rate)
 	if body.is_on_floor():
 		body.velocity.y = 0.0
+		if body.velocity.is_zero_approx():
+			return ## resting: a zero-motion move_and_slide can still shift the body inside its safe margin
 	else:
 		body.velocity.y += body.get_gravity().y * dt
 	body.move_and_slide()

@@ -2,29 +2,36 @@ class_name OwnerPredictor extends RefCounted
 ## Owning client: predicts its own body with the shared movement step and reconciles against the
 ## server snapshots (ADR-0002 rules 6-7). Call predict() once per physics tick and advance_visual()
 ## every frame; snapshots arrive on SceneMultiplayer.peer_packet from the server (peer 1).
+## A received snapshot is only buffered (the newest wins); it is applied at the start of the next
+## predict(), or by apply_pending(), inside the physics frame. The tree polls the multiplayer API in
+## the idle frame, where move_and_slide() would use the frame delta instead of the physics delta and
+## replay the wrong distance (code review 2026-10-13; proven by the process-frame regression test).
 ## Per snapshot: restore the server position and velocity at the acknowledged seq, apply_floor_snap()
 ## when the snapshot says on-floor, replay the unacknowledged frames, then compare with where the
 ## body was before: within correction_deadzone_m nothing is shown, under correction_smooth_max_m the
 ## error is hidden by an offset on `visual` (physics interpolation OFF) that decays over
-## correction_smooth_s, otherwise (or when the server flags a snap) the body snaps and
+## correction_smooth_s, otherwise (or when the server's restore counter changed) the body snaps and
 ## reset_physics_interpolation() is called. A snapshot not newer than the last applied one is ignored.
 ## Usage:
 ##   var p := OwnerPredictor.new(knobs, body, visual, TestMoveStep.apply, smp)
-##   p.predict(frame)   # each physics tick: steps the body and sends the last 3 unacked frames
+##   p.predict(frame)   # each physics tick: applies a buffered snapshot, steps, sends the last 3 frames
 
 ## Memory bound on unacknowledged frames (2 s at 60 Hz); the oldest is dropped beyond it.
 const MAX_UNACKED := 120
+## Memory bound on the recorded magnitudes; counting continues past it.
+const MAX_RECORDED_MAGNITUDES := 1024
 const SERVER_PEER := 1
 
 ## Snapshots applied (stale and undecodable ones are not counted).
 var states_received: int = 0
 ## Corrections beyond the deadzone, smooth and snap alike.
 var corrections: int = 0
-## Corrections that took the snap path (>= correction_smooth_max_m, or the server snap flag).
+## Corrections that took the snap path (>= correction_smooth_max_m, or a server restore).
 var snaps: int = 0
 var stale_ignored: int = 0
 var bad_snapshots: int = 0
-## Magnitude in metres of every correction beyond the deadzone / of every snap.
+## Magnitude in metres of every correction beyond the deadzone / of every snap (the first
+## MAX_RECORDED_MAGNITUDES of each).
 var correction_magnitudes: Array[float] = []
 var snap_magnitudes: Array[float] = []
 ## The modifiers used for prediction; refreshed from each own snapshot entry.
@@ -42,6 +49,11 @@ var _unacked: Array[InputFrame] = []
 var _next_seq: int = 1
 var _local_tick: int = 0
 var _last_tick: int = -1
+## Server restore counter last seen; -1 before the first snapshot.
+var _restores: int = -1
+## Newest received, not yet applied snapshot ({} when none).
+var _pending: Dictionary = {}
+## World-space smoothing offset; shown on `visual` in the body's local space.
 var _offset: Vector3 = Vector3.ZERO
 var _decay_speed: float = 0.0
 
@@ -68,9 +80,10 @@ func close() -> void:
 		_smp.peer_packet.disconnect(_on_packet)
 
 
-## One physics tick: stamps `frame.seq`, runs the shared step on the body and sends the last 3
-## unacknowledged frames (unreliable, input channel).
+## One physics tick: applies a buffered snapshot, stamps `frame.seq`, runs the shared step on the
+## body and sends the last 3 unacknowledged frames (unreliable, input channel).
 func predict(frame: InputFrame) -> void:
+	apply_pending()
 	frame.seq = _next_seq
 	_next_seq += 1
 	_local_tick += 1
@@ -89,10 +102,10 @@ func predict(frame: InputFrame) -> void:
 ## Decays the smoothing offset; call every rendered frame.
 func advance_visual(delta: float) -> void:
 	_offset = _offset.move_toward(Vector3.ZERO, _decay_speed * delta)
-	_visual.position = _offset
+	_show_offset()
 
 
-## Current smoothing offset on the visual child.
+## Current world-space smoothing offset.
 func visual_offset() -> Vector3:
 	return _offset
 
@@ -107,17 +120,28 @@ func local_tick() -> int:
 	return _local_tick
 
 
-## Decodes and applies one snapshot datagram. A bad one is counted and dropped.
+## Decodes one snapshot datagram and buffers it if it is the newest so far; a bad one is counted and
+## dropped. Nothing moves until apply_pending() (or the next predict()) runs in the physics frame.
 func receive(bytes: PackedByteArray) -> void:
 	var snap := SnapshotCodec.decode(bytes)
 	if snap.is_empty():
 		bad_snapshots += 1
-		return
-	apply_snapshot(snap)
+	elif _pending.is_empty() or snap.tick > _pending.tick:
+		_pending = snap
+	else:
+		stale_ignored += 1
+
+
+## Applies the buffered snapshot, if any. Call inside the physics frame (predict() does).
+func apply_pending() -> void:
+	if not _pending.is_empty():
+		var snap := _pending
+		_pending = {}
+		apply_snapshot(snap)
 
 
 ## Reconciles against a decoded snapshot (see class doc). Ignored when not newer than the last one
-## or when it has no own entry.
+## or when it has no own entry. Call inside the physics frame.
 func apply_snapshot(snap: Dictionary) -> void:
 	if snap.tick <= _last_tick:
 		stale_ignored += 1
@@ -142,21 +166,38 @@ func apply_snapshot(snap: Dictionary) -> void:
 		_body.apply_floor_snap() ## before the first replayed step (ADR-0002 rule 6.1)
 	for f in _unacked:
 		_step.call(_body, f, modifiers)
+	var restored: bool = _restores != -1 and own.restores != _restores
+	_restores = own.restores
+	_show_correction(predicted, restored)
+
+
+## Snap (server restore, or error >= smooth max), smooth (error > deadzone) or nothing.
+func _show_correction(predicted: Vector3, restored: bool) -> void:
 	var error := (_body.global_position - predicted).length()
-	if own.snap or error >= _smooth_max:
+	if restored or error >= _smooth_max:
 		_offset = Vector3.ZERO
-		_visual.position = Vector3.ZERO
+		_show_offset()
 		_body.reset_physics_interpolation()
 		snaps += 1
-		snap_magnitudes.append(error)
 		corrections += 1
-		correction_magnitudes.append(error)
+		_record(snap_magnitudes, error)
+		_record(correction_magnitudes, error)
 	elif error > _deadzone:
 		corrections += 1
-		correction_magnitudes.append(error)
+		_record(correction_magnitudes, error)
 		_offset += predicted - _body.global_position
 		_decay_speed = _offset.length() / _smooth_s
-		_visual.position = _offset
+		_show_offset()
+
+
+## `visual` is a child of the body: its position is local, the offset is world space.
+func _show_offset() -> void:
+	_visual.position = _body.global_basis.inverse() * _offset
+
+
+func _record(into: Array[float], value: float) -> void:
+	if into.size() < MAX_RECORDED_MAGNITUDES:
+		into.append(value)
 
 
 ## Recomputes the body's contact flags (on floor, on wall) at `pos` from geometry. CharacterBody3D has
