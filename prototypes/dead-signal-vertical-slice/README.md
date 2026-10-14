@@ -3,7 +3,7 @@
 <!-- Date: 2026-10-13 -->
 # Dead Signal — Vertical Slice
 
-**Status**: in progress — built and rule-tested; waiting for the first human playtest.
+**Status**: built; verdict NOT ASSESSED (designer direction PROCEED) until one group session plays a full round. Report: [REPORT.md](REPORT.md).
 Milestone and scope: `production/milestones/milestone-01-vertical-slice.md` (AD-55).
 Reference only: production code is rewritten from the GDDs and ADRs, never copied from here.
 
@@ -70,4 +70,4 @@ server's latest positions without rewind.
 
 ## Findings
 
-None yet. They come from the playtest debrief (Phase 5 of `/vertical-slice`).
+See [REPORT.md](REPORT.md). Designer solo session 2026-10-13: self-explanatory, no blockers after the mouse-look fix, first real play moment was seeing the creature; stopped before the results screen.
