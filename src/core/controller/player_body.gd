@@ -28,6 +28,16 @@ var _out := false
 ## (MOVE_SERVER on the server, MOVE_PREDICT on the owning client).
 func setup(knobs: Knobs, mask: int) -> void:
 	motion_mode = CharacterBody3D.MOTION_MODE_GROUNDED
+	# ADR-0007 §3: floor and slide settings from data; the three flags are the ADR's fixed choices.
+	var c := knobs.controller
+	floor_max_angle = deg_to_rad(c.floor_max_angle_deg)
+	floor_snap_length = c.floor_snap_length_m
+	safe_margin = c.safe_margin_m
+	max_slides = c.max_slides
+	wall_min_slide_angle = deg_to_rad(c.wall_min_slide_angle_deg)
+	floor_stop_on_slope = true
+	floor_constant_speed = true
+	floor_block_on_wall = true
 	_mask = mask
 	_standing = CapsuleShape3D.new()
 	_standing.radius = knobs.controller.player_radius_m

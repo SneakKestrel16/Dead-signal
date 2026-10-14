@@ -1,12 +1,12 @@
 # Story 002: Shared movement step and gaits
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -87,7 +87,12 @@ One movement function runs on the server and on the owning client. It turns an i
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/movement_step_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/first-person-controller/movement_step_test.gd` passes (9 tests); full suite 245/245 (2026-10-14). Not player-observable yet (no scene drives MovementStep; the NA-6 harness still uses TestMoveStep), so no screenshot.
+
+**Deviations**:
+- Floor and slide settings are new ControllerKnobs fields (`floor_max_angle_deg`, `floor_snap_length_m`, `safe_margin_m`, `max_slides`, `wall_min_slide_angle_deg`), applied in `PlayerBody.setup`; the three ADR-0007 flags stay code constants. Shipped digest re-pinned.
+- Deceleration uses a fixed rate (the gait's full speed over `accel_time_s`); the GDD names only the acceleration from rest (inference, AD-87).
+- ServerMovement/OwnerPredictor are not switched from TestMoveStep to MovementStep here: their signature takes MovementModifiers, not MoveState, and the switch belongs to the composer that builds PlayerBody (later story).
 
 ---
 

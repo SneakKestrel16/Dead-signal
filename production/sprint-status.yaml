@@ -41,7 +41,7 @@ stories:
     name: "Movement step and gaits"
     file: "production/epics/controller-interaction/story-002-movement-step-gaits.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1.5
     blocker: ""

@@ -23,6 +23,14 @@ class_name ControllerKnobs extends Resource
 ## Downed height in capsule_low_height_m (field names chosen 2026-10-14, AD-75). Height includes caps.
 @export var capsule_height_m: float = NAN
 @export var capsule_low_height_m: float = NAN
+## ADR-0007 §3 fixed floor settings, "all from data" (controller story 002). floor_max_angle 40.0 blocks
+## 41° (the engine accepts about 0.5° above it, Verification 9); snap 0.4 is above the 0.35 m step.
+## safe_margin, max_slides, wall_min_slide_angle are the 4.7.2 defaults (Verification 2), set explicitly.
+@export var floor_max_angle_deg: float = NAN
+@export var floor_snap_length_m: float = NAN
+@export var safe_margin_m: float = NAN
+@export var max_slides: int = KnobUnset.INT
+@export var wall_min_slide_angle_deg: float = NAN
 
 
 ## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
