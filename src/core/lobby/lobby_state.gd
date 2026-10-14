@@ -7,6 +7,8 @@ class_name LobbyState extends RefCounted
 ## moment it is applied, so a disconnect processed in the lock tick has already sent the lobby back to
 ## Waiting before server_tick() runs.
 ## Server only: clients display the replicated state and never call these methods.
+## In Match the lobby is dormant: joins, leaves and Ready changes still update its membership (for the
+## return to Waiting, AC-LB-27, a later story) but never touch the roster already handed to Match Flow.
 ## Not thread-safe: server main thread only. Host left -> Closed belongs to network-authority story 003.
 ## Usage:
 ##   var lobby := LobbyState.new(knobs)
@@ -23,7 +25,7 @@ const IN_MATCH := &"in_match"
 
 var _knobs: Knobs
 var _state := WAITING
-var _ready := {} ## token -> bool, one entry per connected player, in join order
+var _ready_by_token: Dictionary[String, bool] = {} ## token -> Ready, one entry per connected player, in join order
 var _start_tick := -1 ## tick the running countdown started; -1 when none runs
 
 
@@ -40,34 +42,34 @@ func state() -> StringName:
 
 ## Connected players. NetAuthority's lobby-full check reads it.
 func player_count() -> int:
-	return _ready.size()
+	return _ready_by_token.size()
 
 
 ## Connected tokens in join order (humans only: no bot ever fills a seat, rule 4).
 func tokens() -> PackedStringArray:
-	return PackedStringArray(_ready.keys())
+	return PackedStringArray(_ready_by_token.keys())
 
 
 ## Adds a connected player, not Ready. Cancels a running countdown (rule 13).
 func join(token: String) -> void:
-	if _ready.has(token):
+	if _ready_by_token.has(token):
 		return
-	_ready[token] = false
+	_ready_by_token[token] = false
 	_cancel()
 
 
 ## Removes a player (leave or disconnect). Cancels a running countdown (rule 13).
 func leave(token: String) -> void:
-	if _ready.erase(token):
+	if _ready_by_token.erase(token):
 		_cancel()
 
 
 ## Sets a player's Ready flag; un-readying cancels a running countdown (rule 13).
-func set_ready(token: String, ready: bool) -> void:
-	if not _ready.has(token) or _ready[token] == ready:
+func set_ready(token: String, is_ready: bool) -> void:
+	if not _ready_by_token.has(token) or _ready_by_token[token] == is_ready:
 		return
-	_ready[token] = ready
-	if not ready:
+	_ready_by_token[token] = is_ready
+	if not is_ready:
 		_cancel()
 
 
@@ -90,7 +92,12 @@ func server_tick(tick: int) -> void:
 
 ## Rule 13: at least min_players connected and every connected player Ready.
 func _rule_13() -> bool:
-	return _ready.size() >= _knobs.lobby.min_players and not _ready.values().has(false)
+	if _ready_by_token.size() < _knobs.lobby.min_players:
+		return false
+	for token in _ready_by_token:
+		if not _ready_by_token[token]:
+			return false
+	return true
 
 
 func _remaining_ticks(tick: int) -> int:

@@ -11,12 +11,12 @@ const FIVE: PackedStringArray = ["a", "b", "c", "d", "e"]
 var _locked: Array = []
 
 
-func _knobs(countdown_s := COUNTDOWN_S) -> Knobs:
+func _knobs(countdown_s := COUNTDOWN_S, min_players := MIN_PLAYERS) -> Knobs:
 	var k := Knobs.new()
 	k.net = NetKnobs.new()
 	k.net.sim_tick_hz = HZ
 	k.lobby = LobbyKnobs.new()
-	k.lobby.min_players = MIN_PLAYERS
+	k.lobby.min_players = min_players
 	k.lobby.max_players = 6
 	k.lobby.lobby_countdown_s = countdown_s
 	return k
@@ -27,9 +27,9 @@ func _tick_of(seconds: float) -> int:
 
 
 ## A lobby with `players` joined (and all Ready when `ready`), roster_locked recorded in _locked.
-func _lobby(players: PackedStringArray, ready := true, countdown_s := COUNTDOWN_S) -> LobbyState:
+func _lobby(players: PackedStringArray, ready := true, countdown_s := COUNTDOWN_S, min_players := MIN_PLAYERS) -> LobbyState:
 	_locked.clear()
-	var lobby := LobbyState.new(_knobs(countdown_s))
+	var lobby := LobbyState.new(_knobs(countdown_s, min_players))
 	lobby.roster_locked.connect(func(t: PackedStringArray) -> void: _locked.append(t))
 	for p in players:
 		lobby.join(p)
@@ -149,3 +149,33 @@ func test_countdown_length_comes_from_the_knob() -> void:
 	assert_array(_locked).is_empty()
 	lobby.server_tick(_tick_of(3.0))
 	assert_int(_locked.size()).is_equal(1)
+
+
+func test_min_players_is_the_boundary() -> void:
+	var four: PackedStringArray = ["a", "b", "c", "d"]
+	var lobby := _lobby(four) ## min 5
+	lobby.server_tick(0)
+	assert_str(lobby.state()).is_equal(LobbyState.WAITING)
+	lobby = _lobby(four, true, COUNTDOWN_S, 4)
+	lobby.server_tick(0)
+	assert_str(lobby.state()).is_equal(LobbyState.COUNTDOWN)
+
+
+func test_a_repeated_join_or_an_unknown_leave_does_not_cancel() -> void:
+	var lobby := _lobby(FIVE)
+	lobby.server_tick(0)
+	lobby.join("a")
+	lobby.leave("zz")
+	assert_str(lobby.state()).is_equal(LobbyState.COUNTDOWN)
+	assert_int(lobby.player_count()).is_equal(5)
+
+
+func test_the_roster_locks_once_and_in_match_changes_do_not_touch_it() -> void:
+	var lobby := _lobby(FIVE)
+	lobby.server_tick(0)
+	_run(lobby, 1, _tick_of(COUNTDOWN_S))
+	lobby.leave("e")
+	lobby.set_ready("a", false)
+	_run(lobby, _tick_of(COUNTDOWN_S) + 1, _tick_of(COUNTDOWN_S) * 3)
+	assert_str(lobby.state()).is_equal(LobbyState.IN_MATCH)
+	assert_array(_locked).is_equal([FIVE])
