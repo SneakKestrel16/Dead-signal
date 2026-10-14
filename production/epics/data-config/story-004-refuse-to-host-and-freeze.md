@@ -1,12 +1,12 @@
 # Story 004: Refuse to host on bad knobs; freeze per round
 
 > **Epic**: Data/Config Loader
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs `NetAuthority.host()` from the network-authority epic.
 
@@ -89,7 +89,13 @@ A validation error must be visible at once: the game refuses to host and lists e
 **Required evidence**:
 - Integration: `tests/integration/data_config/refuse_to_host_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/data_config/refuse_to_host_test.gd` passes (9 tests); full suite 272/272 (2026-10-14). The refusal tests fail with the guard disabled. Screenshot: `production/qa/evidence/data-config-004-refuse-to-host.png` (harness `--role=host --knob=controller.walk_speed=9.0`).
+
+**Implementation**: `NetAuthority.host()` refuses while `knobs.errors()` is non-empty (`host_refused(errors)`, `ERR_INVALID_DATA`, no `create_server`; debug builds assert unless `fail_hard` is false). `KnobStore` (Foundation) holds the next round's set; `reload()` (debug only) replaces it only when valid. The "host UI" is the NH-1 harness until lobby-role-assignment story 005.
+
+**Deviations**:
+- The refusal lives in `NetAuthority.host()` rather than a separate host-flow function, so no host path can skip it.
+- The knob-write grep catches `knobs.`/`_knobs.` chains; a write through a local alias (`var c := knobs.controller; c.x = 1`) is not caught (inference: no such code exists; code review owns the rest).
 
 ---
 

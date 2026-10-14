@@ -61,7 +61,7 @@ stories:
     name: "Refuse to host and freeze"
     file: "production/epics/data-config/story-004-refuse-to-host-and-freeze.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

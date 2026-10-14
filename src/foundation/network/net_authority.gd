@@ -32,6 +32,9 @@ signal join_refused(reason: StringName)
 signal host_left
 ## Server: create_server failed (e.g. port in use). Nothing was left initialised.
 signal host_failed(error: Error)
+## Server: host() refused because the knobs have errors (ADR-0006 §4); `errors` is Knobs.errors(), every
+## one, for the host UI to list. create_server was never called.
+signal host_refused(errors: PackedStringArray)
 
 const REASON_LOBBY_FULL := &"lobby_full"
 const REASON_ROUND_IN_PROGRESS := &"round_in_progress"
@@ -52,6 +55,9 @@ const NAME_MAX := 16
 var known_token_in_grace: Callable
 ## Client: extra fields of the last rejection (version_mismatch carries server_version, client_version).
 var last_reject_details: Dictionary = {}
+## When true a refused host() also ends in assert(false) (ADR-0006 §4: debug builds assert). Default:
+## debug builds only; tests and the manual harness set false to observe the refusal.
+var fail_hard: bool = OS.is_debug_build()
 ## Client: the player_id and token the server issued. The token is a secret: never log or send it on.
 var local_player_id: int = -1
 var local_token: String = ""
@@ -82,10 +88,16 @@ func setup(knobs: Knobs, version: String, lobby: Object) -> void:
 	_lobby = lobby
 
 
-## Starts the listen server on `port`. On failure emits host_failed and changes nothing.
+## Starts the listen server on `port`. Refuses (host_refused, ERR_INVALID_DATA) while the knobs have
+## any error; on a socket failure emits host_failed. Either way nothing is left initialised.
 func host(port: int) -> Error:
 	if _smp != null:
 		return ERR_ALREADY_IN_USE
+	var errs := _knobs.errors()
+	if not errs.is_empty():
+		host_refused.emit(errs)
+		assert(not fail_hard, "refusing to host: %d knob errors: %s" % [errs.size(), "; ".join(errs)])
+		return ERR_INVALID_DATA
 	var peer := ENetMultiplayerPeer.new()
 	var err := peer.create_server(port, _knobs.lobby.max_players + _knobs.net.max_clients_headroom)
 	if err != OK:

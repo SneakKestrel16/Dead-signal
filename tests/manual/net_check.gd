@@ -1,6 +1,7 @@
 extends Node3D
 ## Host/join harness for the two-PC cases in production/qa/test-cases/na-v-real-network-cases.md (NH-1).
-## Every line it prints also shows on screen (the course is collision only and draws nothing). Arguments come after `--`:
+## Every line it prints also shows on screen (the course is collision only and draws nothing). Arguments come after `--`
+## (any role: --knob=section.field=value overrides one loaded knob, e.g. to show the DC-4 refusal):
 ##   <godot> --path <repo> res://tests/manual/net_check.tscn -- --role=host [--port=24690] [--local-player=0|1] [--build=0.1.0]
 ##   <godot> --path <repo> res://tests/manual/net_check.tscn -- --role=client --host=<ip or [ipv6]> [--port=24690]
 ##       [--name=<name>] [--count=N] [--raw=oversized|garbage] [--build=0.1.0] [--mode=idle|route|bots]
@@ -61,11 +62,15 @@ func _ready() -> void:
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		_args[kv[0]] = kv[1] if kv.size() > 1 else ""
 	_knobs = Knobs.load_all()
-	var errs := _knobs.errors()
-	if not errs.is_empty():
-		_log("REFUSED: %d knob problems" % errs.size())
-		for e in errs:
-			_log("  " + e)
+	# --knob=section.field=value overrides one loaded knob, to show the refusal (DC-4) without editing data.
+	if _args.has("knob"):
+		var kv: PackedStringArray = _args.knob.split("=", true, 1)
+		var path := kv[0].split(".")
+		var section: Resource = _knobs.get(path[0])
+		section.set(path[1], str_to_var(kv[1]))
+		_log("KNOB OVERRIDE %s" % _args.knob)
+	if _args.get("role", "") != "host" and not _knobs.errors().is_empty():
+		_log("REFUSED: %d knob problems" % _knobs.errors().size()) ## the host refuses in NetAuthority.host()
 		return
 	_version = _knobs.join_version(_args.get("build", DEFAULT_BUILD))
 	_log("VERSION " + _version)
@@ -110,6 +115,11 @@ func _start_host() -> void:
 	_net.player_dropped.connect(_on_dropped)
 	_net.join_refused.connect(func(r: StringName) -> void: _log("sent reject " + r))
 	_net.host_failed.connect(func(e: Error) -> void: _log("HOST_FAILED " + error_string(e)))
+	_net.fail_hard = false
+	_net.host_refused.connect(func(errs: PackedStringArray) -> void:
+		_log("REFUSED TO HOST: %d knob errors" % errs.size())
+		for e in errs:
+			_log("  " + e))
 	if _net.host(_port()) != OK:
 		return
 	var runner := TickRunner.new()
