@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="AbilityKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/ability_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+lunge_cooldown_s = 10.0
+lunge_windup_s = 0.6
+lunge_windup_turn_deg_s = 15.0
+lunge_distance_m = 4.0
+lunge_dash_s = 0.3
+lunge_dash_turn_deg_s = 30.0
+lunge_cue_radius_m = 20.0
+lunge_hit_radius_m = 1.2
+lunge_cone_deg = 60.0
+miss_slow_multiplier = 0.5
+miss_slow_s = 1.5
+max_rewind_ms = 180
+false_signal_cooldown_s = 25.0
+false_signal_range_m = 20.0
+false_signal_footstep_duration_s = 3.0
+blackout_duration_s = 6.0
+blackout_range_m = 15.0
+blackout_cooldown_s = 45.0
+backup_switch_hold_s = 1.0
+backup_switch_range_m = 2.0

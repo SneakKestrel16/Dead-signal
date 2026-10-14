@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ScareKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/scare_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+major_scare_cooldown_s = 45.0
+minor_scare_cooldown_s = 10.0
+same_scare_repeat_block_s = 120.0
+phase_budget = PackedInt32Array(2, 6, 4)
+scare_max_control_loss_s = 0.3
+flinch_max_angle_deg = 10.0
+hallucination_max_per_client = 2
+stinger_max_db_rel = 6.0
+ambush_unseen_s = 3.0
+duck_db = -8.0
+duck_attack_s = 0.05
+duck_release_s = 0.6
+sfx_pool_size = 24
+occlusion_lowpass_hz = 1200
+occlusion_db = -6.0
+occlusion_recheck_s = 0.25
+occlusion_floor_lift_m = 0.3

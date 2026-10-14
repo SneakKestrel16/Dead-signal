@@ -75,7 +75,7 @@ stories:
     name: "All knob sections and the shipped files"
     file: "production/epics/data-config/story-002-sections-and-shipped-files.md"
     priority: should-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

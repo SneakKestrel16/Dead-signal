@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="CoreKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/core_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+max_flush_rounds = 8

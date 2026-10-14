@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="NetKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/net_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+sim_tick_hz = 60
+starvation_window_s = 2.0
+correction_deadzone_m = 0.005
+correction_smooth_max_m = 1.0
+correction_smooth_s = 0.1
+interp_delay_ms = 50
+max_extrapolation_ms = 50
+history_ticks = 16
+reject_close_delay_s = 0.2

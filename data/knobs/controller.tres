@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ControllerKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/controller_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+walk_speed = 4.0
+sprint_mult = 1.25
+crouch_speed_mult = 0.5
+monster_sprint_mult = 1.15
+max_survivor_sprint_mps = 5.4
+hold_range_tolerance_m = 0.25
+intent_timeout_ms = 500
+player_radius_m = 0.3
+footstep_radius_sprint_m = 20.0
+footstep_radius_walk_m = 6.0
+footstep_radius_crouch_m = 2.0
+footstep_radius_crawl_m = 2.0
+accel_time_s = 0.05
+interact_ray_max_m = 3.0
+step_height_m = 0.35

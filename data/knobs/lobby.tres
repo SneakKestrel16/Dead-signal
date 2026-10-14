@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="LobbyKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/lobby_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+min_players = 4
+max_players = 6
+lobby_countdown_s = 5.0

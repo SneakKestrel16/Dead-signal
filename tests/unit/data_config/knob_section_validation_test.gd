@@ -19,8 +19,14 @@ class ThreeFieldSection extends Resource:
 	@export_range(0.0, 1.0) var c: float = NAN
 
 
+## Valid DefenseKnobs without file I/O: every ranged field at its range minimum,
+## then the two fields these tests reason about at known values.
 func _valid_defense() -> DefenseKnobs:
 	var d := DefenseKnobs.new()
+	for prop in d.get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.hint == PROPERTY_HINT_RANGE:
+			var lo := KnobValidator.parse_range(prop.hint_string).x
+			d.set(prop.name, int(lo) if prop.type == TYPE_INT else lo)
 	d.stun_duration_s = 2.0
 	d.stun_item_charges = 2
 	return d
@@ -75,21 +81,32 @@ func test_validate_three_bad_fields_in_one_section_reports_three_errors() -> voi
 		"three.a unset", "three.b unset", "three.c = 9.0 outside range [0.0, 1.0]"])
 
 
+## Sections the two-section tests below do not set, in Knobs.SECTIONS order.
+func _missing_except_defense_net() -> Array:
+	var out := []
+	for name in Knobs.SECTIONS:
+		if name != "defense" and name != "net":
+			out.append("%s section missing" % name)
+	return out
+
+
 func test_knobs_errors_collects_across_sections() -> void:
 	var k := Knobs.new()
-	k.net = NetKnobs.new() # sim_tick_hz unset: 1 error
+	k.net = NetKnobs.new() # sim_tick_hz and the other net fields unset
 	var d := DefenseKnobs.new()
-	d.stun_duration_s = 9.0 # out of range: 1 error; charges unset: 1 error
+	d.stun_duration_s = 9.0 # out of range: 1 error; every other defense field unset
 	k.defense = d
-	assert_array(k.errors()).contains_exactly([
-		"net.sim_tick_hz unset",
-		"defense.stun_duration_s = 9.0 outside range [1.0, 3.0]",
-		"defense.stun_item_charges unset"])
+	var errs := k.errors()
+	assert_array(errs).contains(["defense.stun_duration_s = 9.0 outside range [1.0, 3.0]",
+			"defense.stun_item_charges unset", "net.sim_tick_hz unset"])
+	assert_array(errs).contains(_missing_except_defense_net())
 
 
 func test_knobs_errors_missing_sections_reports_each() -> void:
-	assert_array(Knobs.new().errors()).contains_exactly(
-			["net section missing", "defense section missing"])
+	var expected := []
+	for name in Knobs.SECTIONS:
+		expected.append("%s section missing" % name)
+	assert_array(Knobs.new().errors()).contains_exactly(expected)
 
 
 func test_validate_private_non_exported_var_is_ignored() -> void:

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PingKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/ping_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ping_lifetime_s = 8.0
+ping_max_range_m = 40.0
+ping_max_active = 2
+ping_bucket_size = 3
+ping_refill_s = 2.0
+callout_global_cooldown_s = 3.0
+callout_repeat_block_s = 8.0
+callout_range_m = 25.0
+rescue_callout_range_m = 40.0
+voice_range_m = 20.0

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MatchFlowKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/match_flow_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+round_duration_s = 540.0
+infiltration_end_s = 120.0
+evacuation_window_s = 120.0
+post_escape_window_s = 45.0
+reconnect_grace_s = 60.0
+load_timeout_s = 60.0
+results_duration_s = 20.0

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="DowningKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/downing_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+downs_to_eliminate = 2
+rescue_duration_s = 6.0
+takedown_commit_s = 1.5
+post_release_grace_s = 2.0
+post_rescue_grace_s = 3.0
+rescue_decay_rate = 0.5
+rescue_range_m = 1.5
+crawl_speed_mult = 0.25
+bleedout_s = 60.0
+camp_slow_radius_m = 10.0
+camp_slow_mult = 0.25

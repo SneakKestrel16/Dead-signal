@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ObjectivesKnobs" format=3]
+
+[ext_resource type="Script" path="res://src/foundation/data_config/objectives_knobs.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+evac_activation_s = 15.0
+drive_extract_s = 5.0
+fuse_install_s = 8.0
+dock_s = 2.0
+pickup_s = 1.0
+max_drives_carried = 2
+activation_start_s = 1.0
+interact_range_m = 2.0
+alert_area_radius_m = 10.0
+alert_duration_s = 5.0
+install_noise_radius_m = 25.0
+discover_range_m = 8.0
+discover_fov_deg = 90.0
+drive_candidates = 6
+fuse_candidates = 7
+fuse_box_candidates = 3
+terminal_candidates = 3
