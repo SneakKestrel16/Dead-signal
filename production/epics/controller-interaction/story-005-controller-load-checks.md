@@ -56,7 +56,19 @@ Two balance limits must hold for the chase and dodge numbers to work, and the in
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- `walk_speed` 4.5 with `sprint_mult` 1.25 (5.63 m/s) fails naming the joint sprint cap; `monster_sprint_mult` 1.0 fails; 4.0 × 1.35 = 5.4 passes (1e-4 epsilon).
+- `player_radius_m` 0.35 with v_s 5.4 fails `catch_gap ≥ 2 × radius`.
+- `interact_ray_max_m` below max owner `range_m` + (`eye_height_m` − `capsule_height_m` / 2) fails, for standing and crouched posture each.
+- Max owner `range_m` is read from owner sections, not a constant: raise one owner's range and the check flips.
+
+**Edge cases to cover**:
+- Values exactly on each limit pass.
+- Shipped knobs pass all three (re-run `shipped_knobs_test.gd`).
+
+**Estimated test count**: ~8 unit tests
 
 ---
 

@@ -59,7 +59,22 @@ Dead peers are found by the ENet timeout and routed to whoever owns the phase: t
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Server and client both call `ENetPacketPeer.set_timeout` with values from knobs (server in `peer_connected`, client after connecting). Assert the values read back match the knobs, not literals.
+- A client killed without closing (stop polling its peer, no `close()`) is reported dropped on the server within the configured timeout ± one tick. Loopback reference: `set_timeout(32, 1000, 2000)` gives 3.0 s (story Engine Notes).
+- Lobby in Waiting and in Countdown: the dropped player is removed from the lobby on the detection tick.
+- In a round: `PlayerConnectionChanged` is emitted once, and the grace clock's start tick equals the detection tick.
+- Host quits in Waiting, Countdown and In Match (three cases): every client receives `server_disconnected`, ends in the boot scene with "Host left", and no result is recorded.
+
+**Edge cases to cover**:
+- Disconnect in the same tick the countdown reaches 0: the lock re-checks rule 13 and returns to Waiting (lobby-role-assignment Edge Cases).
+- The host is the shapeshifter and leaves mid-round: session closes, no forfeit, no result (lobby-role-assignment Edge Cases, rule 19).
+- Network only routes: assert it calls the phase owner and does not itself remove players or start grace (Implementation Notes).
+- No host migration path exists (control manifest Forbidden).
+
+**Estimated test count**: ~8 integration tests
 
 ---
 

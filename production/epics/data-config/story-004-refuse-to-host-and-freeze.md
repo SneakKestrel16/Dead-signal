@@ -60,7 +60,26 @@ A validation error must be visible at once: the game refuses to host and lists e
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Three bad knob sets (one out-of-range value, one missing value, one broken cross-knob rule): each blocks hosting, `create_server` is never called, and the error list returned to the host UI contains the rule or field name.
+- Debug `reload` during a round: the round's `Knobs` reference is unchanged; the next round start passes the reloaded values to `setup()`.
+- Grep test: no `knobs.<field> =` assignment anywhere under `src/` outside the loader.
+
+**Edge cases to cover**:
+- All three errors at once: all are listed, not only the first.
+- Release builds refuse without asserting; debug builds also assert (test the refusal path; the assert is debug-only and is not run in the suite).
+
+**Estimated test count**: ~6 integration tests
+
+**Manual checks**:
+
+**Verification method**: Screenshot
+**Who must sign off**: qa-lead
+**Evidence to capture**: harness window showing the refusal list with a bad knob file
+
+- [ ] Each error is listed by name; hosting does not start.
 
 ---
 

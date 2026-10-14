@@ -62,7 +62,22 @@ A survivor's client must never be able to tell which body is the monster. Bodies
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Disguised monster out of a survivor's PVS for 1 s, then back in view: arrives under a handle the client has never seen.
+- Form change during the 0.5 s linger: handle retired on that peer. Form change in view: handle kept.
+- Snapshot entry with an unintroduced handle: client ignores it.
+- Survivor capture over a scripted sequence (see findings): no shapeshifter player ID outside roster, feed and results messages.
+- Relevance = PVS of the viewer's volume, or within 6 m; closed door prunes the volumes behind it.
+- Handles are random 32-bit, never 0, and differ per peer for the same body.
+
+**Edge cases to cover**:
+- Hidden survivors are never relevant to the monster (ADR-0004).
+- Re-entry exactly at the linger boundary.
+- Snapshot size stays near the ~200 bytes per peer guardrail (report, not assert).
+
+**Estimated test count**: ~9 integration tests
 
 ---
 

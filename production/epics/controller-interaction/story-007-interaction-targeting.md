@@ -59,7 +59,20 @@ Pressing interact targets the nearest interactable on the server's view ray that
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Eye 1.6 m, capsule centre 0.9 m, `interact_ray_max_m` 3.0, interactable `range_m` 2.0: point 2.0 m from capsule centre resolves; 2.05 m does not.
+- Out-of-range interactable at 1.0 m along the ray and in-range one at 1.8 m: the 1.8 m one wins.
+- Wall, glass pane, closed door between eye and point: no target. Open door: target resolves.
+- Target uses the server's view direction: a client-claimed direction passed alongside is ignored.
+- Return value is the net id from `MapQueries.interactable_on_ray`, or −1.
+
+**Edge cases to cover**:
+- Ray excludes the actor's own RID; `collide_with_areas` false (control manifest).
+- Two interactables at equal distance: deterministic pick (lowest net id); record the rule in the code.
+
+**Estimated test count**: ~8 unit tests
 
 ---
 

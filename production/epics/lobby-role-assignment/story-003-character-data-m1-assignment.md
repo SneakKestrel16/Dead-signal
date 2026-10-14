@@ -56,7 +56,18 @@ Five survivor characters C1–C5 are defined in data. In phase M1 each survivor 
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Character data defines exactly 5 survivor characters C1–C5, each with distinct look, colour and voice-set ID; the true-form model is none of them.
+- Fixed seed, 3, 4 and 5 survivors: each survivor gets exactly one character, all distinct; shapeshifter gets none.
+- `LobbyKnobs` loads `min_players`, `max_players`, `lobby_countdown_s`, name length limits and rejects out-of-range values.
+
+**Edge cases to cover**:
+- Cancelled round: characters are redrawn (lobby-role-assignment Edge Cases); test that a second deal with a new seed is valid.
+- `min_players` > `max_players` rejected.
+
+**Estimated test count**: ~6 unit tests
 
 ---
 

@@ -56,7 +56,30 @@ The greybox must respect the controller's limits so nothing snags: wide doorways
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Over the greybox scene: every doorway and archway in map data is ≥ 0.8 m clear; every step > 0.35 m has a ramp collider; no ramp exceeds 40°. Each failure names the passage or step.
+- Every collider is on `world`, `glass` or `doors` via `PhysicsLayers` constants; glass partitions on `glass` only.
+- No `WorldBoundaryShape3D` in the scene; one `StaticBody3D` blocker per door.
+- `SIGHT` ray tests at three LOS blockers named in the level doc: the ray stops at each.
+- Closes FM-1 AC2's geometry-node-count half: assert the node count matches map data.
+
+**Edge cases to cover**:
+- A step exactly 0.35 m without ramp passes; 0.36 m without ramp fails.
+- A ramp at exactly 40° passes; 41° is blocked by `floor_max_angle` (ADR-0007 Verification 9).
+- Seam snagging: a capsule walked across adjacent floor boxes does not stop (ADR-0007 Verification 6).
+
+**Estimated test count**: ~7 integration tests
+
+**Manual checks**:
+
+**Verification method**: Screenshot + designer sign-off
+**Who must sign off**: designer (level-designer review)
+**Evidence to capture**: retained screenshots in `production/qa/evidence/` (overview per zone, plus each room's exits)
+
+- [ ] Every room in the Zones and Rooms table shows at least two traversable exits.
+- [ ] A capsule walked through every doorway does not snag.
 
 ---
 

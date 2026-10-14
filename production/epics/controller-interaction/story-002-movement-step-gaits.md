@@ -61,7 +61,23 @@ One movement function runs on the server and on the owning client. It turns an i
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test** (headless, flat box floor, no networking):
+- 1 s of ticks per gait at `walk_speed` 4.0, full input: crawl 1.0, crouch 2.0, walk 4.0, survivor sprint 5.0, true-form sprint 5.75 m/s (±0.05).
+- Sprint held with input at 30°, 45°, 45° + 1e-4 (inside), 46° and 180° off facing: 5.0, 5.0, 5.0, 4.0, 4.0 m/s.
+- Sprint held while crouched, Downed, Transforming, Holding: 2.0, 1.0, 4.0, 4.0 m/s (gait order).
+- Diagonal input of length 1.41 walks at 4.0 m/s, not 5.66.
+- From rest, horizontal speed reaches gait speed in `accel_time_s` (0.05 default) ± 1 tick; also at 0.09.
+- `MovementStep.step` is the only writer of velocity: floor and slide settings (`floor_max_angle`, `floor_snap_length`, `safe_margin`, `max_slides`, `wall_min_slide_angle`) are set from knobs.
+
+**Edge cases to cover**:
+- Speed modifier ends while sprint held: sprint resumes next tick with no re-press (FPC Edge Cases). Modifier is stubbed at 1.0 here; test the gait resume only.
+- Out state (Eliminated/Escaped): no movement (FPC Edge Cases).
+- Zero input: horizontal speed decays to 0; vertical gravity zeroed on floor.
+- Prediction (NA-6) test stays green: re-run `prediction_reconcile_test.gd` (sprint risk).
+
+**Estimated test count**: ~10 unit tests
 
 ---
 

@@ -54,7 +54,17 @@ Barricades and blocked doors must never cut the map in two. These checks run on 
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-003-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Every room in the Zones and Rooms table has ≥ 2 exits in the graph.
+- All five barricadable doors barricaded: H-N reaches C4 and every other room.
+- Blocking A4-B1, B2-H-N, B3-H-S, B1-C2 one at a time: B1 stays reachable from A1.
+
+**Edge cases to cover**:
+- A synthetic map with a sealed room fails the check (proves the check can fail).
+
+**Estimated test count**: ~4 unit tests
 
 ---
 
