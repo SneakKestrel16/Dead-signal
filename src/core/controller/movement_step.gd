@@ -67,8 +67,8 @@ static func step(body: CharacterBody3D, frame: InputFrame, state: MoveState, kno
 	var h := Vector2(body.velocity.x, body.velocity.z)
 	var to := Vector2(target.x, target.z)
 	var accel := knobs.controller.accel_time_s
-	if accel <= 0.0:
-		h = to
+	if accel <= 0.0 or state.modifiers.rooted or state.modifiers.locked:
+		h = to ## rooted or locked "moves at 0" at once (GDD effective_speed example); no ramp
 	else:
 		# A fixed rate per tick: the gait's full speed (or the target, if faster) over accel_time_s, so
 		# full speed is reached in accel_time_s from rest and a stop is linear. A rate taken from the

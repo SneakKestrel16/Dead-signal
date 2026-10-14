@@ -1,7 +1,7 @@
 # Story 002: Shared movement step and gaits
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -87,7 +87,7 @@ One movement function runs on the server and on the owning client. It turns an i
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/movement_step_test.gd` — must exist and pass
 
-**Status**: [x] `tests/unit/first-person-controller/movement_step_test.gd` passes (9 tests); full suite 245/245 (2026-10-14). Not player-observable yet (no scene drives MovementStep; the NA-6 harness still uses TestMoveStep), so no screenshot.
+**Status**: [x] `tests/unit/first-person-controller/movement_step_test.gd` passes (12 tests); full suite 254/254 (2026-10-14). Not player-observable yet (no scene drives MovementStep; the NA-6 harness still uses TestMoveStep), so no screenshot.
 
 **Deviations**:
 - Floor and slide settings are new ControllerKnobs fields (`floor_max_angle_deg`, `floor_snap_length_m`, `safe_margin_m`, `max_slides`, `wall_min_slide_angle_deg`), applied in `PlayerBody.setup`; the three ADR-0007 flags stay code constants. Shipped digest re-pinned.
@@ -100,3 +100,12 @@ One movement function runs on the server and on the owning client. It turns an i
 
 - Depends on: Story 001
 - Unlocks: Stories 003, 004, 006, 015; network-authority story 006
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing
+**Deviations**: floor settings as controller knobs; fixed-rate deceleration (inference); rooted/locked stop at once (GDD effective_speed example); ServerMovement/OwnerPredictor still use TestMoveStep until the composer wires MovementStep (AD-87, AD-88)
+**Test Evidence**: Logic: `tests/unit/first-person-controller/movement_step_test.gd` (12 tests)
+**Code Review**: Complete (APPROVED WITH SUGGESTIONS after fix: root/lock ramped down instead of stopping). Open suggestion: an idle body skips move_and_slide, so a floor removed under it would leave it hovering (no runtime-removed floors exist)

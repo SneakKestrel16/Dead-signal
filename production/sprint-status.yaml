@@ -41,11 +41,11 @@ stories:
     name: "Movement step and gaits"
     file: "production/epics/controller-interaction/story-002-movement-step-gaits.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "facility-map-2"
     name: "Greybox geometry and collision"

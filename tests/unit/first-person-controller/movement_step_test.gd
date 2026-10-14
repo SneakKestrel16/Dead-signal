@@ -163,8 +163,35 @@ func test_body_floor_and_slide_settings_come_from_knobs() -> void:
 	assert_bool(_body.floor_stop_on_slope and _body.floor_constant_speed and _body.floor_block_on_wall).is_true()
 
 
-func test_rooted_or_out_of_input_body_does_not_move() -> void:
+## Out (Eliminated, Escaped) is not the step's: ServerMovement.set_frozen stops the step and
+## PlayerBody.set_out removes collision (GDD Edge Cases).
+func test_root_stops_a_sprinting_body_on_the_next_tick() -> void:
 	var state := MovementStep.MoveState.new()
+	await _run(_frame(_at(0), true), state, _knobs.net.sim_tick_hz)
 	state.modifiers.rooted = true
-	var v: float = await _speed_after_1s(_frame(_at(0), true), state)
-	assert_float(v).is_equal(0.0)
+	await _run(_frame(_at(0), true), state, 1)
+	assert_float(_hspeed()).is_equal(0.0)
+
+
+func test_sprint_resumes_after_a_root_ends_without_a_re_press() -> void:
+	var state := MovementStep.MoveState.new()
+	var f := _frame(_at(0), true)
+	state.modifiers.rooted = true
+	await _run(f, state, 10)
+	state.modifiers.rooted = false
+	await _run(f, state, _knobs.net.sim_tick_hz)
+	assert_float(_hspeed()).is_equal_approx(5.0, SPEED_TOL)
+
+
+func test_velocity_follows_yaw_and_stays_level_on_the_floor() -> void:
+	var f := _frame(_at(0))
+	f.yaw = PI / 2.0 ## facing -X (yaw 0 faces -Z, positive yaw turns left)
+	await _run(f, MovementStep.MoveState.new(), _knobs.net.sim_tick_hz)
+	assert_vector(_body.velocity).is_equal_approx(Vector3(-4.0, 0.0, 0.0), Vector3(SPEED_TOL, 1e-6, SPEED_TOL))
+	assert_bool(_body.is_on_floor()).is_true()
+
+
+func test_zero_accel_time_reaches_speed_on_the_first_tick() -> void:
+	_knobs.controller.accel_time_s = 0.0
+	await _run(_frame(_at(0)), MovementStep.MoveState.new(), 1)
+	assert_float(_hspeed()).is_equal_approx(4.0, 1e-4)
