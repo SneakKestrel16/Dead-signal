@@ -13,3 +13,7 @@ interp_delay_ms = 50
 max_extrapolation_ms = 50
 history_ticks = 16
 reject_close_delay_s = 0.2
+input_queue_cap = 8
+max_seq_ahead = 16
+starvation_high = 0.10
+starvation_low = 0.02

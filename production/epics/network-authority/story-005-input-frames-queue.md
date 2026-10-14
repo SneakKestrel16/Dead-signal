@@ -1,12 +1,12 @@
 # Story 005: Input frames and the server input queue
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,10 +36,10 @@ Clients send intent, never position. Each tick a client sends its last 3 input f
 
 *From ADR-0002 §3–4 and Validation Criteria, scoped to this story:*
 
-- [ ] A malformed packet (mismatched lengths, more than 3 frames, NaN, `seq` beyond `max_seq_ahead`) changes nothing and is logged.
-- [ ] Duplicate and out-of-order `seq` values are dropped; `move` is clamped to length 1 and pitch to ±85°.
-- [ ] Under starvation the last frame repeats; after `intent_timeout_ms` input is treated as released (counted in ticks via `Knobs.ticks`).
-- [ ] Backlog above target + 1 consumes two frames per tick; target depth rises and falls with the starvation thresholds; the cap drops the oldest.
+- [x] A malformed packet (mismatched lengths, more than 3 frames, NaN, `seq` beyond `max_seq_ahead`) changes nothing and is logged.
+- [x] Duplicate and out-of-order `seq` values are dropped; `move` is clamped to length 1 and pitch to ±85°.
+- [x] Under starvation the last frame repeats; after `intent_timeout_ms` input is treated as released (counted in ticks via `Knobs.ticks`).
+- [x] Backlog above target + 1 consumes two frames per tick; target depth rises and falls with the starvation thresholds; the cap drops the oldest.
 
 ---
 
@@ -84,7 +84,7 @@ Clients send intent, never position. Each tick a client sends its last 3 input f
 **Required evidence**:
 - Logic: `tests/unit/network/input_queue_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/network/input_queue_test.gd` — 28 tests; suite 97/97 pass (2026-10-13)
 
 ---
 
@@ -92,3 +92,17 @@ Clients send intent, never position. Each tick a client sends its last 3 input f
 
 - Depends on: Story 004
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 4/4 passing, each covered by gdUnit4 tests (28 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- Four knobs had no number anywhere and were added as inferences (AD-61): `input_queue_cap` 8, `max_seq_ahead` 16, `starvation_high` 0.10, `starvation_low` 0.02. To retune in the real-network list.
+- Seq window grows by the queue's empty ticks (AD-62), so a stall longer than `max_seq_ahead` ticks recovers; ADR-0002 §4 states the strict rule and needs an amendment note.
+- The queue never asserts or `push_error`s on bad input (remote peers must not trip asserts); it counts drops and keeps the first 32 violation messages.
+- Double-consume returns the later frame; a one-frame edge only in the earlier frame is lost (`ponytail:` comment).
+- One `InputQueue` per player; the per-player map and RPC wiring are later stories. `ack_snapshot_tick`, `view_epoch`, `offset_tick`, `record_id` fields not implemented yet.
+**Test Evidence**: Logic: `tests/unit/network/input_queue_test.gd`; mutation-checked (finite check removed; cap drops newest; always consume one: each failed).
+**Code Review**: Skipped (lean mode). The seq-window code was read by the orchestrator; the rest of the queue was not reviewed line by line, and no specialist or QA review ran.

@@ -40,7 +40,7 @@ The authoritative server that every rule depends on. It hosts a listen-server se
 | 002 | [Session tokens and reconnect rebinding](story-002-tokens-reconnect.md) | Integration | Ready | ADR-0001 |
 | 003 | [Disconnect detection and host leaving](story-003-disconnect-host-left.md) | Integration | Ready | ADR-0001 |
 | 004 | [TickRunner and the server clock](story-004-tick-runner.md) | Logic | Complete | ADR-0002 |
-| 005 | [Input frames and the server input queue](story-005-input-frames-queue.md) | Logic | Ready | ADR-0002 |
+| 005 | [Input frames and the server input queue](story-005-input-frames-queue.md) | Logic | Complete | ADR-0002 |
 | 006 | [Snapshots, owner prediction and reconciliation](story-006-snapshots-prediction.md) | Integration | Ready | ADR-0002, ADR-0007 |
 | 007 | [Rewind history and lag compensation](story-007-rewind-lag-compensation.md) | Logic | Ready | ADR-0003 |
 | 008 | [Per-peer handles and relevance](story-008-handles-relevance.md) | Integration | Ready | ADR-0004 |
