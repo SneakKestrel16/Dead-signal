@@ -1,6 +1,6 @@
 # Milestone 1: Vertical Slice
 
-> **Status**: Active
+> **Status**: Closed 2026-10-13 — slice built (1 day); group playtest skipped by designer decision, verdict NOT ASSESSED, direction PROCEED
 > **Start**: 2026-10-13
 > **Hard time limit**: 10 working days of build, then playtest
 > **Chosen by**: designer, 2026-10-13 (first milestone after the Production gate)
@@ -48,6 +48,6 @@ Auto-accepted (recommended option: smallest set that completes one round), 2026-
 | R1 | Clock drift and Wi-Fi spikes untested (spike tests 4–5 skipped) | Medium | Medium | Server input buffer (ADR-0002); watch the slice sessions | network-programmer |
 | R2 | Dodge margin 27 ms; WAN RTT p95 above the ~113 ms full-compensation bound | Medium | Medium | Keep the dodge AC as a regression test (ADR-0003) | gameplay-programmer |
 | R3 | Slice uses owner-authoritative movement, so it says nothing about prediction feel | High | Low | Network feel already measured by the spike; production follows ADR-0002 | technical-director |
-| R4 | Only one playtest group (designer's friends) | High | Medium | Record sessions; think-aloud; 3+ sessions before Feature epics | designer |
+| R4 | No group playtest: designer skipped it 2026-10-13, so core-loop fun and the core fantasy are unvalidated going into Core work | High | High | Record sessions; think-aloud; 3+ sessions before Feature epics | designer |
 | R5 | No art bible; greybox may misread tone | Medium | Low | `/art-bible` after the slice verdict | art-director |
 | R6 | AD-01..AD-55 auto-decisions unreviewed | Medium | Medium | Designer review pass before Sprint 2 | designer |

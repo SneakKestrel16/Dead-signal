@@ -101,6 +101,8 @@ results screen. Validation items 1 (a full loop without guidance) and 3 (core fa
 are therefore unchecked, not failed. **Designer's direction: PROCEED** (debrief Q6,
 2026-10-13). It becomes the verdict once one group session completes a round.
 
+**Designer decision, 2026-10-13:** skip the group playtest and continue production. The verdict stays NOT ASSESSED; the unvalidated fun is carried as milestone risk R4.
+
 **Creative Director review (CD-PLAYTEST):** not run — lean mode, and the slice has not been played by a group yet.
 
 ---
