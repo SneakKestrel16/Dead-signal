@@ -1,12 +1,12 @@
 # Story 002: Greybox geometry and collision authoring
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -89,7 +89,15 @@ The greybox must respect the controller's limits so nothing snags: wide doorways
 **Required evidence**:
 - Integration: `tests/integration/facility-map/greybox_geometry_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/facility-map/greybox_geometry_test.gd` passes (9 tests); full suite 263/263 (2026-10-14). Screenshot: `production/qa/evidence/facility-map-002-greybox-top.png` (top-down orthographic, whole map).
+
+**Implementation**: `tools/level/greybox_from_map.gd` generated `assets/levels/research_facility.tscn` once from the map data (walls on volume edges, glass, door blockers, LOS blockers); the scene is now the authored greybox. The test measures the scene with physics queries.
+
+**Deviations / inference**:
+- LOS blocker sizes and positions (The Core, two rack rows in B1, the B2 breaker wall) are read off the sketch: inference, the level designer settles them.
+- No steps or ramps exist (the doc: no jumps, no drops), so the step/ramp check is proven on synthetic bad geometry in the same test.
+- AC4 walk-through: a standing capsule fits through every passage (test), FM-3 (graph) owns "two exits per room"; a person walking the greybox is still owed (designer, with CI-6's mouse-look scene or later controller story).
+- Clear width at openings that end against a perpendicular wall is width_m − 0.1 m (A1-H-S 1.9 m, A2 junctions 2.8 m), all above 0.8 m.
 
 ---
 

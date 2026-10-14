@@ -51,7 +51,7 @@ stories:
     name: "Greybox geometry and collision"
     file: "production/epics/facility-map/story-002-greybox-geometry-collision.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1.5
     blocker: ""
