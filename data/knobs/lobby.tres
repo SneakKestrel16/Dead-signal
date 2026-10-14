@@ -7,3 +7,5 @@ script = ExtResource("1")
 min_players = 4
 max_players = 6
 lobby_countdown_s = 5.0
+name_min_chars = 1
+name_max_chars = 16

@@ -46,8 +46,6 @@ const REASON_TOKEN_IN_USE := &"token_in_use"
 
 ## ENet's default throttle measurement interval (ENET_PEER_PACKET_THROTTLE_INTERVAL); protocol constant.
 const THROTTLE_INTERVAL_MS := 5000
-const NAME_MIN := 1
-const NAME_MAX := 16
 
 ## Server seam: Callable(token: String) -> bool, true when the token's player is inside its reconnect
 ## grace (Match Flow owns grace, story 003). Asked only for a known token whose player is unbound.
@@ -282,7 +280,7 @@ func _validate(data: PackedByteArray) -> Dictionary:
 		r["client_version"] = d.version
 		return r
 	var n := sanitize_name(d.display_name)
-	if n.length() < NAME_MIN or n.length() > NAME_MAX:
+	if n.length() < _knobs.lobby.name_min_chars or n.length() > _knobs.lobby.name_max_chars:
 		return _reject(REASON_BAD_NAME)
 	var rebind_id: int = _tokens.get(d.token, -1)
 	if rebind_id != -1 and (peer_id_of(rebind_id) != -1 or _in_grace(d.token)):
