@@ -78,9 +78,9 @@ requirements:
     system: index
     gdd: design/gdd/systems-index.md
     domain: Core
-    requirement: "A server-side event bus carries 15 named events (RoundPhaseChanged, RoundEnded, SurvivorEscaped, SurvivorHit, SurvivorDowned, SurvivorRescued, SurvivorEliminated, MonsterStunned, PlayerShocked, FormChanged, ObjectiveProgressChanged, ScareTriggered, AbilityUsed, BarricadeBroken, PlayerConnectionChanged); events are emitted by the server after validation, with exact names, and each has one emitter"
+    requirement: "A server-side event bus carries 17 named events (RoundPhaseChanged, RoundEnded, SurvivorEscaped, SurvivorHit, SurvivorDowned, SurvivorRescued, SurvivorEliminated, MonsterStunned, PlayerShocked, FormChanged, ObjectiveProgressChanged, ScareTriggered, FlinchRequested, ViewOffsetChanged, AbilityUsed, BarricadeBroken, PlayerConnectionChanged); events are emitted by the server after validation, with exact names, and each has one emitter"
     created: 2026-10-12
-    revised: ""
+    revised: 2026-10-13
     status: active
   - id: TR-index-003
     system: index

@@ -67,7 +67,7 @@ The order sketched in `architecture.md` ran the Match Flow clock first and check
 
 **1. Events.** `ServerEvent` is an `@abstract` class extending `RefCounted` with `tick` and `server_time` fields and two abstract methods: `type() -> StringName` and `project(peer, handles) -> Dictionary`. `project` returns `{}` when the peer receives nothing. Each catalog event is a subclass named `Ev<EventName>` with typed fields, and its file header names its emitter. Every override restates the parent's return type in its signature and ends every branch with an explicit `return` (4.7 typed-return inheritance, `breaking-changes.md`); restating keeps the type visible where the method is read, rather than inherited silently.
 
-The catalog is the 15 events in `systems-index.md`, with names unchanged:
+The catalog is the events in `systems-index.md`, with names unchanged: the 15 below, plus `FlinchRequested` and `ViewOffsetChanged` added by ADR-0015 (Proposed), 17 in all (noted 2026-10-13, AD-60):
 
 | Event | Emitter |
 |---|---|

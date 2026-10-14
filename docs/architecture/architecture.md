@@ -91,7 +91,7 @@ Engine API tags: **V** = covered by the engine reference or proven by the networ
 | Module | Owns | Exposes | Consumes | Engine APIs |
 |---|---|---|---|---|
 | Network Authority & Replication | Session and peer table, server tick and clock, per-player input queue (1–2 tick buffer), snapshot history for rewind, per-peer relevance and handles, reconnect tokens, join auth | `TickRunner`, `InputFrame` / `InputQueue` (ADR-0002), `RewindHistory` / `LagCompensation` (ADR-0003), `Relevance` / `HandleTable` (ADR-0004) | Event Catalog (transport), Data/Config | `ENetMultiplayerPeer` V · `SceneMultiplayer.auth_callback` V (spike) · `@rpc` V · `MultiplayerSynchronizer.set_visibility_for` V (spike) · `MultiplayerSpawner` V · `set_multiplayer_authority` V |
-| Event Catalog + State Registry | The 15 named server events and the read-only replicated state table; one declared owner per state key | `EventBus.emit` (server only), `subscribe`, `flush`; `StateRegistry.view` (ADR-0005) | Network (transport to clients) | `@abstract` `RefCounted` event classes, `Callable` handler lists. HIGH: 4.7 typed-return override and packed-array setter changes |
+| Event Catalog + State Registry | The 17 named server events (15 from ADR-0005, 2 from ADR-0015) and the read-only replicated state table; one declared owner per state key | `EventBus.emit` (server only), `subscribe`, `flush`; `StateRegistry.view` (ADR-0005) | Network (transport to clients) | `@abstract` `RefCounted` event classes, `Callable` handler lists. HIGH: 4.7 typed-return override and packed-array setter changes |
 | Data/Config loader | Every tuning knob, loaded from data files and validated at load | `Knobs` with one typed section per system, `ticks(seconds)` (ADR-0006) | none | `Resource` / `FileAccess` V |
 
 ### Core
@@ -299,7 +299,7 @@ func ticks(seconds: float) -> int
 
 ### Not specified here
 
-Per-event payload schemas (15 events) belong to the Event Catalog ADR. Borrowed Face's render interface waits on its rendering ADR.
+Per-event payload schemas (17 events) belong to the Event Catalog ADR. Borrowed Face's render interface waits on its rendering ADR.
 
 ## ADR Audit
 
@@ -341,7 +341,7 @@ The table below is version 1's condensed baseline of 41 architecture-driving req
 | TR-net-010 | downing | Shapeshifter client never receives bleed-out state | Networking | 4 |
 | TR-net-011 | monster-abilities, pings | `AbilityUsed` stays server-side; fake callout packets match real ones | Networking | 4 |
 | TR-net-012 | pings | Monster client gets survivor pings only in its line of sight; callouts as audio only | Networking | 4 |
-| TR-core-001 | systems-index | 15 server events plus a read-only state table, one owner per state | Core | 5 |
+| TR-core-001 | systems-index | 17 server events plus a read-only state table, one owner per state | Core | 5 |
 | TR-core-002 | controller | Modifier arbitration: lock > root > lowest slow | Core | 7 |
 | TR-core-003 | controller | Hold-to-interact protocol | Core | 8 |
 | TR-core-004 | match-flow | Server clock, phases, outcome lock, tick-ordered win checks | Core | 5 |
