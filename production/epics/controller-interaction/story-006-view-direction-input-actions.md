@@ -1,12 +1,12 @@
 # Story 006: View direction, mouse look and input actions
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -87,7 +87,7 @@ The server keeps each player's view direction from client yaw and pitch, and eve
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/view_direction_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/first-person-controller/view_direction_test.gd` passes (9 tests); 3 mutations caught; suite 183/183 (2026-10-14). Manual scene: `tests/manual/mouse_look_check.tscn`
 
 ---
 

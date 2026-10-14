@@ -139,6 +139,12 @@ func modifiers_of(player_id: int) -> MovementModifiers:
 	return _players[player_id].modifiers
 
 
+## The frame the player's movement used this tick (a repeat or released frame when starved; a released
+## frame keeps the last yaw and pitch). The server's view direction is read from it (ViewState).
+func frame_of(player_id: int) -> InputFrame:
+	return _players[player_id].frame
+
+
 ## Last input seq consumed for the player (0 before any).
 func ack_seq_of(player_id: int) -> int:
 	return _players[player_id].ack_seq

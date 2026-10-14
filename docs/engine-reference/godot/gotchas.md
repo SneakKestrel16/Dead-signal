@@ -55,6 +55,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** read look in `_input`, and set `mouse_filter = MOUSE_FILTER_IGNORE` on HUD controls. ADR-0014's `InputContextStack` should own this in production.
 - **Source:** vertical slice, 2026-10-13 (commit 72a2c19); invisible to headless tests, found by the designer's first session.
 
+### A code-built InputEvent saves with a device ID, not "all devices"
+
+- **Symptom:** actions created with `InputEventKey.new()` / `InputEventMouseButton.new()` and saved through `ProjectSettings.save()` wrote `"device":16` (keys) and `"device":32` (mouse buttons) into `project.godot`. Actions made in the editor's Input Map use `"device":-1`, which matches any device.
+- **Cause:** inference: 4.7's new device IDs (`docs/engine-reference/godot/VERSION.md`, 4.7 row) give a new event a device constant for its kind instead of -1. Not checked against the class reference; a one-line print of `InputEvent.DEVICE_ID_*` would settle it.
+- **Fix:** set `"device":-1` in the `[input]` section (done for the eleven ADR-0007 actions), or set `event.device = -1` before saving.
+- **Source:** controller story 006, 2026-10-14, generating the InputMap with a throwaway script.
+
 ## Export
 
 ### `--path` aborts an exported binary

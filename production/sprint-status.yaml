@@ -57,7 +57,7 @@ stories:
     name: "View direction, mouse look and input actions"
     file: "production/epics/controller-interaction/story-006-view-direction-input-actions.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
