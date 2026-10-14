@@ -21,7 +21,7 @@ stories:
     name: "Knob sections, range and unset validation"
     file: "production/epics/data-config/story-001-knob-section-validation.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

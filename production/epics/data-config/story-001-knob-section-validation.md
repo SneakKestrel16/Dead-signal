@@ -1,12 +1,12 @@
 # Story 001: Knob sections, range and unset validation
 
 > **Epic**: Data/Config Loader
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
