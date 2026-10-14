@@ -61,11 +61,11 @@ stories:
     name: "Refuse to host and freeze"
     file: "production/epics/data-config/story-004-refuse-to-host-and-freeze.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "controller-interaction-7"
     name: "Interaction targeting"

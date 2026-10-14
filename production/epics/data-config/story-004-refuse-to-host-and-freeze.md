@@ -1,7 +1,7 @@
 # Story 004: Refuse to host on bad knobs; freeze per round
 
 > **Epic**: Data/Config Loader
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -103,3 +103,12 @@ A validation error must be visible at once: the game refuses to host and lists e
 
 - Depends on: Story 001, Story 003; network-authority host story
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (AC1's host-UI half verified by the harness screenshot; lobby-role-assignment story 005 owns the real host screen)
+**Deviations**: refusal inside `NetAuthority.host()`; `KnobStore` stages debug reloads; knob-write grep cannot see writes through a local alias (AD-91, AD-92)
+**Test Evidence**: Integration: `tests/integration/data_config/refuse_to_host_test.gd` (9 tests); screenshot `production/qa/evidence/data-config-004-refuse-to-host.png`
+**Code Review**: Complete (APPROVED WITH SUGGESTIONS after widening the knob-write regex to every compound operator, indexed writes and `.set(`). Open suggestions: `#` inside a string hides the rest of a line from the grep; harness `--knob=` with an unknown section crashes; `KnobValidator` prints float32 range hints (3.70000004768372)

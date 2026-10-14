@@ -5,8 +5,9 @@ extends GdUnitTestSuite
 
 const VERSION := "test-1.0+aaaa1111"
 const COPY_DIR := "user://dc4_knobs/"
-## Every src/ assignment to a knob field: `knobs.x.y = `, `_knobs.x.y += `, ... (not `==`).
-const KNOB_WRITE := "(^|[^\\w])_?knobs\\.[\\w.]+\\s*([-+*/]?=)(?!=)"
+## Every src/ write to a knob field: `knobs.x.y = `, `_knobs.x.y += ` and every compound operator,
+## `knobs.x.arr[0] = `, and `knobs.x.set(...)` (not `==`). Code review 2026-10-14 widened it.
+const KNOB_WRITE := "(^|[^\\w])_?knobs\\.(?:[\\w.\\[\\]]+\\s*(?:\\*\\*|<<|>>|[-+*/%|&^])?=(?!=)|[\\w.]+\\.set\\()"
 
 static var _next_port := 25700
 
@@ -182,7 +183,9 @@ func test_no_gameplay_code_writes_a_knob_field() -> void:
 
 func test_knob_write_pattern_catches_writes_and_ignores_reads() -> void:
 	var re := RegEx.create_from_string(KNOB_WRITE)
-	for w in ["\tknobs.net.port = 1", "\t_knobs.controller.walk_speed += 0.1", "x; knobs.ability.lunge_s *= 2"]:
+	for w in ["\tknobs.net.port = 1", "\t_knobs.controller.walk_speed += 0.1", "x; knobs.ability.lunge_s *= 2",
+			"\tknobs.net.port |= 1", "\tknobs.net.port %= 2", "\tknobs.net.port **= 2", "\tknobs.x.arr[0] = 1",
+			"\tknobs.net.set(\"port\", 1)"]:
 		assert_object(re.search(w)).override_failure_message(w).is_not_null()
 	for r in ["\tvar p := knobs.net.port", "\tif _knobs.net.port == 1:", "\tvar my_knobs.x = 1", "\tfoo(knobs.net.port)"]:
 		assert_object(re.search(r)).override_failure_message(r).is_null()
