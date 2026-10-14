@@ -1,7 +1,7 @@
 # Story 002: All knob sections and the shipped files
 
 > **Epic**: Data/Config Loader
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -36,9 +36,9 @@ Every tuning knob in the GDDs becomes a field in its owning section, with its va
 
 *From ADR-0006 §1, §3 and Validation Criteria, scoped to this story:*
 
-- [ ] A test asserts every knob name in every GDD's Tuning Knobs table has a field in its owning section (and ADR-only knobs in `NetKnobs`, `CoreKnobs`, `FacilityKnobs`).
-- [ ] An integration test loads the shipped files and gets `errors()` empty.
-- [ ] The export preset includes `data/knobs/*`; an exported Windows build loads every section by its `res://` path.
+- [x] A test asserts every knob name in every GDD's Tuning Knobs table has a field in its owning section (and ADR-only knobs in `NetKnobs`, `CoreKnobs`, `FacilityKnobs`).
+- [x] An integration test loads the shipped files and gets `errors()` empty.
+- [x] The export preset includes `data/knobs/*`; an exported Windows build loads every section by its `res://` path.
 
 ---
 
@@ -84,7 +84,7 @@ Every tuning knob in the GDDs becomes a field in its owning section, with its va
 **Required evidence**:
 - Integration: `tests/integration/data_config/shipped_knobs_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/data_config/shipped_knobs_test.gd` — 8 tests; suite 25/25 pass (2026-10-13)
 
 ---
 
@@ -92,3 +92,16 @@ Every tuning knob in the GDDs becomes a field in its owning section, with its va
 
 - Depends on: Story 001
 - Unlocks: Story 003
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 3/3 closed with noted gaps (designer chose close-with-debt)
+- AC1 met for every GDD Tuning Knobs table (136 knobs, 13 sections). Not met for 15 ADR-only knobs with no sourced number (TD-001, TD-002).
+- AC2 met: `Knobs.load_all()` on the shipped files gives `errors()` empty.
+- AC3 verified in a scratch Windows export (13 sections load from the .pck, errors empty; negative check without the filter fails). No `export_presets.cfg` in the repo (gitignored), so only the README documents it (TD-004).
+**Deviations** (advisory): `intent_timeout_ms`, `hold_range_tolerance_m`, `interact_ray_max_m` live in ControllerKnobs and `max_rewind_ms` in AbilityKnobs (one home per knob, GDD owner); several knobs ship a value with no sourced range (plain `@export`: unset still caught); `eye_height_m`, `capsule_height_m` have no field (two values each, names undecided); lobby ships its Default 4–6 players, not the MVP 5/5; shipped values are not compared with the GDD (TD-003).
+**Test Evidence**: Integration: `tests/integration/data_config/shipped_knobs_test.gd`; coverage test mutation-checked (deleted `rescue_decay_rate`, test failed); empty-array check watched failing.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester, 2026-10-13); fixes in 8fcecdc.
+**Tech debt**: TD-001..TD-004 in `docs/tech-debt-register.md`.
