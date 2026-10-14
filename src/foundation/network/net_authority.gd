@@ -109,6 +109,11 @@ func join(address: String, port: int, display_name: String, token: String = "") 
 		return err
 	_display_name = display_name
 	_join_token = token
+	# A new session starts unadmitted: a stale ID from an earlier session would turn this session's
+	# reject-and-close into host_left (code review 2026-10-14). The caller already passed the old token.
+	local_player_id = -1
+	local_token = ""
+	last_reject_details = {}
 	_attach(peer, _client_auth)
 	_smp.peer_authenticating.connect(_on_authenticating)
 	_smp.connected_to_server.connect(_on_connected_to_server)
@@ -211,7 +216,9 @@ func _client_auth(_id: int, data: PackedByteArray) -> void:
 
 ## ADR-0001 §6: the client side of the dead-peer timeout, set once the server peer exists.
 func _on_connected_to_server() -> void:
-	_set_timeout((_smp.multiplayer_peer as ENetMultiplayerPeer).get_peer(1))
+	var enet := _smp.multiplayer_peer as ENetMultiplayerPeer
+	if enet != null:
+		_set_timeout(enet.get_peer(1))
 
 
 func _on_server_disconnected() -> void:

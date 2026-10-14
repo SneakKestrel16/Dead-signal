@@ -279,6 +279,29 @@ func test_rejected_client_does_not_report_host_left() -> void:
 	assert_array(left).is_empty()
 
 
+## Code review 2026-10-14: a client admitted once, closed, then refused on its rejoin kept its old
+## local_player_id, so the refusing server's disconnect raised host_left (and the harness rejoined in a loop).
+func test_refused_rejoin_after_an_admitted_session_does_not_report_host_left() -> void:
+	var port := _port()
+	var lobby := FakeLobby.new()
+	var server := _net(lobby)
+	assert_int(server.host(port)).is_equal(OK)
+	var client := await _join(server, port)
+	var pid := client.local_player_id
+	client.close()
+	await _until(func() -> bool: return server.peer_id_of(pid) == -1, "drop")
+	lobby.st = LobbyState.IN_MATCH ## no grace hook: the stored token is refused round_in_progress
+	var left: Array[int] = []
+	var rejects: Array[StringName] = []
+	client.host_left.connect(func() -> void: left.append(1))
+	client.join_rejected.connect(func(r: StringName) -> void: rejects.append(r))
+	assert_int(client.join("127.0.0.1", port, "Ann", "")).is_equal(OK)
+	await _until(func() -> bool: return not rejects.is_empty(), "reject")
+	await get_tree().create_timer(_knobs.net.reject_close_delay_s + 0.3).timeout ## the server closes it
+	assert_array(left).is_empty()
+	assert_int(client.local_player_id).is_equal(-1)
+
+
 func test_main_shows_the_host_left_notice_once_and_records_nothing() -> void:
 	Main.notice = "Host left"
 	var main: Main = auto_free(load("res://src/main.tscn").instantiate())

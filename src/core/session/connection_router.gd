@@ -6,6 +6,8 @@ class_name ConnectionRouter extends RefCounted
 ## Stand-in for Match Flow's half until the Match Flow epic exists: grace expiry and forfeit are its
 ## (story 003 Out of Scope), and it takes over emitting PlayerConnectionChanged (systems-index emitter).
 ## Server only; keyed by player ID, with the token used only to address the lobby.
+## One router per NetAuthority for the whole session: it connects to the net's signals and never
+## disconnects, so a second router on the same net would route every drop twice.
 ## Usage:
 ##   var router := ConnectionRouter.new(knobs, net, lobby, runner.current_tick)
 ##   net.known_token_in_grace = router.in_grace
