@@ -106,7 +106,7 @@ The core of the loader: a typed `Resource` per system whose fields cannot ship w
 **Completed**: 2026-10-13
 **Criteria**: 4/4 passing, each covered by at least one gdUnit4 test (14 tests, 0 failures, 0 orphans)
 **Deviations** (advisory):
-- `NetKnobs.sim_tick_hz` range 30–128 is an inference; no source gives a Safe Range, only the value 60. Settle before story 002.
+- `NetKnobs.sim_tick_hz` range 30–128 was an inference (no source gives a Safe Range, only the value 60); designer kept it 2026-10-13.
 - `Knobs.load_all()` not written: it needs the shipped `.tres` files (story 002). Sections are set directly for now.
 - Validation lives in `KnobValidator`, not on `Knobs`; `Knobs.errors()` aggregates it. A null section is an error (not in the story).
 - Load and validate time not measured against the 10 ms guardrail.
