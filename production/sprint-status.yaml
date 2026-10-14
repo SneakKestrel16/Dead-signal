@@ -30,11 +30,11 @@ stories:
     name: "ServerEvent base and the 15-event catalog"
     file: "production/epics/event-catalog-state-registry/story-001-server-event-catalog.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-13"
   - id: "event-catalog-2"
     name: "EventBus emit, subscribe and flush"
     file: "production/epics/event-catalog-state-registry/story-002-event-bus.md"

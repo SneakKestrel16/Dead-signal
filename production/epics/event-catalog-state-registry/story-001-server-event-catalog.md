@@ -1,7 +1,7 @@
 # Story 001: ServerEvent base and the 15-event catalog
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -36,9 +36,9 @@ Every cross-system fact in a round is one of 15 named events. This story builds 
 
 *From ADR-0005 §1 and Validation Criteria, scoped to this story:*
 
-- [ ] All 15 events in the `systems-index.md` table exist as `Ev<EventName>` subclasses with names unchanged, each file header naming its emitter.
-- [ ] A test fails if any catalog subclass lacks `type()` or `project()`, or if the set of `type()` values differs from the 15 names.
-- [ ] `ServerEvent` cannot be constructed by class name (parse-time), and each override restates its return type.
+- [x] All 15 events in the `systems-index.md` table exist as `Ev<EventName>` subclasses with names unchanged, each file header naming its emitter.
+- [x] A test fails if any catalog subclass lacks `type()` or `project()`, or if the set of `type()` values differs from the 15 names.
+- [x] `ServerEvent` cannot be constructed by class name (parse-time), and each override restates its return type.
 
 ---
 
@@ -81,7 +81,7 @@ Every cross-system fact in a round is one of 15 named events. This story builds 
 **Required evidence**:
 - Logic: `tests/unit/event_catalog/server_event_catalog_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/event_catalog/server_event_catalog_test.gd` — 12 tests; suite 37/37 pass (2026-10-13)
 
 ---
 
@@ -89,3 +89,14 @@ Every cross-system fact in a round is one of 15 named events. This story builds 
 
 - Depends on: None
 - Unlocks: Stories 002, 005
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 3/3 met, one half not re-verified
+- AC1: the catalog is 17 events, not 15 (`systems-index.md` has 17 rows; `FlinchRequested` and `ViewOffsetChanged` come from Proposed ADR-0015). All 17 exist as `Ev<EventName>` with the emitter in the header. ADR-0005 note, architecture.md, TR registry and traceability updated (AD-60).
+- AC3 parse-time half: NOT re-verified this run (a scratch-script probe was declined). Evidence on file: ADR-0005 Verification result (1), `prototypes/adr-verification/README.md`. The runtime test checks that `@abstract` sits on its own line above `class_name`, and that every override restates its return type.
+**Deviations** (advisory): event field names and types are inferred from the systems-index Meaning column (each header says so); `FormChanged` and `MonsterStunned` project `{}` (fail closed) until ADR-0004 projection is built; `ScareTriggered` reaches only its recipient; `HandleTable` is a placeholder; `FlinchRequested` and `ViewOffsetChanged` may change when ADR-0015 is accepted.
+**Test Evidence**: Logic: `tests/unit/event_catalog/server_event_catalog_test.gd`; mutation-checked (renamed a `type()`, moved a file out, removed the `results` copy: each failed the suite).
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester, 2026-10-13); fixes in ceb840a.
