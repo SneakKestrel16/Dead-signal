@@ -123,15 +123,18 @@ func digest() -> String:
 	ctx.start(HashingContext.HASH_SHA256)
 	var names := SECTIONS.duplicate()
 	names.sort()
-	for name in names:
-		var section: Resource = get(name)
+	for section_name in names:
+		var section: Resource = get(section_name)
 		var fields := PackedStringArray()
 		for prop in section.get_property_list():
 			if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.usage & PROPERTY_USAGE_STORAGE:
 				fields.append(prop.name)
 		fields.sort()
 		for field in fields:
-			ctx.update(var_to_bytes([name, field, section.get(field)]))
+			var value: Variant = section.get(field)
+			if value is float and value == 0.0:
+				value = 0.0 ## -0.0 compares equal but serializes differently
+			ctx.update(var_to_bytes([section_name, field, value]))
 	return ctx.finish().hex_encode()
 
 

@@ -56,7 +56,9 @@ func test_digest_is_stable_across_loads_and_runs() -> void:
 	assert_array(a.errors()).is_empty()
 	assert_str(a.digest()).is_equal(b.digest())
 	assert_int(a.digest().length()).is_equal(64)
-	assert_str(a.digest()).is_equal(SHIPPED_DIGEST) ## across runs: the value checked in above
+	assert_str(a.digest()).override_failure_message(
+		"shipped digest changed: if a knob in data/knobs/ was changed on purpose, re-pin SHIPPED_DIGEST to %s" % a.digest()
+		).is_equal(SHIPPED_DIGEST) ## across runs: the value checked in above
 
 
 func test_join_version_is_build_plus_first_8_hex() -> void:
@@ -83,12 +85,22 @@ func test_a_property_that_is_not_a_saved_field_does_not_change_the_digest() -> v
 	assert_str(k.digest()).is_equal(before)
 
 
-func test_float_written_as_1_0_or_1_00_gives_the_same_digest() -> void:
+## 1.0 and 1.00 in a .tres parse to the same double, so only values can differ; -0.0 is the one equal
+## value with different bytes.
+func test_negative_zero_and_zero_give_the_same_digest() -> void:
 	var a := Knobs.load_all()
 	var b := Knobs.load_all()
-	a.net.correction_smooth_max_m = float("1.0")
-	b.net.correction_smooth_max_m = float("1.00")
+	var zero := 0.0
+	a.ability.lunge_windup_turn_deg_s = zero
+	b.ability.lunge_windup_turn_deg_s = -1.0 * zero ## a real -0.0: the literal -0.0 folds to +0.0
 	assert_str(a.digest()).is_equal(b.digest())
+
+
+func test_array_knob_element_change_changes_the_digest() -> void:
+	var k := Knobs.load_all()
+	var before := k.digest()
+	k.scare.phase_budget = PackedInt32Array([2, 4, 6]) ## same elements, reordered
+	assert_str(k.digest()).is_not_equal(before)
 
 
 func test_client_with_one_changed_knob_is_rejected_with_both_versions() -> void:

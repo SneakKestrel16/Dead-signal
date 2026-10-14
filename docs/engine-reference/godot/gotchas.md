@@ -62,6 +62,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** set `"device":-1` in the `[input]` section (done for the eleven ADR-0007 actions), or set `event.device = -1` before saving.
 - **Source:** controller story 006, 2026-10-14, generating the InputMap with a throwaway script.
 
+### The GDScript literal `-0.0` is `+0.0`; a computed `-0.0` serializes differently
+
+- **Symptom:** a test meant to prove `-0.0` and `0.0` hash the same passed even with the normalization removed.
+- **Cause:** `var a := -0.0` folds to +0.0 (`var_to_bytes` gives `0300000000000000`), but `-1.0 * zero` is a real -0.0 (`0300000000000080`). Both compare equal with `==`, and `str()` prints `0.0` for both.
+- **Fix:** build a negative zero by computation in tests. Code that hashes floats (`Knobs.digest()`) maps any zero to +0.0 first.
+- **Source:** data-config story 005 review, 2026-10-14, a headless print of `var_to_bytes` on 4.7.2.
+
 ## Export
 
 ### `--path` aborts an exported binary

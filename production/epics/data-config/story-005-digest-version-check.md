@@ -1,7 +1,7 @@
 # Story 005: Knob digest in the join version check
 
 > **Epic**: Data/Config Loader
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -37,7 +37,7 @@ Host and every predicting client must run the same numbers. A hash of the loaded
 *From ADR-0006 §7 and Validation Criteria, scoped to this story:*
 
 - [ ] The same knob set gives the same digest on two loads and two runs; an editor `.tres` and an exported binary build give the same digest.
-- [ ] A client with one changed knob is rejected with `version_mismatch`, and both version strings are shown.
+- [x] A client with one changed knob is rejected with `version_mismatch`, and both version strings are shown.
 - [ ] The digest is identical on two machines (two-PC test).
 
 ---
@@ -86,7 +86,7 @@ Host and every predicting client must run the same numbers. A hash of the loaded
 **Required evidence**:
 - Integration: `tests/integration/data_config/digest_version_test.gd` — must exist and pass; the cross-machine AC is a documented playtest in `production/qa/evidence/`
 
-**Status**: [x] `tests/integration/data_config/digest_version_test.gd` passes (6 tests, 2 runs, same digest); 2 mutations caught; suite 190/190 (2026-10-14)
+**Status**: [x] `tests/integration/data_config/digest_version_test.gd` passes (7 tests, 2 runs, same digest); 3 mutations caught; suite 198/198 (2026-10-14)
 
 ---
 
@@ -94,3 +94,17 @@ Host and every predicting client must run the same numbers. A hash of the loaded
 
 - Depends on: Story 001, Story 002; network-authority join story
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 1/3 passing, 2 DEFERRED (need an export preset or a second PC)
+- AC1 partly: same digest on two loads and two runs (`test_digest_is_stable_across_loads_and_runs`, value pinned at `908cc535...`). DEFERRED: editor `.tres` against an exported binary: no export preset exists (TD-004).
+- AC2: `test_client_with_one_changed_knob_is_rejected_with_both_versions` (real ENet join; both strings in `last_reject_details`).
+- AC3 DEFERRED: digest identical on two machines: run with NA-V (Sprint 2 Should Have) on the same Tailscale session.
+- Edge cases: a non-saved property and Knobs bookkeeping leave the digest unchanged; -0.0 and 0.0 hash the same (normalized; gotchas.md); an array knob reorder changes it. Section order is sorted by construction.
+**Deviations**: none from ADR-0006 §7; -0.0 is mapped to +0.0 before hashing (equal values, different bytes). The pinned digest must be re-pinned with any shipped knob change (the failure message says so).
+**Test Evidence**: Integration: `tests/integration/data_config/digest_version_test.gd`, 7 tests; 3 mutations caught.
+**Run result**: N/A: no screen; the version string is not shown until the join UI exists.
+**Code Review**: Complete: `/code-review` 2026-10-14, APPROVED WITH SUGGESTIONS; applied: -0.0 normalization with a real negative-zero test, re-pin message, array-knob test, renamed loop variable. Not applied: also filtering on PROPERTY_USAGE_EDITOR (KnobValidator uses the same SCRIPT_VARIABLE + STORAGE rule, so the two stay consistent).
