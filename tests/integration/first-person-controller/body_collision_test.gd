@@ -114,7 +114,10 @@ func test_going_down_on_the_tick_of_a_collision_lets_the_other_pass_next() -> vo
 	var b := _body(Vector3(0, 0, -1.5))
 	await _walk([b], [Vector3(0, 0, WALK_MPS)], 20) ## pressed against a
 	assert_float(b.global_position.z).is_less(-0.45)
-	a.set_downed(true) ## same tick as the contact
+	await get_tree().physics_frame
+	a.set_downed(true) ## same physics frame as b's next step into it
+	b.velocity = Vector3(0, 0, WALK_MPS)
+	b.move_and_slide()
 	await _walk([b], [Vector3(0, 0, WALK_MPS)], 30)
 	assert_float(b.global_position.z).is_greater(0.5)
 
@@ -146,6 +149,7 @@ func test_out_body_has_no_collision_and_no_movement() -> void:
 		runner.step()
 		walker.velocity = Vector3(0, 0, WALK_MPS)
 		walker.move_and_slide()
+	assert_int(sm.ack_seq_of(0)).is_equal(WALK_TICKS) ## the movement phase consumed every frame
 	assert_vector(out.global_position).is_equal(Vector3.ZERO) ## input arrived, nothing moved
 	assert_float(walker.global_position.z).is_greater(1.5) ## walked through the Out body
 	sm.detach()
@@ -169,25 +173,45 @@ func test_standing_under_a_low_ceiling_stays_low() -> void:
 	assert_float(b.capsule().height).is_equal_approx(1.8, 0.0001)
 
 
+func test_revived_under_a_low_ceiling_stays_low() -> void:
+	_box(Vector3(0, LOW_CEILING_Y + 0.5, 0), Vector3(4, 1, 4))
+	var b := _body(Vector3(0, 0, 0))
+	b.set_downed(true)
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	b.set_downed(false)
+	assert_bool(b.is_downed()).is_false()
+	assert_float(b.capsule().height).is_equal_approx(1.2, 0.0001)
+	assert_int(b.collision_layer).is_equal(PhysicsLayers.PLAYERS) ## upright again for collisions
+
+
 func test_project_selects_jolt() -> void:
 	assert_str(String(ProjectSettings.get_setting("physics/3d/physics_engine"))).is_equal("Jolt Physics")
 
 
 # --- inline layer numbers ----------------------------------------------------
 
-## Lines of `src` that set a layer or mask from a number instead of PhysicsLayers: an assignment to
-## collision_layer / collision_mask whose right side holds a digit, or any set_collision_* call.
+## Lines of a script that set a layer or mask from a number instead of PhysicsLayers: an assignment to
+## collision_layer / collision_mask whose right side holds a digit or continues on the next line, any
+## set_collision_* call, and a query built with .create(from, to, mask) whose mask holds a digit.
+## Not caught: a literal stored in a variable first (review that by hand).
 static func literal_mask_lines(src: String) -> PackedStringArray:
-	var assign := RegEx.create_from_string("(collision_layer|collision_mask)\\s*[|&]?=\\s*(.*)$")
+	var assign := RegEx.create_from_string("(collision_layer|collision_mask)\\s*[-+|&^]?=\\s*(.*)$")
+	var create := RegEx.create_from_string("Query\\w*\\.create\\(([^,]*,){2}(.*)$")
 	var digit := RegEx.create_from_string("\\b\\d+\\b")
 	var out := PackedStringArray()
 	for line in src.split("\n"):
-		var code := line.split("#")[0]
+		var code := "" if line.strip_edges().begins_with("#") else line.split(" #")[0]
 		if code.contains("set_collision_layer") or code.contains("set_collision_mask"):
 			out.append(line.strip_edges())
 			continue
 		var m := assign.search(code)
-		if m != null and digit.search(m.get_string(2)) != null:
+		var rhs := m.get_string(2).strip_edges() if m != null else ""
+		if m != null and (rhs == "" or rhs.ends_with("(") or rhs.ends_with("\\") or digit.search(rhs) != null):
+			out.append(line.strip_edges())
+			continue
+		var c := create.search(code)
+		if c != null and digit.search(c.get_string(2)) != null:
 			out.append(line.strip_edges())
 	return out
 
@@ -200,9 +224,18 @@ func test_scanner_catches_a_literal_and_passes_physics_layers() -> void:
 		"\tbody.collision_mask = PhysicsLayers.MOVE_SERVER",
 		"\tbody.collision_layer = PhysicsLayers.NONE # was 0",
 		"\tq.collision_mask = _mask & ~PhysicsLayers.PLAYERS",
+		"\tbody.collision_mask |= 2",
+		"\tbody.collision_mask = (",
+		"\t\t1 << 3)",
+		"\tvar q := PhysicsRayQueryParameters3D.create(a, b, 1)",
+		"\tvar ok := PhysicsRayQueryParameters3D.create(a, b, PhysicsLayers.SIGHT)",
+		"\tvar s := \"#\"; body.collision_layer = 4",
+		"\t# body.collision_layer = 8 (a comment)",
 	])
 	assert_array(literal_mask_lines(fixture)).contains_exactly([
-		"body.collision_mask = 1 << 3", "q.collision_layer = 8", "body.set_collision_layer_value(4, true)"])
+		"body.collision_mask = 1 << 3", "q.collision_layer = 8", "body.set_collision_layer_value(4, true)",
+		"body.collision_mask |= 2", "body.collision_mask = (", "var q := PhysicsRayQueryParameters3D.create(a, b, 1)",
+		"var s := \"#\"; body.collision_layer = 4"])
 
 
 func test_no_script_under_src_sets_a_layer_or_mask_from_a_literal() -> void:
@@ -218,5 +251,10 @@ func test_no_script_under_src_sets_a_layer_or_mask_from_a_literal() -> void:
 				scanned += 1
 				for line in literal_mask_lines(FileAccess.get_file_as_string(dir + f)):
 					bad.append("%s%s: %s" % [dir, f, line])
+			elif f.ends_with(".tscn") or f.ends_with(".tres"):
+				# A saved scene can only hold numbers: layers under src/ are set in code (ADR-0007 §5).
+				for line in FileAccess.get_file_as_string(dir + f).split("\n"):
+					if line.begins_with("collision_layer") or line.begins_with("collision_mask"):
+						bad.append("%s%s: %s" % [dir, f, line])
 	assert_int(scanned).is_greater(10) ## the walk really reached the sources
 	assert_array(bad).is_empty()

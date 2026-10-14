@@ -1,7 +1,7 @@
 # Story 001: Player body, capsules and collision layers
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -34,10 +34,10 @@ Every player, in every form, is the same Jolt `CharacterBody3D` capsule, and eve
 
 *From `first-person-controller.md` Acceptance Criteria (Body and gaits; Cross-system movement: Collision) and ADR-0007 §1, §2, §5, scoped to this story:*
 
-- [ ] For a survivor, a disguised shapeshifter, a true-form shapeshifter and a Downed survivor, the capsule radius is 0.30 m; height is 1.8 m standing and 1.2 m crouched or Downed; no two players share a shape resource.
-- [ ] Two upright players walking into each other do not pass through; an upright player walks through a Downed survivor lying in a 0.9 m doorway.
-- [ ] An Eliminated or Escaped player's body has no collision and accepts no movement.
-- [ ] `project.godot` selects Jolt, and a test fails if any script under `src/` sets `collision_layer`, `collision_mask` or a query mask from a number literal instead of `PhysicsLayers`.
+- [x] For a survivor, a disguised shapeshifter, a true-form shapeshifter and a Downed survivor, the capsule radius is 0.30 m; height is 1.8 m standing and 1.2 m crouched or Downed; no two players share a shape resource.
+- [x] Two upright players walking into each other do not pass through; an upright player walks through a Downed survivor lying in a 0.9 m doorway.
+- [x] An Eliminated or Escaped player's body has no collision and accepts no movement.
+- [x] `project.godot` selects Jolt, and a test fails if any script under `src/` sets `collision_layer`, `collision_mask` or a query mask from a number literal instead of `PhysicsLayers`.
 
 ---
 
@@ -84,7 +84,7 @@ Every player, in every form, is the same Jolt `CharacterBody3D` capsule, and eve
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/body_collision_test.gd` — must exist and pass
 
-**Status**: [x] `tests/integration/first-person-controller/body_collision_test.gd` passes (10 tests); 4 mutations caught; suite 173/173 (2026-10-14)
+**Status**: [x] `tests/integration/first-person-controller/body_collision_test.gd` passes (11 tests); 5 mutations caught; suite 174/174 (2026-10-14)
 
 ---
 
@@ -92,3 +92,18 @@ Every player, in every form, is the same Jolt `CharacterBody3D` capsule, and eve
 
 - Depends on: network-authority story 004 (TickRunner); data-config story 002 (`ControllerKnobs`)
 - Unlocks: Stories 002, 004, 012
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing in `tests/integration/first-person-controller/body_collision_test.gd`
+- AC1: `test_every_form_has_radius_030_and_heights_18_and_12_with_no_shared_shape` (8 distinct capsules; the forms share one class, so the form test is by construction) and `test_capsule_sizes_come_from_controller_knobs`.
+- AC2: `test_two_upright_players_walking_into_each_other_do_not_pass`, `test_upright_player_walks_through_downed_survivor_in_a_09m_doorway` (with an upright control that blocks).
+- AC3: `test_out_body_has_no_collision_and_no_movement` (layer, mask NONE, shape disabled; every frame consumed, no motion). Movement stops through `ServerMovement.set_frozen`, which the Out owner (Match Flow) must call with `set_out()`.
+- AC4: `test_project_selects_jolt`; the literal scan covers assignments (incl. compound and multi-line), `set_collision_*`, `Query*.create(.., mask)` and saved scenes under src/, proven on a fixture. A literal stored in a variable first is not caught.
+- Edge cases: stand-up and revive under a low ceiling stay low; Downed set on the same physics frame as a contact.
+**Deviations** (advisory): AD-75 (capsule height knobs, set_frozen, PhysicsLayers.NONE, Jolt). Deferred review suggestions: TD-007.
+**Test Evidence**: Integration: 11 tests; 5 mutations caught; suite 174/174.
+**Run result**: N/A: no rendered body yet (no mesh or camera); collision verified headless with real Jolt bodies. The boot scene still loads with Jolt selected ("boot ok: knob problems=0").
+**Code Review**: Complete: `/code-review` 2026-10-14, APPROVED WITH SUGGESTIONS (Godot: no blocking; QA: GAPS); applied: revive stand-up probe, scanner forms, movement-phase proof, true same-frame state change.

@@ -58,10 +58,11 @@ func set_low(low: bool) -> bool:
 	return true
 
 
-## Downed: low capsule, no `players` layer bit. Leaving Downed stands the body up.
+## Downed: low capsule, no `players` layer bit. Leaving Downed stands the body up when the standing
+## capsule fits (the same probe as set_low), else it stays low as if crouched.
 func set_downed(downed: bool) -> void:
 	_downed = downed
-	_low = downed
+	_low = downed or _standing_blocked()
 	_apply()
 
 
