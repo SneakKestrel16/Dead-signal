@@ -54,6 +54,8 @@ class PlayerState extends RefCounted:
 	var probe: PhysicsShapeQueryParameters3D
 	## The body's capsule node: the probe is resized from its live shape each tick (a crouch resizes it).
 	var shape_node: CollisionShape3D
+	## No movement and no inside-geometry restore (an Out player, set_frozen).
+	var frozen := false
 	var history_pos := PackedVector3Array()
 	var history_tick := PackedInt32Array()
 
@@ -124,6 +126,14 @@ func push_local(player_id: int, frame: InputFrame) -> void:
 	_players[player_id].queue.push(InputFrame.build_packet(f))
 
 
+## Stops (true) or resumes the player's movement step. The owner of Eliminated and Escaped (Match Flow)
+## calls it together with PlayerBody.set_out(), which removes the body's collision (ADR-0007).
+func set_frozen(player_id: int, frozen: bool) -> void:
+	_players[player_id].frozen = frozen
+	if frozen:
+		_players[player_id].body.velocity = Vector3.ZERO
+
+
 ## The player's modifiers; the controller arbitration (story 002) writes them.
 func modifiers_of(player_id: int) -> MovementModifiers:
 	return _players[player_id].modifiers
@@ -162,6 +172,8 @@ func _input_phase(tick: int) -> void:
 
 func _movement_phase(_tick: int) -> void:
 	for p: PlayerState in _players.values():
+		if p.frozen:
+			continue
 		_restore_if_inside(p)
 		# Movement steps exactly the frames the owner predicted, time-shifted: a catch-up tick steps
 		# both, a starved tick steps none (the repeat still stands for intent, e.g. holds), so a late

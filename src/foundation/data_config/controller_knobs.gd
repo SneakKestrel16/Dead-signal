@@ -19,6 +19,10 @@ class_name ControllerKnobs extends Resource
 @export_range(0.0, 0.09) var accel_time_s: float = NAN
 @export_range(2.7, 3.5) var interact_ray_max_m: float = NAN
 @export_range(0.2, 0.45) var step_height_m: float = NAN
+## GDD `capsule_height_m` "1.8 / 1.2" (Core Rule 1, ADR-0007 §2): standing height here, crouched or
+## Downed height in capsule_low_height_m (field names chosen 2026-10-14, AD-75). Height includes caps.
+@export var capsule_height_m: float = NAN
+@export var capsule_low_height_m: float = NAN
 
 
 ## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.

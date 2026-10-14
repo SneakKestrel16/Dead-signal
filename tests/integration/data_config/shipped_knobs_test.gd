@@ -28,7 +28,6 @@ const NOT_A_KNOB := {
 	"lobby-role-assignment:reconnect_grace_s": "owned by match-flow.md; the field lives in MatchFlowKnobs (checked via match-flow)",
 	"monster-abilities:false_signal_footstep_path_m": "'(derived)' and 'not a knob': walk_speed x duration",
 	"first-person-controller:eye_height_m": "two values (standing 1.6 / crouched 1.0) with no agreed field names yet; NOT SOURCEABLE as one field",
-	"first-person-controller:capsule_height_m": "two values (standing 1.8 / crouched 1.2) with no agreed field names yet; NOT SOURCEABLE as one field",
 }
 
 ## ADR-only knobs (no GDD table): section -> field names.

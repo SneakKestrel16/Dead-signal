@@ -39,16 +39,16 @@ stories:
     name: "Cross-knob rules"
     file: "production/epics/data-config/story-003-cross-knob-rules.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
   - id: "controller-interaction-1"
     name: "Player body, capsules and collision layers"
     file: "production/epics/controller-interaction/story-001-body-capsule-collision.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1.5
     blocker: ""

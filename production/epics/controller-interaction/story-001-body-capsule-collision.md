@@ -1,12 +1,12 @@
 # Story 001: Player body, capsules and collision layers
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -84,7 +84,7 @@ Every player, in every form, is the same Jolt `CharacterBody3D` capsule, and eve
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/body_collision_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/first-person-controller/body_collision_test.gd` passes (10 tests); 4 mutations caught; suite 173/173 (2026-10-14)
 
 ---
 

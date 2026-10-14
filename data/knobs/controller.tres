@@ -19,3 +19,5 @@ footstep_radius_crawl_m = 2.0
 accel_time_s = 0.05
 interact_ray_max_m = 3.0
 step_height_m = 0.35
+capsule_height_m = 1.8
+capsule_low_height_m = 1.2
