@@ -5,7 +5,8 @@ class_name MapData extends Resource
 ## Usage:
 ##   var map := MapData.load_map()
 ##   if not map.errors().is_empty(): refuse the round
-##   var net_id := map.interactables().find(door)
+##   var targets := map.interactables()   # build once per round; pass net ids as ints, never look
+##                                        # an item up by reference (each load makes new instances)
 
 const MAP_PATH := "res://data/maps/research_facility.tres"
 ## Every marker type the level doc places. A map missing one fails errors().
@@ -39,8 +40,11 @@ func errors() -> PackedStringArray:
 		if seen.has(item.id):
 			out.append("duplicate id: %s" % item.id)
 		seen[item.id] = true
-	for v in volumes:
-		rooms[v.room] = true
+	for i in volumes.size():
+		rooms[volumes[i].room] = true
+		for j in range(i + 1, volumes.size()):
+			if volumes[i].box.intersects(volumes[j].box):
+				out.append("volumes overlap: %s %s" % [volumes[i].id, volumes[j].id])
 	for p in passages:
 		for r: StringName in [p.a, p.b]:
 			if not rooms.has(r):

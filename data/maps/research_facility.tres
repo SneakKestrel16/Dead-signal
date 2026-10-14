@@ -296,9 +296,9 @@ id = &"A4-A5"
 a = &"A4"
 b = &"A5"
 kind = &"door"
-position = Vector3(16.5, 0.0, 26.0)
+position = Vector3(17.5, 0.0, 26.0)
 width_m = 1.0
-swing_box = AABB(16.0, 0.0, 25.0, 1.0, 2.0, 2.0)
+swing_box = AABB(17.0, 0.0, 25.0, 1.0, 2.0, 2.0)
 
 [sub_resource type="Resource" id="p_A5_H_S"]
 script = ExtResource("3")
@@ -306,9 +306,9 @@ id = &"A5-H-S"
 a = &"A5"
 b = &"H-S"
 kind = &"door"
-position = Vector3(16.5, 0.0, 36.0)
+position = Vector3(17.5, 0.0, 36.0)
 width_m = 1.0
-swing_box = AABB(16.0, 0.0, 35.0, 1.0, 2.0, 2.0)
+swing_box = AABB(17.0, 0.0, 35.0, 1.0, 2.0, 2.0)
 
 [sub_resource type="Resource" id="p_A4_B1"]
 script = ExtResource("3")
@@ -804,7 +804,7 @@ script = ExtResource("4")
 id = &"P2"
 type = &"fuse_box"
 volume = &"B1"
-position = Vector3(29.0, 0.0, 25.0)
+position = Vector3(30.0, 0.0, 25.0)
 
 [sub_resource type="Resource" id="m_P3"]
 script = ExtResource("4")

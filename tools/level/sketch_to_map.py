@@ -1,6 +1,7 @@
 """One-off generator: research-facility.md sketch -> data/maps/research_facility.tres.
 
-Provenance tool, not a pipeline: it was run once (facility-map story 001, 2026-10-14) to turn the
+Provenance tool, not a pipeline: it was run once (facility-map story 001, 2026-10-14; re-run the same day
+after review corrected three sketch columns) to turn the
 level doc's ASCII sketch into map data. From now on the .tres is the authored file; edit it directly
 (the greybox, story 002, will move positions) and do not re-run this over hand edits.
 
@@ -51,8 +52,8 @@ PASSAGES = [
     ("A2", "A3", "door", 10, 9, "v", DOOR_W), ("A2", "A4", "door", 13, 10, "v", DOOR_W),
     ("A2", "A7", "door", 13, 5, "v", DOOR_W),
     ("A3", "A6", "door", 5, 7, "h", DOOR_W), ("A6", "H-N", "door", 5, 2, "h", DOOR_W),
-    ("A7", "H-N", "door", 17, 2, "h", DOOR_W), ("A4", "A5", "door", 16, 13, "h", DOOR_W),
-    ("A5", "H-S", "door", 16, 18, "h", DOOR_W),
+    ("A7", "H-N", "door", 17, 2, "h", DOOR_W), ("A4", "A5", "door", 17, 13, "h", DOOR_W),
+    ("A5", "H-S", "door", 17, 18, "h", DOOR_W),
     ("A4", "B1", "door", 22, 10, "v", DOOR_W), ("B1", "B2", "door", 31, 6, "h", DOOR_W),
     ("B1", "B3", "door", 31, 14, "h", DOOR_W), ("B2", "H-N", "door", 31, 2, "h", DOOR_W),
     ("B3", "H-S", "door", 31, 18, "h", DOOR_W),
@@ -84,7 +85,7 @@ MARKERS = [
     ("d4", "drive", 14, 4, 2), ("d5", "drive", 14, 15, 2), ("d6", "drive", 45, 15, 2),
     ("f1", "fuse", 4, 8, 2), ("f2", "fuse", 17, 15, 2), ("f3", "fuse", 27, 15, 2), ("f4", "fuse", 34, 19, 2),
     ("f5", "fuse", 41, 4, 2), ("f6", "fuse", 52, 1, 2), ("f7", "fuse", 2, 1, 2),
-    ("P1", "fuse_box", 24, 3, 2), ("P2", "fuse_box", 28, 12, 2), ("P3", "fuse_box", 24, 15, 2),
+    ("P1", "fuse_box", 24, 3, 2), ("P2", "fuse_box", 29, 12, 2), ("P3", "fuse_box", 24, 15, 2),
     ("T1", "terminal", 52, 8, 2), ("T2", "terminal", 41, 8, 2), ("T3", "terminal", 42, 15, 2),
 ]
 

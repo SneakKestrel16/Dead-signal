@@ -114,6 +114,8 @@ func test_interactables_get_the_same_net_ids_on_host_and_client() -> void:
 	for net_id in host.size():
 		assert_str(client[net_id].id).is_equal(host[net_id].id)
 	assert_str(host[0].id).is_equal(&"A1-A2") ## map order: first door in the file
+	assert_str(host[24].id).is_equal(&"h1") ## then markers in file order: the first hiding spot
+	assert_str(host[-1].id).is_equal(&"T3")
 	assert_bool(host.any(func(i: Resource) -> bool: return i is MapMarker and i.type in [&"survivor_spawn",
 		&"monster_spawn", &"camera"])).is_false()
 	assert_bool(host.any(func(i: Resource) -> bool: return i is MapPassage and not i.is_door())).is_false()
@@ -199,3 +201,9 @@ func test_a_passage_to_an_unknown_room_fails_the_load() -> void:
 	var map := MapData.load_map()
 	map.passages[0].b = &"Z9"
 	assert_array(map.errors()).contains_exactly(["passage %s: unknown room Z9" % map.passages[0].id])
+
+
+func test_overlapping_volumes_fail_the_load() -> void:
+	var map := MapData.load_map()
+	map.volumes[1].box.position.x -= 0.5 ## A2-N pushed into A6
+	assert_array(map.errors()).contains([&"volumes overlap: A2-N A6"])
