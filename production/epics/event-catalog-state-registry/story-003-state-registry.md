@@ -1,7 +1,7 @@
 # Story 003: StateRegistry and typed views
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -36,9 +36,9 @@ Systems read each other's state only through the rows of the `systems-index.md` 
 
 *From ADR-0005 §5 and Validation Criteria, scoped to this story:*
 
-- [ ] A registered view is returned by `view(key, ViewClass)`; asking with the wrong class asserts; registering the same key twice asserts.
-- [ ] A view reflects its owner's state after the owner replaces a collection whole.
-- [ ] A test fails if any `*View` class declares a setter or a public writable property.
+- [x] A registered view is returned by `view(key, ViewClass)`; asking with the wrong class asserts; registering the same key twice asserts.
+- [x] A view reflects its owner's state after the owner replaces a collection whole.
+- [x] A test fails if any `*View` class declares a setter or a public writable property.
 
 ---
 
@@ -80,7 +80,7 @@ Systems read each other's state only through the rows of the `systems-index.md` 
 **Required evidence**:
 - Logic: `tests/unit/event_catalog/state_registry_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/event_catalog/state_registry_test.gd` — 11 tests; suite 57/57 pass (2026-10-13)
 
 ---
 
@@ -88,3 +88,16 @@ Systems read each other's state only through the rows of the `systems-index.md` 
 
 - Depends on: None
 - Unlocks: Story 004
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 3/3 passing, each covered by a gdUnit4 test (11 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- Violations (second registration, wrong class, unregistered key) are recorded in `violations`, `push_error`'d, and `assert(false)` only when `fail_hard` (default `OS.is_debug_build()`), same pattern as `EventBus`; `view()` returns null after recording.
+- `StateKeys` has 22 constants, one per state-table row; the key names are the implementer's choice (e.g. `PLAYER_POSITIONS_LIFE_STATES`) and are not yet reviewed.
+- The "no setter / no public writable property" check is a reflection scan over `*_view.gd` under `src/`. It found 0 real view files (none exist until the Feature epics). It was proved on a BadView fixture, but a real view class has never run through it. GDScript has no read-only var, so every public `var` and every public method not starting `get_`/`is_`/`has_` is flagged.
+- The `set(v):` property-setter scan runs only on scripts with source text (real files); inner-class fixtures are covered by the `set_` method rule, and the property-setter case is tested with a runtime-built script.
+**Test Evidence**: Logic: `tests/unit/event_catalog/state_registry_test.gd`; mutation-checked (silent overwrite on register; `is_instance_of` removed: each failed a test; the second run aborted early, so only that one failure was confirmed).
+**Code Review**: Skipped (lean mode). The registry was read in full by the orchestrator; no specialist or QA review ran.
