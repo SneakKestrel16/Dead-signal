@@ -13,7 +13,9 @@ static func validate(section_name: String, section: Resource) -> PackedStringArr
 		var field: String = prop.name
 		var value: Variant = section.get(field)
 		var path := "%s.%s" % [section_name, field]
-		if (prop.type == TYPE_FLOAT and is_nan(value)) or (prop.type == TYPE_INT and value == KnobUnset.INT):
+		# An empty int array is unset too (e.g. scare.phase_budget); its size and element
+		# range are the section's validate_cross rule (story 003).
+		if (prop.type == TYPE_FLOAT and is_nan(value)) or (prop.type == TYPE_INT and value == KnobUnset.INT) 				or (prop.type == TYPE_PACKED_INT32_ARRAY and value.is_empty()):
 			errs.append("%s unset" % path)
 			continue
 		if prop.hint != PROPERTY_HINT_RANGE:

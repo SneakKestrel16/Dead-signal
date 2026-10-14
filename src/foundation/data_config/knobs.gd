@@ -35,13 +35,14 @@ var _load_notes: Dictionary = {}
 
 
 ## Loads every section from KNOB_DIR; collect problems with errors(), never trust a Knobs with errors.
-## `dir` is a test hook: anything outside KNOB_DIR is refused unless OS.is_debug_build().
+## `dir` is a test hook: anything outside KNOB_DIR is refused outside the editor binary
+## (a debug export template must not load user:// resources: they can embed scripts, ADR-0006 §3).
 ## Example: `var k := Knobs.load_all()` ; tests: `Knobs.load_all("user://knob_copy/")`.
 static func load_all(dir: String = KNOB_DIR) -> Knobs:
 	var k := Knobs.new()
-	if dir != KNOB_DIR and not OS.is_debug_build():
+	if dir != KNOB_DIR and not OS.has_feature("editor"):
 		for name in SECTIONS:
-			k._load_notes[name] = "%s: knob directory override refused outside debug builds" % name
+			k._load_notes[name] = "%s: knob directory override refused outside the editor" % name
 		return k
 	for name in SECTIONS:
 		var path := "%s%s.tres" % [dir, name]
@@ -49,10 +50,10 @@ static func load_all(dir: String = KNOB_DIR) -> Knobs:
 			k._load_notes[name] = "%s: file %s missing" % [name, path]
 			continue
 		var res := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
-		k.loaded_paths.append(path)
 		if res == null or not _is_section(name, res):
 			k._load_notes[name] = "%s: file %s failed to load or is the wrong type" % [name, path]
 			continue
+		k.loaded_paths.append(path)
 		k.set(name, res)
 	return k
 

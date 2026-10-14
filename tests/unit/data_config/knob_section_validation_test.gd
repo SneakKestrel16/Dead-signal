@@ -12,6 +12,11 @@ class PrivateVarSection extends Resource:
 	var _cache: float = NAN
 
 
+## Inner section with an int-array knob, unset when empty.
+class ArraySection extends Resource:
+	@export var budget: PackedInt32Array = PackedInt32Array()
+
+
 ## Inner section with three fields, so three bad fields sit in one section.
 class ThreeFieldSection extends Resource:
 	@export_range(0.0, 1.0) var a: float = NAN
@@ -140,3 +145,13 @@ func test_ticks_zero_seconds_returns_zero() -> void:
 	k.net = NetKnobs.new()
 	k.net.sim_tick_hz = 60
 	assert_int(k.ticks(0.0)).is_equal(0)
+
+
+func test_validate_empty_int_array_reports_unset() -> void:
+	assert_array(KnobValidator.validate("arr", ArraySection.new())).contains_exactly(["arr.budget unset"])
+
+
+func test_validate_filled_int_array_is_valid() -> void:
+	var s := ArraySection.new()
+	s.budget = PackedInt32Array([2, 6, 4])
+	assert_array(KnobValidator.validate("arr", s)).is_empty()
