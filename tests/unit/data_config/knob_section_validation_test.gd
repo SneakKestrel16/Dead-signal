@@ -6,6 +6,12 @@ class OrGreaterSection extends Resource:
 	@export_range(1.0, 4.0, 0.1, "or_greater") var x: float = NAN
 
 
+## Inner section with a non-exported helper var, which is not a knob.
+class PrivateVarSection extends Resource:
+	@export_range(0.0, 1.0) var a: float = NAN
+	var _cache: float = NAN
+
+
 ## Inner section with three fields, so three bad fields sit in one section.
 class ThreeFieldSection extends Resource:
 	@export_range(0.0, 1.0) var a: float = NAN
@@ -65,7 +71,8 @@ func test_validate_three_bad_fields_in_one_section_reports_three_errors() -> voi
 	s.a = NAN # unset
 	s.b = KnobUnset.INT # unset
 	s.c = 9.0 # above max
-	assert_array(KnobValidator.validate("three", s)).has_size(3)
+	assert_array(KnobValidator.validate("three", s)).contains_exactly([
+		"three.a unset", "three.b unset", "three.c = 9.0 outside range [0.0, 1.0]"])
 
 
 func test_knobs_errors_collects_across_sections() -> void:
@@ -74,7 +81,21 @@ func test_knobs_errors_collects_across_sections() -> void:
 	var d := DefenseKnobs.new()
 	d.stun_duration_s = 9.0 # out of range: 1 error; charges unset: 1 error
 	k.defense = d
-	assert_array(k.errors()).has_size(3)
+	assert_array(k.errors()).contains_exactly([
+		"net.sim_tick_hz unset",
+		"defense.stun_duration_s = 9.0 outside range [1.0, 3.0]",
+		"defense.stun_item_charges unset"])
+
+
+func test_knobs_errors_missing_sections_reports_each() -> void:
+	assert_array(Knobs.new().errors()).contains_exactly(
+			["net section missing", "defense section missing"])
+
+
+func test_validate_private_non_exported_var_is_ignored() -> void:
+	var s := PrivateVarSection.new()
+	s.a = 0.5
+	assert_array(KnobValidator.validate("private", s)).is_empty()
 
 
 func test_parse_range_int_hint_reported_as_floats_parses() -> void:

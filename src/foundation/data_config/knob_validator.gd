@@ -7,12 +7,13 @@ class_name KnobValidator
 static func validate(section_name: String, section: Resource) -> PackedStringArray:
 	var errs := PackedStringArray()
 	for prop in section.get_property_list():
-		if not (prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE):
+		# Script fields that are saved (exported); a private helper var is not a knob.
+		if not (prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.usage & PROPERTY_USAGE_STORAGE):
 			continue
 		var field: String = prop.name
 		var value: Variant = section.get(field)
 		var path := "%s.%s" % [section_name, field]
-		if prop.type == TYPE_FLOAT and is_nan(value) or prop.type == TYPE_INT and value == KnobUnset.INT:
+		if (prop.type == TYPE_FLOAT and is_nan(value)) or (prop.type == TYPE_INT and value == KnobUnset.INT):
 			errs.append("%s unset" % path)
 			continue
 		if prop.hint != PROPERTY_HINT_RANGE:
