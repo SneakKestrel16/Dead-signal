@@ -31,7 +31,7 @@ stories:
     name: "Disconnect handling and host left"
     file: "production/epics/network-authority/story-003-disconnect-host-left.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

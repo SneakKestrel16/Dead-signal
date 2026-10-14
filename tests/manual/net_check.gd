@@ -179,6 +179,7 @@ func _start_clients() -> void:
 		c.net.setup(_knobs, _version, StubLobby.new())
 		root.add_child(c.net)
 		c.net.join_rejected.connect(_on_rejected.bind(c))
+		c.net.host_left.connect(func() -> void: _log("c%d HOST_LEFT" % i))
 		root.multiplayer.connected_to_server.connect(_on_connected.bind(c))
 		root.multiplayer.server_disconnected.connect(func() -> void:
 			_log("c%d server_disconnected" % i)

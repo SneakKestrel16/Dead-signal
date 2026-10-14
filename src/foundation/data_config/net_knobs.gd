@@ -3,8 +3,7 @@ class_name NetKnobs extends Resource
 ## Defaults are unset sentinels; values come only from res://data/knobs/net.tres. Ranges are the GDD Safe Range;
 ## a knob with no sourced range has a plain @export (unset is still caught). Values the GDD marks proposed ship as proposed.
 ## Usage: `var k := Knobs.load_all(); var v = k.net.sim_tick_hz`
-## NOT SOURCEABLE (no number in ADR-0001/0002/0003): slack_ticks,
-## ENet timeout. Add it when its number is decided.
+## NOT SOURCEABLE (no number in ADR-0001/0002/0003): slack_ticks.
 ## sim_tick_hz range 30..128 kept by designer decision 2026-10-13; ADR-0002 fixes only the value 60.
 
 @export_range(30, 128) var sim_tick_hz: int = KnobUnset.INT
@@ -25,6 +24,12 @@ class_name NetKnobs extends Resource
 @export var auth_timeout_s: float = NAN
 ## Largest auth payload the server will decode, in bytes; larger is bad_payload.
 @export var auth_payload_cap_bytes: int = KnobUnset.INT
+## ENet dead-peer timeout (story network-authority/003), ENetPacketPeer.set_timeout(limit, min_ms, max_ms) on
+## both sides. Values from ADR-0001 verification (1): 32, 1000, 2000 detected a dead peer in 3.0 s on loopback
+## (the default took 5.8 s). Inference: real-network timing is NOT RUN (NA-V NAV-14 settles it).
+@export var enet_timeout_limit: int = KnobUnset.INT
+@export var enet_timeout_min_ms: int = KnobUnset.INT
+@export var enet_timeout_max_ms: int = KnobUnset.INT
 ## Input queue knobs (story network-authority/005): inference, AD-61, no ADR/GDD number.
 ## Hard cap on queued input frames per player; the oldest is dropped.
 @export var input_queue_cap: int = KnobUnset.INT
@@ -53,4 +58,8 @@ func validate_cross() -> PackedStringArray:
 	# deadzone must be below smooth_max or no correction is ever smoothed.
 	if correction_deadzone_m >= correction_smooth_max_m:
 		errs.append("net.correction_deadzone_m (%s) must be below net.correction_smooth_max_m (%s) (ADR-0002 rule 6)" % [correction_deadzone_m, correction_smooth_max_m])
+	# Source: ADR-0001 §6 (ENetPacketPeer.set_timeout from data): ENet's timeoutMinimum is the floor and
+	# timeoutMaximum the ceiling of one timeout window, so min above max leaves the window undefined.
+	if enet_timeout_min_ms > enet_timeout_max_ms:
+		errs.append("net.enet_timeout_min_ms (%s) must not exceed net.enet_timeout_max_ms (%s) (ADR-0001 §6)" % [enet_timeout_min_ms, enet_timeout_max_ms])
 	return errs

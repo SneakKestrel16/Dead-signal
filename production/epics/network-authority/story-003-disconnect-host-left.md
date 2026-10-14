@@ -1,12 +1,12 @@
 # Story 003: Disconnect detection and host leaving
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -84,7 +84,12 @@ Dead peers are found by the ENet timeout and routed to whoever owns the phase: t
 **Required evidence**:
 - Integration: `tests/integration/network/disconnect_host_left_test.gd` — must exist and pass; the real-network timeout is a documented two-PC test in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/network/disconnect_host_left_test.gd` passes (11 tests); full suite 241/241, 0 orphans (2026-10-14). Dead-peer detection 1.22 s on loopback with `set_timeout(32, 1000, 2000)`; both timing tests fail (> 5 s) with `set_timeout` disabled. Screenshot: `production/qa/evidence/network-authority-003-host-left.png`. Real-network timing: NA-V NAV-14/15 (designer).
+
+**Deviations**:
+- No Match Flow exists, so `ConnectionRouter` (`src/core/session/`) starts grace and emits `PlayerConnectionChanged` in a round; the systems index names Match Flow as the emitter, which takes this over in its epic (AD-85).
+- "Main menu" is the boot scene `src/main.tscn` (`Main.return_with`), until lobby-role-assignment story 005.
+- "No result is recorded": no result store exists yet; `Main.return_with` writes nothing.
 
 ---
 

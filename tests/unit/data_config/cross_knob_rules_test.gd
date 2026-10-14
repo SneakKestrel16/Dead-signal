@@ -93,10 +93,14 @@ func test_net_section_rules() -> void:
 	var n := _net()
 	n.starvation_low = n.starvation_high
 	n.correction_deadzone_m = n.correction_smooth_max_m
+	n.enet_timeout_min_ms = n.enet_timeout_max_ms + 1
 	var errs := n.validate_cross()
-	assert_int(errs.size()).is_equal(2)
+	assert_int(errs.size()).is_equal(3)
 	assert_str(errs[0]).contains("net.starvation_low").contains("ADR-0002")
 	assert_str(errs[1]).contains("net.correction_deadzone_m").contains("ADR-0002")
+	assert_str(errs[2]).contains("net.enet_timeout_min_ms").contains("ADR-0001")
+	n.enet_timeout_min_ms = n.enet_timeout_max_ms ## equal is a valid (fixed) window
+	assert_int(n.validate_cross().size()).is_equal(2)
 
 
 func test_scare_phase_budget_needs_three_entries_each_0_to_12() -> void:
@@ -151,4 +155,4 @@ func test_every_cross_check_has_a_source_comment() -> void:
 				assert_bool(cited).override_failure_message("%s: check without a source comment: %s" % [path, t]).is_true()
 				cited = false
 				checked += 1
-	assert_int(checked).is_equal(7) ## 3 spanning + 2 net + 2 scare: a new check must update this
+	assert_int(checked).is_equal(8) ## 3 spanning + 3 net + 2 scare: a new check must update this

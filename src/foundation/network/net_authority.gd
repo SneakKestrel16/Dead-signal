@@ -27,6 +27,9 @@ signal player_rejoined(player_id: int, new_peer_id: int)
 signal join_rejected(reason: StringName)
 ## Server: a join was refused with `reason` (one of REASON_*). The reply is on its way to the client.
 signal join_refused(reason: StringName)
+## Client: the server went away after this client was admitted (host quit, or the server timed out).
+## ADR-0001 §7: the caller returns to the main menu with "Host left" and records no result.
+signal host_left
 ## Server: create_server failed (e.g. port in use). Nothing was left initialised.
 signal host_failed(error: Error)
 
@@ -108,6 +111,8 @@ func join(address: String, port: int, display_name: String, token: String = "") 
 	_join_token = token
 	_attach(peer, _client_auth)
 	_smp.peer_authenticating.connect(_on_authenticating)
+	_smp.connected_to_server.connect(_on_connected_to_server)
+	_smp.server_disconnected.connect(_on_server_disconnected)
 	return OK
 
 
@@ -118,7 +123,8 @@ func close() -> void:
 			_smp.multiplayer_peer.close()
 		_smp.auth_callback = Callable()
 		_smp.multiplayer_peer = null
-		for sig in [&"peer_connected", &"peer_disconnected", &"peer_authentication_failed", &"peer_authenticating"]:
+		for sig in [&"peer_connected", &"peer_disconnected", &"peer_authentication_failed", &"peer_authenticating",
+				&"connected_to_server", &"server_disconnected"]:
 			for c in _smp.get_signal_connection_list(sig):
 				if c.callable.get_object() == self:
 					_smp.disconnect(sig, c.callable)
@@ -138,6 +144,15 @@ func player_id_of(peer_id: int) -> int:
 ## The connected peer of `player_id`, or -1 when disconnected.
 func peer_id_of(player_id: int) -> int:
 	return _peer_by_player.get(player_id, -1)
+
+
+## Server: the session token of `player_id`, or "" when unknown. Server-side routing only (the lobby is
+## keyed by token); never send or log it.
+func token_of(player_id: int) -> String:
+	for token: String in _tokens:
+		if _tokens[token] == player_id:
+			return token
+	return ""
 
 
 ## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
@@ -192,6 +207,16 @@ func _client_auth(_id: int, data: PackedByteArray) -> void:
 		_reject_client(StringName(reply.reason), reply)
 	else:
 		_reject_client(REASON_BAD_PAYLOAD, {})
+
+
+## ADR-0001 §6: the client side of the dead-peer timeout, set once the server peer exists.
+func _on_connected_to_server() -> void:
+	_set_timeout((_smp.multiplayer_peer as ENetMultiplayerPeer).get_peer(1))
+
+
+func _on_server_disconnected() -> void:
+	if local_player_id >= 0:
+		host_left.emit()
 
 
 func _reject_client(reason: StringName, details: Dictionary) -> void:
@@ -310,14 +335,21 @@ func _on_peer_connected(id: int) -> void:
 	var packet_peer := enet.get_peer(id) if enet != null else null
 	if packet_peer != null:
 		packet_peer.throttle_configure(THROTTLE_INTERVAL_MS, ENetPacketPeer.PACKET_THROTTLE_SCALE, 0)
+		_set_timeout(packet_peer)
 	if rebind:
 		player_rejoined.emit(player_id, id)
 	else:
 		player_joined.emit(player_id)
 
 
+## ADR-0001 §6: dead-peer detection from data, on both sides.
+func _set_timeout(packet_peer: ENetPacketPeer) -> void:
+	if packet_peer != null:
+		packet_peer.set_timeout(_knobs.net.enet_timeout_limit, _knobs.net.enet_timeout_min_ms, _knobs.net.enet_timeout_max_ms)
+
+
 ## Raises player_dropped for a bound player. An evicted peer was unbound first, so it raises nothing.
-## Story 003 adds grace timing and the routing to Lobby and Match Flow.
+## ConnectionRouter (Core) routes it to the lobby or the round (story 003).
 func _on_peer_disconnected(id: int) -> void:
 	var player_id: int = _player_by_peer.get(id, -1)
 	_player_by_peer.erase(id)
