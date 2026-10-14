@@ -214,8 +214,9 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		_smp.complete_auth(id)
 		return
 	_smp.send_auth(id, var_to_bytes(verdict))
+	var smp := _smp
 	await get_tree().create_timer(_knobs.net.reject_close_delay_s).timeout
-	if _smp != null and id in _smp.get_authenticating_peers():
+	if _smp == smp and id in _smp.get_authenticating_peers(): ## not a session started since
 		_smp.disconnect_peer(id)
 
 
@@ -237,8 +238,7 @@ func _validate(data: PackedByteArray) -> Dictionary:
 	if n.length() < NAME_MIN or n.length() > NAME_MAX:
 		return _reject(REASON_BAD_NAME)
 	var rebind_id: int = _tokens.get(d.token, -1)
-	if rebind_id != -1 and (peer_id_of(rebind_id) != -1 \
-			or (known_token_in_grace.is_valid() and known_token_in_grace.call(d.token))):
+	if rebind_id != -1 and (peer_id_of(rebind_id) != -1 or _in_grace(d.token)):
 		for p: Dictionary in _pending.values():
 			if p.player_id == rebind_id:
 				return _reject(REASON_TOKEN_IN_USE)
@@ -249,6 +249,10 @@ func _validate(data: PackedByteArray) -> Dictionary:
 	if _lobby.player_count() + new_joins >= _knobs.lobby.max_players:
 		return _reject(REASON_LOBBY_FULL)
 	return {"ok": true}
+
+
+func _in_grace(token: String) -> bool:
+	return known_token_in_grace.is_valid() and known_token_in_grace.call(token)
 
 
 func _reject(reason: StringName) -> Dictionary:
@@ -272,8 +276,14 @@ func _on_peer_connected(id: int) -> void:
 		return
 	var player_id: int = _pending[id].player_id
 	var rebind: bool = _pending[id].rebind
+	var token: String = _pending[id].token
 	_pending.erase(id)
 	var old := peer_id_of(player_id)
+	# Auth may have admitted the rebind because the old peer was still bound; if it dropped before
+	# this peer connected (player_dropped already raised), only grace can admit it now.
+	if rebind and old == -1 and not _in_grace(token):
+		_smp.disconnect_peer(id)
+		return
 	var syncs: Array = _visibility.get(player_id, [])
 	syncs = syncs.filter(func(s: Variant) -> bool: return is_instance_valid(s))
 	_visibility[player_id] = syncs
@@ -313,6 +323,8 @@ func _on_peer_disconnected(id: int) -> void:
 		player_dropped.emit(player_id)
 
 
+## Also raised for a peer that passed our auth_callback but disconnected before connecting (verified
+## 2026-10-14, tokens_reconnect_test.gd), so a pending rebind cannot hold its token as token_in_use.
 func _on_auth_failed(id: int) -> void:
 	if _pending.has(id):
 		if not _pending[id].rebind:

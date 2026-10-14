@@ -82,6 +82,8 @@ func after_test() -> void:
 			api.multiplayer_peer.close()
 		api.multiplayer_peer = null
 		api.auth_callback = Callable()
+		for c in api.peer_authenticating.get_connections(): ## raw clients' lambdas capture their API
+			api.peer_authenticating.disconnect(c.callable)
 		get_tree().set_multiplayer(null, r.get_path())
 		r.free()
 	_roots.clear()
@@ -118,6 +120,21 @@ func _client(display_name: String, token := "", prepare := Callable()) -> Dictio
 	_links.append(link)
 	assert_int(net.join("127.0.0.1", _next_port, display_name, token)).is_equal(OK)
 	return {"net": net, "root": root, "link": link, "rejects": rejects}
+
+
+## A bare SceneMultiplayer client, straight to the server, that sends a join with `token` and records
+## the reply but never completes auth until the test calls api.complete_auth(1). Returns {api, replies}.
+func _raw_client(token: String) -> Dictionary:
+	var root := _root()
+	var api := root.multiplayer as SceneMultiplayer
+	var replies: Array = []
+	api.auth_callback = func(_id: int, data: PackedByteArray) -> void: replies.append(bytes_to_var(data))
+	var payload := var_to_bytes({"version": SERVER_VERSION, "display_name": "Ann", "token": token})
+	api.peer_authenticating.connect(func(id: int) -> void: api.send_auth(id, payload))
+	var peer := ENetMultiplayerPeer.new()
+	assert_int(peer.create_client("127.0.0.1", _port)).is_equal(OK)
+	api.multiplayer_peer = peer
+	return {"api": api, "replies": replies}
 
 
 func _until(cond: Callable, what: String) -> bool:
@@ -304,6 +321,10 @@ func test_two_reconnects_with_the_same_token_one_wins() -> void:
 	var pid: int = a.net.local_player_id
 	var x := _client("Ann", a.net.local_token)
 	var y := _client("Ann", a.net.local_token)
+	# Hold both auths in flight together: a winner's peer cannot connect for a full delayed round trip,
+	# so the second auth always finds the first one pending (else it is a legal second rebind).
+	x.link.delay_s = 0.2
+	y.link.delay_s = 0.2
 	await _until(func() -> bool:
 		return (x.net.local_player_id != -1 or not x.rejects.is_empty()) \
 			and (y.net.local_player_id != -1 or not y.rejects.is_empty()), "both outcomes")
@@ -331,3 +352,47 @@ func test_old_peer_dropping_as_the_new_one_authenticates_ends_bound_to_the_new_p
 	assert_bool(_dropped.is_empty() or _dropped == [pid]).is_true()
 	assert_array(_rejoined).is_equal([[pid, _server.peer_id_of(pid)]])
 	assert_int(a2.net.local_player_id).is_equal(pid)
+
+
+func test_pending_rebind_that_never_connects_does_not_hold_the_token() -> void:
+	var a := await _joined_client("Ann")
+	var pid: int = a.net.local_player_id
+	var raw := _raw_client(a.net.local_token)
+	await _until(func() -> bool: return not raw.replies.is_empty(), "rebind accepted, not completed")
+	assert_bool(raw.replies[0].ok).is_true()
+	raw.api.multiplayer_peer.close() ## gone before connecting
+	await get_tree().create_timer(0.3).timeout ## the server notices the ENet disconnect
+	var a2 := _client("Ann", a.net.local_token)
+	assert_str(String(await _outcome(a2))).is_equal("ok")
+	assert_int(a2.net.local_player_id).is_equal(pid)
+
+
+func test_rebind_whose_old_peer_dropped_before_connect_needs_grace() -> void:
+	var a := await _joined_client("Ann")
+	var pid: int = a.net.local_player_id
+	_lobby.st = &"in_match"
+	_server.known_token_in_grace = func(_t: String) -> bool: return false
+	var raw := _raw_client(a.net.local_token)
+	await _until(func() -> bool: return not raw.replies.is_empty(), "rebind accepted while A was bound")
+	assert_bool(raw.replies[0].ok).is_true()
+	a.net.close()
+	await _until(func() -> bool: return _dropped == [pid], "A dropped")
+	raw.api.complete_auth(1)
+	var api: SceneMultiplayer = raw.api
+	await _until(func() -> bool:
+		return api.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_DISCONNECTED,
+		"server refuses the rebind out of grace")
+	assert_array(_rejoined).is_empty()
+	assert_int(_server.peer_id_of(pid)).is_equal(-1)
+
+
+func test_known_token_in_waiting_after_drop_is_a_new_join() -> void:
+	var a := await _joined_client("Ann")
+	var pid: int = a.net.local_player_id
+	a.net.close()
+	await _until(func() -> bool: return _dropped == [pid], "player_dropped")
+	var a2 := _client("Ann", a.net.local_token)
+	assert_str(String(await _outcome(a2))).is_equal("ok")
+	assert_int(a2.net.local_player_id).is_not_equal(pid) ## the lobby removed the leaver (rule 18)
+	assert_str(a2.net.local_token).is_not_equal(a.net.local_token)
+	assert_array(_rejoined).is_empty()

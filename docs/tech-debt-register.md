@@ -1,6 +1,6 @@
 ## Technical Debt Register
-Last updated: 2026-10-13
-Total items: 4 | Estimated total effort: S + S + M + S
+Last updated: 2026-10-14
+Total items: 6 | Estimated total effort: S + S + M + S + M + S
 
 | ID | Category | Description | Files | Effort | Impact | Priority | Status | Added | Sprint |
 |----|----------|-------------|-------|--------|--------|----------|--------|-------|--------|
@@ -9,3 +9,4 @@ Total items: 4 | Estimated total effort: S + S + M + S
 | TD-003 | Test | Shipped knob numbers are not compared with the GDD default column, so a typo inside a field's range passes; the GDD coverage test also lacks the reverse check (every field traces to a GDD or ADR) and a per-GDD row minimum — from data-config/story-002 code review | tests/integration/data_config/shipped_knobs_test.gd | M | Med | — | Open | 2026-10-13 | Backlog |
 | TD-004 | Dependency | No export_presets.cfg in the repo (gitignored repo-wide); the data/knobs include filter is documented in the README and verified only in a scratch export. Add a test that parses a preset, or un-ignore a project preset — from data-config/story-002 | src/foundation/data_config/README.md | S | Med | — | Open | 2026-10-13 | Backlog |
 | TD-005 | Code | Deferred from the NA-6 code review: build the snapshot body list once per tick instead of per peer (O(N^2)); guard ServerMovement accessors against unknown or removed players and freed bodies; a typed Snapshot class instead of Dictionaries; cap replay length (MAX_UNACKED 120 steps in one frame); validate history_ticks > 0 and correction_smooth_s > 0; a test with a rotating body for the local-space smoothing offset; check that the interpolation-OFF visual child renders smoothly above 60 fps; _restore_contacts relies on a zero-motion move_and_slide (not in the engine reference) — from network-authority/story-006 code review | src/foundation/network/server_movement.gd, owner_predictor.gd | M | Med | — | Open | 2026-10-14 | Backlog |
+| TD-006 | Code | Deferred from the NA-2 code review: `_tokens` and `_visibility` are never pruned when a player leaves for good (story 003 should erase them on removal); `set_player_visibility` has no guard for a freed synchronizer; the token-secrecy test does not capture reject replies or the evicted peer's last bytes, and no test proves eviction came from `disconnect_peer` rather than the client's own close (assert it inside the ENet timeout); the same-frame drop test accepts both orders without forcing each. | `src/foundation/network/net_authority.gd`, `tests/integration/network/tokens_reconnect_test.gd` | S | Low | — | Open | 2026-10-14 | Backlog |
