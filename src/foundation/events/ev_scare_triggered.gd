@@ -12,5 +12,8 @@ func type() -> StringName:
 	return &"ScareTriggered"
 
 
-func project(_peer: int, _handles: HandleTable) -> Dictionary:
+## Recipient clients only (systems-index); shared-scope fan-out arrives with ADR-0004.
+func project(peer: int, _handles: HandleTable) -> Dictionary:
+	if peer != recipient:
+		return {}
 	return {"scope": scope, "recipient": recipient}

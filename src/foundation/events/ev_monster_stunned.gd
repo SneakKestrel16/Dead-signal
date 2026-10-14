@@ -11,5 +11,7 @@ func type() -> StringName:
 	return &"MonsterStunned"
 
 
+## Fails closed: survivors get it only by per-peer handle while in true form (ADR-0004),
+## which needs handles not built yet, so no peer gets it until that projection lands.
 func project(_peer: int, _handles: HandleTable) -> Dictionary:
-	return {"monster": monster}
+	return {}

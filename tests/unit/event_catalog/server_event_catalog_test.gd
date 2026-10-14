@@ -27,7 +27,12 @@ func _scripts() -> Array[GDScript]:
 	var out: Array[GDScript] = []
 	for f in DirAccess.get_files_at(EVENTS_DIR):
 		if f.begins_with("ev_") and f.ends_with(".gd"):
-			out.append(load(EVENTS_DIR + f))
+			var s: GDScript = load(EVENTS_DIR + f)
+			assert_object(s).override_failure_message("%s failed to load" % f).is_not_null()
+			if s != null:
+				out.append(s)
+	# Guards every loop below against passing vacuously on an empty or moved directory.
+	assert_int(out.size()).override_failure_message("event scripts found").is_equal(EXPECTED.size())
 	return out
 
 
@@ -42,6 +47,8 @@ func _table_rows() -> Array[Dictionary]:
 			break
 		elif in_table and line.begins_with("| `"):
 			var cells := line.split("|")
+			if cells.size() < 3 or cells[1].split("`").size() < 2:
+				continue
 			rows.append({
 				"name": cells[1].strip_edges().split("`")[1],
 				"emitter": cells[2].strip_edges(),
@@ -61,11 +68,15 @@ func test_type_values_equal_hardcoded_catalog() -> void:
 	var types: Array = _scripts().map(func(s): return str(s.new().type()))
 	assert_str(_diff_sets(EXPECTED, types)).is_empty()
 	assert_int(types.size()).is_equal(EXPECTED.size())
+	var unique := {}
+	for t in types:
+		unique[t] = true
+	assert_int(unique.size()).override_failure_message("duplicate type()").is_equal(types.size())
 
 
 func test_type_values_equal_systems_index_table() -> void:
 	var rows := _table_rows()
-	assert_int(rows.size()).is_greater_equal(15)
+	assert_int(rows.size()).is_equal(EXPECTED.size())
 	var names: Array = rows.map(func(r): return r.name)
 	var types: Array = _scripts().map(func(s): return str(s.new().type()))
 	assert_str(_diff_sets(names, types)).is_empty()
@@ -83,9 +94,11 @@ func test_each_header_names_the_tables_emitter() -> void:
 	for r in _table_rows():
 		emitters[r.name] = r.emitter
 	for s in _scripts():
-		var name: String = s.new().type()
+		var event_name: String = s.new().type()
+		assert_bool(emitters.has(event_name)).override_failure_message(
+			"%s has no table row" % event_name).is_true()
 		assert_str(_first_line_with(s, "## Emitter:")).override_failure_message(
-			"%s header emitter" % name).is_equal(emitters[name])
+			"%s header emitter" % event_name).is_equal(emitters.get(event_name, "<no row>"))
 
 
 func test_project_returns_dictionary_for_every_subclass() -> void:
@@ -108,3 +121,36 @@ func test_diff_reports_sixteenth_event() -> void:
 func test_diff_reports_missing_event() -> void:
 	var fewer := EXPECTED.slice(1)
 	assert_str(_diff_sets(EXPECTED, fewer)).contains("missing: [\"RoundPhaseChanged\"]")
+
+
+## AC3: every override restates the parent's return type (4.7 typed-return rule).
+func test_each_override_restates_return_types() -> void:
+	for s in _scripts():
+		var src := s.source_code
+		assert_bool(src.contains("func type() -> StringName:")).override_failure_message(
+			"%s type() return type" % s.resource_path).is_true()
+		assert_bool(src.contains(") -> Dictionary:")).override_failure_message(
+			"%s project() return type" % s.resource_path).is_true()
+
+
+## AC3: the base is abstract, so `ServerEvent.new()` is a parse error (checked at authoring;
+## a runtime test cannot express a parse error). Here: the annotation sits on its own line.
+func test_server_event_is_abstract() -> void:
+	var src: String = (load(EVENTS_DIR + "server_event.gd") as GDScript).source_code
+	assert_bool(src.contains("@abstract
+class_name ServerEvent")).is_true()
+
+
+func test_scare_triggered_reaches_only_its_recipient() -> void:
+	var e := EvScareTriggered.new()
+	e.recipient = 3
+	assert_dict(e.project(3, HandleTable.new())).is_not_empty()
+	assert_dict(e.project(4, HandleTable.new())).is_empty()
+
+
+func test_round_ended_projection_does_not_share_results() -> void:
+	var e := EvRoundEnded.new()
+	e.results = {"a": 1}
+	var d: Dictionary = e.project(1, HandleTable.new())
+	d.results["a"] = 2
+	assert_int(e.results["a"]).is_equal(1)

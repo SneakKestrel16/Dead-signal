@@ -14,4 +14,4 @@ func type() -> StringName:
 
 
 func project(_peer: int, _handles: HandleTable) -> Dictionary:
-	return {"outcome": outcome, "reason": reason, "results": results}
+	return {"outcome": outcome, "reason": reason, "results": results.duplicate(true)}
