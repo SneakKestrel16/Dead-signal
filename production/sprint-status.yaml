@@ -84,7 +84,7 @@ stories:
     name: "Ready and countdown state machine"
     file: "production/epics/lobby-role-assignment/story-001-ready-countdown-state-machine.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

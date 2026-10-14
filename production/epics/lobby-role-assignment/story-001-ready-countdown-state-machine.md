@@ -1,12 +1,12 @@
 # Story 001: Ready and countdown state machine
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -81,7 +81,7 @@ The lobby moves Waiting → Countdown → In Match → Closed on the server cloc
 **Required evidence**:
 - Logic: `tests/unit/lobby/lobby_state_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/lobby/lobby_state_test.gd` passes (10 tests); 5 mutants (each cancel trigger, stale start tick) caught; suite 211/211 (2026-10-14)
 
 ---
 
