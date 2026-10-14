@@ -1,12 +1,12 @@
 # Story 004: Composition root and feature tick order
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs the network-authority TickRunner story.
 
@@ -36,10 +36,10 @@ One round-server node builds every service and module, injects them, registers m
 
 *From ADR-0005 §4, §6 and Validation Criteria, scoped to this story:*
 
-- [ ] With stub modules that log calls, one tick runs `server_tick` in the documented order with a `flush()` after each step.
-- [ ] An event emitted by a stub in step 2 is handled before step 3 runs.
-- [ ] After round teardown, no module, view or service is still alive and no orphan nodes remain (gdUnit4 orphan count 0).
-- [ ] No gameplay service is registered as an autoload in `project.godot`.
+- [x] With stub modules that log calls, one tick runs `server_tick` in the documented order with a `flush()` after each step.
+- [x] An event emitted by a stub in step 2 is handled before step 3 runs.
+- [x] After round teardown, no module, view or service is still alive and no orphan nodes remain (gdUnit4 orphan count 0).
+- [x] No gameplay service is registered as an autoload in `project.godot`.
 
 ---
 
@@ -84,7 +84,7 @@ One round-server node builds every service and module, injects them, registers m
 **Required evidence**:
 - Integration: `tests/integration/event_catalog/tick_order_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/event_catalog/tick_order_test.gd` — 6 tests; suite 103/103 pass, 0 orphans (2026-10-13)
 
 ---
 
@@ -92,3 +92,17 @@ One round-server node builds every service and module, injects them, registers m
 
 - Depends on: Stories 002, 003; network-authority TickRunner story; data-config Story 001
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 4/4 passing, each covered by a gdUnit4 integration test (6 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- The flush after each step comes from a `FeatureStep` wrapper (module `server_tick` then `bus.flush()`); `TickRunner` is unchanged, so phase 5 adds one more flush at the end of phase 4.
+- `TickOrder` slots are 100–900 with gaps (4a = 450, 5a = 550).
+- `RoundServer.start_round(modules, knobs)` takes the modules from the caller keyed by `TickOrder` slot; it creates no Feature modules itself. `end_round()` clears bus and registry, frees the `TickRunner` child and drops module references.
+- The autoload rule flags ANY `[autoload]` entry (no allowlist yet).
+- `NetAuthority` is not built by the root yet (network-authority stories 001–003).
+**Test Evidence**: Integration: `tests/integration/event_catalog/tick_order_test.gd`; WeakRefs of runner, bus, registry, 11 stub modules and 11 views are freed after teardown. Mutation-checked: flush removed from `FeatureStep`, `registry.clear()` replaced by `pass`, `tick_runner.free()` removed, two `TickOrder` constants swapped: each failed.
+**Code Review**: Skipped (lean mode). `round_server.gd` and `feature_step.gd` read in full by the orchestrator; no specialist or QA review ran.

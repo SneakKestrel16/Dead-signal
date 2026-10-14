@@ -36,3 +36,10 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** the global class cache (`.godot/global_script_class_cache.cfg`) is refreshed by an import scan, and a `-s` script run does not always rescan first.
 - **Fix:** run `godot --headless --import` once after adding a `class_name` script, then the tests. Commit the updated cache file (it is tracked).
 - **Source:** event-catalog story 003, 2026-10-13 (engine-programmer run). Inference on the cause: not checked against engine source.
+
+### gdUnit4 `assert_object(x)` keeps `x` alive
+
+- **Symptom:** a leak test with `WeakRef` says an object is still alive after teardown, though nothing in the game holds it.
+- **Cause:** the assertion object stores the value it checked, so a `RefCounted` passed to `assert_object` stays referenced for the rest of the test.
+- **Fix:** check liveness with `assert_bool(ref.get_ref() != null)`, never by passing the object itself to an assertion.
+- **Source:** event-catalog story 004, 2026-10-13 (`tests/integration/event_catalog/tick_order_test.gd`). Inference on the cause: not checked against gdUnit4 source.
