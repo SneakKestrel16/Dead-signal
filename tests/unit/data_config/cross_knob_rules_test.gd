@@ -25,6 +25,8 @@ func _knobs() -> Knobs:
 	k.net = NetKnobs.new()
 	k.net.interp_delay_ms = INTERP_DELAY_MS
 	k.net.sim_tick_hz = TICK_HZ
+	k.downing = DowningKnobs.new()
+	TestControllerKnobs.set_shipped(k) ## the controller story 005 rules' inputs
 	return k
 
 
@@ -155,4 +157,4 @@ func test_every_cross_check_has_a_source_comment() -> void:
 				assert_bool(cited).override_failure_message("%s: check without a source comment: %s" % [path, t]).is_true()
 				cited = false
 				checked += 1
-	assert_int(checked).is_equal(8) ## 3 spanning + 3 net + 2 scare: a new check must update this
+	assert_int(checked).is_equal(13) ## 6 spanning + 3 net + 2 scare + 2 controller: a new check must update this

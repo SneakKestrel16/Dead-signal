@@ -4,6 +4,9 @@ class_name ControllerKnobs extends Resource
 ## a knob with no sourced range has a plain @export (unset is still caught). Values the GDD marks proposed ship as proposed.
 ## Usage: `var k := Knobs.load_all(); var v = k.controller.walk_speed`
 
+## Comparison epsilon for the joint sprint cap (GDD: "compared with a 1e-4 m/s epsilon").
+const SPRINT_CAP_EPS := 1e-4
+
 @export_range(3.7, 4.5) var walk_speed: float = NAN
 @export_range(1.15, 1.3) var sprint_mult: float = NAN
 @export_range(0.4, 0.6) var crouch_speed_mult: float = NAN
@@ -23,6 +26,10 @@ class_name ControllerKnobs extends Resource
 ## Downed height in capsule_low_height_m (field names chosen 2026-10-14, AD-75). Height includes caps.
 @export var capsule_height_m: float = NAN
 @export var capsule_low_height_m: float = NAN
+## GDD `eye_height_m` "1.6 / 1.0" (Formulas, interact_ray_max): standing here, crouched in
+## eye_low_height_m (named like capsule_low_height_m, AD-75). Read by the ray-reach load check (story 005).
+@export_range(1.5, 1.7) var eye_height_m: float = NAN
+@export_range(0.9, 1.1) var eye_low_height_m: float = NAN
 ## ADR-0007 §3 fixed floor settings, "all from data" (controller story 002). floor_max_angle 40.0 blocks
 ## 41° (the engine accepts about 0.5° above it, Verification 9); snap 0.4 is above the 0.35 m step.
 ## safe_margin, max_slides, wall_min_slide_angle are the 4.7.2 defaults (Verification 2), set explicitly.
@@ -39,4 +46,14 @@ class_name ControllerKnobs extends Resource
 
 ## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
-	return []
+	var errs := PackedStringArray()
+	# Source: first-person-controller.md Formulas, Gait speed joint cap (designer decision 2026-10-12):
+	# survivor sprint walk_speed x sprint_mult must stay <= max_survivor_sprint_mps (1e-4 m/s epsilon),
+	# and true-form sprint must exceed survivor sprint (monster_sprint_mult > 1).
+	var v_s := walk_speed * sprint_mult
+	if v_s > max_survivor_sprint_mps + SPRINT_CAP_EPS:
+		errs.append("joint sprint cap: controller.walk_speed x sprint_mult (%.4f m/s) must be <= controller.max_survivor_sprint_mps (%s) (first-person-controller.md Gait speed joint cap)" % [v_s, max_survivor_sprint_mps])
+	# Source: first-person-controller.md Gait speed joint cap: true-form sprint must exceed survivor sprint.
+	if monster_sprint_mult <= 1.0:
+		errs.append("joint sprint cap: controller.monster_sprint_mult (%s) must be above 1, or true form is not faster (first-person-controller.md Gait speed joint cap)" % monster_sprint_mult)
+	return errs

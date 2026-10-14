@@ -10,6 +10,8 @@ const DIGEST_SUFFIX_LEN := 8
 ## Survivor reaction time before the rewind is added (monster-abilities.md Formulas, survivor_reaction_s:
 ## "0.25 s reaction + max_rewind_ms", designer decision 2026-10-11). A design target, not a tuning knob.
 const SURVIVOR_REACTION_BASE_S := 0.25
+## Float tolerance for the metre limits below, so a value exactly on a limit passes.
+const CROSS_EPS_M := 1e-6
 
 ## Fixed section list (never enumerate the folder: an export turns .tres into .remap entries).
 ## Section name -> file `<name>.tres` in KNOB_DIR; the field on Knobs has the same name.
@@ -111,7 +113,32 @@ func validate_cross() -> PackedStringArray:
 	var reaction_s := SURVIVOR_REACTION_BASE_S + ability.max_rewind_ms / 1000.0
 	if reaction_s >= ability.lunge_windup_s:
 		errs.append("dodge budget: 0.25 s + ability.max_rewind_ms (%.3f s) must be below ability.lunge_windup_s (%s) (ADR-0003 §7; a necessary condition only, the pursuit simulation sets the real margin)" % [reaction_s, ability.lunge_windup_s])
+	# Source: first-person-controller.md Formulas, catch_gap and the Gait speed joint cap: at survivor
+	# sprint v_s = walk_speed x sprint_mult, catch_gap = lunge_distance_m + lunge_hit_radius_m +
+	# player_radius_m - v_s x (lunge_windup_s + lunge_dash_s) must be >= 2 x player_radius_m, or an
+	# open-ground chase is lunge-proof.
+	var c := controller
+	var r := c.player_radius_m
+	var v_s := c.walk_speed * c.sprint_mult
+	var catch_gap := ability.lunge_distance_m + ability.lunge_hit_radius_m + r - v_s * (ability.lunge_windup_s + ability.lunge_dash_s)
+	if catch_gap < 2.0 * r - CROSS_EPS_M:
+		errs.append("catch_gap (%.3f m at sprint %.3f m/s) must be >= 2 x controller.player_radius_m (%.3f m) (first-person-controller.md catch_gap)" % [catch_gap, v_s, 2.0 * r])
+	# Source: first-person-controller.md Formulas, interact_ray_max: interact_ray_max_m >= max owner range_m
+	# + (eye_height_m - capsule_height_m / 2), for the standing and the crouched posture. Owner ranges:
+	# objectives.interact_range_m, downing.rescue_range_m, ability.backup_switch_range_m.
+	var max_range := maxf(objectives.interact_range_m, maxf(downing.rescue_range_m, ability.backup_switch_range_m))
+	errs.append_array(_ray_reach_errors("standing", max_range, c.eye_height_m, c.capsule_height_m))
+	# Source: first-person-controller.md interact_ray_max, "for either posture": the crouched eye and capsule.
+	errs.append_array(_ray_reach_errors("crouched", max_range, c.eye_low_height_m, c.capsule_low_height_m))
 	return errs
+
+
+## The interact_ray_max rule for one posture (validate_cross cites the source).
+func _ray_reach_errors(posture: String, max_range: float, eye: float, capsule: float) -> PackedStringArray:
+	var need := max_range + (eye - capsule / 2.0)
+	if controller.interact_ray_max_m < need - CROSS_EPS_M:
+		return PackedStringArray(["controller.interact_ray_max_m (%s) must be >= max owner range_m (%s) + eye height above capsule centre, %s (%.3f m) (first-person-controller.md interact_ray_max)" % [controller.interact_ray_max_m, max_range, posture, need]])
+	return PackedStringArray()
 
 
 ## SHA-256 hex over var_to_bytes([section, field, value]) of every saved script variable, sections and
