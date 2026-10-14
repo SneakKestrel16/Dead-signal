@@ -1,7 +1,7 @@
 # Story 002: EventBus emit, subscribe and flush
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -36,10 +36,10 @@ The bus queues server events and drains them at defined points so that cause and
 
 *From ADR-0005 §2–3 and Validation Criteria, scoped to this story:*
 
-- [ ] Two subscribers to one type receive an event in subscribe order; a subscriber whose object was freed is skipped without error.
-- [ ] An event emitted by a handler during `flush()` is delivered in the same flush.
-- [ ] A cascade that needs more than `max_flush_rounds` rounds asserts in debug (test asserts the assert/log path at round 9).
-- [ ] `take_tick_events()` returns every event delivered since the last call, in delivery order; `clear()` empties queue, subscribers and collected events.
+- [x] Two subscribers to one type receive an event in subscribe order; a subscriber whose object was freed is skipped without error.
+- [x] An event emitted by a handler during `flush()` is delivered in the same flush.
+- [x] A cascade that needs more than `max_flush_rounds` rounds asserts in debug (test asserts the assert/log path at round 9).
+- [x] `take_tick_events()` returns every event delivered since the last call, in delivery order; `clear()` empties queue, subscribers and collected events.
 
 ---
 
@@ -84,7 +84,7 @@ The bus queues server events and drains them at defined points so that cause and
 **Required evidence**:
 - Logic: `tests/unit/event_catalog/event_bus_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/event_catalog/event_bus_test.gd` — 9 tests; suite 46/46 pass (2026-10-13)
 
 ---
 
@@ -92,3 +92,15 @@ The bus queues server events and drains them at defined points so that cause and
 
 - Depends on: Story 001; data-config Story 001 (`CoreKnobs`)
 - Unlocks: Story 004
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 4/4 passing, each covered by a gdUnit4 test (9 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- `EventBus.new(rounds)` takes `max_flush_rounds` by constructor injection; callers pass `k.core.max_flush_rounds`. `CoreKnobs.max_flush_rounds` is a plain `@export` with no range yet (value 8, no sourced range).
+- Overflow path: records `overflow_count` and `last_overflow_type`, `push_error`, drops the remaining queue, and `assert(false)` only when `fail_hard` (default `OS.is_debug_build()`), so the round-9 case is testable. `clear()` also resets the overflow record.
+- No test checks that handlers are named methods rather than lambdas (manifest rule); a lambda would pass the suite.
+**Test Evidence**: Logic: `tests/unit/event_catalog/event_bus_test.gd`; mutation-checked (live list instead of copy; invalid-callable skip removed: each failed the suite).
+**Code Review**: Skipped (lean mode). The bus was read in full by the orchestrator; no specialist or QA review ran. Run `/code-review src/foundation/events/event_bus.gd` if a second read is wanted.

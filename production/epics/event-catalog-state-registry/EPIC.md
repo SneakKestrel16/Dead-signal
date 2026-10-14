@@ -34,7 +34,7 @@ The server-side contract every gameplay system talks through. Fifteen named even
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
 | 001 | [ServerEvent base and the 15-event catalog](story-001-server-event-catalog.md) | Logic | Complete | ADR-0005 |
-| 002 | [EventBus emit, subscribe and flush](story-002-event-bus.md) | Logic | Ready | ADR-0005 |
+| 002 | [EventBus emit, subscribe and flush](story-002-event-bus.md) | Logic | Complete | ADR-0005 |
 | 003 | [StateRegistry and typed views](story-003-state-registry.md) | Logic | Ready | ADR-0005 |
 | 004 | [Composition root and feature tick order](story-004-composition-root-tick-order.md) | Integration | Ready | ADR-0005, ADR-0002, ADR-0008 |
 | 005 | [ClientEventRouter](story-005-client-event-router.md) | Integration | Ready | ADR-0005, ADR-0004 |
