@@ -60,7 +60,23 @@ Host and every predicting client must run the same numbers. A hash of the loaded
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- The same knob set gives the same digest across two loads in one run and across two runs (fixed expected value checked into the test).
+- A client with one changed knob is rejected with `version_mismatch`, and both version strings appear in `last_reject_details`.
+- The version string has the form `<build_version>+<first 8 hex of the digest>`.
+
+**Edge cases to cover**:
+- Changing a knob that is not saved (private var) leaves the digest unchanged.
+- A float stored as 1.0 and as 1.00 gives the same digest (serialization is canonical).
+- Section order does not change the digest.
+
+**Estimated test count**: ~6 integration tests
+
+**Manual checks**:
+- Editor `.tres` against an exported binary: the digests are the same. BLOCKED until an export preset exists (`commands.build` is unset). Add a preset first, or move this item to the sprint that adds one.
+- Two-PC: the digest is identical on two machines. Run it with NA-V on the same Tailscale session.
 
 ---
 

@@ -61,7 +61,20 @@ Every player, in every form, is the same Jolt `CharacterBody3D` capsule, and eve
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- For a survivor, a disguised shapeshifter, a true-form shapeshifter and a Downed survivor: capsule radius 0.30 m; height 1.8 m standing and 1.2 m crouched or Downed; no two players share a shape resource (instance ids differ).
+- Two upright players walking into each other do not overlap after N physics ticks. An upright player walks through a Downed survivor lying in a 0.9 m doorway.
+- An Eliminated or Escaped body has no collision layer and ignores movement input.
+- `project.godot` selects Jolt. A source scan fails on any `collision_layer`, `collision_mask` or query mask set from a number literal instead of `PhysicsLayers`; prove it with a fixture that holds a literal.
+
+**Edge cases to cover**:
+- Crouch to stand under a low ceiling (stand-up is story 004: assert only that the height stays 1.2 m here).
+- Changing state on the same tick as a collision.
+- Every knob value comes from `ControllerKnobs`, not literals.
+
+**Estimated test count**: ~8 integration tests
 
 ---
 

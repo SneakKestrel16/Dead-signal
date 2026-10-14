@@ -1,7 +1,7 @@
 # Sprint 002 — 2026-10-27 to 2026-11-09
 
 > PR-SPRINT skipped — Lean mode. No milestone defined: planning against the story backlog alone. No risk register: risks assessed from the sprint contents only.
-> QA plan: run `/qa-plan sprint` before implementation begins (recommended option auto-accepted, AD-68).
+> QA plan: `production/qa/qa-plan-sprint-002-2026-10-13.md`.
 
 ## Sprint Goal
 Finish the Foundation layer's network spine (tokens and reconnect, snapshots with owner prediction) and start the Core layer on the body, view and input it needs: player capsule and collision, mouse look and input actions.

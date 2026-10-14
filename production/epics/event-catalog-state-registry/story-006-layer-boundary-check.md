@@ -59,7 +59,18 @@ Dependencies must point down the layer map: Foundation and Core never reference 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Scan `src/`: fail when a Foundation or Core script references a Feature or Presentation class name or path.
+- Watch it fail: a fixture with a deliberate upward reference makes the check fail, and the clean tree passes.
+- `.github/workflows/tests.yml` runs the test suite that holds this test (assert on the workflow file).
+
+**Edge cases to cover**:
+- A reference inside a comment or string: decide and test one rule (count it or ignore it), and document which.
+- A layer folder that does not exist yet (Feature or Presentation have no files): the check still runs and passes.
+
+**Estimated test count**: ~5 unit tests
 
 ---
 

@@ -63,7 +63,20 @@ The server sends each peer one snapshot per tick. The owner predicts its own mov
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- With 5 clients over a simulated link at 150 ms RTT, 30 ms jitter and 2% loss: owner corrections at or below 53 per 5022 states, and p95 snap under 0.35 m. The network conditioner is part of the test harness; ENet has no built-in one.
+- Replay a scripted route over step and ramp geometry on a clean link: zero snaps.
+- The host's local player and a remote client run the same scripted route and end with identical server-side positions (the host goes through the same input queue).
+- Push a player inside geometry: the server restores the last valid position, and the owner receives it through the snap path, not a smooth correction.
+
+**Edge cases to cover**:
+- Loss bursts (5 consecutive packets) recover without a permanent offset.
+- Reconciliation with an empty input buffer.
+- A snapshot that arrives out of order is ignored (older tick).
+
+**Estimated test count**: ~6 integration tests (one long-running: mark it and keep it under 60 s)
 
 ---
 

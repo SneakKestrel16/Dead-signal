@@ -60,7 +60,24 @@ The server keeps each player's view direction from client yaw and pitch, and eve
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Yaw wraps through 360 degrees and pitch clamps at ±85 degrees in every state except Hidden.
+- With each of root, slow, lock, Downed, Seized, Transforming and Holding applied, the server view direction follows input alone.
+- `InputMap` holds exactly the eleven actions of ADR-0007 §11 and no jump. A source scan fails on any `event.device` compared with 0; prove it with a fixture.
+
+**Edge cases to cover**:
+- Pitch input past the clamp in one frame.
+- Yaw at exactly 360 and -360 degrees.
+- Hidden state: the view range follows the hiding spot's rule (assert that it differs).
+
+**Estimated test count**: ~8 unit tests
+
+**Manual checks**:
+- Mouse sensitivity is the same in a full-size and a half-size window (`screen_relative`): turn 90 degrees with the same mouse travel at both sizes, using a test scene.
+- Alt-tab out and back: the mouse is captured again on focus.
+- Evidence: the result written in the story's Completion Notes. These two items need a running build and a person, so they cannot be automated.
 
 ---
 

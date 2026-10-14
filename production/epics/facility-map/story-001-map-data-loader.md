@@ -58,7 +58,19 @@ The facility is one hand-authored level, loaded whole. Everything gameplay reads
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- The map data loads whole at round start and lists every room and corridor volume, door (swing box, barricadable flag), spawn S1–S5 and M1–M3, hiding point, switch, camera and candidate marker in the level doc (counts against the level doc table).
+- Across 10 loads, the layout digest and geometry node count are identical; only candidate activation differs.
+- Interactables register in map order and get the same net ids on host and client (two SceneMultiplayer subtrees).
+- Every M1–M3 spawn is at least 25 m of walking from A1 and out of A1's line of sight, checked against the data.
+
+**Edge cases to cover**:
+- A missing marker type in the data fails the load with a named error.
+- A duplicate marker id fails the load.
+
+**Estimated test count**: ~7 integration tests
 
 ---
 

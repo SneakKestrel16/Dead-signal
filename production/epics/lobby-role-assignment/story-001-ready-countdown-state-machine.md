@@ -58,7 +58,20 @@ The lobby moves Waiting → Countdown → In Match → Closed on the server cloc
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Injected clock, 5 players all Ready at t = 100.0: remaining = 1.8 at t = 103.2, the roster locks at t = 105.0, and remaining stays in [0, 5]. The countdown does not start while `ready_count < connected`.
+- During a countdown, an un-ready, a leave or a join alone each return the lobby to Waiting. Once all are Ready again, the countdown restarts at the full `lobby_countdown_s`.
+- A disconnect processed in the same tick that remaining reaches 0 makes the lock re-check rule 13, return to Waiting, and hand no roster to Match Flow.
+- With 3 connected players all Ready, the lobby stays in Waiting and the roster holds only the 3 human tokens.
+
+**Edge cases to cover**:
+- Remaining exactly 0 on a tick boundary.
+- All players un-ready at once.
+- The value comes from `lobby_countdown_s` in data (a test with a fixture value).
+
+**Estimated test count**: ~9 unit tests
 
 ---
 

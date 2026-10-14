@@ -61,7 +61,20 @@ Identity in a round is a server-assigned player ID, bound to a secret token. A p
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- Reconnect with a known token while the old peer is still connected: the old peer is evicted with `disconnect_peer`, `player_dropped` is not raised for it, `player_rejoined(player_id, new_peer)` is raised once, and the queue position is unchanged.
+- After the rebind, the new peer gets a full snapshot before any delta (record the message order at the peer), and entities filtered by visibility reappear on it.
+- Token secrecy: record every byte sent to a non-owner peer (raw SceneMultiplayer client, as in `host_join_auth_test.gd`) and assert that no other player's token string appears in it.
+
+**Edge cases to cover**:
+- Reconnect after the grace period: rejected with `round_in_progress`.
+- Reconnect with an unknown token: treated as a new join, so Countdown and In Match reject it.
+- Two reconnects with the same token at once: one wins and the other is rejected.
+- The old peer drops in the same frame the new one authenticates.
+
+**Estimated test count**: ~8 integration tests
 
 ---
 

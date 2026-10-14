@@ -60,7 +60,19 @@ Some knobs are only valid relative to others: a hold tolerance must stay below t
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-002-2026-10-13.md` (/qa-plan, 2026-10-13). Implement against these and the Acceptance Criteria above.*
+
+**What to test**:
+- `hold_range_tolerance_m` >= `interact_range_m` gives a named error that cites ADR-0008; strictly less passes.
+- A rewind and interpolation set that breaks the ADR-0003 dodge budget (`max_rewind_ms`, `lunge_windup_s`, interpolation delay) gives a named error that cites ADR-0003; a set at the boundary passes.
+- Source-comment guard: the test reads the cross-knob check source and fails if any check has no source comment.
+
+**Edge cases to cover**:
+- Equal values (the boundary is exclusive or inclusive exactly as the ADR states).
+- An unset (NaN) knob reports the unset error, not a cross-knob error.
+- Two rules broken at once produce two errors.
+
+**Estimated test count**: ~7 unit tests
 
 ---
 
