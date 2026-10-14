@@ -39,6 +39,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** create every body that a test compares at least a few physics frames before its first step. The game spawns players at round start, well before the first input, so it should not hit this.
 - **Source:** network-authority story 006, 2026-10-14; per-step log of both server bodies in `prediction_reconcile_test.gd`; 6 of 6 runs passed after the fix.
 
+### `set_visibility_for()` on a peer that `disconnect_peer()` already removed is an error
+
+- **Symptom:** `Condition "!peers_info.has(p_peer)" is true` in `_update_sync_visibility`, raised when a reconnect revoked visibility for the evicted peer.
+- **Cause:** `SceneMultiplayer.disconnect_peer()` drops the peer from the replication interface at once, so a later `set_visibility_for(old_peer, false)` names a peer it no longer knows.
+- **Fix:** revoke the old peer's visibility before `disconnect_peer()`, as `NetAuthority._on_peer_connected` does. In tests, also free nodes holding a `MultiplayerSynchronizer` before unsetting their `SceneMultiplayer`; freeing them afterwards logs `on_replication_stop` and `on_reset` errors.
+- **Source:** network-authority story 002, 2026-10-14, `tokens_reconnect_test.gd::test_visibility_follows_the_player_to_the_new_peer`.
+
 ## UI and input
 
 ### A centred `Control` eats captured-mouse look

@@ -7,12 +7,22 @@ class_name NetAuthority extends Node
 ## server replies {ok: true, player_id, token} or {ok: false, reason[, server_version, client_version]}.
 ## One round trip per join. A rejected peer is disconnected after reject_close_delay_s (a reason
 ## sent immediately before disconnect_peer is lost, ADR-0001 verification 6).
+## Reconnect (ADR-0001 §5): a join carrying a known token rebinds that player ID to the new peer when
+## the player is still bound (its old peer has not timed out) or known_token_in_grace says so; any
+## other token is a new join. A still-connected old peer is evicted with disconnect_peer and raises
+## no player_dropped. Per-peer visibility granted with set_player_visibility() follows the player to
+## the new peer. Snapshots need nothing here: ServerMovement looks the peer up every tick and every
+## snapshot is full (there are no deltas yet).
 ## Usage:
 ##   var net := NetAuthority.new(); net.setup(knobs, "1.0+ab12cd34", lobby)
 ##   add_child(net); net.host(knobs.net.port)          # or net.join("1.2.3.4", port, "Ann")
 
 ## Server: a player passed auth and its peer connected. Client-side nothing is emitted.
 signal player_joined(player_id: int)
+## Server: a bound player's peer disconnected. Never raised for a peer evicted by a reconnect.
+signal player_dropped(player_id: int)
+## Server: a known token rebound its player to a new peer (after any eviction and visibility re-grant).
+signal player_rejoined(player_id: int, new_peer_id: int)
 ## Client: the server refused the join. Reason is one of REASON_*; details in last_reject_details.
 signal join_rejected(reason: StringName)
 ## Server: create_server failed (e.g. port in use). Nothing was left initialised.
@@ -23,15 +33,17 @@ const REASON_ROUND_IN_PROGRESS := &"round_in_progress"
 const REASON_VERSION_MISMATCH := &"version_mismatch"
 const REASON_BAD_NAME := &"bad_name"
 const REASON_BAD_PAYLOAD := &"bad_payload"
+## A second join with the same token while the first is still authenticating (one wins).
+const REASON_TOKEN_IN_USE := &"token_in_use"
 
 ## ENet's default throttle measurement interval (ENET_PEER_PACKET_THROTTLE_INTERVAL); protocol constant.
 const THROTTLE_INTERVAL_MS := 5000
 const NAME_MIN := 1
 const NAME_MAX := 16
 
-## Server seam for story 002: Callable(token: String) -> bool, true when the token belongs to a
-## player inside its reconnect grace. Unset means false. Story 002 must also rebind the old
-## player_id (today a true result only passes the lobby-state check and a NEW id is issued).
+## Server seam: Callable(token: String) -> bool, true when the token's player is inside its reconnect
+## grace (Match Flow owns grace, story 003). Asked only for a known token whose player is unbound.
+## Unset means false.
 var known_token_in_grace: Callable
 ## Client: extra fields of the last rejection (version_mismatch carries server_version, client_version).
 var last_reject_details: Dictionary = {}
@@ -45,12 +57,16 @@ var _version: String
 var _lobby: Object
 var _smp: SceneMultiplayer
 var _display_name: String = ""
+var _join_token: String = ""
 var _player_by_peer: Dictionary = {}
 var _peer_by_player: Dictionary = {}
-## Authenticated but not yet connected: peer_id -> {player_id, token}. Counts toward the cap.
+## Authenticated but not yet connected: peer_id -> {player_id, token, rebind}. A new join counts
+## toward the cap; a rebind does not.
 var _pending: Dictionary = {}
-## token -> player_id. Story 002 reads this.
+## token -> player_id.
 var _tokens: Dictionary = {}
+## player_id -> Array of MultiplayerSynchronizer this player may see (set_player_visibility).
+var _visibility: Dictionary = {}
 var _next_player_id: int = 0
 
 
@@ -78,8 +94,8 @@ func host(port: int) -> Error:
 
 
 ## Connects to a host. The outcome arrives as join_rejected, or the usual SceneMultiplayer
-## connected_to_server. Returns the create_client error.
-func join(address: String, port: int, display_name: String) -> Error:
+## connected_to_server. Pass the stored local_token to reconnect. Returns the create_client error.
+func join(address: String, port: int, display_name: String, token: String = "") -> Error:
 	if _smp != null:
 		return ERR_ALREADY_IN_USE
 	var peer := ENetMultiplayerPeer.new()
@@ -87,6 +103,7 @@ func join(address: String, port: int, display_name: String) -> Error:
 	if err != OK:
 		return err
 	_display_name = display_name
+	_join_token = token
 	_attach(peer, _client_auth)
 	_smp.peer_authenticating.connect(_on_authenticating)
 	return OK
@@ -108,6 +125,7 @@ func close() -> void:
 	_peer_by_player.clear()
 	_pending.clear()
 	_tokens.clear()
+	_visibility.clear()
 
 
 ## The player bound to `peer_id`, or -1 when unbound.
@@ -118,6 +136,19 @@ func player_id_of(peer_id: int) -> int:
 ## The connected peer of `player_id`, or -1 when disconnected.
 func peer_id_of(player_id: int) -> int:
 	return _peer_by_player.get(player_id, -1)
+
+
+## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
+## The synchronizer should have public_visibility = false. Callers name players, never peers.
+func set_player_visibility(sync: MultiplayerSynchronizer, player_id: int, visible: bool) -> void:
+	var list: Array = _visibility.get_or_add(player_id, [])
+	if visible and not sync in list:
+		list.append(sync)
+	elif not visible:
+		list.erase(sync)
+	var peer := peer_id_of(player_id)
+	if peer != -1:
+		sync.set_visibility_for(peer, visible)
 
 
 func _exit_tree() -> void:
@@ -136,7 +167,7 @@ func _attach(peer: ENetMultiplayerPeer, auth: Callable) -> void:
 func _on_authenticating(id: int) -> void:
 	if id != 1:
 		return
-	var payload := {"version": _version, "display_name": _display_name, "token": ""}
+	var payload := {"version": _version, "display_name": _display_name, "token": _join_token}
 	_smp.send_auth(1, var_to_bytes(payload))
 
 
@@ -171,11 +202,14 @@ func _reject_client(reason: StringName, details: Dictionary) -> void:
 func _server_auth(id: int, data: PackedByteArray) -> void:
 	var verdict := _validate(data)
 	if verdict.ok:
-		var player_id := _next_player_id
-		_next_player_id += 1
-		var token := Crypto.new().generate_random_bytes(16).hex_encode()
-		_pending[id] = {"player_id": player_id, "token": token}
-		_tokens[token] = player_id
+		var rebind := verdict.has("player_id")
+		var player_id: int = verdict.get("player_id", _next_player_id)
+		var token: String = verdict.get("token", "")
+		if not rebind:
+			_next_player_id += 1
+			token = Crypto.new().generate_random_bytes(16).hex_encode()
+			_tokens[token] = player_id
+		_pending[id] = {"player_id": player_id, "token": token, "rebind": rebind}
 		_smp.send_auth(id, var_to_bytes({"ok": true, "player_id": player_id, "token": token}))
 		_smp.complete_auth(id)
 		return
@@ -185,7 +219,8 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		_smp.disconnect_peer(id)
 
 
-## Runs the checks in the ADR order. Returns {ok: true} or the reject reply.
+## Runs the checks in the ADR order. Returns {ok: true} (plus player_id and token for a rebind) or the
+## reject reply.
 func _validate(data: PackedByteArray) -> Dictionary:
 	if data.size() > _knobs.net.auth_payload_cap_bytes:
 		return _reject(REASON_BAD_PAYLOAD)
@@ -201,11 +236,17 @@ func _validate(data: PackedByteArray) -> Dictionary:
 	var n := sanitize_name(d.display_name)
 	if n.length() < NAME_MIN or n.length() > NAME_MAX:
 		return _reject(REASON_BAD_NAME)
-	var state: StringName = _lobby.state()
-	if state != &"waiting" and not (state in [&"countdown", &"in_match"] \
-			and known_token_in_grace.is_valid() and known_token_in_grace.call(d.token)):
+	var rebind_id: int = _tokens.get(d.token, -1)
+	if rebind_id != -1 and (peer_id_of(rebind_id) != -1 \
+			or (known_token_in_grace.is_valid() and known_token_in_grace.call(d.token))):
+		for p: Dictionary in _pending.values():
+			if p.player_id == rebind_id:
+				return _reject(REASON_TOKEN_IN_USE)
+		return {"ok": true, "player_id": rebind_id, "token": d.token}
+	if _lobby.state() != &"waiting":
 		return _reject(REASON_ROUND_IN_PROGRESS)
-	if _lobby.player_count() + _pending.size() >= _knobs.lobby.max_players:
+	var new_joins := _pending.values().filter(func(p: Dictionary) -> bool: return not p.rebind).size()
+	if _lobby.player_count() + new_joins >= _knobs.lobby.max_players:
 		return _reject(REASON_LOBBY_FULL)
 	return {"ok": true}
 
@@ -230,9 +271,23 @@ func _on_peer_connected(id: int) -> void:
 	if not _pending.has(id):
 		return
 	var player_id: int = _pending[id].player_id
+	var rebind: bool = _pending[id].rebind
 	_pending.erase(id)
+	var old := peer_id_of(player_id)
+	var syncs: Array = _visibility.get(player_id, [])
+	syncs = syncs.filter(func(s: Variant) -> bool: return is_instance_valid(s))
+	_visibility[player_id] = syncs
+	if old != -1:
+		# Unbind and revoke first: the evicted peer's peer_disconnected then finds no player and raises
+		# nothing, and the replication interface forgets a peer once it is disconnected.
+		_player_by_peer.erase(old)
+		for sync: MultiplayerSynchronizer in syncs:
+			sync.set_visibility_for(old, false)
+		_smp.disconnect_peer(old)
 	_player_by_peer[id] = player_id
 	_peer_by_player[player_id] = id
+	for sync: MultiplayerSynchronizer in syncs:
+		sync.set_visibility_for(id, true)
 	# ENet's packet throttle drops unreliable packets when the measured round trip rises. Under 30 ms
 	# jitter that starved input: 58-62 corrections per ~4360 states without this, 1 per ~4820 with it
 	# (story 006, prediction_reconcile_test.gd, 2026-10-13). The game has its own redundancy (3 frames
@@ -242,18 +297,24 @@ func _on_peer_connected(id: int) -> void:
 	var packet_peer := enet.get_peer(id) if enet != null else null
 	if packet_peer != null:
 		packet_peer.throttle_configure(THROTTLE_INTERVAL_MS, ENetPacketPeer.PACKET_THROTTLE_SCALE, 0)
-	player_joined.emit(player_id)
+	if rebind:
+		player_rejoined.emit(player_id, id)
+	else:
+		player_joined.emit(player_id)
 
 
-## Story 003 will turn this into player_dropped; for now only the id maps are cleared.
+## Raises player_dropped for a bound player. An evicted peer was unbound first, so it raises nothing.
+## Story 003 adds grace timing and the routing to Lobby and Match Flow.
 func _on_peer_disconnected(id: int) -> void:
 	var player_id: int = _player_by_peer.get(id, -1)
 	_player_by_peer.erase(id)
 	if player_id != -1:
 		_peer_by_player.erase(player_id)
+		player_dropped.emit(player_id)
 
 
 func _on_auth_failed(id: int) -> void:
 	if _pending.has(id):
-		_tokens.erase(_pending[id].token)
+		if not _pending[id].rebind:
+			_tokens.erase(_pending[id].token)
 		_pending.erase(id)

@@ -13,6 +13,9 @@ var drop_next_up: int = 0
 var drop_next_down: int = 0
 var dropped: int = 0
 var forwarded: int = 0
+## When true, every server-to-client datagram that is forwarded is kept in captured_down.
+var record_down: bool = false
+var captured_down: Array[PackedByteArray] = []
 
 var _client_side := PacketPeerUDP.new()
 var _server_side := PacketPeerUDP.new()
@@ -56,6 +59,8 @@ func pump(now_s: float) -> void:
 		elif _client_port != 0:
 			_client_side.set_dest_address(_client_ip, _client_port)
 			_client_side.put_packet(e.data)
+			if record_down:
+				captured_down.append(e.data)
 		forwarded += 1
 
 

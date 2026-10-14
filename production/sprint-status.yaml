@@ -21,7 +21,7 @@ stories:
     name: "Session tokens and reconnect rebinding"
     file: "production/epics/network-authority/story-002-tokens-reconnect.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

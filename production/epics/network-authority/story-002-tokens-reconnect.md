@@ -1,12 +1,12 @@
 # Story 002: Session tokens and reconnect rebinding
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -84,7 +84,7 @@ Identity in a round is a server-assigned player ID, bound to a secret token. A p
 **Required evidence**:
 - Integration: `tests/integration/network/tokens_reconnect_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/network/tokens_reconnect_test.gd` passes (9 tests, 3 runs); full suite 150/150, 0 orphans (2026-10-14)
 
 ---
 

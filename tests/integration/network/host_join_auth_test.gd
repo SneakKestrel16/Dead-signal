@@ -200,12 +200,15 @@ func test_join_during_countdown_and_in_match_rejected_round_in_progress() -> voi
 		assert_str(String(await _outcome(_client(port, "Ann")))).is_equal("round_in_progress")
 
 
-func test_join_with_known_token_in_grace_passes_state_check() -> void:
+func test_unknown_token_is_a_new_join_even_when_grace_says_yes() -> void:
+	# Story 002: only a token the server issued can rebind; known-token reconnects are in
+	# tokens_reconnect_test.gd.
 	var port := _port()
 	var s := _server(port)
 	_lobby.st = &"in_match"
 	s.known_token_in_grace = func(_t: String) -> bool: return true
-	assert_str(String(await _outcome(_client(port, "Ann")))).is_equal("ok")
+	var raw := _raw_client(port, _good_payload({"token": "ab".repeat(16)}))
+	assert_str(await _raw_reason(raw)).is_equal("round_in_progress")
 
 
 func test_version_mismatch_rejected_with_both_strings() -> void:
