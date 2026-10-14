@@ -51,11 +51,11 @@ stories:
     name: "Greybox geometry and collision"
     file: "production/epics/facility-map/story-002-greybox-geometry-collision.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "data-config-4"
     name: "Refuse to host and freeze"

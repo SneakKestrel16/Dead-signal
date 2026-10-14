@@ -1,7 +1,7 @@
 # Story 002: Greybox geometry and collision authoring
 
 > **Epic**: Facility Map
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -105,3 +105,12 @@ The greybox must respect the controller's limits so nothing snags: wide doorways
 
 - Depends on: Story 001; controller-interaction story 001
 - Unlocks: Stories 003, 009
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 4/4 (AC4: geometry half automated, capsule fits every passage; screenshot `production/qa/evidence/facility-map-002-greybox-top.png`; a walk by a person is owed with the first walkable controller scene)
+**Deviations**: LOS blocker sizes and positions are inference; no steps or ramps exist, so the step/ramp checker is proven on synthetic geometry (AD-89)
+**Test Evidence**: Integration: `tests/integration/facility-map/greybox_geometry_test.gd` (9 tests); full suite 263/263
+**Code Review**: Complete (APPROVED WITH SUGGESTIONS after test fixes: slope from physics normals, not line-primitive debug faces; width bound within one wall thickness; glass found by geometry; doors asserted open; duplicate blockers rejected; 0.35/0.36 step boundary). Open suggestions: the generator matches a passage to a wall line by one coordinate and ignores straddling volumes (not triggered by this map; the test measures the output); 0.1 m corner notches (cosmetic)
