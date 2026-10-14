@@ -1,12 +1,12 @@
 # Story 006: Snapshots, owner prediction and reconciliation
 
 > **Epic**: Network Authority & Replication
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: 2 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: 2026-10-13
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,10 +36,10 @@ The server sends each peer one snapshot per tick. The owner predicts its own mov
 
 *From ADR-0002 §5–9 and Validation Criteria, scoped to this story:*
 
-- [ ] With 5 clients at simulated 150 ms RTT, 30 ms jitter and 2% loss, owner corrections are at or below 53 per 5022 states and snaps are under 0.35 m p95.
-- [ ] A replay over step and ramp geometry shows no snap on a clean link.
-- [ ] The host and a remote client complete the same scripted route with identical server-side positions.
-- [ ] A player pushed inside geometry is restored to the last valid position and the owner receives it through the snap path.
+- [x] With 5 clients at simulated 150 ms RTT, 30 ms jitter and 2% loss, owner corrections are at or below 53 per 5022 states and snaps are under 0.35 m p95.
+- [x] A replay over step and ramp geometry shows no snap on a clean link.
+- [x] The host and a remote client complete the same scripted route with identical server-side positions.
+- [x] A player pushed inside geometry is restored to the last valid position and the owner receives it through the snap path.
 
 ---
 
@@ -86,7 +86,7 @@ The server sends each peer one snapshot per tick. The owner predicts its own mov
 **Required evidence**:
 - Integration: `tests/integration/network/prediction_reconcile_test.gd` — must exist and pass; two-PC results documented in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/network/prediction_reconcile_test.gd` passes (9 tests); two-PC rows deferred to NA-V
 
 ---
 
@@ -94,3 +94,18 @@ The server sends each peer one snapshot per tick. The owner predicts its own mov
 
 - Depends on: Stories 004, 005
 - Unlocks: Stories 007, 008
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing in `tests/integration/network/prediction_reconcile_test.gd` (simulated link, one process, real ENet sockets)
+- AC1: 5 clients, 150 ms RTT, 30 ms jitter, 2% loss, 1600 ticks: 5440 states, 0 corrections, 0 snaps (budget 53 per 5022, p95 < 0.35 m). Earlier runs: 0 to 2 corrections.
+- AC2: clean-link ramp and step route: 0 snaps; one sub-centimetre smooth correction at the ramp lip (5.8 mm measured, under the 1 cm test tolerance).
+- AC3: host and remote server bodies end within 0.23 mm in x/z and 2 x safe_margin in y; both stepped with seq 1..630 and no gap. 6 of 6 runs after fix 7a53150.
+- AC4: restore raises the restore counter in every own entry; the owner snaps even with the next 3 snapshots dropped.
+**Deviations** (advisory, logged): AD-69 (starved tick steps nothing instead of repeating the last frame; input and snapshots use `send_bytes`; default ENet channel count; throttle pinned full), AD-70 (snapshot format v2 restore counter; physics-frame replay). ADR-0002 needs amendment notes for both. Deferred review suggestions: TD-005.
+**Deferred**: two-PC real-network rows named under Test Evidence: Sprint 2 story NA-V. Cross-machine Jolt drift (ADR verification 5) still NOT RUN.
+**Test Evidence**: Integration: `tests/integration/network/prediction_reconcile_test.gd`, full suite 141/141, 0 orphans (2026-10-14).
+**Run result**: N/A: no player-observable screen yet; the netcode runs headless under the test harness, and the boot scene is unchanged.
+**Code Review**: Complete: `/code-review` 2026-10-14, CHANGES REQUIRED, fixes in 2631585; flaky-test fix 7a53150.

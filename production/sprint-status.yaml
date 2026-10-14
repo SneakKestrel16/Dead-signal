@@ -14,7 +14,7 @@ goal: "Finish the Foundation network spine (tokens and reconnect, snapshots with
 start: "2026-10-27"
 end: "2026-11-09"
 generated: "2026-10-13"
-updated: "2026-10-13"
+updated: "2026-10-14"
 
 stories:
   - id: "network-authority-2"
@@ -30,11 +30,11 @@ stories:
     name: "Snapshots, owner prediction and reconciliation"
     file: "production/epics/network-authority/story-006-snapshots-prediction.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 2
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
   - id: "data-config-3"
     name: "Cross-knob rules"
     file: "production/epics/data-config/story-003-cross-knob-rules.md"
