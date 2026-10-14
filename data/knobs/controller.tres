@@ -26,3 +26,4 @@ floor_snap_length_m = 0.4
 safe_margin_m = 0.001
 max_slides = 6
 wall_min_slide_angle_deg = 15.0
+interact_pick_radius_m = 0.5

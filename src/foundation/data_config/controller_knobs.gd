@@ -31,6 +31,10 @@ class_name ControllerKnobs extends Resource
 @export var safe_margin_m: float = NAN
 @export var max_slides: int = KnobUnset.INT
 @export var wall_min_slide_angle_deg: float = NAN
+## Interaction pick radius: how far an interactable's point may sit from the view ray and still be a
+## candidate (ADR-0007 §10 "a point and radius"; controller story 007). Inference: no GDD or ADR number;
+## 0.5 m is half a door's width. The level designer or a playtest settles it.
+@export_range(0.05, 1.0) var interact_pick_radius_m: float = NAN
 
 
 ## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.

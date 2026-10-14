@@ -1,12 +1,12 @@
 # Story 007: Interaction targeting by the server's view ray
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Pressing interact targets the nearest interactable on the server's view ray that
 
 *From `first-person-controller.md` Acceptance Criteria (Hold-to-interact: prompt range; nearest in range; wall) and rule 12, scoped to this story:*
 
-- [ ] With eye height 1.6 m, capsule centre 0.9 m, `interact_ray_max_m` 3.0 and an interactable with `range_m` 2.0 whose point is 2.0 m from the capsule centre, the target resolves; at 2.05 m it does not.
-- [ ] With an out-of-range interactable 1.0 m along the ray and an in-range one 1.8 m along it, the 1.8 m one is the target.
-- [ ] A wall, a glass pane or a closed door between eye and point gives no target; an open door does not block.
-- [ ] The target is computed from the server's view direction, not a client-claimed one.
+- [x] With eye height 1.6 m, capsule centre 0.9 m, `interact_ray_max_m` 3.0 and an interactable with `range_m` 2.0 whose point is 2.0 m from the capsule centre, the target resolves; at 2.05 m it does not.
+- [x] With an out-of-range interactable 1.0 m along the ray and an in-range one 1.8 m along it, the 1.8 m one is the target.
+- [x] A wall, a glass pane or a closed door between eye and point gives no target; an open door does not block.
+- [x] The target is computed from the server's view direction, not a client-claimed one.
 
 ---
 
@@ -82,7 +82,7 @@ Pressing interact targets the nearest interactable on the server's view ray that
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/interaction_targeting_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (20 tests, 2026-10-14)
 
 ---
 
