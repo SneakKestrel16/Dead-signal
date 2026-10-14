@@ -357,10 +357,14 @@ func test_clean_link_replay_over_step_and_ramp_geometry_shows_no_snap() -> void:
 func test_host_and_remote_client_end_with_identical_server_positions() -> void:
 	await _build_world()
 	_start_server()
-	await _add_clients(1)
-	_condition_links(LINK_DELAY_S, 0.0, 0.0)
-	_server_bodies[HOST_ID] = TestMoveStep.make_body(_server_root, _spawn(_clients[0].pid))
+	# The host body exists as long as the remote one before the route starts: a body created on the
+	# tick it first moves took a different first step (y 0.0 vs -1.9 mm) and diverged by metres at
+	# the step corner in about 1 run in 3 (2026-10-14).
+	_server_bodies[HOST_ID] = TestMoveStep.make_body(_server_root, _spawn(0))
 	_sm.add_player(HOST_ID, _server_bodies[HOST_ID], true)
+	await _add_clients(1)
+	assert_int(_clients[0].pid).is_equal(0) ## same spawn as the host body
+	_condition_links(LINK_DELAY_S, 0.0, 0.0)
 	var route := _ramp_route()
 	for i in route.size():
 		var hf := _frame(route[i][0], route[i][1])
@@ -375,9 +379,10 @@ func test_host_and_remote_client_end_with_identical_server_positions() -> void:
 	assert_int(_sm.ack_seq_of(_clients[0].pid)).is_equal(route.size())
 	# Not bit-identical: a resting CharacterBody3D sits anywhere within its safe margin of the contact
 	# (-0.19 mm to +0.84 mm measured), and that changes the slope contact, so after this route x and z
-	# differ by about 0.19 mm (measured 2026-10-13/14 over 12 runs). Before TestMoveStep skipped the
-	# resting step, the remote's extra idle steps while its first frames were in flight made the step
-	# corner diverge by metres in about 1 run in 6; the real controller step should keep that property.
+	# differ by up to about 0.23 mm (measured 2026-10-13/14). Both bodies are stepped with seq 1..630 and
+	# no gap, so a difference beyond that is the physics start state, not the input path: before
+	# TestMoveStep skipped the resting step, and before the host body was created up front, the step
+	# corner diverged by metres in some runs. The real controller step should keep the first property.
 	assert_float(Vector2(host_pos.x, host_pos.z).distance_to(Vector2(remote_pos.x, remote_pos.z))).is_less(HORIZONTAL_TOLERANCE_M)
 	assert_float(absf(host_pos.y - remote_pos.y)).is_less_equal(2.0 * _server_bodies[HOST_ID].safe_margin)
 

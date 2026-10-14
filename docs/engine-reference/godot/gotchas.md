@@ -32,6 +32,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** skip `move_and_slide()` when the body is on the floor with zero velocity, as `tests/helpers/test_move_step.gd` now does. The controller's real movement step (controller story 002) should do the same.
 - **Source:** network-authority story 006, 2026-10-14, `test_host_and_remote_client_end_with_identical_server_positions` (12 runs).
 
+### A body's first `move_and_slide()` depends on how long the body has been in the space
+
+- **Symptom:** after the fix above, the same test still failed in about 1 run in 3, with the host body 6 m past the remote. Both bodies were stepped with seq 1..630, no gaps and the same frames. They differed from the very first step: the host ended at y 0.0, the remote at y -1.9 mm.
+- **Cause:** the host body was created on the tick it first moved, but the remote body had existed for many physics frames. Inference: the new body was not yet fully registered in the physics space when the first test-motion query ran. Not confirmed in the Jolt source; a single-body test comparing first steps at age 0 and age 2 frames would settle it.
+- **Fix:** create every body that a test compares at least a few physics frames before its first step. The game spawns players at round start, well before the first input, so it should not hit this.
+- **Source:** network-authority story 006, 2026-10-14; per-step log of both server bodies in `prediction_reconcile_test.gd`; 6 of 6 runs passed after the fix.
+
 ## UI and input
 
 ### A centred `Control` eats captured-mouse look
