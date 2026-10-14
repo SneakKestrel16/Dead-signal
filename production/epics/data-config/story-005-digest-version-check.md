@@ -1,12 +1,12 @@
 # Story 005: Knob digest in the join version check
 
 > **Epic**: Data/Config Loader
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. Also needs the network-authority join story.
 
@@ -86,7 +86,7 @@ Host and every predicting client must run the same numbers. A hash of the loaded
 **Required evidence**:
 - Integration: `tests/integration/data_config/digest_version_test.gd` — must exist and pass; the cross-machine AC is a documented playtest in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/data_config/digest_version_test.gd` passes (6 tests, 2 runs, same digest); 2 mutations caught; suite 190/190 (2026-10-14)
 
 ---
 

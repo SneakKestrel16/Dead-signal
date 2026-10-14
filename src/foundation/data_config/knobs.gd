@@ -3,9 +3,10 @@ class_name Knobs extends RefCounted
 ## Plain object: the composition root creates it and injects it; never an autoload.
 ## Not thread-safe: load once at boot on the main thread, then treat as read-only.
 ## Usage: `var k := Knobs.load_all(); if k.errors().is_empty(): var hz := k.net.sim_tick_hz`
-## ponytail: digest arrives in story 005.
 
 const KNOB_DIR := "res://data/knobs/"
+## Hex characters of the digest in the join version (ADR-0006 §7).
+const DIGEST_SUFFIX_LEN := 8
 ## Survivor reaction time before the rewind is added (monster-abilities.md Formulas, survivor_reaction_s:
 ## "0.25 s reaction + max_rewind_ms", designer decision 2026-10-11). A design target, not a tuning knob.
 const SURVIVOR_REACTION_BASE_S := 0.25
@@ -111,6 +112,34 @@ func validate_cross() -> PackedStringArray:
 	if reaction_s >= ability.lunge_windup_s:
 		errs.append("dodge budget: 0.25 s + ability.max_rewind_ms (%.3f s) must be below ability.lunge_windup_s (%s) (ADR-0003 §7; a necessary condition only, the pursuit simulation sets the real margin)" % [reaction_s, ability.lunge_windup_s])
 	return errs
+
+
+## SHA-256 hex over var_to_bytes([section, field, value]) of every saved script variable, sections and
+## fields in sorted name order (ADR-0006 §7). Values, never file bytes, so formatting and key order in
+## the .tres do not matter. Requires every section loaded.
+## Example: `Knobs.load_all().digest()` -> "3f1c..." (64 hex characters).
+func digest() -> String:
+	var ctx := HashingContext.new()
+	ctx.start(HashingContext.HASH_SHA256)
+	var names := SECTIONS.duplicate()
+	names.sort()
+	for name in names:
+		var section: Resource = get(name)
+		var fields := PackedStringArray()
+		for prop in section.get_property_list():
+			if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.usage & PROPERTY_USAGE_STORAGE:
+				fields.append(prop.name)
+		fields.sort()
+		for field in fields:
+			ctx.update(var_to_bytes([name, field, section.get(field)]))
+	return ctx.finish().hex_encode()
+
+
+## The auth version string (ADR-0001 §3 as amended by ADR-0006 §7): "<build_version>+<digest 8 hex>",
+## so a client whose knobs differ from the host's is rejected with version_mismatch.
+## Example: `knobs.join_version("0.1.0")` -> "0.1.0+3f1c09ab".
+func join_version(build_version: String) -> String:
+	return "%s+%s" % [build_version, digest().left(DIGEST_SUFFIX_LEN)]
 
 
 ## Converts GDD seconds to sim ticks: roundi(seconds * net.sim_tick_hz).
