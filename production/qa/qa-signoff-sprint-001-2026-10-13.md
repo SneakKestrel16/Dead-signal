@@ -1,6 +1,6 @@
 ## QA Sign-Off Report: Sprint 001
-**Date**: 2026-10-13
-**Config**: qa.level standard, team.size individual, automation autonomous. Drafted by qa-lead; verdict checked against the /team-qa rules by the orchestrator (agree).
+**Date**: 2026-10-13. Reissued after the smoke re-run; the first issue was NOT ASSESSED because there was no launchable build.
+**Config**: qa.level standard, team.size individual, automation autonomous. qa-lead drafted this report. The orchestrator checked the verdict against the /team-qa rules and agrees.
 
 ### Test Coverage Summary
 | Story | Type | Auto Test | Manual QA | Result |
@@ -13,28 +13,25 @@
 | event-catalog 004 composition root and tick order | Integration | PASS `tests/integration/event_catalog/tick_order_test.gd` | n/a | PASS |
 | network-authority 004 tick runner | Logic | PASS `tests/unit/network/tick_runner_test.gd` | n/a | PASS |
 | network-authority 005 input frames and queue | Logic | PASS `tests/unit/network/input_queue_test.gd` | n/a | PASS |
-| network-authority 001 host, join, auth | Integration | PASS `tests/integration/network/host_join_auth_test.gd` (20 cases) | n/a | PASS WITH NOTES: WAN, real-latency reject delay, NAT/IPv6, exported headless build unverified |
+| network-authority 001 host, join, auth | Integration | PASS `tests/integration/network/host_join_auth_test.gd` (20 cases) | n/a | PASS WITH NOTES: not yet verified on two machines over WAN, the reject delay under real latency, NAT and IPv6, or an exported headless build |
 
-Suite run 2026-10-13: 123/123, 10 suites, 0 failures, 0 orphans. The tenth suite is the `/test-setup` scaffold `framework_smoke_test.gd` and belongs to no story. No Visual/Feel or UI stories, so no screenshots are required. No manual cases were run.
-
-Smoke check: NOT ASSESSED (`production/qa/smoke-2026-10-13.md`). There is no launchable build (no main scene).
+- **Suite (2026-10-13)**: 123/123 tests pass in 10 suites, with 0 orphans. The tenth suite is the `/test-setup` scaffold `framework_smoke_test.gd`; no story owns it.
+- **Smoke check**: PASS (`production/qa/smoke-2026-10-13.md`). The boot scene launches, and the screenshot is kept at `production/qa/evidence/boot-2026-10-13.png`. All four QA-plan smoke paths are confirmed. Menu, save and performance are N/A for this sprint.
 
 ### Bugs Found
 | ID | Story | Severity | Status |
 |----|-------|----------|--------|
 | none | | | |
 
-No bugs are on file (`production/qa/bugs/` does not exist) and none were filed this cycle. This is a "none known" record, not a "verified clean" one.
+No bugs are on file (`production/qa/bugs/` does not exist), and none were filed this cycle.
 
-### Verdict: NOT ASSESSED
+### Verdict: APPROVED WITH CONDITIONS
 
-There is no open S1/S2 bug and no failing story, so the verdict is not NOT APPROVED. Every story has executed, passing automated evidence. The smoke check is NOT ASSESSED, so the precondition for an approval fails.
-
-**Conditions** (to reissue):
-1. Add a main scene so a build exists, then re-run `/smoke-check sprint` to a real verdict. Or the designer formally waives the launch for this foundation-only sprint (AD-65).
-2. Confirm smoke path 4: have a test assert no leaked nodes after the round teardown.
-
-To carry as notes at any approval: the network items above are unverified, and code review was skipped in lean mode for all 9 stories.
+**Conditions**:
+1. Verify NA-1 on a real network before any milestone that needs online play: two machines over WAN, the reject delay under real latency, NAT and IPv6, and an exported headless build. Record it as a playtest or integration pass.
+2. Code review was skipped for all 9 stories (lean mode). Either accept that risk or schedule a retroactive review.
+3. Menu, session, save and performance become required smoke items in the sprint that adds each system.
+4. File any defects under `production/qa/bugs/` with `/bug-report`.
 
 ### Next Step
-QA did not run to completion: the build-health gate never ran. Do not advance the build on this verdict. Produce a launchable build or a recorded waiver, run `/smoke-check`, then run `/team-qa` again.
+Resolve the conditions before advancing. Carry conditions 1 to 3 into Sprint 2 planning.
