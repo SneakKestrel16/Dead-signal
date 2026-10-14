@@ -9,92 +9,101 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 1
-goal: "Unblock the Foundation layer and land its pure-logic core: two-PC network test, accept ADRs, then knob loader, event bus, state registry, tick runner and input queue."
-start: "2026-10-13"
-end: "2026-10-26"
-generated: "2026-10-12"
+sprint: 2
+goal: "Finish the Foundation network spine (tokens and reconnect, snapshots with owner prediction) and start Core on the player body, view and input."
+start: "2026-10-27"
+end: "2026-11-09"
+generated: "2026-10-13"
 updated: "2026-10-13"
 
 stories:
-  - id: "data-config-1"
-    name: "Knob sections, range and unset validation"
-    file: "production/epics/data-config/story-001-knob-section-validation.md"
+  - id: "network-authority-2"
+    name: "Session tokens and reconnect rebinding"
+    file: "production/epics/network-authority/story-002-tokens-reconnect.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-13"
-  - id: "event-catalog-1"
-    name: "ServerEvent base and the 15-event catalog"
-    file: "production/epics/event-catalog-state-registry/story-001-server-event-catalog.md"
+    completed: ""
+  - id: "network-authority-6"
+    name: "Snapshots, owner prediction and reconciliation"
+    file: "production/epics/network-authority/story-006-snapshots-prediction.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 2
+    blocker: ""
+    completed: ""
+  - id: "data-config-3"
+    name: "Cross-knob rules"
+    file: "production/epics/data-config/story-003-cross-knob-rules.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-13"
-  - id: "event-catalog-2"
-    name: "EventBus emit, subscribe and flush"
-    file: "production/epics/event-catalog-state-registry/story-002-event-bus.md"
+    completed: ""
+  - id: "controller-interaction-1"
+    name: "Player body, capsules and collision layers"
+    file: "production/epics/controller-interaction/story-001-body-capsule-collision.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-13"
-  - id: "event-catalog-3"
-    name: "StateRegistry and typed views"
-    file: "production/epics/event-catalog-state-registry/story-003-state-registry.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-13"
-  - id: "network-authority-4"
-    name: "TickRunner and the server clock"
-    file: "production/epics/network-authority/story-004-tick-runner.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-13"
-  - id: "network-authority-5"
-    name: "Input frames and the server input queue"
-    file: "production/epics/network-authority/story-005-input-frames-queue.md"
-    priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: "2026-10-13"
-  - id: "data-config-2"
-    name: "All knob sections and the shipped files"
-    file: "production/epics/data-config/story-002-sections-and-shipped-files.md"
-    priority: should-have
-    status: done
+    completed: ""
+  - id: "controller-interaction-6"
+    name: "View direction, mouse look and input actions"
+    file: "production/epics/controller-interaction/story-006-view-direction-input-actions.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-13"
-  - id: "event-catalog-4"
-    name: "Composition root and feature tick order"
-    file: "production/epics/event-catalog-state-registry/story-004-composition-root-tick-order.md"
+    completed: ""
+  - id: "data-config-5"
+    name: "Knob digest in the join version check"
+    file: "production/epics/data-config/story-005-digest-version-check.md"
     priority: should-have
-    status: done
+    status: backlog
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-13"
-  - id: "network-authority-1"
-    name: "Host, join and join validation"
-    file: "production/epics/network-authority/story-001-host-join-auth.md"
+    completed: ""
+  - id: "event-catalog-state-registry-6"
+    name: "Layer boundary check"
+    file: "production/epics/event-catalog-state-registry/story-006-layer-boundary-check.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "lobby-role-assignment-1"
+    name: "Ready and countdown state machine"
+    file: "production/epics/lobby-role-assignment/story-001-ready-countdown-state-machine.md"
     priority: nice-to-have
-    status: done
+    status: backlog
     owner: ""
-    estimate_days: 1.5
+    estimate_days: 1
     blocker: ""
-    completed: "2026-10-13"
+    completed: ""
+  - id: "facility-map-1"
+    name: "Facility map data and whole-level load"
+    file: "production/epics/facility-map/story-001-map-data-loader.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "network-authority-verify"
+    name: "Verify NA-1 on a real network"
+    file: ""
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: "needs a second PC"
+    completed: ""
