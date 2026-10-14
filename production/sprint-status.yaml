@@ -9,130 +9,130 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 3
-goal: "Make real-network verification runnable and move Core to a moving body in a built level: host/join harness, host left, gaits, greybox, knob refusal."
-start: "2026-11-10"
-end: "2026-11-23"
+sprint: 4
+goal: "Close the real-network run and the Sprint 1 review, then give the server its first rule loop: speed modifiers, holds, event projection, roster hand-off."
+start: "2026-11-24"
+end: "2026-12-07"
 generated: "2026-10-14"
 updated: "2026-10-14"
 
 stories:
-  - id: "net-harness-1"
-    name: "Host/join harness net_check.tscn"
-    file: "tests/manual/net_check.tscn"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "network-authority-3"
-    name: "Disconnect handling and host left"
-    file: "production/epics/network-authority/story-003-disconnect-host-left.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "controller-interaction-2"
-    name: "Movement step and gaits"
-    file: "production/epics/controller-interaction/story-002-movement-step-gaits.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "facility-map-2"
-    name: "Greybox geometry and collision"
-    file: "production/epics/facility-map/story-002-greybox-geometry-collision.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "data-config-4"
-    name: "Refuse to host and freeze"
-    file: "production/epics/data-config/story-004-refuse-to-host-and-freeze.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "controller-interaction-7"
-    name: "Interaction targeting"
-    file: "production/epics/controller-interaction/story-007-interaction-targeting.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: ""
-
-  - id: "network-authority-8"
-    name: "Handles and relevance"
-    file: "production/epics/network-authority/story-008-handles-relevance.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 1.5
-    blocker: ""
-    completed: ""
-
-  - id: "controller-interaction-5"
-    name: "Controller load checks"
-    file: "production/epics/controller-interaction/story-005-controller-load-checks.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: ""
-
   - id: "na-verify"
     name: "Verify NA-1 on a real network (carryover)"
     file: ""
-    priority: should-have
+    priority: must-have
     status: backlog
-    owner: "SneakKestrel16"
-    estimate_days: 0.5
-    blocker: "needs NH-1 and a second PC"
-    completed: ""
-
-  - id: "facility-map-3"
-    name: "Connectivity checks"
-    file: "production/epics/facility-map/story-003-connectivity-checks.md"
-    priority: nice-to-have
-    status: done
     owner: ""
     estimate_days: 0.5
+    blocker: "designer session with a second PC"
+    completed: ""
+
+  - id: "sprint1-review"
+    name: "Retroactive Sprint 1 code review"
+    file: ""
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
     blocker: ""
     completed: ""
 
-  - id: "lobby-role-assignment-3"
-    name: "Character data and M1 assignment"
-    file: "production/epics/lobby-role-assignment/story-003-character-data-m1-assignment.md"
-    priority: nice-to-have
-    status: done
+  - id: "controller-interaction-3"
+    name: "Speed modifiers"
+    file: "production/epics/controller-interaction/story-003-speed-modifiers.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "controller-interaction-8"
+    name: "Hold start and complete"
+    file: "production/epics/controller-interaction/story-008-hold-start-complete.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+
+  - id: "network-authority-9"
+    name: "Event projection and sounds"
+    file: "production/epics/network-authority/story-009-event-projection-sounds.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+
+  - id: "lobby-role-assignment-2"
+    name: "Roster lock and hand-off"
+    file: "production/epics/lobby-role-assignment/story-002-roster-lock-handoff.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "facility-map-5"
+    name: "Visibility table"
+    file: "production/epics/facility-map/story-005-visibility-table.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "network-authority-10"
+    name: "Hidden entities and spectators"
+    file: "production/epics/network-authority/story-010-hidden-entities-spectators.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "controller-interaction-4"
+    name: "Steps, slopes and stand-up"
+    file: "production/epics/controller-interaction/story-004-steps-slopes-stand-up.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "controller-interaction-9"
+    name: "Hold continue and cancel"
+    file: "production/epics/controller-interaction/story-009-hold-continue-cancel.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+
+  - id: "lobby-role-assignment-7"
+    name: "Rotation queue"
+    file: "production/epics/lobby-role-assignment/story-007-rotation-queue.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
     blocker: ""
     completed: ""
 
   - id: "export-preset-1"
-    name: "Export preset (TD-004)"
+    name: "Export preset (TD-004, carryover)"
     file: ""
     priority: nice-to-have
     status: backlog
     owner: ""
     estimate_days: 0.5
-    blocker: ""
+    blocker: "commit decision taken when the story starts (AD-102)"
     completed: ""
