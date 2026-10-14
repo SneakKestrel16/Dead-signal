@@ -1,12 +1,12 @@
 # Story 004: TickRunner and the server clock
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,9 +36,9 @@ One server clock in ticks drives every rule. A single TickRunner runs the six ph
 
 *From ADR-0002 §1–2, scoped to this story:*
 
-- [ ] `current_tick()` increases by exactly 1 per physics step; server time is `server_tick / sim_tick_hz`.
-- [ ] Registered stub features run in `phase_order` inside phase 4, after movement and history and before flush and snapshots.
-- [ ] `physics_ticks_per_second` is set once at boot from `NetKnobs.sim_tick_hz` and a test fails if any script changes it later.
+- [x] `current_tick()` increases by exactly 1 per physics step; server time is `server_tick / sim_tick_hz`.
+- [x] Registered stub features run in `phase_order` inside phase 4, after movement and history and before flush and snapshots.
+- [x] `physics_ticks_per_second` is set once at boot from `NetKnobs.sim_tick_hz` and a test fails if any script changes it later.
 
 ---
 
@@ -80,7 +80,7 @@ One server clock in ticks drives every rule. A single TickRunner runs the six ph
 **Required evidence**:
 - Logic: `tests/unit/network/tick_runner_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/network/tick_runner_test.gd` — 12 tests; suite 69/69 pass (2026-10-13)
 
 ---
 
@@ -88,3 +88,18 @@ One server clock in ticks drives every rule. A single TickRunner runs the six ph
 
 - Depends on: data-config Story 001
 - Unlocks: Stories 005, 006, 007; event-catalog Story 004
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 3/3 passing, each covered by a gdUnit4 test (12 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- Phases 1–3 and 6 are `Callable` hooks (`input_stage`, `movement_stage`, `history_stage`, `snapshot_stage`), default no-op, for stories 005–007 to set. Phase 5 is skipped when `bus` is null (tests only).
+- `step()` runs one tick and is what `_physics_process` calls, so tests drive ticks without the engine loop.
+- Boot-once is per runner instance. "Set once" is enforced across the code by a source-scan test: no script under `src/` but `tick_runner.gd` assigns `physics_ticks_per_second` (minimum-file guard; scanner proved on a fixture).
+- Duplicate `phase_order` and a second `boot()` are recorded violations, with `assert` only when `fail_hard` (same pattern as `EventBus`).
+- `server_time()` before `boot()` divides by zero (returns inf); `boot()` is the composition root's first call.
+- The 2.0 ms server-tick guardrail is not measured here (no real phase work yet).
+**Test Evidence**: Logic: `tests/unit/network/tick_runner_test.gd`; mutation-checked (phase 2 replaced by a second phase 3; features sorted descending: each failed the ordering test).
+**Code Review**: Skipped (lean mode). The runner was read in full by the orchestrator; no specialist or QA review ran.
