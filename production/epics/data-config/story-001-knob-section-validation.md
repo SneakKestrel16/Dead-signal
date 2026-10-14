@@ -1,7 +1,7 @@
 # Story 001: Knob sections, range and unset validation
 
 > **Epic**: Data/Config Loader
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -36,10 +36,10 @@ The core of the loader: a typed `Resource` per system whose fields cannot ship w
 
 *From ADR-0006 §1, §2, §4, §6 and Validation Criteria, scoped to this story:*
 
-- [ ] A section built with `.new()` and every field set inside its range validates with `errors()` empty.
-- [ ] A float field left at `NAN` or an int field left at `KnobUnset.INT` produces a named error ("<section>.<field> unset"); a value outside the `@export_range` produces a named error with the value and range.
-- [ ] Three bad fields in one section produce three errors, not one.
-- [ ] `Knobs.ticks(seconds)` returns `roundi(seconds * net.sim_tick_hz)` (e.g. 0.5 s at 60 Hz = 30).
+- [x] A section built with `.new()` and every field set inside its range validates with `errors()` empty.
+- [x] A float field left at `NAN` or an int field left at `KnobUnset.INT` produces a named error ("<section>.<field> unset"); a value outside the `@export_range` produces a named error with the value and range.
+- [x] Three bad fields in one section produce three errors, not one.
+- [x] `Knobs.ticks(seconds)` returns `roundi(seconds * net.sim_tick_hz)` (e.g. 0.5 s at 60 Hz = 30).
 
 ---
 
@@ -91,7 +91,7 @@ The core of the loader: a typed `Resource` per system whose fields cannot ship w
 **Required evidence**:
 - Logic: `tests/unit/data_config/knob_section_validation_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/data_config/knob_section_validation_test.gd` — 14 tests pass (gdUnit4, 2026-10-13)
 
 ---
 
@@ -99,3 +99,17 @@ The core of the loader: a typed `Resource` per system whose fields cannot ship w
 
 - Depends on: None
 - Unlocks: Stories 002, 003, 004, 005
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-13
+**Criteria**: 4/4 passing, each covered by at least one gdUnit4 test (14 tests, 0 failures, 0 orphans)
+**Deviations** (advisory):
+- `NetKnobs.sim_tick_hz` range 30–128 is an inference; no source gives a Safe Range, only the value 60. Settle before story 002.
+- `Knobs.load_all()` not written: it needs the shipped `.tres` files (story 002). Sections are set directly for now.
+- Validation lives in `KnobValidator`, not on `Knobs`; `Knobs.errors()` aggregates it. A null section is an error (not in the story).
+- Load and validate time not measured against the 10 ms guardrail.
+- `Knobs.ticks()` is undefined when `net` is missing or unset (documented precondition).
+**Test Evidence**: Logic: `tests/unit/data_config/knob_section_validation_test.gd`; the unset, private-var and first-error checks were watched failing against a broken validator.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester, 2026-10-13); suggestions applied in f1c0cdb.

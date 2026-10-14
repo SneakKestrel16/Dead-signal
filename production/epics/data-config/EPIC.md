@@ -29,7 +29,7 @@ Loads every tuning knob from data and refuses to host on a bad value. Each syste
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Knob sections, range and unset validation](story-001-knob-section-validation.md) | Logic | Ready | ADR-0006 |
+| 001 | [Knob sections, range and unset validation](story-001-knob-section-validation.md) | Logic | Complete | ADR-0006 |
 | 002 | [All knob sections and the shipped files](story-002-sections-and-shipped-files.md) | Integration | Ready | ADR-0006 |
 | 003 | [Cross-knob rules](story-003-cross-knob-rules.md) | Logic | Ready | ADR-0006 |
 | 004 | [Refuse to host on bad knobs; freeze per round](story-004-refuse-to-host-and-freeze.md) | Integration | Ready | ADR-0006, ADR-0005 |
