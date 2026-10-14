@@ -35,19 +35,19 @@ static func load_map(path: String = MAP_PATH) -> MapData:
 func errors() -> PackedStringArray:
 	var out := PackedStringArray()
 	var seen := {}
-	var rooms := {&"Outside": true}
+	var known := {&"Outside": true}
 	for item: Resource in volumes + passages + markers:
 		if seen.has(item.id):
 			out.append("duplicate id: %s" % item.id)
 		seen[item.id] = true
 	for i in volumes.size():
-		rooms[volumes[i].room] = true
+		known[volumes[i].room] = true
 		for j in range(i + 1, volumes.size()):
 			if volumes[i].box.intersects(volumes[j].box):
 				out.append("volumes overlap: %s %s" % [volumes[i].id, volumes[j].id])
 	for p in passages:
 		for r: StringName in [p.a, p.b]:
-			if not rooms.has(r):
+			if not known.has(r):
 				out.append("passage %s: unknown room %s" % [p.id, r])
 	var types := {}
 	var queries := MapQueries.new(self)
@@ -60,7 +60,69 @@ func errors() -> PackedStringArray:
 	for t in MARKER_TYPES:
 		if not types.has(t):
 			out.append("missing marker type: %s" % t)
+	out.append_array(_connectivity_errors())
 	return out
+
+
+## research-facility.md Acceptance Criteria 1-2 (facility-map story 003): every room has at least two
+## exits, and barricading every barricadable door at once seals no room off.
+func _connectivity_errors() -> PackedStringArray:
+	var out := PackedStringArray()
+	var all := rooms()
+	for r in all:
+		if exits_of(r) < 2:
+			out.append("room %s: %d exit(s), needs at least 2" % [r, exits_of(r)])
+	if not all.is_empty():
+		var reach := reachable(all[0], barricadable_ids())
+		for r in all:
+			if not reach.has(r):
+				out.append("room %s: sealed off when every barricadable door is barricaded" % r)
+	return out
+
+
+## Connectivity-graph rooms (each volume's room, &"Outside" excluded), in volume order.
+func rooms() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for v in volumes:
+		if not v.room in out:
+			out.append(v.room)
+	return out
+
+
+## Passages (doors, archways, open junctions, the exit) leading out of `room`. A passage from a room
+## to itself leads nowhere and does not count; two doors to the same neighbour are two exits.
+func exits_of(room: StringName) -> int:
+	var n := 0
+	for p in passages:
+		if p.a != p.b and (p.a == room or p.b == room):
+			n += 1
+	return n
+
+
+## Ids of the barricadable doors.
+func barricadable_ids() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for p in passages:
+		if p.kind == MapPassage.BARRICADABLE:
+			out.append(p.id)
+	return out
+
+
+## Rooms reachable from `from` (included) over every passage whose id is not in `cut`; a blocked or
+## barricaded door is a cut edge (research-facility.md Connectivity Graph). &"Outside" is a node too.
+func reachable(from: StringName, cut: Array[StringName] = []) -> Dictionary:
+	var seen := {from: true}
+	var queue: Array[StringName] = [from]
+	while not queue.is_empty():
+		var r: StringName = queue.pop_front()
+		for p in passages:
+			if p.id in cut:
+				continue
+			var other: StringName = p.b if p.a == r else (p.a if p.b == r else &"")
+			if other != &"" and not seen.has(other):
+				seen[other] = true
+				queue.append(other)
+	return seen
 
 
 ## Map interactables in map order (doors, then interactable markers, each in file order). The index

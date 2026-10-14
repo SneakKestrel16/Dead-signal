@@ -1,12 +1,12 @@
 # Story 003: Connectivity checks: no sealed rooms, no single choke
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -32,9 +32,9 @@ Barricades and blocked doors must never cut the map in two. These checks run on 
 
 *From `research-facility.md` Acceptance Criteria 1, 2, 3, scoped to this story:*
 
-- [ ] Every room in the Zones and Rooms table has at least two exits in the graph.
-- [ ] With all five barricadable doors barricaded, H-N reaches C4 and every other room.
-- [ ] Blocking each single edge into Zone B in turn (A4-B1, B2-H-N, B3-H-S, B1-C2), B1 stays reachable from A1.
+- [x] Every room in the Zones and Rooms table has at least two exits in the graph.
+- [x] With all five barricadable doors barricaded, H-N reaches C4 and every other room.
+- [x] Blocking each single edge into Zone B in turn (A4-B1, B2-H-N, B3-H-S, B1-C2), B1 stays reachable from A1.
 
 ---
 
@@ -74,7 +74,7 @@ Barricades and blocked doors must never cut the map in two. These checks run on 
 **Required evidence**:
 - Logic: `tests/unit/facility-map/connectivity_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (6 tests, 2026-10-14)
 
 ---
 
