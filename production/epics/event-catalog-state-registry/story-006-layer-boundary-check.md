@@ -1,12 +1,12 @@
 # Story 006: Layer boundary check
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 0.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -80,7 +80,7 @@ Dependencies must point down the layer map: Foundation and Core never reference 
 **Required evidence**:
 - Logic: `tests/unit/event_catalog/layer_boundary_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/event_catalog/layer_boundary_test.gd` passes (7 tests); watched fail on the real tree (a planted PlayerBody reference in server_movement.gd); suite 198/198 (2026-10-14)
 
 ---
 
