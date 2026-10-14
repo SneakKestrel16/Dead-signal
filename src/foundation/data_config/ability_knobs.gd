@@ -26,6 +26,6 @@ class_name AbilityKnobs extends Resource
 @export_range(1.5, 2.3) var backup_switch_range_m: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
 	return []

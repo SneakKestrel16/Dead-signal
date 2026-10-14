@@ -13,6 +13,6 @@ class_name BorrowedFaceKnobs extends Resource
 @export_range(5.0, 15.0) var reveal_radius_m: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
 	return []

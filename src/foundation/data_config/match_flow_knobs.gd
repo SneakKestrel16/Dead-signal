@@ -13,6 +13,6 @@ class_name MatchFlowKnobs extends Resource
 @export_range(10.0, 45.0) var results_duration_s: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
 	return []

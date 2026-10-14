@@ -21,6 +21,6 @@ class_name ControllerKnobs extends Resource
 @export_range(0.2, 0.45) var step_height_m: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
 	return []

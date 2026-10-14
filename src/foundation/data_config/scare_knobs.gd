@@ -24,6 +24,21 @@ class_name ScareKnobs extends Resource
 @export_range(0.1, 0.5) var occlusion_floor_lift_m: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Phase count of phase_budget: Low, Rising, Emergency (scare-events.md Formulas).
+const PHASES := 3
+## Per-phase budget range (scare-events.md Tuning Knobs: 0-12 each).
+const PHASE_BUDGET_MAX := 12
+
+
+## Cross-knob rules within this section; [] = valid. Knobs.errors() runs it only when every field is set.
 func validate_cross() -> PackedStringArray:
-	return []
+	var errs := PackedStringArray()
+	# Source: scare-events.md Formulas and Tuning Knobs: one budget per phase (Low/Rising/Emergency),
+	# each 0-12. The array knob has no @export_range, so its size and range are checked here.
+	if phase_budget.size() != PHASES:
+		errs.append("scare.phase_budget has %d entries, needs %d (Low/Rising/Emergency, scare-events.md)" % [phase_budget.size(), PHASES])
+	# Source: scare-events.md Tuning Knobs: phase_budget "0-12 each".
+	for i in phase_budget.size():
+		if phase_budget[i] < 0 or phase_budget[i] > PHASE_BUDGET_MAX:
+			errs.append("scare.phase_budget[%d] = %d outside range [0, %d] (scare-events.md)" % [i, phase_budget[i], PHASE_BUDGET_MAX])
+	return errs

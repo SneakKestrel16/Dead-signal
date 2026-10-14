@@ -39,7 +39,7 @@ stories:
     name: "Cross-knob rules"
     file: "production/epics/data-config/story-003-cross-knob-rules.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 0.5
     blocker: ""

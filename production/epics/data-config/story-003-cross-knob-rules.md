@@ -1,12 +1,12 @@
 # Story 003: Cross-knob rules
 
 > **Epic**: Data/Config Loader
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 0.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -82,7 +82,7 @@ Some knobs are only valid relative to others: a hold tolerance must stay below t
 **Required evidence**:
 - Logic: `tests/unit/data_config/cross_knob_rules_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/data_config/cross_knob_rules_test.gd` passes (10 tests); 3 mutations caught; suite 163/163 (2026-10-14)
 
 ---
 

@@ -9,6 +9,6 @@ class_name FacilityKnobs extends Resource
 @export var max_flashes_per_s: int = KnobUnset.INT
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
 func validate_cross() -> PackedStringArray:
 	return []

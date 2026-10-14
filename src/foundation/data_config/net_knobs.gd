@@ -42,6 +42,15 @@ class_name NetKnobs extends Resource
 @export var tick_estimate_fall_alpha: float = NAN
 
 
-## Cross-knob rules arrive in story data-config/003; none yet.
+## Cross-knob rules within this section; [] = valid. Knobs.errors() runs it only when every field is set.
 func validate_cross() -> PackedStringArray:
-	return []
+	var errs := PackedStringArray()
+	# Source: ADR-0002 rule 4 (Adaptation): the target depth rises above starvation_high and falls
+	# below starvation_low, so low must sit under high or the depth flips every window.
+	if starvation_low >= starvation_high:
+		errs.append("net.starvation_low (%s) must be below net.starvation_high (%s) (ADR-0002 rule 4)" % [starvation_low, starvation_high])
+	# Source: ADR-0002 rule 6: corrections beyond the deadzone and under smooth_max are smoothed, so the
+	# deadzone must be below smooth_max or no correction is ever smoothed.
+	if correction_deadzone_m >= correction_smooth_max_m:
+		errs.append("net.correction_deadzone_m (%s) must be below net.correction_smooth_max_m (%s) (ADR-0002 rule 6)" % [correction_deadzone_m, correction_smooth_max_m])
+	return errs
