@@ -12,6 +12,10 @@ class_name MapVolume extends Resource
 @export var zone: StringName
 ## Floor-level box in metres: x east from the west wall, z south from the north wall, y up.
 @export var box: AABB
+## Visibility set (research-facility.md "Visibility sets", ADR-0004 §4): volume id -> the door
+## passage id that cuts it while closed or barricaded, or &"" when seen through an archway, open
+## corridor or glass. The volume itself is implied. Facility-map story 005 authors the shipped table.
+@export var sees: Dictionary[StringName, StringName] = {}
 
 
 ## True when `point` (x, z only) is inside the box; the east and south edges belong to the next volume.

@@ -81,7 +81,7 @@ stories:
     name: "Handles and relevance"
     file: "production/epics/network-authority/story-008-handles-relevance.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""

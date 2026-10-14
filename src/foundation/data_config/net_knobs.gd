@@ -45,6 +45,11 @@ class_name NetKnobs extends Resource
 ## TickEstimator: fraction of the gap closed per snapshot when a sample is above / below the offset.
 @export var tick_estimate_rise_alpha: float = NAN
 @export var tick_estimate_fall_alpha: float = NAN
+## Story network-authority/008: ADR-0004 §4 numbers.
+## A body this close to a viewer is relevant whatever the visibility sets say.
+@export var relevance_near_m: float = NAN
+## A body stays relevant this long after it stops qualifying.
+@export var relevance_linger_s: float = NAN
 
 
 ## Cross-knob rules within this section; [] = valid. Knobs.errors() runs it only when every field is set.

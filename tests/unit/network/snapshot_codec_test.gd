@@ -1,7 +1,7 @@
 # Story network-authority/006: snapshot binary format.
 extends GdUnitTestSuite
 
-const SIX_BODY_BYTES := 147 ## 6 + 6 * 20 + 21; ADR verification 6 measured 144 B for the spike layout
+const SIX_BODY_BYTES := 159 ## 6 + 6 * 22 + 21 (u32 handles, story 008); ADR verification 6 measured 144 B with u16 ids
 const SINGLE_DATAGRAM_BYTES := 1000
 
 
@@ -81,7 +81,7 @@ func test_wrong_version_unknown_flags_and_two_own_entries_are_rejected() -> void
 	v.encode_u8(0, SnapshotCodec.VERSION + 1)
 	assert_dict(SnapshotCodec.decode(v)).is_empty()
 	var f := good.duplicate()
-	f.encode_u8(SnapshotCodec.HEADER_BYTES + SnapshotCodec.ENTRY_BYTES + SnapshotCodec.OWN_EXTRA_BYTES + 2, 0x80)
+	f.encode_u8(SnapshotCodec.HEADER_BYTES + SnapshotCodec.ENTRY_BYTES + SnapshotCodec.OWN_EXTRA_BYTES + 4, 0x80) ## flags byte after the u32 id
 	assert_dict(SnapshotCodec.decode(f)).is_empty()
 	var two_own := _bodies(2)
 	two_own[1]["own"] = true

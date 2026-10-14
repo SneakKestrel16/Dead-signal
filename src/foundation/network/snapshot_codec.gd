@@ -1,19 +1,20 @@
 class_name SnapshotCodec extends RefCounted
 ## Binary snapshot format (ADR-0002 rule 5). Static encode/decode; one datagram.
-## Layout, little endian: header = version u8, server_tick u32, count u8 (6 B). Per body (20 B):
-## player_id u16, flags u8 (F_*), gait u8, position 3 x f32, yaw f32. A body with F_OWN adds 20 B:
-## last consumed seq s32, velocity 3 x f32, effective modifier scale f32, restore counter u8 (the
-## receiving player's own entry only). 6 bodies with one own entry = 6 + 6*20 + 21 = 147 B (ADR
-## verification 6 measured 144 B).
+## Layout, little endian: header = version u8, server_tick u32, count u8 (6 B). Per body (22 B):
+## id u32, flags u8 (F_*), gait u8, position 3 x f32, yaw f32. `id` is the receiver's per-peer handle
+## for the body (ADR-0004 §3), or the receiver's own player ID on its F_OWN entry. A body with F_OWN
+## adds 21 B: last consumed seq s32, velocity 3 x f32, effective modifier scale f32, restore counter u8
+## (the receiving player's own entry only). 6 bodies with one own entry = 6 + 6*22 + 21 = 159 B (ADR
+## verification 6 measured 144 B with u16 ids; ADR-0004 guardrail about 200 B per peer).
 ## Body Dictionary: {id, pos: Vector3, yaw, gait} plus, when own: {own: true, seq, vel: Vector3,
 ## on_floor, scale, restores}. `restores` counts the server's inside-geometry restores of that player
 ## (mod 256). Every own entry carries it, so a lost datagram cannot lose a restore (ADR-0002 rule 9).
-## Which bodies a snapshot carries is replication scope (story 008).
+## Which bodies a snapshot carries is replication scope (ReplicationScope, story 008).
 ## Usage: `var snap := SnapshotCodec.decode(SnapshotCodec.encode(tick, bodies))`; {} means rejected.
 
-const VERSION := 2
+const VERSION := 3
 const HEADER_BYTES := 6
-const ENTRY_BYTES := 20
+const ENTRY_BYTES := 22
 const OWN_EXTRA_BYTES := 21
 ## Upper bound on bodies in one snapshot (protocol limit, well above lobby size).
 const MAX_BODIES := 32
@@ -36,11 +37,11 @@ static func encode(tick: int, bodies: Array[Dictionary]) -> PackedByteArray:
 	for b in bodies:
 		var own: bool = b.get("own", false)
 		var flags := (F_OWN if own else 0) | (F_ON_FLOOR if own and b.on_floor else 0)
-		out.encode_u16(o, b.id)
-		out.encode_u8(o + 2, flags)
-		out.encode_u8(o + 3, b.gait)
-		_put_vec(out, o + 4, b.pos)
-		out.encode_float(o + 16, b.yaw)
+		out.encode_u32(o, b.id)
+		out.encode_u8(o + 4, flags)
+		out.encode_u8(o + 5, b.gait)
+		_put_vec(out, o + 6, b.pos)
+		out.encode_float(o + 18, b.yaw)
 		o += ENTRY_BYTES
 		if own:
 			out.encode_s32(o, b.seq)
@@ -65,11 +66,11 @@ static func decode(bytes: PackedByteArray) -> Dictionary:
 	for i in count:
 		if o + ENTRY_BYTES > bytes.size():
 			return {}
-		var flags := bytes.decode_u8(o + 2)
+		var flags := bytes.decode_u8(o + 4)
 		if flags & ~F_ALL != 0:
 			return {}
-		var b := {"id": bytes.decode_u16(o), "gait": bytes.decode_u8(o + 3),
-			"pos": _get_vec(bytes, o + 4), "yaw": bytes.decode_float(o + 16)}
+		var b := {"id": bytes.decode_u32(o), "gait": bytes.decode_u8(o + 5),
+			"pos": _get_vec(bytes, o + 6), "yaw": bytes.decode_float(o + 18)}
 		if not (_finite(b.pos) and is_finite(b.yaw)):
 			return {}
 		o += ENTRY_BYTES

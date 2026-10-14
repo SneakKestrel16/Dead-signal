@@ -40,6 +40,10 @@ var _step: Callable
 var _static_mask: int
 var _players: Dictionary = {}
 var _runner: TickRunner
+## Which bodies each viewer's snapshot carries and under which handle (ADR-0004). The composition root
+## sets its relevance.volume_at and visible_volumes from the Facility Map; until then only the near
+## rule applies. Tests may replace it with one built on a seeded RNG.
+var scope: ReplicationScope
 
 
 class PlayerState extends RefCounted:
@@ -68,6 +72,7 @@ func _init(knobs: Knobs, net: NetAuthority, smp: SceneMultiplayer, step: Callabl
 	_smp = smp
 	_step = step
 	_static_mask = static_mask
+	scope = ReplicationScope.new(knobs)
 
 
 ## Sets the runner's four hook Callables and starts listening for input packets.
@@ -78,6 +83,7 @@ func attach(runner: TickRunner) -> void:
 	runner.history_stage = _history_phase
 	runner.snapshot_stage = _snapshot_phase
 	_smp.peer_packet.connect(_on_packet)
+	_net.player_rejoined.connect(_on_rejoined)
 
 
 ## Removes the hooks and the packet listener. Safe to call twice.
@@ -90,6 +96,8 @@ func detach() -> void:
 		_runner = null
 	if _smp.peer_packet.is_connected(_on_packet):
 		_smp.peer_packet.disconnect(_on_packet)
+	if _net.player_rejoined.is_connected(_on_rejoined):
+		_net.player_rejoined.disconnect(_on_rejoined)
 
 
 ## Registers a player. `host_mode` true = the host's own player (InputQueue depth 0, no peer).
@@ -118,6 +126,7 @@ func add_player(player_id: int, body: CharacterBody3D, host_mode: bool = false) 
 ## Forgets a player (the body is the caller's to free).
 func remove_player(player_id: int) -> void:
 	_players.erase(player_id)
+	scope.remove_player(player_id)
 
 
 ## The host's own player submits one frame through the same queue as remote players.
@@ -201,20 +210,33 @@ func _history_phase(tick: int) -> void:
 		p.history_tick[i] = tick
 
 
+## Per viewer: its own entry, then every relevant body under the viewer's handle, in handle order
+## (join order would let a client link a re-introduced body to its old place). Handle introduce and
+## retire messages are sent first, reliable on the event channel (ADR-0004 §3); ENet does not order
+## across channels, so a snapshot can still arrive first and its new entry is ignored until then.
 func _snapshot_phase(tick: int) -> void:
+	var positions := {}
+	for pid: int in _players:
+		positions[pid] = _players[pid].body.global_position
 	for pid: int in _players:
 		var peer := _net.peer_id_of(pid)
-		if peer != -1:
-			var bodies: Array[Dictionary] = []
-			for other_id: int in _players:
-				bodies.append(_entry(other_id, other_id == pid))
-			_smp.send_bytes(SnapshotCodec.encode(tick, bodies), peer,
-				MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.STATE)
+		if peer == -1:
+			continue
+		var seen := scope.bodies_for(tick, pid, positions)
+		var msgs := scope.handles.take(pid)
+		if not msgs.is_empty():
+			_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+		var bodies: Array[Dictionary] = [_entry(pid, pid, true)]
+		for other: int in seen: ## handle order (ReplicationScope.bodies_for)
+			bodies.append(_entry(other, seen[other], false))
+		_smp.send_bytes(SnapshotCodec.encode(tick, bodies), peer,
+			MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.STATE)
 
 
-func _entry(player_id: int, own: bool) -> Dictionary:
+## `id` is the viewer's handle for the body; the own entry carries the viewer's own player ID.
+func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 	var p: PlayerState = _players[player_id]
-	var e := {"id": player_id, "pos": p.body.global_position, "yaw": p.frame.yaw, "gait": _gait(p.frame)}
+	var e := {"id": id, "pos": p.body.global_position, "yaw": p.frame.yaw, "gait": _gait(p.frame)}
 	if own:
 		e["own"] = true
 		e["seq"] = p.ack_seq
@@ -223,6 +245,11 @@ func _entry(player_id: int, own: bool) -> Dictionary:
 		e["scale"] = p.modifiers.effective_scale()
 		e["restores"] = p.restores
 	return e
+
+
+## The rebound client starts a new puppet map: re-issue every handle (ADR-0004 §9).
+func _on_rejoined(player_id: int, _new_peer_id: int) -> void:
+	scope.reset_viewer(player_id)
 
 
 func _gait(f: InputFrame) -> int:

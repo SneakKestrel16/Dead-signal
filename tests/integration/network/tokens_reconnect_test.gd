@@ -240,10 +240,19 @@ func test_rebound_peer_gets_full_snapshot_first() -> void:
 	for c in [a, b]:
 		_sm.add_player(c.net.local_player_id, TestMoveStep.make_body(_roots[0], Vector3(c.net.local_player_id * 2.0, 0.0, 0.0)))
 	var pid: int = a.net.local_player_id
+	for i in 3:
+		_runner.step() ## the old peer is introduced to Bob's body before the rebind
 	var a2 := _client("Ann", a.net.local_token)
 	var states: Array[Dictionary] = []
+	var introduced: Array[int] = []
 	(a2.root.multiplayer as SceneMultiplayer).peer_packet.connect(func(_id: int, bytes: PackedByteArray) -> void:
-		states.append(SnapshotCodec.decode(bytes)))
+		if HandleTable.is_message(bytes): ## handle messages (story 008)
+			var msgs := HandleTable.decode(bytes)
+			for i in range(0, msgs.size(), 2):
+				if msgs[i] == HandleTable.INTRODUCE:
+					introduced.append(msgs[i + 1])
+		else:
+			states.append(SnapshotCodec.decode(bytes)))
 	assert_str(String(await _outcome(a2))).is_equal("ok")
 	await _until(func() -> bool:
 		_runner.step()
@@ -253,6 +262,11 @@ func test_rebound_peer_gets_full_snapshot_first() -> void:
 	var own: Array = states[0].bodies.filter(func(e: Dictionary) -> bool: return e.get("own", false))
 	assert_int(own.size()).is_equal(1)
 	assert_int(own[0].id).is_equal(pid)
+	# The rebound client starts with an empty puppet map, so every handle is re-issued (ADR-0004 §9;
+	# code review 2026-10-14: before the fix the server kept the old peer's handles and sent none).
+	var other: Array = states[0].bodies.filter(func(e: Dictionary) -> bool: return not e.get("own", false))
+	assert_int(introduced.size()).is_greater_equal(1)
+	assert_bool(other[0].id in introduced).is_true()
 
 
 func test_visibility_follows_the_player_to_the_new_peer() -> void:

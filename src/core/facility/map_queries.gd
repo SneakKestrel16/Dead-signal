@@ -104,6 +104,21 @@ static func _leaf(p: MapPassage) -> AABB:
 	return AABB(Vector3(p.position.x - size.x / 2.0, 0.0, p.position.z - size.z / 2.0), size)
 
 
+## The volumes `volume_id` sees (its `sees` keys), minus those behind a door `door_closed` reports
+## closed: Callable(passage_id: StringName) -> bool, unset = every door open (ADR-0004 §4). The
+## volume itself is not listed (Relevance adds it). Unknown id: empty.
+func visible_set(volume_id: StringName, door_closed: Callable = Callable()) -> PackedStringArray:
+	var out := PackedStringArray()
+	for v in _map.volumes:
+		if v.id != volume_id:
+			continue
+		for seen: StringName in v.sees:
+			var door: StringName = v.sees[seen]
+			if door == &"" or not door_closed.is_valid() or not door_closed.call(door):
+				out.append(seen)
+	return out
+
+
 ## The id of the volume containing `point` (x, z only), or &"" outside every volume.
 func volume_at(point: Vector3) -> StringName:
 	for v in _map.volumes:

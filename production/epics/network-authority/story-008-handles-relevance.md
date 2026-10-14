@@ -1,12 +1,12 @@
 # Story 008: Per-peer handles and relevance
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,10 +36,10 @@ A survivor's client must never be able to tell which body is the monster. Bodies
 
 *From ADR-0004 §2–4 and Validation Criteria, scoped to this story:*
 
-- [ ] A disguised monster out of a survivor's PVS for 1 s, then back in view, arrives under a handle the client has never seen.
-- [ ] A form change during linger retires the handle on that peer; a form change in view keeps it.
-- [ ] A snapshot entry with an unintroduced handle is ignored by the client.
-- [ ] A survivor's capture over a full scripted round contains no shapeshifter player ID outside roster, feed and results messages.
+- [x] A disguised monster out of a survivor's PVS for 1 s, then back in view, arrives under a handle the client has never seen.
+- [x] A form change during linger retires the handle on that peer; a form change in view keeps it.
+- [x] A snapshot entry with an unintroduced handle is ignored by the client.
+- [x] A survivor's capture over a full scripted round contains no shapeshifter player ID outside roster, feed and results messages.
 
 ---
 
@@ -87,7 +87,7 @@ A survivor's client must never be able to tell which body is the monster. Bodies
 **Required evidence**:
 - Integration: `tests/integration/network/handles_relevance_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created and passing (18 tests, 2026-10-14); AC4 run as a scripted visibility and form-change sequence (no round flow yet, AD-95)
 
 ---
 
