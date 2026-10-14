@@ -93,7 +93,7 @@ stories:
     name: "Facility map data and whole-level load"
     file: "production/epics/facility-map/story-001-map-data-loader.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""

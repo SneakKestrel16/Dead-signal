@@ -1,0 +1,841 @@
+[gd_resource type="Resource" script_class="MapData" format=3]
+
+[ext_resource type="Script" path="res://src/core/facility/map_data.gd" id="1"]
+[ext_resource type="Script" path="res://src/core/facility/map_volume.gd" id="2"]
+[ext_resource type="Script" path="res://src/core/facility/map_passage.gd" id="3"]
+[ext_resource type="Script" path="res://src/core/facility/map_marker.gd" id="4"]
+
+[sub_resource type="Resource" id="v_A1"]
+script = ExtResource("2")
+id = &"A1"
+room = &"A1"
+zone = &"A"
+box = AABB(0.0, 0.0, 28.0, 10.0, 3.0, 12.0)
+
+[sub_resource type="Resource" id="v_A2_N"]
+script = ExtResource("2")
+id = &"A2-N"
+room = &"A2"
+zone = &"A"
+box = AABB(10.0, 0.0, 4.0, 3.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="v_A2_M"]
+script = ExtResource("2")
+id = &"A2-M"
+room = &"A2"
+zone = &"A"
+box = AABB(10.0, 0.0, 14.0, 3.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="v_A2_S"]
+script = ExtResource("2")
+id = &"A2-S"
+room = &"A2"
+zone = &"A"
+box = AABB(10.0, 0.0, 24.0, 3.0, 3.0, 12.0)
+
+[sub_resource type="Resource" id="v_A3"]
+script = ExtResource("2")
+id = &"A3"
+room = &"A3"
+zone = &"A"
+box = AABB(0.0, 0.0, 14.0, 10.0, 3.0, 14.0)
+
+[sub_resource type="Resource" id="v_A4"]
+script = ExtResource("2")
+id = &"A4"
+room = &"A4"
+zone = &"A"
+box = AABB(13.0, 0.0, 14.0, 9.0, 3.0, 12.0)
+
+[sub_resource type="Resource" id="v_A5"]
+script = ExtResource("2")
+id = &"A5"
+room = &"A5"
+zone = &"A"
+box = AABB(13.0, 0.0, 26.0, 9.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="v_A6"]
+script = ExtResource("2")
+id = &"A6"
+room = &"A6"
+zone = &"A"
+box = AABB(0.0, 0.0, 4.0, 10.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="v_A7"]
+script = ExtResource("2")
+id = &"A7"
+room = &"A7"
+zone = &"A"
+box = AABB(13.0, 0.0, 4.0, 9.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="v_H_N1"]
+script = ExtResource("2")
+id = &"H-N1"
+room = &"H-N"
+zone = &"link"
+box = AABB(0.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_N2"]
+script = ExtResource("2")
+id = &"H-N2"
+room = &"H-N"
+zone = &"link"
+box = AABB(12.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_N3"]
+script = ExtResource("2")
+id = &"H-N3"
+room = &"H-N"
+zone = &"link"
+box = AABB(24.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_N4"]
+script = ExtResource("2")
+id = &"H-N4"
+room = &"H-N"
+zone = &"link"
+box = AABB(36.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_S1"]
+script = ExtResource("2")
+id = &"H-S1"
+room = &"H-S"
+zone = &"link"
+box = AABB(10.0, 0.0, 36.0, 12.5, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_S2"]
+script = ExtResource("2")
+id = &"H-S2"
+room = &"H-S"
+zone = &"link"
+box = AABB(22.5, 0.0, 36.0, 12.5, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_S3"]
+script = ExtResource("2")
+id = &"H-S3"
+room = &"H-S"
+zone = &"link"
+box = AABB(35.0, 0.0, 36.0, 12.5, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_H_S4"]
+script = ExtResource("2")
+id = &"H-S4"
+room = &"H-S"
+zone = &"link"
+box = AABB(47.5, 0.0, 36.0, 12.5, 3.0, 4.0)
+
+[sub_resource type="Resource" id="v_B1"]
+script = ExtResource("2")
+id = &"B1"
+room = &"B1"
+zone = &"B"
+box = AABB(22.0, 0.0, 12.0, 18.0, 6.0, 16.0)
+
+[sub_resource type="Resource" id="v_B2"]
+script = ExtResource("2")
+id = &"B2"
+room = &"B2"
+zone = &"B"
+box = AABB(22.0, 0.0, 4.0, 18.0, 3.0, 8.0)
+
+[sub_resource type="Resource" id="v_B3"]
+script = ExtResource("2")
+id = &"B3"
+room = &"B3"
+zone = &"B"
+box = AABB(22.0, 0.0, 28.0, 18.0, 3.0, 8.0)
+
+[sub_resource type="Resource" id="v_C1"]
+script = ExtResource("2")
+id = &"C1"
+room = &"C1"
+zone = &"C"
+box = AABB(48.0, 0.0, 0.0, 12.0, 3.0, 12.0)
+
+[sub_resource type="Resource" id="v_C2"]
+script = ExtResource("2")
+id = &"C2"
+room = &"C2"
+zone = &"C"
+box = AABB(40.0, 0.0, 14.0, 10.0, 3.0, 14.0)
+
+[sub_resource type="Resource" id="v_C3"]
+script = ExtResource("2")
+id = &"C3"
+room = &"C3"
+zone = &"C"
+box = AABB(40.0, 0.0, 28.0, 20.0, 3.0, 8.0)
+
+[sub_resource type="Resource" id="v_C4"]
+script = ExtResource("2")
+id = &"C4"
+room = &"C4"
+zone = &"C"
+box = AABB(50.0, 0.0, 12.0, 10.0, 3.0, 16.0)
+
+[sub_resource type="Resource" id="v_C5"]
+script = ExtResource("2")
+id = &"C5"
+room = &"C5"
+zone = &"C"
+box = AABB(40.0, 0.0, 4.0, 8.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="p_A1_A2"]
+script = ExtResource("3")
+id = &"A1-A2"
+a = &"A1"
+b = &"A2"
+kind = &"door"
+position = Vector3(10.0, 0.0, 33.0)
+width_m = 1.0
+swing_box = AABB(9.0, 0.0, 32.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_A1_A3"]
+script = ExtResource("3")
+id = &"A1-A3"
+a = &"A1"
+b = &"A3"
+kind = &"door"
+position = Vector3(5.5, 0.0, 28.0)
+width_m = 1.0
+swing_box = AABB(5.0, 0.0, 27.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A1_H_S"]
+script = ExtResource("3")
+id = &"A1-H-S"
+a = &"A1"
+b = &"H-S"
+kind = &"archway"
+position = Vector3(10.0, 0.0, 39.0)
+width_m = 2.0
+swing_box = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+[sub_resource type="Resource" id="p_A2_H_N"]
+script = ExtResource("3")
+id = &"A2-H-N"
+a = &"A2"
+b = &"H-N"
+kind = &"open"
+position = Vector3(11.5, 0.0, 4.0)
+width_m = 3.0
+swing_box = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+[sub_resource type="Resource" id="p_A2_H_S"]
+script = ExtResource("3")
+id = &"A2-H-S"
+a = &"A2"
+b = &"H-S"
+kind = &"open"
+position = Vector3(11.5, 0.0, 36.0)
+width_m = 3.0
+swing_box = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+[sub_resource type="Resource" id="p_A2_A3"]
+script = ExtResource("3")
+id = &"A2-A3"
+a = &"A2"
+b = &"A3"
+kind = &"door"
+position = Vector3(10.0, 0.0, 19.0)
+width_m = 1.0
+swing_box = AABB(9.0, 0.0, 18.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_A2_A4"]
+script = ExtResource("3")
+id = &"A2-A4"
+a = &"A2"
+b = &"A4"
+kind = &"door"
+position = Vector3(13.0, 0.0, 21.0)
+width_m = 1.0
+swing_box = AABB(12.0, 0.0, 20.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_A2_A7"]
+script = ExtResource("3")
+id = &"A2-A7"
+a = &"A2"
+b = &"A7"
+kind = &"door"
+position = Vector3(13.0, 0.0, 11.0)
+width_m = 1.0
+swing_box = AABB(12.0, 0.0, 10.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_A3_A6"]
+script = ExtResource("3")
+id = &"A3-A6"
+a = &"A3"
+b = &"A6"
+kind = &"door"
+position = Vector3(5.5, 0.0, 14.0)
+width_m = 1.0
+swing_box = AABB(5.0, 0.0, 13.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A6_H_N"]
+script = ExtResource("3")
+id = &"A6-H-N"
+a = &"A6"
+b = &"H-N"
+kind = &"door"
+position = Vector3(5.5, 0.0, 4.0)
+width_m = 1.0
+swing_box = AABB(5.0, 0.0, 3.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A7_H_N"]
+script = ExtResource("3")
+id = &"A7-H-N"
+a = &"A7"
+b = &"H-N"
+kind = &"door"
+position = Vector3(17.5, 0.0, 4.0)
+width_m = 1.0
+swing_box = AABB(17.0, 0.0, 3.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A4_A5"]
+script = ExtResource("3")
+id = &"A4-A5"
+a = &"A4"
+b = &"A5"
+kind = &"door"
+position = Vector3(16.5, 0.0, 26.0)
+width_m = 1.0
+swing_box = AABB(16.0, 0.0, 25.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A5_H_S"]
+script = ExtResource("3")
+id = &"A5-H-S"
+a = &"A5"
+b = &"H-S"
+kind = &"door"
+position = Vector3(16.5, 0.0, 36.0)
+width_m = 1.0
+swing_box = AABB(16.0, 0.0, 35.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_A4_B1"]
+script = ExtResource("3")
+id = &"A4-B1"
+a = &"A4"
+b = &"B1"
+kind = &"door"
+position = Vector3(22.0, 0.0, 21.0)
+width_m = 1.0
+swing_box = AABB(21.0, 0.0, 20.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_B1_B2"]
+script = ExtResource("3")
+id = &"B1-B2"
+a = &"B1"
+b = &"B2"
+kind = &"door"
+position = Vector3(31.5, 0.0, 12.0)
+width_m = 1.0
+swing_box = AABB(31.0, 0.0, 11.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_B1_B3"]
+script = ExtResource("3")
+id = &"B1-B3"
+a = &"B1"
+b = &"B3"
+kind = &"door"
+position = Vector3(31.5, 0.0, 28.0)
+width_m = 1.0
+swing_box = AABB(31.0, 0.0, 27.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_B2_H_N"]
+script = ExtResource("3")
+id = &"B2-H-N"
+a = &"B2"
+b = &"H-N"
+kind = &"door"
+position = Vector3(31.5, 0.0, 4.0)
+width_m = 1.0
+swing_box = AABB(31.0, 0.0, 3.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_B3_H_S"]
+script = ExtResource("3")
+id = &"B3-H-S"
+a = &"B3"
+b = &"H-S"
+kind = &"door"
+position = Vector3(31.5, 0.0, 36.0)
+width_m = 1.0
+swing_box = AABB(31.0, 0.0, 35.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_B1_C2"]
+script = ExtResource("3")
+id = &"B1-C2"
+a = &"B1"
+b = &"C2"
+kind = &"barricadable"
+position = Vector3(40.0, 0.0, 21.0)
+width_m = 1.0
+swing_box = AABB(39.0, 0.0, 20.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_H_N_C5"]
+script = ExtResource("3")
+id = &"H-N-C5"
+a = &"H-N"
+b = &"C5"
+kind = &"door"
+position = Vector3(44.5, 0.0, 4.0)
+width_m = 1.0
+swing_box = AABB(44.0, 0.0, 3.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_H_N_C1"]
+script = ExtResource("3")
+id = &"H-N-C1"
+a = &"H-N"
+b = &"C1"
+kind = &"barricadable"
+position = Vector3(48.0, 0.0, 3.0)
+width_m = 1.0
+swing_box = AABB(47.0, 0.0, 2.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_C5_C1"]
+script = ExtResource("3")
+id = &"C5-C1"
+a = &"C5"
+b = &"C1"
+kind = &"door"
+position = Vector3(48.0, 0.0, 9.0)
+width_m = 1.0
+swing_box = AABB(47.0, 0.0, 8.5, 2.0, 2.0, 1.0)
+
+[sub_resource type="Resource" id="p_C5_C2"]
+script = ExtResource("3")
+id = &"C5-C2"
+a = &"C5"
+b = &"C2"
+kind = &"door"
+position = Vector3(44.5, 0.0, 14.0)
+width_m = 1.0
+swing_box = AABB(44.0, 0.0, 13.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_C1_C4"]
+script = ExtResource("3")
+id = &"C1-C4"
+a = &"C1"
+b = &"C4"
+kind = &"barricadable"
+position = Vector3(55.5, 0.0, 12.0)
+width_m = 1.0
+swing_box = AABB(55.0, 0.0, 11.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_C2_C4"]
+script = ExtResource("3")
+id = &"C2-C4"
+a = &"C2"
+b = &"C4"
+kind = &"archway"
+position = Vector3(50.0, 0.0, 22.0)
+width_m = 4.0
+swing_box = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+[sub_resource type="Resource" id="p_C2_C3"]
+script = ExtResource("3")
+id = &"C2-C3"
+a = &"C2"
+b = &"C3"
+kind = &"door"
+position = Vector3(45.5, 0.0, 28.0)
+width_m = 1.0
+swing_box = AABB(45.0, 0.0, 27.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_C3_C4"]
+script = ExtResource("3")
+id = &"C3-C4"
+a = &"C3"
+b = &"C4"
+kind = &"barricadable"
+position = Vector3(55.5, 0.0, 28.0)
+width_m = 1.0
+swing_box = AABB(55.0, 0.0, 27.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_C3_H_S"]
+script = ExtResource("3")
+id = &"C3-H-S"
+a = &"C3"
+b = &"H-S"
+kind = &"barricadable"
+position = Vector3(50.5, 0.0, 36.0)
+width_m = 1.0
+swing_box = AABB(50.0, 0.0, 35.0, 1.0, 2.0, 2.0)
+
+[sub_resource type="Resource" id="p_C4_Outside"]
+script = ExtResource("3")
+id = &"C4-Outside"
+a = &"C4"
+b = &"Outside"
+kind = &"exit"
+position = Vector3(60.0, 0.0, 20.0)
+width_m = 4.0
+swing_box = AABB(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+[sub_resource type="Resource" id="m_S1"]
+script = ExtResource("4")
+id = &"S1"
+type = &"survivor_spawn"
+volume = &"A1"
+position = Vector3(2.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_S2"]
+script = ExtResource("4")
+id = &"S2"
+type = &"survivor_spawn"
+volume = &"A1"
+position = Vector3(5.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_S3"]
+script = ExtResource("4")
+id = &"S3"
+type = &"survivor_spawn"
+volume = &"A1"
+position = Vector3(2.0, 0.0, 33.0)
+
+[sub_resource type="Resource" id="m_S4"]
+script = ExtResource("4")
+id = &"S4"
+type = &"survivor_spawn"
+volume = &"A1"
+position = Vector3(5.0, 0.0, 33.0)
+
+[sub_resource type="Resource" id="m_S5"]
+script = ExtResource("4")
+id = &"S5"
+type = &"survivor_spawn"
+volume = &"A1"
+position = Vector3(8.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_M1"]
+script = ExtResource("4")
+id = &"M1"
+type = &"monster_spawn"
+volume = &"C3"
+position = Vector3(49.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_M2"]
+script = ExtResource("4")
+id = &"M2"
+type = &"monster_spawn"
+volume = &"C5"
+position = Vector3(42.0, 0.0, 11.0)
+
+[sub_resource type="Resource" id="m_M3"]
+script = ExtResource("4")
+id = &"M3"
+type = &"monster_spawn"
+volume = &"B2"
+position = Vector3(25.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_h1"]
+script = ExtResource("4")
+id = &"h1"
+type = &"hiding"
+volume = &"A6"
+position = Vector3(5.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_h2"]
+script = ExtResource("4")
+id = &"h2"
+type = &"hiding"
+volume = &"A3"
+position = Vector3(2.0, 0.0, 19.0)
+
+[sub_resource type="Resource" id="m_h3"]
+script = ExtResource("4")
+id = &"h3"
+type = &"hiding"
+volume = &"A4"
+position = Vector3(18.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_h4"]
+script = ExtResource("4")
+id = &"h4"
+type = &"hiding"
+volume = &"A5"
+position = Vector3(15.0, 0.0, 33.0)
+
+[sub_resource type="Resource" id="m_h5"]
+script = ExtResource("4")
+id = &"h5"
+type = &"hiding"
+volume = &"B3"
+position = Vector3(31.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_h6"]
+script = ExtResource("4")
+id = &"h6"
+type = &"hiding"
+volume = &"C5"
+position = Vector3(45.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_s_A1"]
+script = ExtResource("4")
+id = &"s-A1"
+type = &"switch"
+volume = &"A1"
+position = Vector3(1.5, 0.0, 35.0)
+
+[sub_resource type="Resource" id="m_s_A3"]
+script = ExtResource("4")
+id = &"s-A3"
+type = &"switch"
+volume = &"A3"
+position = Vector3(4.5, 0.0, 19.0)
+
+[sub_resource type="Resource" id="m_s_A4"]
+script = ExtResource("4")
+id = &"s-A4"
+type = &"switch"
+volume = &"A4"
+position = Vector3(14.5, 0.0, 19.0)
+
+[sub_resource type="Resource" id="m_s_A5"]
+script = ExtResource("4")
+id = &"s-A5"
+type = &"switch"
+volume = &"A5"
+position = Vector3(17.5, 0.0, 33.0)
+
+[sub_resource type="Resource" id="m_s_A6"]
+script = ExtResource("4")
+id = &"s-A6"
+type = &"switch"
+volume = &"A6"
+position = Vector3(1.5, 0.0, 11.0)
+
+[sub_resource type="Resource" id="m_s_A7"]
+script = ExtResource("4")
+id = &"s-A7"
+type = &"switch"
+volume = &"A7"
+position = Vector3(17.5, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_s_B1"]
+script = ExtResource("4")
+id = &"s-B1"
+type = &"switch"
+volume = &"B1"
+position = Vector3(31.5, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_s_B2"]
+script = ExtResource("4")
+id = &"s-B2"
+type = &"switch"
+volume = &"B2"
+position = Vector3(28.5, 0.0, 7.0)
+
+[sub_resource type="Resource" id="m_s_B3"]
+script = ExtResource("4")
+id = &"s-B3"
+type = &"switch"
+volume = &"B3"
+position = Vector3(24.5, 0.0, 33.0)
+
+[sub_resource type="Resource" id="m_s_C1"]
+script = ExtResource("4")
+id = &"s-C1"
+type = &"switch"
+volume = &"C1"
+position = Vector3(55.5, 0.0, 3.0)
+
+[sub_resource type="Resource" id="m_s_C2"]
+script = ExtResource("4")
+id = &"s-C2"
+type = &"switch"
+volume = &"C2"
+position = Vector3(44.5, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_s_C3"]
+script = ExtResource("4")
+id = &"s-C3"
+type = &"switch"
+volume = &"C3"
+position = Vector3(51.5, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_s_C4"]
+script = ExtResource("4")
+id = &"s-C4"
+type = &"switch"
+volume = &"C4"
+position = Vector3(52.5, 0.0, 19.0)
+
+[sub_resource type="Resource" id="m_s_C5"]
+script = ExtResource("4")
+id = &"s-C5"
+type = &"switch"
+volume = &"C5"
+position = Vector3(44.5, 0.0, 11.0)
+
+[sub_resource type="Resource" id="m_c1"]
+script = ExtResource("4")
+id = &"c1"
+type = &"camera"
+volume = &"B1"
+position = Vector3(27.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_c2"]
+script = ExtResource("4")
+id = &"c2"
+type = &"camera"
+volume = &"H-S3"
+position = Vector3(38.0, 0.0, 39.0)
+
+[sub_resource type="Resource" id="m_c3"]
+script = ExtResource("4")
+id = &"c3"
+type = &"camera"
+volume = &"C4"
+position = Vector3(56.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_c4"]
+script = ExtResource("4")
+id = &"c4"
+type = &"camera"
+volume = &"A2-N"
+position = Vector3(12.0, 0.0, 13.0)
+
+[sub_resource type="Resource" id="m_monitors"]
+script = ExtResource("4")
+id = &"monitors"
+type = &"monitor"
+volume = &"C1"
+position = Vector3(51.0, 0.0, 7.0)
+
+[sub_resource type="Resource" id="m_d1"]
+script = ExtResource("4")
+id = &"d1"
+type = &"drive"
+volume = &"A6"
+position = Vector3(2.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_d2"]
+script = ExtResource("4")
+id = &"d2"
+type = &"drive"
+volume = &"A4"
+position = Vector3(15.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_d3"]
+script = ExtResource("4")
+id = &"d3"
+type = &"drive"
+volume = &"A3"
+position = Vector3(2.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_d4"]
+script = ExtResource("4")
+id = &"d4"
+type = &"drive"
+volume = &"A7"
+position = Vector3(15.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_d5"]
+script = ExtResource("4")
+id = &"d5"
+type = &"drive"
+volume = &"A5"
+position = Vector3(15.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_d6"]
+script = ExtResource("4")
+id = &"d6"
+type = &"drive"
+volume = &"C3"
+position = Vector3(46.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_f1"]
+script = ExtResource("4")
+id = &"f1"
+type = &"fuse"
+volume = &"A3"
+position = Vector3(5.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_f2"]
+script = ExtResource("4")
+id = &"f2"
+type = &"fuse"
+volume = &"A5"
+position = Vector3(18.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_f3"]
+script = ExtResource("4")
+id = &"f3"
+type = &"fuse"
+volume = &"B3"
+position = Vector3(28.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_f4"]
+script = ExtResource("4")
+id = &"f4"
+type = &"fuse"
+volume = &"H-S3"
+position = Vector3(35.0, 0.0, 39.0)
+
+[sub_resource type="Resource" id="m_f5"]
+script = ExtResource("4")
+id = &"f5"
+type = &"fuse"
+volume = &"C5"
+position = Vector3(42.0, 0.0, 9.0)
+
+[sub_resource type="Resource" id="m_f6"]
+script = ExtResource("4")
+id = &"f6"
+type = &"fuse"
+volume = &"C1"
+position = Vector3(53.0, 0.0, 3.0)
+
+[sub_resource type="Resource" id="m_f7"]
+script = ExtResource("4")
+id = &"f7"
+type = &"fuse"
+volume = &"H-N1"
+position = Vector3(3.0, 0.0, 3.0)
+
+[sub_resource type="Resource" id="m_P1"]
+script = ExtResource("4")
+id = &"P1"
+type = &"fuse_box"
+volume = &"B2"
+position = Vector3(25.0, 0.0, 7.0)
+
+[sub_resource type="Resource" id="m_P2"]
+script = ExtResource("4")
+id = &"P2"
+type = &"fuse_box"
+volume = &"B1"
+position = Vector3(29.0, 0.0, 25.0)
+
+[sub_resource type="Resource" id="m_P3"]
+script = ExtResource("4")
+id = &"P3"
+type = &"fuse_box"
+volume = &"B3"
+position = Vector3(25.0, 0.0, 31.0)
+
+[sub_resource type="Resource" id="m_T1"]
+script = ExtResource("4")
+id = &"T1"
+type = &"terminal"
+volume = &"C4"
+position = Vector3(53.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_T2"]
+script = ExtResource("4")
+id = &"T2"
+type = &"terminal"
+volume = &"C2"
+position = Vector3(42.0, 0.0, 17.0)
+
+[sub_resource type="Resource" id="m_T3"]
+script = ExtResource("4")
+id = &"T3"
+type = &"terminal"
+volume = &"C3"
+position = Vector3(43.0, 0.0, 31.0)
+
+[resource]
+script = ExtResource("1")
+volumes = Array[ExtResource("2")]([SubResource("v_A1"), SubResource("v_A2_N"), SubResource("v_A2_M"), SubResource("v_A2_S"), SubResource("v_A3"), SubResource("v_A4"), SubResource("v_A5"), SubResource("v_A6"), SubResource("v_A7"), SubResource("v_H_N1"), SubResource("v_H_N2"), SubResource("v_H_N3"), SubResource("v_H_N4"), SubResource("v_H_S1"), SubResource("v_H_S2"), SubResource("v_H_S3"), SubResource("v_H_S4"), SubResource("v_B1"), SubResource("v_B2"), SubResource("v_B3"), SubResource("v_C1"), SubResource("v_C2"), SubResource("v_C3"), SubResource("v_C4"), SubResource("v_C5")])
+passages = Array[ExtResource("3")]([SubResource("p_A1_A2"), SubResource("p_A1_A3"), SubResource("p_A1_H_S"), SubResource("p_A2_H_N"), SubResource("p_A2_H_S"), SubResource("p_A2_A3"), SubResource("p_A2_A4"), SubResource("p_A2_A7"), SubResource("p_A3_A6"), SubResource("p_A6_H_N"), SubResource("p_A7_H_N"), SubResource("p_A4_A5"), SubResource("p_A5_H_S"), SubResource("p_A4_B1"), SubResource("p_B1_B2"), SubResource("p_B1_B3"), SubResource("p_B2_H_N"), SubResource("p_B3_H_S"), SubResource("p_B1_C2"), SubResource("p_H_N_C5"), SubResource("p_H_N_C1"), SubResource("p_C5_C1"), SubResource("p_C5_C2"), SubResource("p_C1_C4"), SubResource("p_C2_C4"), SubResource("p_C2_C3"), SubResource("p_C3_C4"), SubResource("p_C3_H_S"), SubResource("p_C4_Outside")])
+markers = Array[ExtResource("4")]([SubResource("m_S1"), SubResource("m_S2"), SubResource("m_S3"), SubResource("m_S4"), SubResource("m_S5"), SubResource("m_M1"), SubResource("m_M2"), SubResource("m_M3"), SubResource("m_h1"), SubResource("m_h2"), SubResource("m_h3"), SubResource("m_h4"), SubResource("m_h5"), SubResource("m_h6"), SubResource("m_s_A1"), SubResource("m_s_A3"), SubResource("m_s_A4"), SubResource("m_s_A5"), SubResource("m_s_A6"), SubResource("m_s_A7"), SubResource("m_s_B1"), SubResource("m_s_B2"), SubResource("m_s_B3"), SubResource("m_s_C1"), SubResource("m_s_C2"), SubResource("m_s_C3"), SubResource("m_s_C4"), SubResource("m_s_C5"), SubResource("m_c1"), SubResource("m_c2"), SubResource("m_c3"), SubResource("m_c4"), SubResource("m_monitors"), SubResource("m_d1"), SubResource("m_d2"), SubResource("m_d3"), SubResource("m_d4"), SubResource("m_d5"), SubResource("m_d6"), SubResource("m_f1"), SubResource("m_f2"), SubResource("m_f3"), SubResource("m_f4"), SubResource("m_f5"), SubResource("m_f6"), SubResource("m_f7"), SubResource("m_P1"), SubResource("m_P2"), SubResource("m_P3"), SubResource("m_T1"), SubResource("m_T2"), SubResource("m_T3")])

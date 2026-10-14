@@ -1,12 +1,12 @@
 # Story 001: Facility map data and whole-level load
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -80,7 +80,7 @@ The facility is one hand-authored level, loaded whole. Everything gameplay reads
 **Required evidence**:
 - Integration: `tests/integration/facility-map/map_data_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/facility-map/map_data_test.gd` passes (15 tests); 6 mutants caught (each load error, map order, digest fields); suite 229/229 (2026-10-14)
 
 ---
 

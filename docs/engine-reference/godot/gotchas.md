@@ -69,6 +69,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** build a negative zero by computation in tests. Code that hashes floats (`Knobs.digest()`) maps any zero to +0.0 first.
 - **Source:** data-config story 005 review, 2026-10-14, a headless print of `var_to_bytes` on 4.7.2.
 
+### `CACHE_MODE_IGNORE_DEEP` reloads the resource's own script
+
+- **Symptom:** a static loader such as `MapData.load_map()` that loads its own class's `.tres` with `ResourceLoader.CACHE_MODE_IGNORE_DEEP` gets the resource back. Then `res is MapData`, or `as MapData`, fails with `Condition ' !script_type ' is true` or `Internal script error! Opcode: 32`. The headless process can then crash with signal 11.
+- **Cause:** `IGNORE_DEEP` also bypasses the cache for external dependencies, and those include the `Script` ext_resource. The loaded resource therefore carries a second copy of the class's GDScript, separate from the one the calling code was compiled against. Inference: the cause was not checked against engine source.
+- **Fix:** use `CACHE_MODE_IGNORE`. It re-creates the file's main resource and its sub-resources, and reuses its dependencies, scripts included. That gives a fresh layout on every load.
+- **Source:** facility-map story 001, 2026-10-14. Verified on 4.7.2: `src/core/facility/map_data.gd` loads, and the 10-load digest test passes, after the switch.
+
 ## Export
 
 ### `--path` aborts an exported binary
