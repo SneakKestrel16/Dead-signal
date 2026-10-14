@@ -58,7 +58,19 @@ At lock the server builds a roster of 4–6 players with exactly one shapeshifte
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/lobby/roster_lock_test.gd`
+**What to test**:
+- 4, 5, 6 players: exactly 1 shapeshifter and 3, 4, 5 survivors; 3 or 7 refused.
+- At countdown 0 Match Flow receives `player_count` and per player peer ID, display name, role; survivors have a character (LB-3 deal), the shapeshifter none; loading starts on every peer; `player_count` fixed for the round.
+- `RosterView` is read-only; a test fails if it exposes a setter.
+- After Results and after Cancelled, every connected peer is back in Waiting with Ready cleared; a survivor whose grace expired is absent.
+
+**Edge cases to cover**:
+- A disconnect during the countdown (LB-1 rules).
+
+**Estimated test count**: ~7 integration tests
 
 ---
 

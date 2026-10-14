@@ -1,7 +1,7 @@
 # Sprint 004 — 2026-11-24 to 2026-12-07
 
 > PR-SPRINT skipped (lean mode). No milestone is open: Milestone 1 (vertical slice) closed 2026-10-13, so this sprint is planned against the story backlog alone. There is no risk register; risks are assessed from the sprint contents and the Milestone 1 register.
-> QA plan: run `/qa-plan sprint` before implementation begins.
+> QA plan: `production/qa/qa-plan-sprint-004-2026-10-14.md`.
 > Inputs: the conditions in `production/qa/qa-signoff-sprint-003-2026-10-14.md`. No Sprint 3 retrospective was written; the sign-off conditions and AD-83 to AD-101 carry its lessons.
 > Auto-decided (AD-102, autonomous mode; the designer did not answer the four open items): NA-V is scheduled (not waived) as a Must Have designer session; the Sprint 1 retroactive code review is scheduled as agent work (SR-1), since agents can run it; EX-1 carries as Nice to Have and its commit question is decided when the story starts; the FM-2 greybox sign-off is a designer task under External Factors.
 

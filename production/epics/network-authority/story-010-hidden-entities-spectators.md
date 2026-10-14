@@ -59,7 +59,18 @@ Things only some players may know about (undiscovered objectives, hallucinations
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/network/hidden_entities_test.gd`
+**What to test**:
+- A hidden spawn granted to one client never reaches another (no node, no `spawned` signal).
+- No node path sent to any client contains a player ID, peer ID, handle, role or character name.
+- After a spectator switch and after a reconnect, the client's handle set is entirely new and its state matches the server's projection.
+
+**Edge cases to cover**:
+- Grant in the same frame as `spawn()` (ADR-0004 §7 spawn order).
+
+**Estimated test count**: ~6 integration tests
 
 ---
 

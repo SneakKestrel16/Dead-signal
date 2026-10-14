@@ -57,7 +57,16 @@ Once accepted, a hold survives looking away and small steps, but cancels on rang
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/first-person-controller/hold_service_continue_test.gd`
+**What to test**:
+- Continues through a 180° turn and at `range_m` + 0.2.
+- Cancels that tick, with the owner's cancel rule, beyond `range_m` + 0.25, on lost line of sight, released input, owner interrupt (`holds.cancel`), or another hold started.
+- While Holding: sprint input gives 4.0 m/s; `roots_actor` gives 0; crouch input leaves posture unchanged.
+- Target changes owner state mid-hold: the owner cancels it and its cancel rule applies.
+
+**Estimated test count**: ~8 integration tests
 
 ---
 

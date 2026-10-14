@@ -62,7 +62,20 @@ Every hold in the game runs through one server service. This story builds Start 
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/first-person-controller/hold_service_start_test.gd`
+**What to test**:
+- Start rejected (and the client bar cancels) when the actor is shocked, hidden, Downed or the wrong role; when line of sight is blocked; when another actor holds the exclusive lock.
+- Two Starts on one exclusive target in one tick: the first in rotated player order wins (ADR-0008 Verification 3).
+- Stop arriving before acceptance: accepted and cancelled on that tick, progress 0.
+- `duration_s` D held: completion fires once on the first tick with elapsed ≥ D (±1 tick); `duration_s` 0 completes on the Start tick with no lock.
+
+**Edge cases to cover**:
+- Target net id out of range or -1 rejected.
+- A Start from a client-claimed view direction uses the server's (CI-7 targeting).
+
+**Estimated test count**: ~8 integration tests
 
 ---
 

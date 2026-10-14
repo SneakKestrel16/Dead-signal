@@ -59,7 +59,19 @@ Each tick's delivered events are projected per peer and sent as one reliable bat
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/network/event_projection_test.gd`
+**What to test**:
+- Every row of the ADR-0004 projection table: survivor and shapeshifter clients receive exactly the projected payload; `SurvivorHit` and `AbilityUsed` never reach survivors; bleed-out state never reaches the shapeshifter.
+- `PlayerShocked` byte-identical for every case to a survivor client.
+- A footstep 1 m outside its radius reaches no peer; inside it carries position and sound set, no handle.
+
+**Edge cases to cover**:
+- An event whose `project()` returns `{}` for every peer sends nothing (no empty batch).
+- The NA-8 survivor capture test, extended to decode event batches, still finds no shapeshifter player ID.
+
+**Estimated test count**: ~10 integration tests
 
 ---
 

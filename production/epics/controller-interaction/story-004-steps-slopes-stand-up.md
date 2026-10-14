@@ -58,7 +58,16 @@ Players climb stairs through invisible ramps, never jump, and stay crouched unti
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/first-person-controller/steps_stand_up_test.gd`
+**What to test**:
+- Steps 0.18 and 0.35 m (with ramp colliders) and a 40° ramp are climbed; a 0.40 m step and a 41° ramp block.
+- Crouched under a 1.5 m ceiling, releasing crouch stays at 1.2 m until open floor, then stands within 1 tick.
+- Head room blocked only by another capsule: stays crouched (analytic test), stands once it leaves.
+- No jump action in `InputMap`.
+
+**Estimated test count**: ~6 integration tests
 
 ---
 

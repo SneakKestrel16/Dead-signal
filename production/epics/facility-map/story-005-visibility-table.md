@@ -54,7 +54,18 @@ Relevance filtering needs to know which volumes can see which. The table was aut
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/integration/facility-map/visibility_table_test.gd`
+**What to test**:
+- All 25 volumes have a `sees` table entry; a test fails if the table is not symmetric or a volume is missing (`MapVolume.sees`, NA-8).
+- `MapQueries.volume_at(point)` returns each of the 25 volumes for a point inside it.
+- A body in a volume outside a peer's visible set is not sent; inside it is (through `ReplicationScope`).
+
+**Edge cases to cover**:
+- A door entry is cut while that door is closed (`MapQueries.visible_set` with `door_closed`).
+
+**Estimated test count**: ~5 integration tests
 
 ---
 

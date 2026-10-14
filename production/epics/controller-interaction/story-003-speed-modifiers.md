@@ -56,7 +56,19 @@ Taser stuns, takedown commits, rescues and transforms all limit movement. Each o
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/unit/first-person-controller/speed_modifiers_test.gd`
+**What to test**:
+- From a true-form sprint 5.75 m/s: slow 0.5 gives 2.875; slows 0.5 and 0.7 together give 2.875 (the strongest wins, not the product 2.01); a root gives 0; a lock plus a slow gives 0.
+- Last modifier removed with sprint still held: the next tick moves at 5.75 with no re-press.
+- Owners A and B each add a modifier; removing A's leaves B's active.
+
+**Edge cases to cover**:
+- Removing a modifier that was never added changes nothing.
+- The same owner adding twice replaces, not stacks (record the rule if the GDD is silent).
+
+**Estimated test count**: ~6 unit tests
 
 ---
 

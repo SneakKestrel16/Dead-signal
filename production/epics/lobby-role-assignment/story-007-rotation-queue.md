@@ -54,7 +54,15 @@ Post-M1 phase. Instead of a random pick, a shuffled queue of session tokens deci
 
 ## QA Test Cases
 
-*Test cases not yet defined — run /qa-plan to generate them.*
+*From `production/qa/qa-plan-sprint-004-2026-10-14.md` (/qa-plan, 2026-10-14). Implement against these and the Acceptance Criteria above.*
+
+**Test file path**: `tests/unit/lobby/rotation_queue_test.gd`
+**What to test**:
+- N connected tokens and a seeded RNG: Q_1 holds each token once, reproducible from the seed, head is the shapeshifter.
+- Stable roster N = 4, 5, 6 over 2N Ended rounds (one forfeit): `shapeshifter(r) = Q_1[(r − 1) mod N]`, each token the shapeshifter exactly twice.
+- After a Cancelled round: queue unchanged, same shapeshifter, characters dealt again.
+
+**Estimated test count**: ~5 unit tests
 
 ---
 
