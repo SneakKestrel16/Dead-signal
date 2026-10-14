@@ -66,6 +66,9 @@ func test_pitch_clamps_at_85_degrees_even_past_it_in_one_frame() -> void:
 	assert_float(_view.pitch_of(PID)).is_equal_approx(deg_to_rad(-85.0), EPS)
 	_send(0.0, deg_to_rad(40.0))
 	assert_float(_view.pitch_of(PID)).is_equal_approx(deg_to_rad(40.0), EPS)
+	_sm.frame_of(PID).pitch = deg_to_rad(120.0) ## past InputQueue's clamp: ViewState clamps on its own
+	assert_float(_view.pitch_of(PID)).is_equal_approx(deg_to_rad(85.0), EPS)
+	_sm.frame_of(PID).pitch = deg_to_rad(40.0)
 	assert_float(_view.server_dir(PID).y).is_equal_approx(sin(deg_to_rad(40.0)), EPS) ## positive looks up
 
 
@@ -104,6 +107,15 @@ func test_mouse_look_uses_screen_relative_not_relative() -> void:
 	assert_float(li.yaw).is_equal_approx(-40.0 * li.sensitivity, EPS)
 
 
+func test_mouse_motion_is_ignored_while_the_mouse_is_not_captured() -> void:
+	var li: LocalInput = auto_free(LocalInput.new()) ## not in the tree: _ready never captured it
+	assert_int(Input.mouse_mode).is_not_equal(Input.MOUSE_MODE_CAPTURED)
+	var e := InputEventMouseMotion.new()
+	e.screen_relative = Vector2(40, 0)
+	li._input(e)
+	assert_float(li.yaw).is_equal(0.0)
+
+
 func test_mouse_look_clamps_pitch_and_wraps_yaw() -> void:
 	var li: LocalInput = auto_free(LocalInput.new())
 	li.look(Vector2(0, -100000)) ## far past the clamp in one event
@@ -129,7 +141,8 @@ func test_input_map_holds_exactly_the_eleven_actions_and_no_jump() -> void:
 
 # --- device == 0 -------------------------------------------------------------
 
-## Lines that compare an event's device with 0 (4.7 changed device IDs; use the event type).
+## Lines that compare an event's device with 0 (4.7 changed device IDs; use the event type). A
+## tripwire for the common forms: `device == 0`, `0 != x.device`; not `in [0]`, `match` or get("device").
 static func device_zero_lines(src: String) -> PackedStringArray:
 	var re := RegEx.create_from_string("\\bdevice\\s*(==|!=)\\s*0\\b|\\b0\\s*(==|!=)\\s*\\w*\\.?device\\b")
 	var out := PackedStringArray()

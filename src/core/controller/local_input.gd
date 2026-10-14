@@ -18,7 +18,9 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
-func _unhandled_input(event: InputEvent) -> void:
+## _input, not _unhandled_input: captured motion still carries the window-centre position, so a HUD
+## Control with a STOP filter would eat it before _unhandled_input (gotchas.md).
+func _input(event: InputEvent) -> void:
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		handle(event)
 
