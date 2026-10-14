@@ -1,7 +1,7 @@
 # Story 002: Session tokens and reconnect rebinding
 
 > **Epic**: Network Authority & Replication
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -36,9 +36,9 @@ Identity in a round is a server-assigned player ID, bound to a secret token. A p
 
 *From ADR-0001 §4–5 and Validation Criteria; `lobby-role-assignment.md` AC-LB-18, AC-LB-28, scoped to this story:*
 
-- [ ] A reconnect while the old peer is still connected evicts the old peer, raises no dropped notification, and leaves the queue position unchanged.
-- [ ] After rebind the new peer gets a full snapshot before any delta, and visibility-filtered entities reappear on it.
-- [ ] A packet capture on a non-owner client contains no other player's token.
+- [x] A reconnect while the old peer is still connected evicts the old peer, raises no dropped notification, and leaves the queue position unchanged.
+- [x] After rebind the new peer gets a full snapshot before any delta, and visibility-filtered entities reappear on it.
+- [x] A packet capture on a non-owner client contains no other player's token.
 
 ---
 
@@ -84,7 +84,7 @@ Identity in a round is a server-assigned player ID, bound to a secret token. A p
 **Required evidence**:
 - Integration: `tests/integration/network/tokens_reconnect_test.gd` — must exist and pass
 
-**Status**: [x] `tests/integration/network/tokens_reconnect_test.gd` passes (9 tests, 3 runs); full suite 150/150, 0 orphans (2026-10-14)
+**Status**: [x] `tests/integration/network/tokens_reconnect_test.gd` passes (12 tests, 3 runs); full suite 153/153, 0 orphans (2026-10-14)
 
 ---
 
@@ -92,3 +92,17 @@ Identity in a round is a server-assigned player ID, bound to a secret token. A p
 
 - Depends on: Story 001
 - Unlocks: Story 003
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing in `tests/integration/network/tokens_reconnect_test.gd`
+- AC1: `test_reconnect_while_old_peer_connected_evicts_it_without_drop_and_keeps_queue_position` (no drop, same ID, queue unchanged; the queue is a stand-in kept by the join/drop signals until lobby story 007).
+- AC2: `test_rebound_peer_gets_full_snapshot_first` (first snapshot carries every body; vacuous for "before any delta" until deltas exist) and `test_visibility_follows_the_player_to_the_new_peer`.
+- AC3: `test_non_owner_capture_contains_no_other_token` (positive control: the capture does see the client's own token).
+- Edge cases: after grace, unknown token in Countdown, same-token race, same-frame drop, pending rebind that never connects, drop before connect without grace, known token in Waiting.
+**Deviations** (advisory, logged): AD-72: `token_in_use` reject reason (not in ADR-0001's list; UI text needed); rebind when still bound or in grace; `player_dropped` emitted now. Review suggestions deferred: TD-006.
+**Test Evidence**: Integration: `tests/integration/network/tokens_reconnect_test.gd`; 7 mutations caught; suite 153/153, 0 orphans.
+**Run result**: N/A: no screen; netcode verified headless.
+**Code Review**: Complete: `/code-review` 2026-10-14, CHANGES REQUIRED (grace re-check at connect), fixed in 9b5d42d.

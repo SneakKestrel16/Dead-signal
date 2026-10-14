@@ -21,11 +21,11 @@ stories:
     name: "Session tokens and reconnect rebinding"
     file: "production/epics/network-authority/story-002-tokens-reconnect.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
   - id: "network-authority-6"
     name: "Snapshots, owner prediction and reconciliation"
     file: "production/epics/network-authority/story-006-snapshots-prediction.md"
