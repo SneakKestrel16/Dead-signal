@@ -5,7 +5,7 @@
 > **Architecture Module**: Facility Map (`docs/architecture/architecture.md` Core layer)
 > **Status**: Ready (geometry, doors, zones and visibility stories are unblocked; lighting and camera-feed stories block on ADR-0009, Proposed)
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories facility-map`
+> **Stories**: 12 stories (6 Ready, 6 Blocked on Proposed ADR-0009/0012/0013)
 
 ## Overview
 
@@ -40,6 +40,25 @@ The one hand-authored 60 × 40 m Research Facility greybox, loaded whole. It pro
 
 Lighting, camera-feed, zone-audio and reduced-flash requirements rest on ADR-0009 and ADR-0013 (Proposed); their stories will be Blocked until those are accepted.
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [Facility map data and whole-level load](story-001-map-data-loader.md) | Integration | Ready | ADR-0007 |
+| 002 | [Greybox geometry and collision authoring](story-002-greybox-geometry-collision.md) | Integration | Ready | ADR-0007 |
+| 003 | [Connectivity checks: no sealed rooms, no single choke](story-003-connectivity-checks.md) | Logic | Ready | N/A |
+| 004 | [Analytic zones, terminal zone and exit gating](story-004-analytic-zones-exit.md) | Integration | Ready | ADR-0007, ADR-0004 |
+| 005 | [Per-volume visibility table for relevance](story-005-visibility-table.md) | Integration | Ready | ADR-0004 |
+| 006 | [Traversal budget walk-through](story-006-traversal-budget.md) | Integration | Ready | ADR-0007 |
+| 007 | [Candidate point selection and placement constraints](story-007-candidate-selection.md) | Logic | Blocked | ADR-0012 (Proposed) |
+| 008 | [Candidate replication and discovery agreement](story-008-candidate-replication.md) | Integration | Blocked | ADR-0012 (Proposed), ADR-0004 |
+| 009 | [Per-volume lighting state machine and precedence](story-009-lighting-state-machine.md) | Logic | Blocked | ADR-0009 (Proposed) |
+| 010 | [Lighting replication, Blackout scope and reduced flash](story-010-lighting-render-blackout.md) | Visual/Feel | Blocked | ADR-0009 (Proposed) |
+| 011 | [Surveillance cameras at the C1 monitor](story-011-surveillance-cameras.md) | Visual/Feel | Blocked | ADR-0009 (Proposed) |
+| 012 | [Zone ambience and B3 footstep masking](story-012-zone-ambience.md) | Visual/Feel | Blocked | ADR-0013 (Proposed) |
+
+Grouping playtest AC 11 belongs to Match Telemetry.
+
 ## Definition of Done
 
 This epic is complete when:
@@ -50,4 +69,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories facility-map` to break this epic into implementable stories.
+Run `/story-readiness` on a story, then `/dev-story`. Start with Story 001.
