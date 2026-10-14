@@ -34,6 +34,12 @@ class_name NetKnobs extends Resource
 @export var starvation_high: float = NAN
 ## Starved-tick fraction below which the target depth falls back to 1.
 @export var starvation_low: float = NAN
+## Story network-authority/006: inference, no ADR/GDD number (ADR-0002 rule 7 gives the method, not the values).
+## Largest input packet (var_to_bytes) the server decodes, in bytes; larger is dropped before decoding.
+@export var input_packet_cap_bytes: int = KnobUnset.INT
+## TickEstimator: fraction of the gap closed per snapshot when a sample is above / below the offset.
+@export var tick_estimate_rise_alpha: float = NAN
+@export var tick_estimate_fall_alpha: float = NAN
 
 
 ## Cross-knob rules arrive in story data-config/003; none yet.

@@ -29,6 +29,7 @@ var _low: float
 var _timeout_ticks: int
 var _window_ticks: int
 var _frames: Array[InputFrame] = []
+var _taken: Array[InputFrame] = []
 var _newest_seq: int = -1
 var _last_consumed_seq: int = -1
 var _last: InputFrame = null
@@ -118,6 +119,13 @@ func target_depth() -> int:
 	return 0 if _host_mode else _target
 
 
+## The queued frames the last next() consumed, oldest first: two on a catch-up tick, none when it
+## starved (next() then returned a repeated or released frame). Movement steps each one, so a
+## catch-up never skips a frame the owner predicted (story 006).
+func taken() -> Array[InputFrame]:
+	return _taken
+
+
 ## Number of frames waiting.
 func size() -> int:
 	return _frames.size()
@@ -125,6 +133,7 @@ func size() -> int:
 
 func _take_or_starve(count: int) -> InputFrame:
 	if _frames.is_empty():
+		_taken.clear()
 		_empty_ticks += 1
 		if _empty_ticks >= _timeout_ticks:
 			_released = true
@@ -132,8 +141,10 @@ func _take_or_starve(count: int) -> InputFrame:
 			return _released_frame()
 		return _last if _last != null else InputFrame.new()
 	var f: InputFrame = null
+	_taken.clear()
 	for i in mini(count, _frames.size()):
 		f = _frames.pop_front()
+		_taken.append(f)
 	_last = f
 	_last_consumed_seq = f.seq
 	_empty_ticks = 0

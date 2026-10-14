@@ -30,7 +30,7 @@ stories:
     name: "Snapshots, owner prediction and reconciliation"
     file: "production/epics/network-authority/story-006-snapshots-prediction.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 2
     blocker: ""

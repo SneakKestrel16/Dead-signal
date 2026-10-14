@@ -1,12 +1,12 @@
 # Story 006: Snapshots, owner prediction and reconciliation
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 2 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 

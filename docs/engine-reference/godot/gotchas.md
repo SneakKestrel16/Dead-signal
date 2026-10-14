@@ -11,6 +11,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** test for the real transport: `multiplayer.multiplayer_peer is ENetMultiplayerPeer`.
 - **Source:** vertical slice, 2026-10-13 (`prototypes/dead-signal-vertical-slice/net.gd`, `online()`); found by its headless round test hanging.
 
+### An explicit ENet channel count starved unreliable sends
+
+- **Symptom:** input sent every tick reached the server about once in 8 to 20 ticks. The server queue starved, and owner corrections of 1.3 m (20 lost frames) hit every client on the same ticks.
+- **Cause:** with `create_server(..., 4)` and `create_client(..., 4)`, the client's `PEER_PACKET_THROTTLE_LIMIT` fell to 1 of 32. ENet then drops unreliable sends to match. With the default count (0, ENet's maximum) the limit stayed at 32. Why the count matters inside ENet was not traced, so this is an inference from the measurement.
+- **Fix:** keep the default channel count; any channel number up to the maximum then works. Separately, ENet's adaptive throttle also cut input under 30 ms jitter (58 to 62 corrections per ~4360 states). `NetAuthority` pins it with `throttle_configure(5000, PACKET_THROTTLE_SCALE, 0)` on each peer, and ENet forwards that to the client.
+- **Source:** network-authority story 006, 2026-10-13, `tests/integration/network/prediction_reconcile_test.gd` (5 clients, 150 ms RTT, 30 ms jitter, 2% loss). Diagnosed from `ENetPacketPeer.get_statistic` per tick.
+
 ## UI and input
 
 ### A centred `Control` eats captured-mouse look
