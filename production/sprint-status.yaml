@@ -48,7 +48,7 @@ stories:
     name: "StateRegistry and typed views"
     file: "production/epics/event-catalog-state-registry/story-003-state-registry.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 0.5
     blocker: ""

@@ -27,3 +27,12 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Symptom:** `ERROR: --path was specified on the command line, but this Godot binary was compiled without support for path overrides. Aborting.`
 - **Fix:** run exported builds without `--path`; pass game arguments after `--`.
 - **Source:** vertical slice launch, 2026-10-13.
+
+## Testing
+
+### A new `class_name` is unknown to the next headless test run
+
+- **Symptom:** gdUnit4 run right after adding a script fails with the new class name not found (e.g. `StateRegistry`), although the file exists.
+- **Cause:** the global class cache (`.godot/global_script_class_cache.cfg`) is refreshed by an import scan, and a `-s` script run does not always rescan first.
+- **Fix:** run `godot --headless --import` once after adding a `class_name` script, then the tests. Commit the updated cache file (it is tracked).
+- **Source:** event-catalog story 003, 2026-10-13 (engine-programmer run). Inference on the cause: not checked against engine source.
