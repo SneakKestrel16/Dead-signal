@@ -17,3 +17,7 @@ input_queue_cap = 8
 max_seq_ahead = 16
 starvation_high = 0.10
 starvation_low = 0.02
+port = 24690
+max_clients_headroom = 2
+auth_timeout_s = 3.0
+auth_payload_cap_bytes = 1024

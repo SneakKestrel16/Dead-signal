@@ -3,8 +3,8 @@ class_name NetKnobs extends Resource
 ## Defaults are unset sentinels; values come only from res://data/knobs/net.tres. Ranges are the GDD Safe Range;
 ## a knob with no sourced range has a plain @export (unset is still caught). Values the GDD marks proposed ship as proposed.
 ## Usage: `var k := Knobs.load_all(); var v = k.net.sim_tick_hz`
-## NOT SOURCEABLE (no number in ADR-0001/0002/0003): slack_ticks, port,
-## max_clients, auth_timeout, payload size cap, ENet timeout. Add each when its number is decided.
+## NOT SOURCEABLE (no number in ADR-0001/0002/0003): slack_ticks,
+## ENet timeout. Add it when its number is decided.
 ## sim_tick_hz range 30..128 kept by designer decision 2026-10-13; ADR-0002 fixes only the value 60.
 
 @export_range(30, 128) var sim_tick_hz: int = KnobUnset.INT
@@ -16,6 +16,15 @@ class_name NetKnobs extends Resource
 @export var max_extrapolation_ms: int = KnobUnset.INT
 @export var history_ticks: int = KnobUnset.INT
 @export var reject_close_delay_s: float = NAN
+## Join knobs (story network-authority/001): inference, AD-63, no ADR/GDD number.
+## ENet listen port for a hosted game.
+@export var port: int = KnobUnset.INT
+## Extra ENet slots above max_players so a reconnect can arrive while its stale peer still exists.
+@export var max_clients_headroom: int = KnobUnset.INT
+## Seconds a peer may stay unauthenticated before SceneMultiplayer drops it.
+@export var auth_timeout_s: float = NAN
+## Largest auth payload the server will decode, in bytes; larger is bad_payload.
+@export var auth_payload_cap_bytes: int = KnobUnset.INT
 ## Input queue knobs (story network-authority/005): inference, AD-61, no ADR/GDD number.
 ## Hard cap on queued input frames per player; the oldest is dropped.
 @export var input_queue_cap: int = KnobUnset.INT

@@ -43,3 +43,10 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** the assertion object stores the value it checked, so a `RefCounted` passed to `assert_object` stays referenced for the rest of the test.
 - **Fix:** check liveness with `assert_bool(ref.get_ref() != null)`, never by passing the object itself to an assertion.
 - **Source:** event-catalog story 004, 2026-10-13 (`tests/integration/event_catalog/tick_order_test.gd`). Inference on the cause: not checked against gdUnit4 source.
+
+### `SceneTree.set_multiplayer` per-path APIs leak unless unset
+
+- **Symptom:** a test suite passes with 0 orphans but the engine prints "N resources still in use at exit"; `--verbose` lists leaked `SceneMultiplayer`, `ENetMultiplayerPeer` and `Scene*Interface` instances.
+- **Cause:** the tree keeps a custom multiplayer registered for its path after the node is freed. A lambda connected to the API's own signal that captures the API is a reference cycle.
+- **Fix:** before freeing the node, close and clear `multiplayer_peer`, clear `auth_callback`, disconnect the lambdas, then call `get_tree().set_multiplayer(null, node.get_path())`.
+- **Source:** network-authority story 001, 2026-10-13. Verified on 4.7.2: the warning disappeared after the teardown change (123/123 pass).

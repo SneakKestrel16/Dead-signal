@@ -1,12 +1,12 @@
 # Story 001: Host, join and join validation
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-13
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,10 +36,10 @@ A player hosts a listen server on a data-configured port and others join by addr
 
 *From ADR-0001 §1–3, §7 and Validation Criteria; `lobby-role-assignment.md` AC-LB-02, AC-LB-03, AC-LB-04, AC-LB-29, scoped to this story:*
 
-- [ ] Joins are rejected with `lobby_full` at the cap, `round_in_progress` during In Match (except a known token in grace), `version_mismatch` (both strings shown) and `bad_name`; a valid join receives a player ID.
-- [ ] A rejected client shows the reason text in 20 of 20 attempts with the 0.2 s delay.
-- [ ] A malformed or oversized auth payload is rejected with `bad_payload` without decoding objects.
-- [ ] `create_server` failing (port in use) shows the error and leaves nothing half-initialised; the server role starts and runs with no local player (headless).
+- [x] Joins are rejected with `lobby_full` at the cap, `round_in_progress` during In Match (except a known token in grace), `version_mismatch` (both strings shown) and `bad_name`; a valid join receives a player ID.
+- [x] A rejected client shows the reason text in 20 of 20 attempts with the 0.2 s delay.
+- [x] A malformed or oversized auth payload is rejected with `bad_payload` without decoding objects.
+- [x] `create_server` failing (port in use) shows the error and leaves nothing half-initialised; the server role starts and runs with no local player (headless).
 
 ---
 
@@ -87,7 +87,7 @@ A player hosts a listen server on a data-configured port and others join by addr
 **Required evidence**:
 - Integration: `tests/integration/network/host_join_auth_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created, 20 cases pass (full suite 123/123, 0 orphans)
 
 ---
 
@@ -95,3 +95,17 @@ A player hosts a listen server on a data-configured port and others join by addr
 
 - Depends on: data-config Story 001
 - Unlocks: Stories 002, 003, 004
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-13
+**Criteria**: 4/4 passing (all auto-verified by `tests/integration/network/host_join_auth_test.gd`)
+**Deviations**:
+- ADVISORY: "shows the reason text" is proven at the client: the reason code arrives in `join_rejected` (20 of 20), and the version strings are in `last_reject_details`. The on-screen text belongs to the lobby screen story (lobby-role-assignment 005).
+- ADVISORY: open points logged as AD-64. These are host peer-1 binding, storing the display name, `player_joined` on connect, and no reason code for a client auth timeout.
+- Finding: with `reject_close_delay_s` = 0 the reason still arrived in 20 of 20 attempts, because a 0 s timer waits one frame. Only a back-to-back disconnect lost it (0 of 20). This partly contradicts Engine Note (6). The 0.2 s value is kept. Settle it in the real-network test list.
+**Test Evidence**: Integration: `tests/integration/network/host_join_auth_test.gd` (20 cases). Mutations caught: the size check removed, and the version and name checks swapped.
+**Code Review**: Skipped (lean mode). A teardown leak (SceneMultiplayer per path) was found and fixed during verification. It is recorded in `docs/engine-reference/godot/gotchas.md`.
+**Unverified**: two machines or a WAN, NAT, IPv6-only, an exported headless build.

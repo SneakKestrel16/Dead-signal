@@ -36,7 +36,7 @@ The authoritative server that every rule depends on. It hosts a listen-server se
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | [Host, join and join validation](story-001-host-join-auth.md) | Integration | Ready | ADR-0001 |
+| 001 | [Host, join and join validation](story-001-host-join-auth.md) | Integration | Complete | ADR-0001 |
 | 002 | [Session tokens and reconnect rebinding](story-002-tokens-reconnect.md) | Integration | Ready | ADR-0001 |
 | 003 | [Disconnect detection and host leaving](story-003-disconnect-host-left.md) | Integration | Ready | ADR-0001 |
 | 004 | [TickRunner and the server clock](story-004-tick-runner.md) | Logic | Complete | ADR-0002 |
