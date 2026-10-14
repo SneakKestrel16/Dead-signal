@@ -75,11 +75,11 @@ stories:
     name: "Layer boundary check"
     file: "production/epics/event-catalog-state-registry/story-006-layer-boundary-check.md"
     priority: should-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
   - id: "lobby-role-assignment-1"
     name: "Ready and countdown state machine"
     file: "production/epics/lobby-role-assignment/story-001-ready-countdown-state-machine.md"

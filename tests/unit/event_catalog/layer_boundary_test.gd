@@ -4,7 +4,10 @@
 # each layer are read from the `class_name` lines in that folder, never from a hand list.
 # Rule for comments and strings: text after `#` is a comment and ignored (a doc line may say "Story 003
 # adds X"); string contents count, because a res://src/feature/ path in a load() is a real reference.
-# Known limit: a `#` inside a string ends the scanned part of that line early.
+# .tscn/.tres files under src/ are scanned for paths too (an ext_resource is a reference); a path
+# counts with or without the trailing slash, and ../feature/x.gd from a sibling folder counts as well.
+# Known limits: a `#` inside a string ends the scanned part of that line early; a path built at run
+# time ("res://src/" + layer) or a uid:// reference is not seen.
 extends GdUnitTestSuite
 
 ## Lowest first. A script in LAYERS[i] may reference LAYERS[0..i] only.
@@ -12,19 +15,23 @@ const LAYERS: PackedStringArray = ["foundation", "core", "feature", "presentatio
 const SRC := "res://src/"
 
 
-## Upward references in `files` (res path -> source text). Returns "path: Name (layer)" entries.
+## Upward references in `files` (res path -> source text). Returns "path: Name (layer)" entries, plus
+## "path: class_name X declared twice" when one name is declared in two files.
 ## Files outside src/<layer>/ (e.g. src/main.gd, the composition root) are not checked.
 static func upward_references(files: Dictionary) -> PackedStringArray:
-	var class_re := RegEx.create_from_string("(?m)^class_name\\s+(\\w+)")
+	var class_re := RegEx.create_from_string("(?m)^\\s*(?:@\\w+\\s+)*class_name\\s+(\\w+)")
 	var owner := {} ## class name -> layer index
+	var out := PackedStringArray()
 	for path: String in files:
 		var layer := layer_of(path)
-		if layer == -1:
+		if layer == -1 or not path.ends_with(".gd"):
 			continue
 		for m in class_re.search_all(files[path]):
-			owner[m.get_string(1)] = layer
+			var name := m.get_string(1)
+			if owner.has(name):
+				out.append("%s: class_name %s declared twice" % [path, name])
+			owner[name] = layer
 	var word := RegEx.create_from_string("\\b[A-Z]\\w*\\b")
-	var out := PackedStringArray()
 	for path: String in files:
 		var layer := layer_of(path)
 		if layer == -1:
@@ -36,7 +43,7 @@ static func upward_references(files: Dictionary) -> PackedStringArray:
 				if owner.has(name) and owner[name] > layer:
 					out.append("%s: %s (%s)" % [path, name, LAYERS[owner[name]]])
 			for higher in range(layer + 1, LAYERS.size()):
-				if code.contains(SRC + LAYERS[higher] + "/"):
+				if code.contains(SRC + LAYERS[higher]) or code.contains("../" + LAYERS[higher] + "/"):
 					out.append("%s: %s path" % [path, LAYERS[higher]])
 	return out
 
@@ -49,7 +56,7 @@ static func layer_of(path: String) -> int:
 	return -1
 
 
-## Every .gd file under src/, path -> text.
+## Every .gd, .tscn and .tres file under src/, path -> text.
 static func src_files() -> Dictionary:
 	var files := {}
 	var dirs := [SRC]
@@ -58,7 +65,7 @@ static func src_files() -> Dictionary:
 		for sub in DirAccess.get_directories_at(dir):
 			dirs.append(dir + sub + "/")
 		for f in DirAccess.get_files_at(dir):
-			if f.ends_with(".gd"):
+			if f.get_extension() in ["gd", "tscn", "tres"]:
 				files[dir + f] = FileAccess.get_file_as_string(dir + f)
 	return files
 
@@ -116,8 +123,36 @@ func test_missing_layer_folders_still_check() -> void:
 	assert_array(upward_references(files)).is_empty()
 
 
+func test_indented_or_annotated_class_name_still_owns_its_layer() -> void:
+	var files := {
+		"res://src/feature/a.gd": "@abstract class_name Ab extends RefCounted\n",
+		"res://src/feature/b.gd": "@tool\n  class_name Bc\n",
+		"res://src/core/c.gd": "class_name Cc\nvar a: Ab\nvar b: Bc\n",
+	}
+	assert_array(upward_references(files)).contains_exactly_in_any_order(
+		["res://src/core/c.gd: Ab (feature)", "res://src/core/c.gd: Bc (feature)"])
+
+
+func test_scene_resource_path_and_relative_path_count() -> void:
+	var files := {
+		"res://src/core/x.tscn": "[ext_resource type=\"Script\" path=\"res://src/feature/stun.gd\" id=\"1\"]\n",
+		"res://src/core/y.gd": "class_name Yy\nconst S := preload(\"../feature/stun.gd\")\n",
+	}
+	assert_array(upward_references(files)).contains_exactly_in_any_order(
+		["res://src/core/x.tscn: feature path", "res://src/core/y.gd: feature path"])
+
+
+func test_a_class_name_declared_in_two_layers_fails() -> void:
+	var files := {"res://src/core/a.gd": "class_name Dup\n", "res://src/feature/b.gd": "class_name Dup\n"}
+	var out := Array(upward_references(files))
+	assert_bool(out.any(func(e: String) -> bool: return e.contains("class_name Dup declared twice"))).is_true()
+
+
 func test_ci_workflow_runs_the_unit_tests() -> void:
 	var wf := FileAccess.get_file_as_string("res://.github/workflows/tests.yml")
 	assert_str(wf).contains("on:").contains("push:")
 	assert_str(wf).contains("gdUnit4-action")
-	assert_str(wf).contains("tests/unit") ## this file lives under tests/unit/
+	## The `paths:` block lists tests/unit (this file lives there); a comment mentioning it does not count.
+	var paths := RegEx.create_from_string("(?m)^\\s+paths:\\s*\\|?\\s*\\n((?:\\s+[^#\\s][^\\n]*\\n?)+)").search(wf)
+	assert_bool(paths != null).is_true()
+	assert_bool(Array(paths.get_string(1).split("\n")).any(func(l: String) -> bool: return l.strip_edges() == "tests/unit")).is_true()

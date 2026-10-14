@@ -1,7 +1,7 @@
 # Story 006: Layer boundary check
 
 > **Epic**: Event Catalog & State Registry
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: 0.5 days
@@ -36,9 +36,9 @@ Dependencies must point down the layer map: Foundation and Core never reference 
 
 *From `docs/architecture/architecture.md` dependency direction and TR-index-010, scoped to this story:*
 
-- [ ] A test scans `src/` and fails when a Foundation or Core script references a Feature or Presentation class name or path.
-- [ ] The check is shown to fail: a deliberate upward reference in a fixture makes it fail, and removing it makes it pass.
-- [ ] The test runs in the CI workflow `.github/workflows/tests.yml`.
+- [x] A test scans `src/` and fails when a Foundation or Core script references a Feature or Presentation class name or path.
+- [x] The check is shown to fail: a deliberate upward reference in a fixture makes it fail, and removing it makes it pass.
+- [x] The test runs in the CI workflow `.github/workflows/tests.yml`.
 
 ---
 
@@ -80,7 +80,7 @@ Dependencies must point down the layer map: Foundation and Core never reference 
 **Required evidence**:
 - Logic: `tests/unit/event_catalog/layer_boundary_test.gd` — must exist and pass
 
-**Status**: [x] `tests/unit/event_catalog/layer_boundary_test.gd` passes (7 tests); watched fail on the real tree (a planted PlayerBody reference in server_movement.gd); suite 198/198 (2026-10-14)
+**Status**: [x] `tests/unit/event_catalog/layer_boundary_test.gd` passes (10 tests); watched fail on the real tree (a planted PlayerBody reference in server_movement.gd), on a workflow whose `paths:` drops tests/unit, and with the duplicate-name check removed; suite 201/201 (2026-10-14)
 
 ---
 
@@ -88,3 +88,22 @@ Dependencies must point down the layer map: Foundation and Core never reference 
 
 - Depends on: Story 004 (folder layout set by the composition root)
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (all automated: `tests/unit/event_catalog/layer_boundary_test.gd`, 10 tests).
+**Deviations**: Wider than AC1, on purpose. Any reference to a higher layer fails, which includes Foundation naming a Core class (AD-77). Strings count; comments do not.
+**Code review**: qa-tester verdict GAPS, nothing blocking. These findings were applied:
+- `class_name` is found when indented or after annotations.
+- `.tscn` and `.tres` files are scanned.
+- A path counts without the trailing slash, and a `../<layer>/` path counts.
+- A name declared twice fails.
+- The CI check reads the workflow's `paths:` block.
+**Known limits** (documented in the test header):
+- A `#` inside a string hides the rest of its line.
+- A path built at run time, or a `uid://` reference, is not seen.
+- An autoload name is not a `class_name`, so referencing one is not seen.
+**Test Evidence**: Logic: `tests/unit/event_catalog/layer_boundary_test.gd`. It runs in CI through the `tests/unit` entry in `.github/workflows/tests.yml`.
