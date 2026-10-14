@@ -1,7 +1,7 @@
 # Story 003: Disconnect detection and host leaving
 
 > **Epic**: Network Authority & Replication
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -97,3 +97,12 @@ Dead peers are found by the ENet timeout and routed to whoever owns the phase: t
 
 - Depends on: Story 002
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (AC3's "no result is recorded" is vacuous until a result store exists)
+**Deviations**: ConnectionRouter (Core) stands in for Match Flow's grace start and `PlayerConnectionChanged` emission (AD-85); "main menu" is the boot scene `src/main.tscn`; no production caller wires `host_left` to `Main.return_with` yet (lobby-role-assignment story 005)
+**Test Evidence**: Integration: `tests/integration/network/disconnect_host_left_test.gd` (12 tests); screenshot `production/qa/evidence/network-authority-003-host-left.png`. Real-network timing: NA-V NAV-14/15 (designer)
+**Code Review**: Complete (APPROVED WITH SUGGESTIONS after fix 340fbbb: stale `local_player_id` on rejoin). Open suggestions: null-bus drop test; same-tick countdown drop via the router
