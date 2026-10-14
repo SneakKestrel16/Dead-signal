@@ -87,3 +87,51 @@ static func add_wedge(parent: Node, z0: float, angle_deg: float, height: float) 
 	b.add_child(cs)
 	parent.add_child(b)
 	return b
+
+
+## The NA-6 course under `parent`: floor, a 40 degree ramp, a plateau after it (a drop beyond), and a
+## 0.35 m step further on. Shared by prediction_reconcile_test.gd and tests/manual/net_check.gd.
+static func add_course(parent: Node, floor_size: float) -> void:
+	add_box(parent, Vector3(0, -0.5, 0), Vector3(floor_size, 1.0, floor_size))
+	add_wedge(parent, 2.0, 40.0, 0.8)
+	var ramp_end := 2.0 + 0.8 / tan(deg_to_rad(40.0))
+	add_box(parent, Vector3(0, 0.3, (ramp_end + 6.0) / 2.0), Vector3(4, 1.0, 6.0 - ramp_end))
+	add_box(parent, Vector3(0, 0.175, 9.5), Vector3(4, 0.35, 1.0))
+
+
+## Segments [ticks, move, yaw] expanded to one [move, yaw] per tick.
+static func expand(segments: Array) -> Array:
+	var out: Array = []
+	for s in segments:
+		for i in s[0]:
+			out.append([s[1], s[2]])
+	return out
+
+
+## Up the ramp, along the plateau, off its edge, into the step, along it, back across the floor.
+static func ramp_route() -> Array:
+	return expand([
+		[300, Vector2(0, 1), PI],
+		[60, Vector2(1, 0), PI],
+		[60, Vector2(0.7, 0.7), PI / 2.0],
+		[120, Vector2(0, -1), PI],
+		[90, Vector2.ZERO, PI],
+	])
+
+
+## Seeded random walk: new heading and speed every 20 to 60 ticks, sometimes standing still.
+static func random_route(seed_value: int, n: int) -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var out: Array = []
+	var move := Vector2.ZERO
+	var yaw := 0.0
+	var left := 0
+	for i in n:
+		if left == 0:
+			left = rng.randi_range(20, 60)
+			yaw += rng.randf_range(-1.0, 1.0)
+			move = Vector2.ZERO if rng.randf() < 0.15 else Vector2.from_angle(rng.randf() * TAU)
+		left -= 1
+		out.append([move, yaw])
+	return out

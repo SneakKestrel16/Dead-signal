@@ -1,13 +1,11 @@
 # Manual test cases: NA-V, network authority on a real network
 
-> **BLOCKED-UNTIL-HARNESS: no one can host or join yet.**
+> **Runnable since NH-1 (2026-10-14)**: the harness below exists as `tests/manual/net_check.tscn`. Checked on one machine with two to four local instances: join, `version_mismatch`, `bad_name`, `bad_payload`, `round_in_progress` after `L`, `--count=2`, `R` rejoin with the same player IDs, and `--mode=route` (host and client ended at identical server positions, 0 snaps). No token-shaped string appeared in any log. Evidence: `production/qa/evidence/net-harness-1-evidence.md`.
 >
-> - `src/main.tscn` / `src/main.gd` is a boot placeholder. It loads the knobs and shows a status label, and has no host or join path.
-> - `src/main.tscn` is the only scene under `src/`. The host/join UI belongs to lobby-role-assignment story 005, which has not been built.
-> - `NetAuthority` (`src/foundation/network/net_authority.gd`) is driven only by the integration tests, on one machine.
-> - `prototypes/networking-spike/` runs over a real network, but it is throwaway prototype code, not `NetAuthority`. It cannot verify NA-1, NA-2, NA-6 or DC-5.
->
-> Every case below is written against the harness specified next. None can run until that harness exists. No UI has been invented here.
+> Two harness behaviours to know when reading results:
+> - `R` closes the connection before rejoining, so the host prints `player_dropped` and then `player_rejoined` through the grace stub. NAV-14 outcome (ii) without a drop needs a network outage, not `R`.
+> - The grace stub admits any known token for 60 s after the latest drop. Mark a grace rejoin "via stub" until NA-3 lands.
+> - NAV-08 stays BLOCKED until EX-1 (export preset).
 
 **Scope**: Sprint 1 sign-off condition 1 (`production/sprints/sprint-002.md`, row NA-V). It covers:
 - NA-1: `story-001-host-join-auth.md`
@@ -76,7 +74,7 @@
 
 ## (a) NA-1: host, join and auth across two machines
 
-### Test Case: NAV-01: A valid join over LAN or Tailscale gets a player ID (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-01: A valid join over LAN or Tailscale gets a player ID
 
 **Preconditions**: common preconditions.
 
@@ -95,7 +93,7 @@
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-02: `version_mismatch` shows both version strings (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-02: `version_mismatch` shows both version strings
 
 **Preconditions**: common preconditions. The host is running on PC-A.
 
@@ -113,7 +111,7 @@
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-03: `lobby_full` at the cap (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-03: `lobby_full` at the cap
 
 **Preconditions**: the host runs on PC-A with `--local-player=0`, so the cap is 6 remote players.
 
@@ -131,7 +129,7 @@
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-04: `round_in_progress`, `bad_name` and `bad_payload` over the network (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-04: `round_in_progress`, `bad_name` and `bad_payload` over the network
 
 **Preconditions**: the host is running on PC-A in the Waiting state.
 
@@ -150,7 +148,7 @@
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-05: Reject delay under real latency, 0.2 s and 0 s (settles AD-64) (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-05: Reject delay under real latency, 0.2 s and 0 s (settles AD-64)
 
 **Preconditions**: the host is running on PC-A. Record the RTT the client prints.
 
@@ -171,7 +169,7 @@
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-06: IPv6 join over Tailscale (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-06: IPv6 join over Tailscale
 
 **Preconditions**: NAV-01 has passed.
 
@@ -215,7 +213,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 
 ## (b) NA-6: two-PC rows (story-006 Test Evidence: "two-PC results documented in `production/qa/evidence/`")
 
-### Test Case: NAV-09: Host's local player and remote client run the same route to identical server positions (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-09: Host's local player and remote client run the same route to identical server positions
 
 **Preconditions**:
 - The host is running on PC-A with `--local-player=1`.
@@ -233,7 +231,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-10: Corrections and snaps under real latency (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-10: Corrections and snaps under real latency
 
 **Preconditions**: the host is running on PC-A with `--local-player=0`.
 
@@ -250,7 +248,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-11: Clean route over step and ramp, and cross-machine Jolt drift (ADR-0002 verification 5) (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-11: Clean route over step and ramp, and cross-machine Jolt drift (ADR-0002 verification 5)
 
 **Preconditions**: as NAV-09, on the step and ramp route from the integration test.
 
@@ -272,7 +270,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 
 ## (c) DC-5: cross-machine digest
 
-### Test Case: NAV-12: Same build gives the same join version on both PCs (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-12: Same build gives the same join version on both PCs
 
 **Preconditions**: common preconditions. Both PCs are on the same commit with clean knobs.
 
@@ -289,7 +287,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-13: One knob changed on one PC is rejected with both versions (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-13: One knob changed on one PC is rejected with both versions
 
 **Preconditions**: NAV-12 has passed.
 
@@ -315,7 +313,7 @@ Players connect over Tailscale. The NAT and raw-WAN rows are skipped (`sprint-00
 
 ENet keeps a peer through short outages; its default peer timeout is about 5–30 s. That figure is an inference from ENet's defaults; settle it by measuring in NAV-14. A short pull may therefore never cause a reconnect at all, and the cases record which path was taken.
 
-### Test Case: NAV-14: A short outage within the ENet timeout keeps the same connection (BLOCKED-UNTIL-HARNESS)
+### Test Case: NAV-14: A short outage within the ENet timeout keeps the same connection
 
 **Preconditions**: PC-B has joined PC-A (NAV-01). Record the player ID and peer ID.
 
@@ -333,7 +331,7 @@ ENet keeps a peer through short outages; its default peer timeout is about 5–3
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-15: A longer outage leads to a reconnect within grace with the same player ID (BLOCKED-UNTIL-HARNESS; the grace part depends on NA-3)
+### Test Case: NAV-15: A longer outage leads to a reconnect within grace with the same player ID (grace via the harness stub until NA-3)
 
 **Preconditions**:
 - As NAV-14.
@@ -355,7 +353,7 @@ ENet keeps a peer through short outages; its default peer timeout is about 5–3
 **Actual Result**:
 **Pass/Fail**:
 
-### Test Case: NAV-16: Reconnect after grace is rejected (BLOCKED-UNTIL-HARNESS; depends on NA-3)
+### Test Case: NAV-16: Reconnect after grace is rejected (grace via the harness stub until NA-3)
 
 **Preconditions**: as NAV-15.
 

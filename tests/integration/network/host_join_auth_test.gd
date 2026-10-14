@@ -180,9 +180,12 @@ func test_two_joins_get_distinct_ids_and_tokens() -> void:
 
 func test_join_at_cap_rejected_lobby_full() -> void:
 	var port := _port()
-	_server(port)
+	var server := _server(port)
+	var refused: Array[StringName] = []
+	server.join_refused.connect(func(r: StringName) -> void: refused.append(r))
 	_lobby.count = _knobs.lobby.max_players
 	assert_str(String(await _outcome(_client(port, "Ann")))).is_equal("lobby_full")
+	assert_array(refused).contains_exactly([&"lobby_full"]) ## the server side sees its own reject
 
 
 func test_join_one_below_cap_accepted() -> void:

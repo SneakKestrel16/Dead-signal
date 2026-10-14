@@ -25,6 +25,8 @@ signal player_dropped(player_id: int)
 signal player_rejoined(player_id: int, new_peer_id: int)
 ## Client: the server refused the join. Reason is one of REASON_*; details in last_reject_details.
 signal join_rejected(reason: StringName)
+## Server: a join was refused with `reason` (one of REASON_*). The reply is on its way to the client.
+signal join_refused(reason: StringName)
 ## Server: create_server failed (e.g. port in use). Nothing was left initialised.
 signal host_failed(error: Error)
 
@@ -214,6 +216,7 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		_smp.complete_auth(id)
 		return
 	_smp.send_auth(id, var_to_bytes(verdict))
+	join_refused.emit(StringName(verdict.reason))
 	var smp := _smp
 	await get_tree().create_timer(_knobs.net.reject_close_delay_s).timeout
 	if _smp == smp and id in _smp.get_authenticating_peers(): ## not a session started since

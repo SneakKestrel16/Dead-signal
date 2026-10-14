@@ -112,15 +112,11 @@ func _spawn(player_id: int) -> Vector3:
 	return Vector3(float(player_id) * 2.0, 0.0, -1.0)
 
 
-## Floor, a 40 degree ramp, a plateau after it (a drop beyond), and a 0.35 m step further on.
+## The shared NA-6 course (TestMoveStep.add_course).
 func _build_world() -> void:
 	_world = Node3D.new()
 	get_tree().root.add_child(_world)
-	TestMoveStep.add_box(_world, Vector3(0, -0.5, 0), Vector3(WORLD_SIZE, 1.0, WORLD_SIZE))
-	TestMoveStep.add_wedge(_world, 2.0, 40.0, 0.8)
-	var ramp_end := 2.0 + 0.8 / tan(deg_to_rad(40.0))
-	TestMoveStep.add_box(_world, Vector3(0, 0.3, (ramp_end + 6.0) / 2.0), Vector3(4, 1.0, 6.0 - ramp_end))
-	TestMoveStep.add_box(_world, Vector3(0, 0.175, 9.5), Vector3(4, 0.35, 1.0))
+	TestMoveStep.add_course(_world, WORLD_SIZE)
 	await get_tree().physics_frame
 	await get_tree().physics_frame
 
@@ -241,44 +237,6 @@ func _frame(move: Vector2, yaw: float) -> InputFrame:
 	return f
 
 
-## Segments [ticks, move, yaw] expanded to one [move, yaw] per tick.
-func _expand(segments: Array) -> Array:
-	var out: Array = []
-	for s in segments:
-		for i in s[0]:
-			out.append([s[1], s[2]])
-	return out
-
-
-## Up the ramp, along the plateau, off its edge, into the step, along it, back across the floor.
-func _ramp_route() -> Array:
-	return _expand([
-		[300, Vector2(0, 1), PI],
-		[60, Vector2(1, 0), PI],
-		[60, Vector2(0.7, 0.7), PI / 2.0],
-		[120, Vector2(0, -1), PI],
-		[90, Vector2.ZERO, PI],
-	])
-
-
-## Seeded random walk: new heading and speed every 20 to 60 ticks, sometimes standing still.
-func _random_route(seed_value: int, n: int) -> Array:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_value
-	var out: Array = []
-	var move := Vector2.ZERO
-	var yaw := 0.0
-	var left := 0
-	for i in n:
-		if left == 0:
-			left = rng.randi_range(20, 60)
-			yaw += rng.randf_range(-1.0, 1.0)
-			move = Vector2.ZERO if rng.randf() < 0.15 else Vector2.from_angle(rng.randf() * TAU)
-		left -= 1
-		out.append([move, yaw])
-	return out
-
-
 func _p95(values: Array[float]) -> float:
 	if values.is_empty():
 		return 0.0
@@ -304,7 +262,7 @@ func test_five_clients_at_150ms_rtt_30ms_jitter_2pct_loss_stay_within_correction
 	_condition_links(LINK_DELAY_S, LINK_JITTER_S, LINK_LOSS)
 	var routes: Array = []
 	for i in AC1_CLIENTS:
-		routes.append(_random_route(77 + i, AC1_TICKS))
+		routes.append(TestMoveStep.random_route(77 + i, AC1_TICKS))
 	var t0 := Time.get_ticks_msec()
 	for t in AC1_TICKS:
 		var frames: Array[InputFrame] = []
@@ -337,7 +295,7 @@ func test_clean_link_replay_over_step_and_ramp_geometry_shows_no_snap() -> void:
 	_start_server()
 	await _add_clients(1)
 	_condition_links(LINK_DELAY_S, 0.0, 0.0)
-	var route := _ramp_route()
+	var route := TestMoveStep.ramp_route()
 	var peak_y := 0.0
 	for r in route:
 		await _tick([_frame(r[0], r[1])] as Array[InputFrame])
@@ -365,7 +323,7 @@ func test_host_and_remote_client_end_with_identical_server_positions() -> void:
 	await _add_clients(1)
 	assert_int(_clients[0].pid).is_equal(0) ## same spawn as the host body
 	_condition_links(LINK_DELAY_S, 0.0, 0.0)
-	var route := _ramp_route()
+	var route := TestMoveStep.ramp_route()
 	for i in route.size():
 		var hf := _frame(route[i][0], route[i][1])
 		hf.seq = i + 1
@@ -419,7 +377,7 @@ func test_loss_burst_of_five_packets_recovers_without_a_permanent_offset() -> vo
 	await _add_clients(1)
 	_condition_links(LINK_DELAY_S, 0.0, 0.0)
 	var link: UdpLink = _clients[0].link
-	var route := _random_route(5, 300)
+	var route := TestMoveStep.random_route(5, 300)
 	var p: OwnerPredictor = _clients[0].predictor
 	for t in route.size():
 		if t == 100:
