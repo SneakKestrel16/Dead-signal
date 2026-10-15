@@ -51,7 +51,7 @@ stories:
     name: "Loading barrier, spawn, round end and return to lobby"
     file: "production/epics/match-flow/story-004-round-lifecycle.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1.5
     blocker: ""
@@ -81,7 +81,7 @@ stories:
     name: "Docking and the evacuation terminal"
     file: "production/epics/survivor-objectives/story-005-docking-and-terminal.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1.5
     blocker: ""
@@ -131,7 +131,7 @@ stories:
     name: "Bleed-out timer and anti-camping slow"
     file: "production/epics/downing-and-rescue/story-003-bleed-out.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
