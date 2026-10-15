@@ -127,7 +127,12 @@ func test_scare_reaches_its_recipient_with_no_identity() -> void:
 	var e := EvScareTriggered.new()
 	e.recipient = S1
 	e.scope = 2
-	assert_array(_got(S1, _one(e))).is_equal([[&"ScareTriggered", {"scope": 2}]])
+	e.scare_id = &"door_burst"
+	e.origin = Vector3(1, 0, 2)
+	e.source = 0
+	e.player = M
+	assert_array(_got(S1, _one(e))).is_equal([[&"ScareTriggered",
+			{"scare": &"door_burst", "scope": 2, "origin": Vector3(1, 0, 2), "intensity": 0}]])
 	assert_array(_got(S2, _one(e))).is_empty()
 	assert_array(_got(M, _one(e))).is_empty()
 

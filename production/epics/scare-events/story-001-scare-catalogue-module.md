@@ -1,7 +1,7 @@
 # Story 001: Scare catalogue data and the server Scare module
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ Creates the server Scare Events module at the Scare slot in tick order (after Pi
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] The scare catalogue loads from a `.tres` resource; an entry missing scare_id, source, scope or intensity is a load problem, not a silent default.
-- [ ] `ScareTriggered` carries scare_id, scope, origin and intensity to its recipient; every server-side event has a source of Monster, Survivor or RoundScript, and every Monster or Survivor source names a player.
-- [ ] A survivor peer's projection of `ScareTriggered` contains no source and no player identity field.
-- [ ] Nothing but the Scare module emits `ScareTriggered`; there is no ambient timer.
+- [x] The scare catalogue loads from a `.tres` resource; an entry missing scare_id, source, scope or intensity is a load problem, not a silent default.
+- [x] `ScareTriggered` carries scare_id, scope, origin and intensity to its recipient; every server-side event has a source of Monster, Survivor or RoundScript, and every Monster or Survivor source names a player.
+- [x] A survivor peer's projection of `ScareTriggered` contains no source and no player identity field.
+- [x] Nothing but the Scare module emits `ScareTriggered`; there is no ambient timer.
 
 ---
 
@@ -66,7 +66,7 @@ Creates the server Scare Events module at the Scare slot in tick order (after Pi
 **Story Type**: Logic
 **Required evidence**: `tests/unit/scare-events/scare_catalogue_module_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/scare-events/scare_catalogue_module_test.gd` (8 cases); `tests/integration/network/event_projection_test.gd`
 
 ---
 
@@ -74,3 +74,14 @@ Creates the server Scare Events module at the Scare slot in tick order (after Pi
 
 - Depends on: None
 - Unlocks: Stories 002-009
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se1. Full suite 1301/1301, no leak lines. Mutations caught: source-equals-entry check skipped, `source` added to the projection, intensity-missing check skipped.
+
+Deviations (inference):
+- `fire(scare_id, origin, recipients, source, player)` refuses, emitting nothing, on an unknown id, a source that differs from the entry, a Monster or Survivor source with no player, no recipients, or a single-client scare without exactly one recipient (rule 20).
+- One source per entry: the fuse alarm and the recording each have a Survivor and a RoundScript entry (`alarm_fuse`/`alarm_evacuation`, `recording_room`/`recording_script`); recordings fire once per round.
+- Every audible range and flash or shake value in `data/scare_events/scare_catalogue.tres` is a placeholder; the GDD gives no numbers. Story 003 and the M4 horror pass settle them.
+- The monster's own peer gets the same stripped projection as a survivor.
+- Not done: `round_client.gd` still gives `ScarePresenter` an empty catalog; wiring `ScareCatalogue.load_shipped().presenter_catalog()` is left for stories 008/009.

@@ -1,0 +1,140 @@
+[gd_resource type="Resource" script_class="ScareCatalogue" format=3]
+
+[ext_resource type="Script" path="res://src/feature/scare_events/scare_catalogue.gd" id="1"]
+[ext_resource type="Script" path="res://src/feature/scare_events/scare_entry.gd" id="2"]
+
+; Seeded from design/gdd/scare-events.md Detailed Design table (rules 2, 5-8). Enum values: see ScareEntry
+; (Source 0 Monster/1 Survivor/2 RoundScript, Scope 0 Shared/1 SingleClient, Intensity 0 Major/1 Minor,
+; Category 0 Player/1 Environment/2 Deception, Phase 0 Low/1 Rising/2 Emergency).
+; Inference: every audible_range_m and presentation number (flash*, shake*) is a greybox placeholder, the GDD
+; gives none; the recipient story (003) and the M4 horror pass settle them. Fuse-install alarm and recording
+; have a Survivor entry and a RoundScript entry because an entry carries one source. False Signal: no entry (rule 4a).
+
+[sub_resource type="Resource" id="reveal"]
+script = ExtResource("2")
+scare_id = &"transformation_reveal"
+category = 0
+source = 0
+scope = 0
+intensity = 0
+audible_range_m = 10.0
+flash = 0.6
+flash_s = 0.12
+shake_deg = 2.0
+shake_s = 0.25
+
+[sub_resource type="Resource" id="burst"]
+script = ExtResource("2")
+scare_id = &"door_burst"
+category = 0
+source = 0
+scope = 0
+intensity = 0
+audible_range_m = 25.0
+flash = 0.5
+flash_s = 0.1
+shake_deg = 1.5
+shake_s = 0.25
+
+[sub_resource type="Resource" id="lunge"]
+script = ExtResource("2")
+scare_id = &"ambush_lunge"
+category = 0
+source = 0
+scope = 0
+intensity = 0
+audible_range_m = 15.0
+
+[sub_resource type="Resource" id="blackout"]
+script = ExtResource("2")
+scare_id = &"blackout"
+category = 1
+source = 0
+scope = 0
+intensity = 0
+audible_range_m = 20.0
+
+[sub_resource type="Resource" id="slam"]
+script = ExtResource("2")
+scare_id = &"slammed_door"
+category = 1
+source = 2
+scope = 0
+intensity = 1
+audible_range_m = 25.0
+phases = PackedInt32Array(0, 1, 2)
+zones = PackedStringArray("A", "B", "C")
+anchors = PackedStringArray("sd1", "sd2", "sd3", "sd4", "sd5", "sd6")
+
+[sub_resource type="Resource" id="glass"]
+script = ExtResource("2")
+scare_id = &"glass_break"
+category = 1
+source = 2
+scope = 0
+intensity = 0
+audible_range_m = 25.0
+phases = PackedInt32Array(0, 1, 2)
+zones = PackedStringArray("A")
+anchors = PackedStringArray("sg1", "sg2", "sg3")
+flash = 0.4
+flash_s = 0.1
+
+[sub_resource type="Resource" id="alarm"]
+script = ExtResource("2")
+scare_id = &"alarm_fuse"
+category = 1
+source = 1
+scope = 0
+intensity = 1
+audible_range_m = 40.0
+flash = 0.25
+flash_s = 0.1
+
+[sub_resource type="Resource" id="alarm_evac"]
+script = ExtResource("2")
+scare_id = &"alarm_evacuation"
+category = 1
+source = 2
+scope = 0
+intensity = 1
+audible_range_m = 40.0
+phases = PackedInt32Array(2)
+zones = PackedStringArray("A", "B", "C")
+flash = 0.25
+flash_s = 0.1
+
+[sub_resource type="Resource" id="rec"]
+script = ExtResource("2")
+scare_id = &"recording_room"
+category = 1
+source = 1
+scope = 0
+intensity = 1
+audible_range_m = 15.0
+once_per_round = true
+
+[sub_resource type="Resource" id="rec_script"]
+script = ExtResource("2")
+scare_id = &"recording_script"
+category = 1
+source = 2
+scope = 0
+intensity = 1
+audible_range_m = 15.0
+phases = PackedInt32Array(0, 1, 2)
+zones = PackedStringArray("A", "B", "C")
+once_per_round = true
+
+[sub_resource type="Resource" id="image"]
+script = ExtResource("2")
+scare_id = &"surveillance_image"
+category = 2
+source = 1
+scope = 1
+intensity = 1
+audible_range_m = 6.0
+
+[resource]
+script = ExtResource("1")
+entries = Array[ExtResource("2")]([SubResource("reveal"), SubResource("burst"), SubResource("lunge"), SubResource("blackout"), SubResource("slam"), SubResource("glass"), SubResource("alarm"), SubResource("alarm_evac"), SubResource("rec"), SubResource("rec_script"), SubResource("image")])

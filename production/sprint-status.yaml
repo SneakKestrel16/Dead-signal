@@ -93,11 +93,11 @@ stories:
     name: "Scare catalogue data and the server Scare module"
     file: "production/epics/scare-events/story-001-scare-catalogue-module.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "scare-2"
     name: "Per-recipient scare gating, budgets and repeat block"
     file: "production/epics/scare-events/story-002-per-recipient-gating.md"

@@ -52,6 +52,8 @@ var lighting_rep: LightingReplication
 var controller: ControllerAuthority
 var footsteps: Footsteps
 var offset: ViewOffset
+## Server Scare Events module (scare-events story 001); owning systems call scares.fire().
+var scares: ScareEvents
 var candidates: CandidateReplication
 ## Map interactable index (MapQueries.interactable_on_ray) -> HoldService net ids at that object, built
 ## after setup: only doors register at their map index, so the aim ray's index is translated here.
@@ -104,6 +106,10 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	if not cand_errs.is_empty():
 		push_error("RoundComposer: map has no valid active point placement, round not started: %s" % "; ".join(cand_errs))
 		return cand_errs
+	var catalogue := ScareCatalogue.load_shipped()
+	if catalogue == null:
+		return PackedStringArray(["scare catalogue invalid, round not started"])
+	scares = ScareEvents.new(catalogue)
 	holds = HoldService.new(knobs, _live_players, sm.frames_of, _centre, _hold_sight, _aim, _body_target,
 			_is_monster)
 	doors = Doors.new(holds, map, _capsules, _not_locked)
@@ -209,6 +215,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.FOOTSTEPS: footsteps,
 		TickOrder.SURVIVOR_OBJECTIVES: objectives,
 		TickOrder.PINGS_CALLOUTS: pings,
+		TickOrder.SCARE_EVENTS: scares,
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
 	}
 	var errs := server.start_round(modules, knobs)
