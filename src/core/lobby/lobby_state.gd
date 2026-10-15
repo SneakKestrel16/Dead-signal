@@ -94,10 +94,10 @@ func preferences() -> Dictionary[String, StringName]:
 	return _pref_by_token.duplicate()
 
 
-## Sets a connected player's preference; false (unchanged) for an unknown token or a value outside
-## C1-C5 (client input, validated here). The Ready lock (rule 12) is story 010.
+## Sets a connected player's preference; false (unchanged) for an unknown token, a Ready player
+## (rule 12, AC-LB-20) or a value outside C1-C5 (client input, validated here).
 func set_preference(token: String, character: StringName) -> bool:
-	if not _ready_by_token.has(token) or not CharacterDef.IDS.has(character):
+	if not _ready_by_token.has(token) or _ready_by_token[token] or not CharacterDef.IDS.has(character):
 		return false
 	_pref_by_token[token] = character
 	return true
