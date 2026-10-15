@@ -39,11 +39,11 @@ stories:
     name: "Callout acceptance limits and attached item ping"
     file: "production/epics/pings-and-callouts/story-003-callout-limits-attached-ping.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "pings-4"
     name: "Ping recipients and per-peer delivery"
     file: "production/epics/pings-and-callouts/story-004-ping-recipients-delivery.md"

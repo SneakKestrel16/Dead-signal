@@ -279,6 +279,7 @@ func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:
 	bf.request_form_change(pid, bytes)
 	sd.request_intent(pid, bytes)
 	pings.request_ping(pid, bytes)
+	pings.request_callout(pid, bytes)
 
 
 # --- RoundLifecycle hooks ---------------------------------------------------------

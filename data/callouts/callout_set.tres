@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CalloutSet" format=3]
+
+[ext_resource type="Script" path="res://src/feature/pings_callouts/callout_set.gd" id="1"]
+
+; design/gdd/pings-and-callouts.md rule 9 (proposed: 8 lines), texts verbatim. The ids are ours (the GDD names
+; lines by text only); PingsCallouts names drive_here, fuse_here (rule 13), need_rescue and danger (rule 14).
+
+[resource]
+script = ExtResource("1")
+lines = Array[StringName]([&"drive_here", &"fuse_here", &"need_rescue", &"im_with_you", &"follow_me", &"wait", &"danger", &"that_wasnt_me"])
+texts = PackedStringArray("Drive here", "Fuse here", "Need rescue", "I'm with you", "Follow me", "Wait", "Danger", "That wasn't me")

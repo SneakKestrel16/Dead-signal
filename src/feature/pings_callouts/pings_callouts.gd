@@ -5,7 +5,7 @@ class_name PingsCallouts extends RefCounted
 ## per tick; the PINGS_CALLOUTS slot validates each in arrival order: range and line of sight from the sender's
 ## eye, a valid target, then the per-player token bucket (a rejected ping spends nothing). Accepted pings are
 ## the tick's `accepted()` records; recipients (004) and marker lifetime (005) read or extend them. Callouts
-## (003) will add their own packet key beside PING_KEY. Server only.
+## (003) have their own packet (callout_packet, CALLOUT_KEY beside PING_KEY); see request_callout. Server only.
 ## Story 002 (rules 14, 21-23; States and Transitions): can_send(player, kind, line) is the one sender-state
 ## gate for pings and callouts alike, reading life state, form, transforming and the shock lock.
 ## Usage:
@@ -22,12 +22,16 @@ const WARNING_POINT := 3
 const WARNING_PLAYER := 4
 ## Send kind for a callout in can_send (not a ping kind: decode_ping never yields it).
 const CALLOUT := 5
-## Authored callout lines (rule 9). Inference: these ids are placeholders until story 003 authors the set;
-## the GDD names lines by their text only.
+## Callout line ids the rules name (13, 14). The ids are ours: the GDD names lines by their text only.
+const DRIVE_HERE := &"drive_here"
+const FUSE_HERE := &"fuse_here"
 const NEED_RESCUE := &"need_rescue"
 const DANGER := &"danger"
-const CALLOUT_LINES: Array[StringName] = [&"drive_here", &"fuse_here", NEED_RESCUE, &"im_with_you",
-	&"follow_me", &"wait", DANGER, &"that_wasnt_me"]
+## The authored callout lines (rule 9), from data (CalloutSet, res://data/callouts/callout_set.tres); [] when
+## that set is invalid, which rejects every callout.
+static var CALLOUT_LINES: Array[StringName] = CalloutSet.shipped_lines([DRIVE_HERE, FUSE_HERE, NEED_RESCUE, DANGER])
+## The lines that may attach an item ping (rule 13).
+const ITEM_LINES: Array[StringName] = [DRIVE_HERE, FUSE_HERE]
 ## The callouts a Downed survivor may send (rule 14); it may also ping.
 const DOWNED_LINES: Array[StringName] = [NEED_RESCUE, DANGER]
 ## Packet dictionary keys: kind, world point (location and warning point), target (item: map interactable
@@ -37,6 +41,10 @@ const AT_KEY := "at"
 const TARGET_KEY := "target"
 ## Size cap of a ping packet; anything larger is not one (untrusted client bytes).
 const REQUEST_CAP_BYTES := 96
+## Story 003: callout packet keys are CALLOUT_KEY (the line id) and TARGET_KEY (the attached item's map
+## interactable index, -1 for none). Size cap of a callout packet (untrusted client bytes).
+const CALLOUT_KEY := "callout"
+const CALLOUT_CAP_BYTES := 96
 ## Marker types an item ping may name (rule 5). Not pingable: the monitor station; tasers are not map objects.
 ## Barricadable doors are named by DOOR_TYPE.
 const PINGABLE_TYPES: Array[StringName] = [&"drive", &"fuse", &"fuse_box", &"terminal", &"hiding", &"switch"]
@@ -65,6 +73,22 @@ class PingRecord extends RefCounted:
 		return kind == PingsCallouts.WARNING_PLAYER and identity == CharacterDef.TRUE_FORM_APPEARANCE_ID
 
 
+## Story 003: one accepted callout, real or a False Signal fake. Server only: `fake` is never sent to a
+## survivor client (rule 27); delivery is story 006's.
+class CalloutRecord extends RefCounted:
+	## The requesting player (a fake: the monster).
+	var sender: int
+	## The displayed appearance id whose voice and name it carries (a fake: the impersonated survivor's).
+	var identity: int
+	var line: StringName
+	## The sender's position (a real callout) or the point False Signal chose (a fake).
+	var origin: Vector3
+	var fake: bool = false
+	## The attached item ping (rules 13, 28), also in accepted(); null when none was accepted. Never on a fake.
+	var ping: PingRecord
+	var tick: int
+
+
 var _range_m: float = 0.0
 var _bucket_size: int = 0
 ## Ticks per token (ping_refill_s at the sim rate, unrounded).
@@ -91,6 +115,17 @@ var _locked: Callable
 ## Map interactable index -> [point, type]; built by set_map.
 var _items: Dictionary[int, Array] = {}
 var _point_height_m: float = 0.0
+## Story 003 callout limits in ticks (PingKnobs, unrounded) and per-player last accepted callout ticks
+## (absent = minus infinity: the first callout is always accepted).
+var _callout_cd_ticks: float = 0.0
+var _repeat_block_ticks: float = 0.0
+var _last_callout_any: Dictionary[int, int] = {}
+## player id -> {line -> tick}.
+var _last_callout: Dictionary[int, Dictionary] = {}
+## player id -> this tick's first callout request; fakes taken from AbilityUsed since the last tick.
+var _pending_callouts: Dictionary[int, Dictionary] = {}
+var _pending_fakes: Array[CalloutRecord] = []
+var _callouts: Array[CalloutRecord] = []
 
 
 ## Injects the world sources. `eye_of(player) -> Vector3` is the sender's eye (inference: the standing eye; the
@@ -181,6 +216,7 @@ func setup(tick_runner: TickRunner, _bus: EventBus, _registry: StateRegistry, kn
 	_stamp = {}
 	_pending = {}
 	_accepted = []
+	_setup_callouts(_bus, knobs)
 
 
 ## The bytes a client sends to request a ping of `kind` (`at` for LOCATION and WARNING_POINT, `target` for
@@ -226,6 +262,7 @@ func server_tick(tick: int) -> void:
 			if rec != null and _take_token(player, tick):
 				_accepted.append(rec)
 	_pending = {}
+	_tick_callouts(tick)
 
 
 ## The pings accepted on the latest server_tick, in acceptance order.
@@ -292,3 +329,108 @@ func _validate(sender: int, req: Dictionary, tick: int) -> PingRecord:
 func _sees(sender: int, eye: Vector3, point: Vector3, item: int) -> bool:
 	var clear := func(from: Vector3, to: Vector3) -> bool: return _line_clear.call(sender, from, to, item)
 	return SightTest.sees(eye, 0.0, PackedVector3Array([point]), _range_m, 360.0, clear)
+
+
+# --- Story 003: callouts ------------------------------------------------------------
+
+func _setup_callouts(bus: EventBus, knobs: Knobs) -> void:
+	_callout_cd_ticks = knobs.ping.callout_global_cooldown_s * knobs.ticks(1.0)
+	_repeat_block_ticks = knobs.ping.callout_repeat_block_s * knobs.ticks(1.0)
+	_last_callout_any = {}
+	_last_callout = {}
+	_pending_callouts = {}
+	_pending_fakes = []
+	_callouts = []
+	if bus != null:
+		bus.subscribe(&"AbilityUsed", _on_ability_used)
+
+
+## The bytes a client sends to call out `line`, attaching item ping `item` (a map interactable index; only
+## ITEM_LINES may attach, rule 13; -1 for none).
+static func callout_packet(line: StringName, item: int = -1) -> PackedByteArray:
+	return var_to_bytes({CALLOUT_KEY: line, TARGET_KEY: item})
+
+
+## The request in untrusted `bytes` as {line, target}, or {} when they are not exactly a well-formed callout
+## (size cap, shape, a line of the set, an attachment only on ITEM_LINES).
+static func decode_callout(bytes: PackedByteArray) -> Dictionary:
+	if bytes.is_empty() or bytes.size() > CALLOUT_CAP_BYTES:
+		return {}
+	var d: Variant = bytes_to_var(bytes)
+	if not (d is Dictionary and d.size() == 2 and d.get(CALLOUT_KEY) is StringName and d.get(TARGET_KEY) is int):
+		return {}
+	var line: StringName = d[CALLOUT_KEY]
+	var target: int = d[TARGET_KEY]
+	if line not in CALLOUT_LINES or target < -1 or (target != -1 and line not in ITEM_LINES):
+		return {}
+	return {"line": line, "target": target}
+
+
+## Server entry for a client's callout bytes from `player` (as the network layer identifies it). Non-callout
+## bytes are ignored; only the first callout per player per tick is kept (a second would fail the global
+## cooldown, callout_global_cooldown_s being longer than one tick).
+func request_callout(player: int, bytes: PackedByteArray) -> void:
+	var req := decode_callout(bytes)
+	if not req.is_empty() and not _pending_callouts.has(player):
+		_pending_callouts[player] = req
+
+
+## The callouts accepted on the latest server_tick (real ones first, then fakes), for delivery (story 006).
+func callouts() -> Array[CalloutRecord]:
+	return _callouts
+
+
+## Runs after the ping requests, so a ping and an attached ping in one tick spend from one bucket in that order.
+func _tick_callouts(tick: int) -> void:
+	_callouts = []
+	for player: int in _pending_callouts:
+		_accept_callout(player, _pending_callouts[player], tick)
+	_pending_callouts = {}
+	for rec in _pending_fakes:
+		rec.tick = tick
+		_callouts.append(rec)
+	_pending_fakes = []
+
+
+## Rules 13, 16 and Formulas "Callout acceptance": sender state (can_send), then the global cooldown and the
+## line's repeat block. Only an accepted callout writes the timestamps; its attached item ping is then
+## validated like any item ping and spends a token, and a rejected attachment leaves the callout standing.
+func _accept_callout(player: int, req: Dictionary, tick: int) -> void:
+	var line: StringName = req["line"]
+	var lines: Dictionary = _last_callout.get_or_add(player, {})
+	if not can_send(player, CALLOUT, line) \
+			or (_last_callout_any.has(player) and tick - _last_callout_any[player] < _callout_cd_ticks - TOKEN_EPS) \
+			or (lines.has(line) and tick - lines[line] < _repeat_block_ticks - TOKEN_EPS):
+		return
+	_last_callout_any[player] = tick
+	lines[line] = tick
+	var rec := CalloutRecord.new()
+	rec.sender = player
+	rec.identity = _identity_of.call(player)
+	rec.line = line
+	rec.origin = _position_of.call(player)
+	rec.tick = tick
+	if req["target"] != -1:
+		var ping := _validate(player, {"kind": ITEM, "at": Vector3.ZERO, "target": req["target"]}, tick)
+		if ping != null and _take_token(player, tick):
+			rec.ping = ping
+			_accepted.append(ping)
+	_callouts.append(rec)
+
+
+## Rules 17, 26-28: a False Signal callout (Monster Abilities validated the survivor and the point) becomes a
+## fake record in the impersonated survivor's voice at the chosen point. It reads and writes no limit state
+## and never attaches a ping. Inference: a line outside the set is dropped here, after Monster Abilities has
+## spent the False Signal cooldown (it does not know the set); only a modified client sends one.
+func _on_ability_used(e: ServerEvent) -> void:
+	var a := e as EvAbilityUsed
+	if a.ability != MonsterAbilities.Ability.FALSE_SIGNAL or a.line not in CALLOUT_LINES \
+			or a.detail != MonsterAbilities.SIGNAL_DETAILS[MonsterAbilities.SignalType.CALLOUT]:
+		return
+	var rec := CalloutRecord.new()
+	rec.sender = _monster
+	rec.identity = _identity_of.call(a.survivor)
+	rec.line = a.line
+	rec.origin = a.target
+	rec.fake = true
+	_pending_fakes.append(rec)

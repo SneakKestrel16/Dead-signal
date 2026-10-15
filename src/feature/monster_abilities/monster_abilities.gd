@@ -125,7 +125,7 @@ var _blackout_ticks: Array[int] = []
 enum SignalType { CALLOUT, FOOTSTEPS, INTERACTION }
 const SIGNAL_DETAILS: Array[StringName] = [&"callout", &"footsteps", &"interaction"]
 ## Extra keys of a False Signal request: signal type, survivor (callout voice / footstep set), footstep
-## direction, interaction sound set.
+## direction, interaction sound set (a callout: the line id, pings-and-callouts/003).
 const TYPE_KEY := "type"
 const SURVIVOR_KEY := "survivor"
 const DIR_KEY := "dir"
@@ -237,7 +237,7 @@ func falsesignals_used() -> int:
 
 ## The bytes the shapeshifter's client sends for a False Signal of `type` aimed at `aim`. `survivor` is
 ## the impersonated voice (CALLOUT) or footstep set (FOOTSTEPS); `dir` the footstep direction; `sound`
-## the interaction sound set (INTERACTION).
+## the interaction sound set (INTERACTION) or the callout line id (CALLOUT, PingsCallouts.CALLOUT_LINES).
 static func signal_packet(type: SignalType, aim: Vector3, survivor: int = -1, dir: Vector3 = Vector3.ZERO,
 		sound: StringName = &"") -> PackedByteArray:
 	return var_to_bytes({ABILITY_KEY: Ability.FALSE_SIGNAL, AIM_KEY: aim, TYPE_KEY: type,
@@ -430,7 +430,8 @@ func server_tick(tick: int) -> void:
 		_ready_tick[Ability.FALSE_SIGNAL] = tick + _signal_cooldown_ticks ## rule 16: from activation
 		_signal_ticks.append(tick)
 		_start_signal(req, point, tick)
-		_emit_used(Ability.FALSE_SIGNAL, point, SIGNAL_DETAILS[req[TYPE_KEY]], req[SURVIVOR_KEY])
+		_emit_used(Ability.FALSE_SIGNAL, point, SIGNAL_DETAILS[req[TYPE_KEY]], req[SURVIVOR_KEY],
+			req[SOUND_KEY] if req[TYPE_KEY] == SignalType.CALLOUT else &"")
 
 
 ## Rule 15: the fake goes out as the positional sound the real one sends (ADR-0004 §6: position and set
@@ -700,12 +701,15 @@ func _end_miss_slow() -> void:
 ## Rule 3a (story 005): one AbilityUsed per accepted activation, at Lunge wind-up start. Server-internal:
 ## its project() is empty (ADR-0004 §5). Inference: Lunge has no aimed target, so `target` carries the
 ## request's aim point; the GDD's "target point or zone" for Lunge (facing-based?) would settle it.
-## Story 009: a False Signal also carries its signal type as `detail` and the impersonated `survivor`.
-func _emit_used(ability: Ability, target: Vector3, detail: StringName = &"", survivor: int = -1) -> void:
+## Story 009: a False Signal also carries its signal type as `detail` and the impersonated `survivor`; a
+## callout its `line` (pings-and-callouts/003, which validates it).
+func _emit_used(ability: Ability, target: Vector3, detail: StringName = &"", survivor: int = -1,
+		line: StringName = &"") -> void:
 	var e := EvAbilityUsed.new()
 	e.ability = ability
 	e.detail = detail
 	e.survivor = survivor
+	e.line = line
 	e.position = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
 	e.target = target
 	_bus.emit(e)

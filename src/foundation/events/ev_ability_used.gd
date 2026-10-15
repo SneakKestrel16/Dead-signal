@@ -12,6 +12,9 @@ var target: Vector3
 var detail: StringName
 ## A False Signal callout's impersonated survivor (or the footstep set's survivor); -1 otherwise (story 009).
 var survivor: int = -1
+## A False Signal callout's line id (PingsCallouts.CALLOUT_LINES; the request's sound field); &"" otherwise
+## (story pings-and-callouts/003, rule 26: the fake uses the same authored line).
+var line: StringName = &""
 
 
 func type() -> StringName:
