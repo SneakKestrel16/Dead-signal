@@ -335,6 +335,14 @@ func terminal_state() -> TerminalState:
 	return _terminal
 
 
+## The activation countdown while Activating (rule 19): {at: terminal point, ticks: counted, held: zone held};
+## {} otherwise. For the world progress bar (story hud-results/005).
+func activation() -> Dictionary:
+	if _terminal != TerminalState.ACTIVATING:
+		return {}
+	return {"at": _terminal_point, "ticks": _activation_ticks, "held": _zone_held()}
+
+
 ## True once evacuation is activated (rule 20).
 func exit_open() -> bool:
 	return _terminal == TerminalState.ACTIVATED

@@ -6,8 +6,8 @@ class_name ScarePresenter extends CanvasLayer
 ## reaction on CameraFx. Settings scale intensity only; timing is unchanged (rule 28).
 ## Entry keys (ScareCatalog data): flash (peak alpha 0-1), flash_s, shake_deg, shake_m, shake_s; a
 ## missing key plays nothing of that kind.
-## Not here yet (Scare Events epic): the stinger (AudioDirector, ADR-0013), the P8 edge pulse for a
-## flinch-off player (ADR-0014) and the ScareCatalog itself. ScareTriggered's projection carries only
+## The P8 edge pulse for a flinch-off player is EdgeCues (hud-results story 005).
+## Not here yet (Scare Events epic): the stinger (AudioDirector, ADR-0013) and the ScareCatalog itself. ScareTriggered's projection carries only
 ## `scope` today, so the entry is looked up by a `scare` id the projection must add; until then on_scare()
 ## finds no entry and plays nothing.
 ## Usage:

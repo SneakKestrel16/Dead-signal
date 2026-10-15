@@ -51,6 +51,8 @@ var lighting_rep: LightingReplication
 ## Delivers accepted pings per recipient (pings-and-callouts story 004); sm holds only its Callable.
 var ping_delivery: PingDelivery
 var callout_delivery: CalloutDelivery
+## World progress bar replication (hud-results story 005); kept here, batch_extras holds only its Callable.
+var world_progress: WorldProgress
 ## Runs HoldService in the HOLDS slot and owns the RoundEnded freeze.
 var controller: ControllerAuthority
 var footsteps: Footsteps
@@ -216,6 +218,9 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 			bf.appearance_of)
 	sm.batch_extras.append(callout_delivery.entries)
 	sm.batch_extras.append(scare_state.entries)
+	world_progress = WorldProgress.new(knobs, survivors, roster.player_ids, holds.hold_of, holds.item,
+			objectives.activation, _tick)
+	sm.batch_extras.append(world_progress.entries)
 	monster_hud = MonsterHudFeed.new(monster, survivors, _tick, ma.ready_tick, bf.cooldown_end_tick,
 			bf.transform_end_tick, sd.lock_end_tick, sd.free_tick, bf.observation_s, bf.appearance_of)
 	sm.batch_extras.append(monster_hud.entries)

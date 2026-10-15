@@ -1,7 +1,7 @@
 # Story 005: Edge cues, flinch-off pulse, taser count and world progress bars
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@ H11, H13 and H14: the taser cartridge count, world progress bars on objects in p
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/edge-cues-items-progress/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/edge-cues-items-progress-evidence.md (5 png); tests/unit/hud-results/edge_cues_items_progress_test.gd (12)
 
 ---
 
@@ -71,3 +71,7 @@ H11, H13 and H14: the taser cartridge count, world progress bars on objects in p
 
 - Depends on: Story 001
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged e82059b..2f2ee08 (main merged twice by the agent; EventBatch PROGRESS &"Progress" and MONSTER_HUD &"MonsterHud" are StringNames, no collision; batch_extras count 11). EdgeCues (lunge chevron, transform arc, flinch-off pulse; 150 ms in, 300 ms out), TasterCount from the CHARGES entry, WorldProgress server sender (batch_extras, survivors only, on start/pause/resume; client advances at rate) and WorldProgressBars (percent, "Paused"). DEVIATIONS: new server feed because nothing replicated hold progress or activation; fake holds, hiding holds, backup switch and instant interactions not sent (reading of rule 25); every survivor gets every bar (ponytail note: relevance filter if bars leak); pulse length = scare_max_control_loss_s (no source); pulse skipped while a lunge cue shows; "holding the taser" = has a count; widgets subscribe to the router directly, not HudModel (deviation from ADR-0014 §6); edge-cue toggle hides chevron and arc, not the pulse; greybox text for icon and bar art. EVIDENCE GAPS: world-bar-paused-synthetic.png is client-fed (no bot reaches a live objective hold); top-edge cues overlap the HUD-2 clock (art pass). 12 unit tests; 4 mutations caught. Full suite 1470/1470.

@@ -44,6 +44,9 @@ const FACILITY_SCARE := &"FacilityScare"
 ## to survivor viewers in range; CALLOUT_AUDIO {line, voice, origin} to the monster in range (audio only, rule 11).
 const CALLOUT := &"Callout"
 const CALLOUT_AUDIO := &"CalloutAudio"
+## Entry type of one world progress bar (WorldProgress.entries, story hud-results/005): {key, at, progress,
+## rate, paused}, or {key, end: true}. Sent to survivor viewers only, on change.
+const PROGRESS := &"Progress"
 ## Entry type of the shapeshifter's own HUD state (MonsterHudFeed.entries, story hud-results/006, ADR-0004 §5):
 ## {ready: {lunge, false_signal, blackout, form}, transform_end, stun_end, immune_end, faces: [[survivor,
 ## observed_ticks, appearance], ...]}, all times server ticks. Sent to the shapeshifter's peer only, on change.

@@ -228,10 +228,10 @@ stories:
     name: "Edge cues, flinch-off pulse, taser count and world progress bars"
     file: "production/epics/hud-results/story-005-edge-cues-items-progress.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-6"
     name: "Shapeshifter HUD and survivor-side absence"

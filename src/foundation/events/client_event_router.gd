@@ -23,7 +23,7 @@ const CATALOG: Array[StringName] = [
 const NON_CATALOG: Array[StringName] = [EventBatch.SOUND, EventBatch.BLEED_RING, EventBatch.CHARGES,
 	EventBatch.HIDING, EventBatch.BARRICADE, EventBatch.CAMERA, EventBatch.LIGHTING,
 	EventBatch.PING, EventBatch.PING_REJECTED, EventBatch.FACILITY_SCARE, EventBatch.CALLOUT, EventBatch.CALLOUT_AUDIO,
-	EventBatch.MONSTER_HUD]
+	EventBatch.PROGRESS, EventBatch.MONSTER_HUD]
 
 ## Event batches that failed to decode.
 var rejected: int = 0

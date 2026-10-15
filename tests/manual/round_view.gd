@@ -26,6 +26,8 @@ extends Node3D
 ## client (another --count client) walks at the shown client and requests one Lunge within LUNGE_FROM_M. With
 ## --shots it saves windup.png (mid wind-up), dash.png (just after it) and hit.png (the hit-stop), as the
 ## shown client's LungePresenter shows them. Use --view=survivor.
+## --no-flinch (story hud-results/005) joins every client with the camera flinch off (the P8 edge pulse shows).
+## --fake-paused (story hud-results/005): see _edge_shots.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
 ## --no-roster: the shown client's Show roster off (story hud-results/002; the roster is seeded by _seed_roster).
 ## --shots=<dir> saves press.png, bar.png and full.png (bot) and view.png at drawn frame --shot-at=N.
@@ -161,6 +163,7 @@ func _ready() -> void:
 			_link.delay_s = latency / 2000.0
 			to = port + LINK_PORT_OFFSET
 			_link.start(to, port)
+		c.flinch_enabled = not _args.has("no-flinch") # hud-results story 005: the P8 pulse instead
 		c.join(host, to, "View%d" % i)
 		c.scripted = InputFrame.new() # idle; the shown client drops it for LocalInput below
 		_clients.append(c)
@@ -176,6 +179,7 @@ func _process(delta: float) -> void:
 	_seed_roster()
 	_lighting()
 	_scare_shots()
+	_edge_shots()
 	var c0 := _shown
 	if c0 == null or not c0.is_spawned():
 		return
@@ -927,6 +931,28 @@ func _on_scare_audio(_tick: int, payload: Dictionary) -> void:
 	print("SCARE %s intensity %s at %s frame %d: bearing %.1f deg, distance %.2f m" % [payload.get("scare"),
 			payload.get("intensity"), at, Engine.get_frames_drawn(), TransformPresenter.bearing_deg(cam, at),
 			cam.origin.distance_to(at)])
+
+
+## Story hud-results/005: pulse.png once the shown client's flinch-off pulse is fully in (--no-flinch). With
+## --fake-paused, a client-side PROGRESS entry (not from the server: manual capture of the Paused label only)
+## is fed to the shown client's bars 2 m ahead of it once it stands, and paused.png is saved 10 frames later.
+func _edge_shots() -> void:
+	if _shown == null or _shown.edge_cues == null or not _shown.is_spawned():
+		return
+	if not has_meta(&"pulse"):
+		for c in _shown.edge_cues.cues():
+			if c.kind == EdgeCues.Kind.PULSE and c.alpha > 0.95:
+				set_meta(&"pulse", true)
+				_shot("pulse")
+	if _args.has("fake-paused") and not has_meta(&"paused") and _shown.predictor.states_received > 60:
+		set_meta(&"paused", Engine.get_frames_drawn())
+		var ahead := _shown.body.global_position + Basis.from_euler(Vector3(0.0, _shown.head.rotation.y, 0.0)) * Vector3(0.0, 0.8, -2.5)
+		for n in _shown.get_children():
+			if n is WorldProgressBars:
+				n.on_progress(int(_shown.estimated_tick()), {"key": WorldProgress.ACTIVATION_KEY, "at": ahead,
+					"progress": 0.4, "rate": 0.0, "paused": true})
+	if has_meta(&"paused") and Engine.get_frames_drawn() == int(get_meta(&"paused")) + 10:
+		_shot("paused")
 
 
 ## --bot=shifter step: 0 walk and observe, 1 transforming, 2 disguised, 3 tased, 4 done.

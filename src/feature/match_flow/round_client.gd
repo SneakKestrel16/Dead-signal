@@ -69,6 +69,8 @@ var hud: CanvasLayer
 ## The HUD's only data source (hud-results story 001) and the client's display of phase and clock; null when
 ## not rendering.
 var hud_model: HudModel
+## Edge cues, taser count and world progress bars (hud-results story 005); null when not rendering.
+var edge_cues: EdgeCues
 var match_display: MatchDisplay
 ## Prompt, hold ring and refusal label in Z4/Z5 (hud-results story 003); null when not rendering.
 var interaction: InteractionHud
@@ -256,6 +258,16 @@ func _on_connected() -> void:
 		hud.add_child(ping_hud)
 		input.contexts = ping_hud.contexts
 		ping_hud.contexts.viewport = get_viewport()
+		edge_cues = EdgeCues.new(knobs, camera.get_global_transform, func() -> bool: return flinch_enabled)
+		hud.add_child(edge_cues)
+		router.subscribe(EventBatch.SOUND, edge_cues.on_sound)
+		router.subscribe(&"ScareTriggered", edge_cues.on_scare)
+		var taser := TaserCount.new()
+		hud.add_child(taser)
+		router.subscribe(EventBatch.CHARGES, taser.on_charges)
+		var bars := WorldProgressBars.new(knobs, estimated_tick)
+		add_child(bars)
+		router.subscribe(EventBatch.PROGRESS, bars.on_progress)
 		router.subscribe(&"RoundPhaseChanged", _on_phase_changed)
 		router.subscribe(&"RoundEnded", _on_round_ended)
 		bar = PredictedHoldBar.new()

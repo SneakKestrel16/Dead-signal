@@ -221,6 +221,11 @@ func _fakes(actor: int, item: Interactable) -> bool:
 	return item.fakeable and _is_shapeshifter.is_valid() and _is_shapeshifter.call(actor)
 
 
+## The registered interactable with net id `id`, null if none (WorldProgress reads its point and duration).
+func item(id: int) -> Interactable:
+	return _item(id)
+
+
 func _item(id: int) -> Interactable:
 	return _items[id] if id >= 0 and id < _items.size() else null
 
