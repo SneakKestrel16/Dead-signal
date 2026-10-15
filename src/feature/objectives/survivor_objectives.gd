@@ -15,7 +15,9 @@ class_name SurvivorObjectives extends RefCounted
 ## alert to the shapeshifter alone: an ObjectiveProgressChanged with state INSTALLING whose projection
 ## carries only an offset circle that contains the box. Fake holds never call on_start (ADR-0008), so a
 ## fake install raises neither (rule 26).
-## Not yet here: fake holds (007), the registry view of objective state (no StateKeys row).
+## Story 007 (rules 25-26): every point is `fakeable`, so the shapeshifter's Start is a HoldService fake:
+## no lock, no state change, no on_start (so no install noise or alert) and a real Start cancels it.
+## Not yet here: the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
 ##   obj.drop(actor, SurvivorObjectives.DRIVE_ID + i)   # the carrier's own drop request
@@ -170,6 +172,10 @@ func _add(p: ObjectivePoint, index: int, m: MapMarker, duration_s: float, lock_t
 	p.range_m = _knobs.objectives.interact_range_m
 	p.duration_s = duration_s
 	p.lock_key = StringName("%s_%s%s" % [m.type, m.id, lock_tag])
+	## Rule 25: the shapeshifter fakes at any objective point; HoldService never calls the owner for a fake.
+	## Inference: "any objective point" includes fuse spawns and dropped-item pickups, not only the
+	## console, box and terminal the rule lists; a designer ruling on rule 25's list settles it.
+	p.fakeable = true
 	_holds.register(p)
 	return p
 
