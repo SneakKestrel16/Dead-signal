@@ -58,7 +58,7 @@ This epic is complete when:
 | 004 | Monster-source scares: door burst, reveal and Blackout | Integration | In Review | ADR-0005 |
 | 005 | Ambush lunge scare and flinch suppression near a lunge | Integration | Complete | ADR-0015 |
 | 006 | Facility scare state machine and RoundScript anchors | Integration | In Review | ADR-0009 |
-| 007 | Presentation-only guarantees: slammed doors and no fake teammates | Integration | Ready | ADR-0005 |
+| 007 | Presentation-only guarantees: slammed doors and no fake teammates | Integration | Complete | ADR-0005 |
 | 008 | Scare audio: positional origin, stingers, ducking and volume scales | Visual/Feel | Ready | ADR-0013 |
 | 009 | Scare visuals and flash accessibility | Visual/Feel | Ready | ADR-0015 |
 

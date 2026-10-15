@@ -147,11 +147,11 @@ stories:
     name: "Presentation-only guarantees: slammed doors and no fake teammates"
     file: "production/epics/scare-events/story-007-presentation-only-scares.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "scare-8"
     name: "Scare audio: positional origin, stingers, ducking and volume scales"
     file: "production/epics/scare-events/story-008-scare-audio.md"
