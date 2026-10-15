@@ -23,6 +23,7 @@ class_name BorrowedFace extends RefCounted
 ##   attacking(player) -> bool                  in Lunge wind-up, active or takedown commit (rule 7,
 ##                                              rule 11; story 005). Stub until Monster Abilities and
 ##                                              Downing are wired; unset = never attacking
+## A Lunge's AbilityUsed reveals a disguise (rule 11, monster-abilities story 012).
 ## Usage:
 ##   var bf := BorrowedFace.new()
 ##   bf.set_roster([2, 3, 4, 5], 1)   # BEFORE start_round
@@ -193,6 +194,7 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_form_changes = 0
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
+	bus.subscribe(&"AbilityUsed", _on_ability_used)
 
 
 ## BORROWED_FACE slot: observation, then a transformation due this tick completes, then this
@@ -285,6 +287,25 @@ func _on_monster_stunned(e: ServerEvent) -> void:
 	if _transforming and (e as EvMonsterStunned).monster == _monster:
 		_transforming = false
 		_cooldown_end_tick = e.tick + _cooldown_ticks
+
+
+## Rule 11 (monster-abilities story 012, designer decision 2026-10-15, playtest): an accepted Lunge from
+## a disguise reveals true form at wind-up start. AbilityUsed flushes after the MONSTER_ABILITIES step, so
+## the reveal is in the same tick's snapshot and survivors see it lunge_windup_s before the dash. Monster
+## Abilities rejects a lunge while Transforming, so none runs here. Inference (the GDD marks the instant
+## reveal proposed): no transformation, no form-change cooldown and no form_changes count; FormChanged
+## still goes out, so Scare Events' transformation reveal fires. A Borrowed Face ruling settles it.
+func _on_ability_used(e: ServerEvent) -> void:
+	if (e as EvAbilityUsed).ability != MonsterAbilities.Ability.LUNGE or _form == TRUE_FORM:
+		return
+	var c := EvFormChanged.new()
+	c.player = _monster
+	c.previous = _form
+	c.form = TRUE_FORM
+	_form = TRUE_FORM
+	_form_tick = e.tick
+	_form_event()
+	_bus.emit(c)
 
 
 ## Rule 6 and rule 7 except the cooldown (checked in server_tick) and the Lunge/takedown commit

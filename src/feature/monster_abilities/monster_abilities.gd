@@ -14,8 +14,8 @@ class_name MonsterAbilities extends RefCounted
 ## activation, and the fake as the same positional sound a real one sends (set_false_signal_sources).
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
-##   form() -> int            BorrowedFace.TRUE_FORM or the copied survivor (TransformView.get_form);
-##                            unset = true form
+##   form() -> int            unused since story 012 (a Lunge is accepted in any form); kept in the
+##                            signature so the composer and tests need no change
 ##   transforming() -> bool   a transformation in progress (TransformView.get_transforming); unset = never
 ##   locked(player) -> bool   Stunned or under the shock lock (Survivor Defense rule 14,
 ##                            StateKeys.SHOCK_STUN_LOCK); unset = never locked
@@ -68,7 +68,6 @@ const SCRAPE_SOUND := &"lunge_scrape"
 const HIT_SOUND := &"lunge_hit"
 
 var _monster: int = -1
-var _form: Callable
 var _transforming: Callable
 var _locked: Callable
 var _windup_ticks: int = 0
@@ -302,8 +301,7 @@ func monster() -> int:
 
 
 ## Injects the status collaborators (see the class comment).
-func set_status_sources(form: Callable, transforming: Callable, locked: Callable = Callable()) -> void:
-	_form = form
+func set_status_sources(_form: Callable, transforming: Callable, locked: Callable = Callable()) -> void:
 	_transforming = transforming
 	_locked = locked
 
@@ -501,7 +499,8 @@ func blackout_target_ok(aim: Vector3) -> bool:
 	return not _blackout_sight.is_valid() or _blackout_sight.call(_monster, aim)
 
 
-## Rules 2 and 4: whether `ability` may activate now. Lunge needs Ready and true form; no ability while
+## Rules 2 and 4: whether `ability` may activate now. Lunge needs Ready, in any form (story 012, designer
+## decision 2026-10-15: a disguised lunge reveals true form through Borrowed Face's AbilityUsed); no ability while
 ## Stunned, shock-locked, Transforming, or in Lunge wind-up, Active or takedown commit. Cooldowns are
 ## per ability (rule 3).
 func can_activate(ability: Ability, tick: int) -> bool:
@@ -512,7 +511,7 @@ func can_activate(ability: Ability, tick: int) -> bool:
 	if _transforming.is_valid() and _transforming.call():
 		return false
 	if ability == Ability.LUNGE:
-		return _lunge == Lunge.READY and (not _form.is_valid() or _form.call() == BorrowedFace.TRUE_FORM)
+		return _lunge == Lunge.READY
 	return true
 
 

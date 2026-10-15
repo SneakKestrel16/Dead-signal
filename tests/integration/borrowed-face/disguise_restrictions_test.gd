@@ -1,5 +1,5 @@
 # Story borrowed-face/005: action restrictions while Disguised or Transforming (design/gdd/borrowed-face.md
-# rules 7, 8, 11, Edge Cases "Lunge requested while Disguised", "Transform requested during a Lunge
+# rules 7, 8, 11, Edge Cases "Lunge requested while Disguised" (since monster-abilities 012: accepted, reveals), "Transform requested during a Lunge
 # takedown commit"; ADR-0008 §2, §7; ADR-0005). BorrowedFace runs in a RoundServer with stub sight and
 # status sources. Story monster-abilities/006 retired StubAbilities: the real MonsterAbilities is the
 # ability request handler (status sources from the TRANSFORMING view), and Borrowed Face's attack source
@@ -192,17 +192,15 @@ func _gait(sprint: bool) -> MovementStep.Gait:
 	return MovementStep.gait(f, st)
 
 
-## AC 1 (Edge Case "Lunge requested while Disguised"): rejected; true form allows it.
-func test_lunge_is_rejected_while_disguised_and_allowed_in_true_form() -> void:
-	assert_bool(_can(MonsterAbilities.Ability.LUNGE)).is_true()
+## AC 1 (Edge Case "Lunge requested while Disguised", monster-abilities story 012, designer decision
+## 2026-10-15): accepted, and the wind-up's first tick already shows true form (instant reveal).
+func test_lunge_while_disguised_reveals_true_form_at_wind_up_start() -> void:
 	_become(S1)
-	assert_bool(_can(MonsterAbilities.Ability.LUNGE)).is_false()
-	assert_bool(_lunge()).override_failure_message("a real request started a lunge while Disguised").is_false()
 	assert_bool(_can(MonsterAbilities.Ability.FALSE_SIGNAL)).override_failure_message("False Signal and Blackout stay allowed while Disguised").is_true()
 	assert_bool(_can(MonsterAbilities.Ability.BLACKOUT)).is_true()
-	_step(_knobs.ticks(_knobs.borrowed_face.form_change_cooldown_s))
-	_become(BorrowedFace.TRUE_FORM)
-	assert_bool(_lunge()).is_true()
+	assert_bool(_lunge()).override_failure_message("a real request did not start a lunge while Disguised").is_true()
+	assert_int(_view.get_form()).is_equal(BorrowedFace.TRUE_FORM)
+	assert_bool(_view.get_transforming()).is_false()
 
 
 ## AC 1 (Edge Case "Transform requested during a Lunge takedown commit"): rejected, no cooldown cost.

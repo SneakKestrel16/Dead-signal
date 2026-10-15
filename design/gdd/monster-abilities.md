@@ -37,13 +37,13 @@ The shapeshifter is a human player, and its abilities are tools for timing and m
 
 | Ability | Usable while Disguised? | Breaks the disguise? |
 |---|---|---|
-| Predatory Lunge | No — True Form only; transform first (2 s cue is the warning) | n/a |
+| Predatory Lunge | Yes (designer decision 2026-10-15 (playtest)) | Yes — activation reveals true form at wind-up start; the reveal is instant, no 2 s transform **(proposed)**, and the wind-up is the telegraph |
 | False Signal | Yes | No — sound plays at a separate location |
 | Blackout | Yes | No |
 
 **Predatory Lunge** (MVP)
 
-4. Activation: shapeshifter in True Form, lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming.
+4. Activation: lunge cooldown ready, not Stunned, not under the shock lock (Survivor Defense rule 14) and not Transforming. True Form or Disguised (designer decision 2026-10-15 (playtest)): a disguised activation reveals the shapeshifter to True Form at the start of wind-up, instantly with no 2 s transformation **(proposed)**; the `lunge_windup_s` wind-up is the telegraph and plays in True Form, visible and audible to all, like the takedown commit. The reveal is a form change to True Form (`FormChanged`), so Scare Events' transformation reveal fires with it.
 5. **Wind-up**: `lunge_windup_s` = 0.6 s **(proposed)**. A distinct audio cue plays from the monster's position, audible within `lunge_cue_radius_m` = 20 m **(proposed)**, plus a visible crouch-and-coil pose. The monster cannot move during wind-up and turns at no more than `lunge_windup_turn_deg_s` = 15°/s **(proposed, designer decision 2026-10-11)**, so a survivor who strafes within a realistic reaction time still leaves the dash path (Formulas, Dodge window). Source canon: "clear wind-up and audible cue".
 6. **Active**: the monster dashes forward `lunge_distance_m` = 4 m over `lunge_dash_s` = 0.3 s **(proposed)** along its facing at wind-up end. Steering during the dash is limited to `lunge_dash_turn_deg_s` = 30°/s **(proposed)**. Blocked by walls, closed or barricaded doors, and the body of any survivor who is not a valid target (rule 7); the dash stops at the obstacle and the lunge resolves as a miss **(proposed; body rule designer decision 2026-10-11)**.
 7. **Hit validation** (server, every server tick of Active): a survivor is hit if all of these hold (all **(proposed)**):
@@ -102,7 +102,7 @@ False Signal and Blackout each go Ready → Active (signal playing / zone dark) 
 
 - **Downing, Rescue & Elimination**: consumes `SurvivorHit`. Downed survivors are not valid lunge targets.
 - **Survivor Defense**: `MonsterStunned` interrupts Lunge; barricaded doors block the dash; flashlights counter Blackout.
-- **Borrowed Face**: Lunge needs True Form; no ability during Transforming; transformation cannot start during Lunge wind-up, active or takedown commit; False Signal callouts use the observed-survivor list.
+- **Borrowed Face**: Lunge from disguise reveals True Form at wind-up start (designer decision 2026-10-15 (playtest)); no ability during Transforming; transformation cannot start during Lunge wind-up, active or takedown commit; False Signal callouts use the observed-survivor list.
 - **Pings & Callouts**: owns the authored callout set and the fake-callout presentation rule (same line, voice and feed line; no gesture, no item ping, "(not you)" mark).
 - **Facility Map**: lighting zones, blackout-able flags, emergency lights, backup switches, doors.
 - **Scare Events**: Blackout triggers the Blackout scare; the Facility Map owns the lighting state and Scare Events adds only flicker and stinger (designer decision, 2026-10-12, cross-review B2). A lunge counts as an ambush scare when Scare Events' ambush test passes at wind-up start (cross-review B1). False Signal never triggers a scare (designer decision, 2026-10-12, cross-review B3). Scare Events owns those presentations and cooldowns; scares never delay or block the ability.
@@ -166,7 +166,7 @@ Fastest cycle after a hit whose commit completes: 0.6 wind-up + up to 0.3 dash +
 | Stun lands during wind-up | No dash, no hit; cooldown starts | Stun interrupts attacks (source) |
 | Client shows a hit, server says miss | Server wins; logged as dispute | Never trust client damage |
 | Survivor enters grace, hiding or another commit mid-dash | Not a valid target | Hit checks current state |
-| Lunge while Disguised | Rejected | Requires True Form (kept for now; playtest) |
+| Lunge while Disguised | Accepted; instant reveal to True Form at wind-up start **(proposed: instant)** | A disguised lunge that did nothing gave no feedback (designer decision 2026-10-15 (playtest)); the wind-up is the telegraph |
 | False Signal aimed through a wall | Allowed if within range; sound plays there | Sound travels; sight verifies |
 | False Signal Footsteps path meets a wall | The path stops at the first wall along it; the footsteps end there | Real footsteps cannot pass a wall (designer decision, 2026-10-12, cross-review 12e) |
 | False Signal callout as an unobserved survivor | Rejected | Uses observed list |
@@ -285,7 +285,7 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 | Hit outcome | `design/gdd/downing-and-rescue.md` | `SurvivorHit` handling, takedown commit (`takedown_commit_s`), eligibility | Ownership handoff |
 | Imitated interaction sounds | `design/gdd/survivor-objectives.md` | Objective interaction sounds, fake-interaction rule | Data dependency |
 | Stun interrupts | `design/gdd/survivor-defense.md` | `MonsterStunned`, barricades, flashlight | State trigger |
-| True Form requirement, observed list | `design/gdd/borrowed-face.md` | Disguise state | Rule dependency |
+| Reveal on disguised Lunge, observed list | `design/gdd/borrowed-face.md` | Disguise state | Rule dependency |
 | Fake callout presentation | `design/gdd/pings-and-callouts.md` | Authored callouts, monster voice rules | Rule dependency |
 | Lighting zones, switches | `design/levels/research-facility.md` | Zones, emergency lights, backup switches | Data dependency |
 | Scare presentation | `design/gdd/scare-events.md` | `ScareTriggered`, ambush test, flicker and stingers | Ownership handoff |
@@ -294,7 +294,8 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 ## Acceptance Criteria
 
 - [ ] Lunge plays its cue 0.6 s before the dash; a survivor 20 m away hears it from a bearing within ±15° of the monster's true bearing **(proposed tolerance)**.
-- [ ] Server rejects a lunge during cooldown, while Disguised (Borrowed Face rule 11, kept until playtest), while Stunned, or while Transforming.
+- [ ] Server rejects a lunge during cooldown, while Stunned, or while Transforming.
+- [ ] Server accepts a lunge while Disguised and reveals True Form at wind-up start, so survivors see the true form before the hit can land (Borrowed Face rule 11, designer decision 2026-10-15 (playtest)).
 - [ ] Server rejects a lunge, False Signal or Blackout from a disguised shapeshifter during the shock lock (Survivor Defense rule 14), and accepts them once the lock ends; an immune taser hit applies no lock and rejects nothing (designer decision, 2026-10-12, cross-review B4).
 - [ ] A survivor behind a closed door 1 m from the monster is never hit.
 - [ ] A dash whose path meets a hidden, grace, Downed or Seized survivor stops at that body, emits no `SurvivorHit`, and applies the miss slow.
@@ -326,7 +327,7 @@ The victim's 200 ms camera impact on a hit is owned by Downing, Rescue & Elimina
 | Can False Signal impersonate an Eliminated survivor? (Pings & Callouts defers this here) | SneakKestrel16 | Before Milestone 3 | **Settled:** no (designer decision, 2026-10-11); rule 14, edge case and AC |
 | Backup switch cannot be faked (rule 19): does a monster that cannot pretend to restore the zone it blacked out become a tell, or does standing at a switch doing nothing pass as a survivor deciding? Alternative if it is a tell: allow a fake hold like Objectives rule 25 | SneakKestrel16 | Before Milestone 5 | **Kept "cannot be faked" for now (2026-10-12, cross-review 12e); test in the M5 playtest** |
 | False Signal footsteps stop at the first wall (rule 13), so a fake path cut short can end earlier than `false_signal_footstep_duration_s`. Does a path cut short by a wall read as a tell to a careful listener (a real walker would turn or open a door)? | SneakKestrel16 | Milestone 5 closed playtest | Added (designer decision, 2026-10-12, cross-review 12f) |
-| Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Kept True Form only for now (2026-10-12); test in the M5 playtest.** Test plan lives in Borrowed Face's Open Questions |
+| Should Lunge be usable from disguise? | SneakKestrel16 | Before Milestone 5 | **Resolved: yes, with a reveal at wind-up start (designer decision 2026-10-15 (playtest)).** A disguised lunge that was rejected did nothing and gave no feedback. Rule 4; the instant reveal is proposed |
 | Which zones are blackout-able, and is the evacuation area excluded? | SneakKestrel16 | Before Milestone 3 | Facility Map. **Proposed 2026-10-11 (re-review R4):** every volume except the active terminal room during Evacuation |
 | Does the Blackout cooldown start at activation or at expiry? | SneakKestrel16 | Before Milestone 5 | Proposed at activation (rule 21); confirm in playtest |
 | Does the lunge dodge survive a 0.40 s strafe once the survivor collision radius is set? | SneakKestrel16 | With the Controller GDD | Resolved 2026-10-12: yes under the steering pursuit model (4.0 m/s, r 0.3, latest safe start ~0.49 s); the straight-line upper bound no longer governs (designer decision) |

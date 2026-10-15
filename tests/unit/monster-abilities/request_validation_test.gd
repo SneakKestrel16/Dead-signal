@@ -128,19 +128,29 @@ func _hit() -> EvSurvivorHit:
 	return e
 
 
-## AC-1: a lunge while Disguised, Stunned, shock-locked or Transforming is rejected with no state
-## change and no cooldown cost; Stunned and the shock lock both read SHOCK_STUN_LOCK.
+## AC-1: a lunge while Stunned, shock-locked or Transforming is rejected with no state change and no
+## cooldown cost, disguised or not; Stunned and the shock lock both read SHOCK_STUN_LOCK.
 func test_lunge_rejected_while_blocked_costs_nothing() -> void:
 	_start()
-	for blocker in ["disguised", "locked", "transforming"]:
-		_form_now = S1 if blocker == "disguised" else BorrowedFace.TRUE_FORM
-		_locked_now = blocker == "locked"
-		_transforming_now = blocker == "transforming"
+	for blocker in ["locked", "transforming", "disguised locked", "disguised transforming"]:
+		_form_now = S1 if blocker.begins_with("disguised") else BorrowedFace.TRUE_FORM
+		_locked_now = blocker.ends_with("locked")
+		_transforming_now = blocker.ends_with("transforming")
 		_req(A.LUNGE)
 		_step()
 		assert_int(_ma.lunge_state()).override_failure_message(blocker).is_equal(L.READY)
 		assert_array(_ready_ticks()).is_equal([0, 0, 0])
 	assert_array(_states).is_empty()
+
+
+## Story 012 (rule 4, designer decision 2026-10-15): a lunge while Disguised is accepted; the module
+## leaves the reveal to Borrowed Face (its AbilityUsed subscription).
+func test_lunge_accepted_while_disguised() -> void:
+	_start()
+	_form_now = S1
+	_req(A.LUNGE)
+	_step()
+	assert_int(_ma.lunge_state()).is_equal(L.WIND_UP)
 
 
 ## AC-1 edge: two (here three) rejection reasons at once still reject cleanly.

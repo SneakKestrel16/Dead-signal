@@ -77,7 +77,7 @@ func _init(model: HudModel, camera: Camera3D, contexts: InputContextStack, send:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-## Sends a Lunge request (rule 4: the server checks form, cooldown and state). False when not allowed to send.
+## Sends a Lunge request in any form (rule 4: the server checks lock, cooldown and state; a disguise is revealed). False when not allowed to send.
 func lunge() -> bool:
 	return _request(MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE))
 

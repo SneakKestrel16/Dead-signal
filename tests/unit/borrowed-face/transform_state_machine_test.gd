@@ -249,3 +249,34 @@ func test_timings_come_from_knobs() -> void:
 	_step(_cooldown_ticks - 1)
 	assert_bool(_request(S2)).is_true()
 	assert_int(_tick()).is_equal(done + 6 * k.net.sim_tick_hz)
+
+
+## Emits an accepted activation of `ability` (MonsterAbilities' AbilityUsed) and steps one tick.
+func _ability_used(ability: MonsterAbilities.Ability) -> void:
+	var e := EvAbilityUsed.new()
+	e.ability = ability
+	_server.bus.emit(e)
+	_step(1)
+
+
+## Story monster-abilities/012 (rule 11, designer decision 2026-10-15): a Lunge accepted while Disguised
+## reveals true form at once, with one FormChanged and no transformation or new cooldown; other abilities
+## and a lunge in true form change nothing.
+func test_lunge_from_disguise_reveals_true_form_instantly() -> void:
+	_start()
+	_become(S1)
+	var cooldown_end := _bf.cooldown_end_tick()
+	_changes.clear()
+	_ability_used(MonsterAbilities.Ability.FALSE_SIGNAL)
+	_ability_used(MonsterAbilities.Ability.BLACKOUT)
+	assert_int(_bf.form()).is_equal(S1)
+	assert_array(_changes).is_empty()
+	_ability_used(MonsterAbilities.Ability.LUNGE)
+	assert_int(_bf.form()).is_equal(BorrowedFace.TRUE_FORM)
+	assert_bool(_bf.transforming()).is_false()
+	assert_int(_bf.cooldown_end_tick()).is_equal(cooldown_end)
+	assert_int(_changes.size()).is_equal(1)
+	var c := _changes[0][0] as EvFormChanged
+	assert_array([c.player, c.previous, c.form, _changes[0][1]]).is_equal([MONSTER, S1, BorrowedFace.TRUE_FORM, _tick()])
+	_ability_used(MonsterAbilities.Ability.LUNGE)
+	assert_int(_changes.size()).is_equal(1)

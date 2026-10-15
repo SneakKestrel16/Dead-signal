@@ -343,9 +343,12 @@ func test_lunge_wind_up_inside_immunity_ends_it_and_a_stun_on_it_applies() -> vo
 
 
 func test_rejected_wind_up_leaves_immunity_in_place() -> void:
+	_observe_all()
 	_hit_in(1)
 	_step(_lock() + _t(2.0))
-	_ma_form = S1 # Lunge needs true form: rejected
+	_bf.request_form_change(MONSTER, BorrowedFace.request_packet(S1))
+	_step(1)
+	assert_bool(_bf.transforming()).is_true() # Transforming rejects the Lunge (since monster-abilities 012 a disguise does not)
 	_ma.request_ability(MONSTER, MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE))
 	_step(1)
 	assert_int(_ma.lunge_state()).is_equal(MonsterAbilities.Lunge.READY)
