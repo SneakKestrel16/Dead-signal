@@ -1,8 +1,8 @@
 class_name ScareEvents extends RefCounted
 ## Server Scare Events module, story scare-events/001 (design/gdd/scare-events.md rules 1-3, 8; ADR-0005).
 ## The only emitter of ScareTriggered (rule 3): there is no timer here, a scare fires only when an owning
-## system calls fire(). Gating (story 002) and recipient selection (story 003) are not here yet: fire()
-## sends exactly to the recipients it is given.
+## system calls fire(). Each recipient is gated by ScareGating (story 002); recipient selection (story 003) is
+## not here yet: fire() gates exactly the recipients it is given.
 ## Usage:
 ##   var scares := ScareEvents.new(ScareCatalogue.load_shipped())
 ##   server.start_round({TickOrder.SCARE_EVENTS: scares}, knobs)
@@ -10,6 +10,8 @@ class_name ScareEvents extends RefCounted
 
 var _catalogue: ScareCatalogue
 var _bus: EventBus
+var _registry: StateRegistry
+var _gating: ScareGating
 
 
 func _init(catalogue: ScareCatalogue) -> void:
@@ -17,8 +19,10 @@ func _init(catalogue: ScareCatalogue) -> void:
 
 
 ## RoundServer entry.
-func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, _knobs: Knobs) -> void:
+func setup(_tick_runner: Node, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
+	_registry = registry
+	_gating = ScareGating.new(knobs.scare) # fresh records every round (story 002)
 
 
 ## Nothing runs on a timer (rule 3); the step exists so the module sits at the Scare slot.
@@ -40,14 +44,24 @@ func fire(scare_id: StringName, origin: Vector3, recipients: Array, source: int,
 		return _refuse("%s: a Monster or Survivor source must name a player" % scare_id)
 	if recipients.is_empty() or (entry.scope == ScareEntry.Scope.SINGLE_CLIENT and recipients.size() != 1):
 		return _refuse("%s: bad recipient count %d for scope %d" % [scare_id, recipients.size(), entry.scope])
+	# Story 002 gating at Match Flow's round time; MatchFlow.Phase (Infiltration/Investigation/Evacuation)
+	# indexes the same Low/Rising/Emergency budgets as ScareEntry.Phase. No clock (module-only tests): t=0, Low.
+	var clock: MatchFlow.ClockView = null
+	if _registry != null and _registry.has_view(StateKeys.ROUND_CLOCK):
+		clock = _registry.view(StateKeys.ROUND_CLOCK, MatchFlow.ClockView) as MatchFlow.ClockView
+	var now_s := clock.elapsed_s() if clock != null else 0.0
+	var phase := clock.phase() if clock != null else ScareEntry.Phase.LOW
 	for r: int in recipients:
+		var intensity := _gating.gate(r, entry, origin, now_s, phase)
+		if intensity == ScareGating.BLOCKED:
+			continue
 		var e := EvScareTriggered.new()
 		e.scare_id = scare_id
 		e.scope = entry.scope
 		e.source = source
 		e.player = player
 		e.origin = origin
-		e.intensity = entry.intensity
+		e.intensity = intensity
 		e.recipient = r
 		_bus.emit(e)
 	return true

@@ -1,7 +1,7 @@
 # Story 002: Per-recipient scare gating, budgets and repeat block
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -32,10 +32,10 @@ Each client has gating state: last Major, last any, last fire per (scare_id, loc
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] A RoundScript scare within 45 s of a Major scare on the same client is blocked; a Monster scare in the same window plays as Minor.
-- [ ] A RoundScript scare within 10 s of any scare on the same client is blocked; no client receives more RoundScript scares in a phase than that phase's budget (2/6/4).
-- [ ] The same scare_id at the same location does not fire twice within 120 s; no client receives more than `hallucination_max_per_client` (2) hallucinations in a round.
-- [ ] A disguised shapeshifter entering an authored room or viewing a monitor fires the same scare a survivor would; the gating log is identical for both.
+- [x] A RoundScript scare within 45 s of a Major scare on the same client is blocked; a Monster scare in the same window plays as Minor.
+- [x] A RoundScript scare within 10 s of any scare on the same client is blocked; no client receives more RoundScript scares in a phase than that phase's budget (2/6/4).
+- [x] The same scare_id at the same location does not fire twice within 120 s; no client receives more than `hallucination_max_per_client` (2) hallucinations in a round.
+- [x] A disguised shapeshifter entering an authored room or viewing a monitor fires the same scare a survivor would; the gating log is identical for both.
 
 ---
 
@@ -63,7 +63,7 @@ Each client has gating state: last Major, last any, last fire per (scare_id, loc
 **Story Type**: Logic
 **Required evidence**: `tests/unit/scare-events/per_recipient_gating_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/scare-events/per_recipient_gating_test.gd` (12 cases)
 
 ---
 
@@ -71,3 +71,14 @@ Each client has gating state: last Major, last any, last fire per (scare_id, loc
 
 - Depends on: Story 001
 - Unlocks: Stories 003-007
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se2. Full suite 1324/1324, no leak lines. Mutations caught: reduced Minor restarting the Major cooldown, budget off by one, Monster scares blocked, no budget reset on phase change (caught after the reset test was strengthened).
+
+Deviations (inference):
+- Once-per-round is per recipient; rule 11 does not say. A designer ruling settles it.
+- The hallucination cap and repeat block skip Monster-source scares (the Formulas never block one).
+- The Blackout block for RoundScript scares is not here; it needs lighting state (story 006).
+- The repeat-block location key is the scare's origin. Infiltration, Investigation and Evacuation map onto the Low, Rising and Emergency budget slots.
+- `fire()` returns true when every recipient is gated out; false still means the request was refused.
