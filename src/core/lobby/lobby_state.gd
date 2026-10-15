@@ -9,9 +9,11 @@ class_name LobbyState extends RefCounted
 ## Server only: clients display the replicated state and never call these methods.
 ## In Match the lobby is dormant: joins, leaves and Ready changes still update its membership (for
 ## return_to_waiting, AC-LB-27) but never touch the roster already handed to Match Flow.
+## Each player keeps a preferred character C1-C5 for the session (rules 6, 17; TR-lobby-004 keys it by
+## token): drawn from the injected RNG on their first join, kept through rounds, leaves and rejoins.
 ## Not thread-safe: server main thread only. Host left -> Closed belongs to network-authority story 003.
 ## Usage:
-##   var lobby := LobbyState.new(knobs)
+##   var lobby := LobbyState.new(knobs, rng)
 ##   lobby.join("tok-a"); lobby.set_ready("tok-a", true)
 ##   lobby.server_tick(tick)   # once per server tick
 ##   lobby.roster_locked.connect(match_flow.start)
@@ -27,12 +29,18 @@ var _knobs: Knobs
 var _state := WAITING
 var _ready_by_token: Dictionary[String, bool] = {} ## token -> Ready, one entry per connected player, in join order
 var _start_tick := -1 ## tick the running countdown started; -1 when none runs
+var _rng: RandomNumberGenerator
+## token -> preferred character, for every token ever joined this session. Kept on leave: inference
+## from TR-lobby-004 (the token keys the preference); rule 17 does not say, a designer ruling would settle it.
+var _pref_by_token: Dictionary[String, StringName] = {}
 
 
 ## `knobs` must be valid (Knobs.errors() empty): reads lobby.min_players, lobby.lobby_countdown_s
-## and net.sim_tick_hz through Knobs.ticks().
-func _init(knobs: Knobs) -> void:
+## and net.sim_tick_hz through Knobs.ticks(). `rng` draws a joiner's default preference (seed it in
+## tests); null = an unseeded one.
+func _init(knobs: Knobs, rng: RandomNumberGenerator = null) -> void:
 	_knobs = knobs
+	_rng = rng if rng != null else RandomNumberGenerator.new()
 
 
 ## WAITING, COUNTDOWN or IN_MATCH. NetAuthority's join check reads it.
@@ -50,11 +58,14 @@ func tokens() -> PackedStringArray:
 	return PackedStringArray(_ready_by_token.keys())
 
 
-## Adds a connected player, not Ready. Cancels a running countdown (rule 13).
+## Adds a connected player, not Ready. Cancels a running countdown (rule 13). A first-time joiner gets a
+## uniformly random preference (rule 6); a returning token keeps theirs.
 func join(token: String) -> void:
 	if _ready_by_token.has(token):
 		return
 	_ready_by_token[token] = false
+	if not _pref_by_token.has(token):
+		_pref_by_token[token] = CharacterDef.IDS[_rng.randi_range(0, CharacterDef.IDS.size() - 1)]
 	_cancel()
 
 
@@ -62,6 +73,25 @@ func join(token: String) -> void:
 func leave(token: String) -> void:
 	if _ready_by_token.erase(token):
 		_cancel()
+
+
+## The preferred character of `token`; &"" for a token that never joined.
+func preference(token: String) -> StringName:
+	return _pref_by_token.get(token, &"")
+
+
+## token -> preferred character (a copy) for every token that joined this session. Roster.lock reads it.
+func preferences() -> Dictionary[String, StringName]:
+	return _pref_by_token.duplicate()
+
+
+## Sets a connected player's preference; false (unchanged) for an unknown token or a value outside
+## C1-C5 (client input, validated here). The Ready lock (rule 12) is story 010.
+func set_preference(token: String, character: StringName) -> bool:
+	if not _ready_by_token.has(token) or not CharacterDef.IDS.has(character):
+		return false
+	_pref_by_token[token] = character
+	return true
 
 
 ## Sets a player's Ready flag; un-readying cancels a running countdown (rule 13).

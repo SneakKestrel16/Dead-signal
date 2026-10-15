@@ -15,7 +15,7 @@ var _tick := 0
 
 func before_test() -> void:
 	_knobs = Knobs.load_all()
-	_lobby = LobbyState.new(_knobs)
+	_lobby = LobbyState.new(_knobs, _rng(SEED + 1)) ## seeded preferences: the redeal check below is deterministic
 	_handoff = RosterHandoff.new(_lobby, _info, _knobs, _rng(), SESSION)
 	_got = []
 	_tick = 0

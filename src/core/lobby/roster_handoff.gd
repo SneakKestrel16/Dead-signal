@@ -66,7 +66,7 @@ func queue_order() -> PackedStringArray:
 
 
 func _on_locked(tokens: PackedStringArray) -> void:
-	var r := Roster.lock(tokens, _info, _session, _round_index + 1, _knobs, _queue, _rng)
+	var r := Roster.lock(tokens, _info, _session, _round_index + 1, _knobs, _queue, _rng, _lobby.preferences())
 	if r == null:
 		push_error("RosterHandoff: roster of %d refused (outside %d-%d, unknown or repeated player)" % [
 			tokens.size(), _knobs.lobby.min_players, _knobs.lobby.max_players])

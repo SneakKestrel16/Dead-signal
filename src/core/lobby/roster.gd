@@ -3,9 +3,9 @@ class_name Roster extends RefCounted
 ## once at countdown 0 and never changed: `player_count` is fixed for the round. Players are named by
 ## player ID, never peer ID (control manifest: peer IDs stay inside NetAuthority; the GDD's "peer ID"
 ## predates that rule, AD-108). The shapeshifter is the session RotationQueue's pick (rules 8-10);
-## survivors' characters come from CharacterAssignment.deal_m1. Server-side; Match Flow and every
+## survivors' characters come from CharacterAssignment.assign over their lobby preferences (rule 7). Server-side; Match Flow and every
 ## reader see it through RosterView.
-## Usage: `var r := Roster.lock(tokens, info, session_id, round_index, knobs, queue, rng)` (null = refused)
+## Usage: `var r := Roster.lock(tokens, info, session_id, round_index, knobs, queue, rng, prefs)` (null = refused)
 
 const SHAPESHIFTER := &"shapeshifter"
 const SURVIVOR := &"survivor"
@@ -20,9 +20,11 @@ var _players: Dictionary[int, Dictionary] = {}
 ## Locks the roster for `tokens` (join order). `info` is Callable(token) -> {player_id: int, name:
 ## String}. Returns null when the count is outside lobby.min_players..max_players (AC-LB-01: 3 or 7
 ## refused), or when any token is unknown (player_id -1); a refused lock leaves `queue` untouched.
-## `rng` shuffles Q_1 (the session's first lock) and deals the characters.
+## `rng` shuffles Q_1 (the session's first lock) and deals the characters. `prefs` is token -> preferred
+## character (LobbyState.preferences()); a token without one claims nothing and is dealt at random.
+## The shapeshifter's preference is ignored and left as it is (Edge Cases).
 static func lock(tokens: PackedStringArray, info: Callable, session: String, index: int, knobs: Knobs,
-		queue: RotationQueue, rng: RandomNumberGenerator) -> Roster:
+		queue: RotationQueue, rng: RandomNumberGenerator, prefs: Dictionary = {}) -> Roster:
 	if tokens.size() < knobs.lobby.min_players or tokens.size() > knobs.lobby.max_players:
 		return null
 	var ids: Array[int] = []
@@ -39,8 +41,11 @@ static func lock(tokens: PackedStringArray, info: Callable, session: String, ind
 	r._round_index = index
 	r._player_count = ids.size()
 	var monster: int = ids[tokens.find(queue.pick(tokens, rng))]
-	var survivors: Array[int] = ids.filter(func(id: int) -> bool: return id != monster)
-	var chars := CharacterAssignment.deal_m1(survivors, CharacterDef.IDS, rng)
+	var survivor_prefs: Dictionary[int, StringName] = {}
+	for i in ids.size():
+		if ids[i] != monster:
+			survivor_prefs[ids[i]] = prefs.get(tokens[i], &"")
+	var chars := CharacterAssignment.assign(survivor_prefs, CharacterDef.IDS, rng)
 	for id in ids:
 		r._players[id] = {"name": names[id], "role": SHAPESHIFTER if id == monster else SURVIVOR,
 			"character": chars.get(id, &"")}
