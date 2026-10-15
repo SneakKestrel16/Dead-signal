@@ -1,7 +1,7 @@
 # Story 005: Action restrictions while Disguised or Transforming
 
 > **Epic**: Borrowed Face
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]

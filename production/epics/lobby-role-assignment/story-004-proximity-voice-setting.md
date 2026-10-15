@@ -79,3 +79,17 @@ byte (never decodes server packets) and exposes `NetAuthority.proximity_voice`. 
 
 - Depends on: Story 001; network-authority story 001
 - Unlocks: none
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-168):
+- Server-side setting and host/phase checks merged in the earlier wave; AC-LB-26 (every client reports the value) added by a worktree agent and squash-merged as c3b0e76.
+- Transport: two fixed reliable packets (on/off) sent on every accepted change and to each joining or rejoining player; the client matches them byte for byte and never decodes server packets (decoding every snapshot broke a 200 ms loopback bound in LB-11).
+- A rejoining player gets the value in any phase, not only Waiting (the setting carries across rounds).
+- Evidence is the existing unit test plus the new integration test (story named one file).
+**Test Evidence**: `tests/unit/lobby/proximity_voice_setting_test.gd`, `tests/integration/lobby/proximity_voice_replication_test.gd` (2 tests, real ENet). Mutations caught: no send on join, size-only client match, send to the first player only.
+**Code Review**: Complete (orchestrator review at merge)
