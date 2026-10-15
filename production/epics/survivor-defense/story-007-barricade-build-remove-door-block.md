@@ -59,7 +59,34 @@ Barricadable doors can be barricaded by a Healthy survivor in `barricade_duratio
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/survivor-defense/barricade_doors_test.gd`
+
+- **AC-1**: Build and remove timing
+  - Given: a door
+  - When: build `barricade_duration_s` (3 s), cancel, remove `barricade_remove_s` (1 s)
+  - Then: not rooting; resets on cancel; remove takes 1 s
+  - Edge cases: cancel 1 tick before completion
+- **AC-2**: Barricaded door
+  - Given: a barricaded door; the monster in the doorway
+  - When: anyone opens it; a build is completed
+  - Then: cannot open until broken or removed; build fails to complete with the monster in the doorway
+  - Edge cases: monster leaves the doorway on the final tick
+- **AC-3**: Lunge blocked
+  - Given: a lunge path crossing a closed door
+  - When: the dash runs
+  - Then: stops at the door, resolves as a miss
+  - Edge cases: door closed the same tick
+- **AC-4**: One action at a time
+  - Given: build, remove and break on one door; a forged 'barricade complete'
+  - When: started together
+  - Then: only one runs; the forgery changes nothing
+  - Edge cases: same-tick start from two players
+
+**Re-run against the real module**: `tests/integration/borrowed-face/disguise_gates_test.gd` (barricade and remove rows); the Facility Map door tests named in the story
+
+**Estimated test count**: ~8 tests
 
 ---
 

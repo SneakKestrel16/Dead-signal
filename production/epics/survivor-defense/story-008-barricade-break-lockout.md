@@ -59,7 +59,32 @@ The monster, in any form, holds Break on a barricaded door. The barricade breaks
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/survivor-defense/barricade_break_test.gd`
+
+- **AC-1**: Break time
+  - Given: a barricade
+  - When: break with interruptions including a stun
+  - Then: breaks after exactly 5 s total; progress kept
+  - Edge cases: interruption on the final tick
+- **AC-2**: Rebuild lockout
+  - Given: a just-broken barricade
+  - When: a rebuild at 29.9 s and 30 s
+  - Then: rejected before, allowed at 30 s
+  - Edge cases: exactly 30 s
+- **AC-3**: Who may break
+  - Given: the monster in each form; a survivor
+  - When: a break is started
+  - Then: works in any form and is a visible monster action; survivors cannot start it
+  - Edge cases: disguised monster
+- **AC-4**: Event
+  - Given: a break
+  - When: completes
+  - Then: `BarricadeBroken` emitted once
+  - Edge cases: two doors broken give two events
+
+**Estimated test count**: ~6 tests
 
 ---
 

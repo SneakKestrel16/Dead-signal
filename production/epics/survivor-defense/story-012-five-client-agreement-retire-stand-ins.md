@@ -57,7 +57,29 @@ Closes the epic: with five clients connected, all five agree on stun state (as v
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/survivor-defense/five_client_agreement_test.gd`
+
+- **AC-1**: Five-client agreement
+  - Given: 5 clients
+  - When: after each stun, charge, hide, barricade event
+  - Then: all agree on stun state as visible to their role, charges, hiding occupancy, barricade state
+  - Edge cases: a reconnect, if in scope
+- **AC-2**: Retire `StubDefense`
+  - Given: `transform_state_machine_test.gd`, `transform_immunity_test.gd`, `stun_projection_test.gd`
+  - When: re-run on the real module
+  - Then: all three pass; `disguise_gates_test.gd` hide, barricade and search rows run on the real interactables
+  - Edge cases: stub removed from the tree, not only unused
+- **AC-3**: No hardcoded knobs
+  - Given: every Tuning Knob
+  - When: loaded and scanned
+  - Then: all from data; test asserts no hardcoded value
+  - Edge cases: a knob changed in data changes behaviour
+
+**Re-run against the real module**: `tests/unit/borrowed-face/transform_state_machine_test.gd`; `tests/unit/borrowed-face/transform_immunity_test.gd`; `tests/integration/borrowed-face/stun_projection_test.gd`; `tests/integration/borrowed-face/disguise_gates_test.gd`
+
+**Estimated test count**: ~6 tests
 
 ---
 

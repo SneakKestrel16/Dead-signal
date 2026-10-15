@@ -58,7 +58,37 @@ A lunge ends in Resolved by one of four paths (commit end, dash end or obstacle,
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/monster-abilities/lunge_resolution_test.gd`
+
+- **AC-1**: Miss slow and cooldown
+  - Given: a lunge that hits nothing, and one blocked by a door
+  - When: resolution runs
+  - Then: monster at 50% speed for 1.5 s; next lunge accepted no earlier than 10 s after resolution
+  - Edge cases: request at 9.99 s and 10.0 s; slow end tick
+- **AC-2**: Transform during miss slow
+  - Given: the miss slow active
+  - When: a transformation request arrives
+  - Then: accepted when Borrowed Face rule 7 holds
+  - Edge cases: request on the final slow tick
+- **AC-3**: Cooldown after a hit
+  - Given: a hit whose commit completes at T, then one cancelled by a stun at T
+  - When: a lunge is requested before and at T + 10 s
+  - Then: rejected before, accepted at T + 10 s, in both cases
+  - Edge cases: T + 10 s - 1 tick
+- **AC-4**: Stun in wind-up or dash
+  - Given: a stun during wind-up, then during the dash
+  - When: resolution runs
+  - Then: no `SurvivorHit`; cooldown starts at the stun; no miss slow
+  - Edge cases: stun on the dash's last tick
+- **AC-5**: Disconnect
+  - Given: a monster disconnect mid-lunge
+  - When: the event arrives
+  - Then: lunge ends, no hit
+  - Edge cases: disconnect on the hit tick
+
+**Estimated test count**: ~7 tests
 
 ---
 

@@ -60,7 +60,34 @@ Hiding spots as interactables: a Healthy survivor holds `hide_transition_s` to e
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/survivor-defense/hiding_spots_test.gd`
+
+- **AC-1**: Entering
+  - Given: a Healthy survivor at a spot
+  - When: they enter, then cancel mid-way
+  - Then: rooted `hide_transition_s` (1.0 s), timer reset on cancel; targetable until hidden; one occupant per spot
+  - Edge cases: two survivors enter the same tick
+- **AC-2**: Hidden limits
+  - Given: a hidden survivor
+  - When: lunge, taser, item, objective, rescue are tried
+  - Then: all fail; charges and flashlight kept
+  - Edge cases: hit on the tick hiding completes
+- **AC-3**: Search
+  - Given: an occupied and an empty spot
+  - When: a search of `search_duration_s`; a stun mid-search
+  - Then: occupant ejected in front without a down; empty spot nothing; stun interrupts
+  - Edge cases: search ends the tick the occupant leaves
+- **AC-4**: Search during entry
+  - Given: a search on a spot being entered
+  - When: entry completes
+  - Then: entry finishes first, then ejects; only Healthy survivors can hide
+  - Edge cases: a Downed survivor tries to enter
+
+**Re-run against the real module**: `tests/integration/borrowed-face/disguise_gates_test.gd` (hiding and search rows)
+
+**Estimated test count**: ~8 tests
 
 ---
 

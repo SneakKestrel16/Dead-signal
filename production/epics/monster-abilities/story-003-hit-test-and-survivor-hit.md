@@ -62,7 +62,42 @@ Each Active tick the server tests survivors against positions rewound by `LagCom
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/monster-abilities/lunge_hit_test_test.gd`; `tests/integration/monster-abilities/lunge_lag_comp_test.gd`
+
+- **AC-1**: Eligibility, range, cone, line of sight
+  - Given: survivors Healthy, hidden, in grace, Seized, outside 1.2 m, outside the 60 degree cone, without chest line of sight; and a monster stunned since wind-up
+  - When: the dash hit test runs
+  - Then: only the eligible one in range, cone and sight gets `SurvivorHit`; a stunned monster hits nobody
+  - Edge cases: exactly 1.2 m; exactly on the cone edge
+- **AC-2**: Two valid targets
+  - Given: two valid survivors in the cone
+  - When: the test runs
+  - Then: only the closer gets `SurvivorHit`; the dash ends that tick
+  - Edge cases: equal distance (assert the tie-break)
+- **AC-3**: Closed door
+  - Given: a survivor 1 m away behind a closed door
+  - When: the test runs
+  - Then: never hit
+  - Edge cases: door opened on the same tick
+- **AC-4**: Grace and hidden
+  - Given: survivors in post-rescue grace, post-release grace, hidden, all inside cone and radius
+  - When: the test runs
+  - Then: none hit
+  - Edge cases: grace expiring on the dash tick
+- **AC-5**: Rewind
+  - Given: a monster at 80 ms RTT, then 300 ms; a survivor who hid or entered grace after the rewound time
+  - When: the test runs
+  - Then: 80 ms rewinds to the viewed tick; 300 ms rewinds exactly 180 ms (cap); the late-hidden survivor is not hit
+  - Edge cases: RTT at the cap +/- 1 tick; `view_tick` unset clamps to the cap (NA-7)
+- **AC-6**: Dodge smoke
+  - Given: a survivor 3 m ahead (radius 0.3 m) strafing 4.0 m/s from 0.25 s after the cue, monster at 150 ms RTT
+  - When: the lunge runs
+  - Then: not hit (steering check)
+  - Edge cases: rerun after any change to wind-up, turn rates, dash, radius or cone
+
+**Estimated test count**: ~10 unit and ~5 integration tests
 
 ---
 

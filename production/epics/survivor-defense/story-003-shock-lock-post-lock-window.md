@@ -61,7 +61,32 @@ The single lock both a shocked survivor and a stunned disguised monster get: `st
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/survivor-defense/shock_lock_test.gd`
+
+- **AC-1**: Root, slow, cancel
+  - Given: a survivor in a rescue, an objective hold, and a barricade build
+  - When: a hit lands
+  - Then: rooted `stun_root_s`; slowed until `stun_duration_s`; the hold is cancelled
+  - Edge cases: hit on the first tick of a hold
+- **AC-2**: Lock blocks actions
+  - Given: a locked player
+  - When: door, interact, item, ping and callout are tried
+  - Then: every attempt fails; the first attempt after the lock succeeds
+  - Edge cases: attempts on the last locked tick and the first free tick
+- **AC-3**: No refresh
+  - Given: four hits 0.5 s apart
+  - When: time is read
+  - Then: lock lasts exactly `stun_duration_s` from the first hit; four charges spent
+  - Edge cases: hit exactly at lock end
+- **AC-4**: Post-lock window
+  - Given: eight hits 2 s apart (0, 2, ..., 14 s)
+  - When: effects are read
+  - Then: lock only at 0 to 2 s and 8 to 10 s; other hits spend a charge, play, apply no root, slow or lock; a hit in the window still cancels a hold
+  - Edge cases: hit at exactly the window edge
+
+**Estimated test count**: ~8 tests
 
 ---
 

@@ -58,7 +58,27 @@ Every survivor owns a flashlight toggle, replicated so all clients see the cone 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/survivor-defense/flashlight_toggle_test.gd`
+
+- **AC-1**: Toggle and replication
+  - Given: a survivor and 4 other clients
+  - When: toggle on, off
+  - Then: server state flips; every client sees the same cone state; local response within 50 ms
+  - Edge cases: toggle twice in one tick
+- **AC-2**: No battery, no monster effect
+  - Given: a long-held beam on the monster
+  - When: time passes
+  - Then: no limit; no stun, slow or disguise reveal
+  - Edge cases: beam on a disguised monster
+- **AC-3**: Blackout
+  - Given: Blackout active (stubbed until story 010 lands)
+  - When: toggle
+  - Then: works; does not end Blackout early
+  - Edge cases: toggle on the Blackout end tick
+
+**Estimated test count**: ~5 tests
 
 ---
 

@@ -62,7 +62,39 @@ The monster's Normal, Stunned, Immune machine. A valid hit stuns for `stun_durat
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/survivor-defense/monster_stun_test.gd`
+
+- **AC-1**: Stun applies
+  - Given: a true-form monster within 5 m; out of range; missed; blocked by a survivor
+  - When: a taser hit
+  - Then: 2.0 s stun and `MonsterStunned` only for the first
+  - Edge cases: exactly 5 m
+- **AC-2**: Stun cancels
+  - Given: a lunge wind-up, takedown commit, transformation, and a same-tick completion
+  - When: a stun lands
+  - Then: no `SurvivorHit`; victim freed; change cancelled; stun beats completion
+  - Edge cases: stun one tick after completion: the down stands
+- **AC-3**: Immunity
+  - Given: a stun, then a second true-form hit inside `stun_immunity_s`; two survivors firing the same tick
+  - When: hits land
+  - Then: second resisted, nothing applied; same-tick pair stuns once and spends two charges
+  - Edge cases: hit at immunity end
+- **AC-4**: Immunity ends early
+  - Given: stun at 0 s; lunge wind-up at 2 s into immunity; a completed change into a disguise
+  - When: each occurs
+  - Then: immunity ends and a stun on that wind-up applies; same after a disguise
+  - Edge cases: a rejected wind-up leaves immunity in place
+- **AC-5**: Interrupted actions
+  - Given: a search or break in progress
+  - When: a stun lands
+  - Then: interrupted; barricade damage already dealt is kept
+  - Edge cases: stun on the final break tick
+
+**Re-run against the real module**: `tests/unit/borrowed-face/transform_state_machine_test.gd`; `tests/unit/borrowed-face/transform_immunity_test.gd`; the Downing tests listed under Cross-Epic Re-Runs in the sprint plan
+
+**Estimated test count**: ~10 tests
 
 ---
 

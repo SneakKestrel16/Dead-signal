@@ -61,7 +61,32 @@ Turns a validated fire intent into a hit: after `stun_use_delay_s` the server tr
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/survivor-defense/taser_trace_test.gd`
+
+- **AC-1**: Range and aim
+  - Given: a target at 5.0 m inside tolerance, 5.1 m, and outside 10 degrees
+  - When: a shot is fired at each
+  - Then: first hits; others hit nothing and still consume a cartridge
+  - Edge cases: exactly 10 degrees; exactly 5 m
+- **AC-2**: Blocking order
+  - Given: a survivor in front of the monster
+  - When: a shot is fired
+  - Then: the survivor is hit; the monster is not
+  - Edge cases: two survivors in line
+- **AC-3**: Skipped bodies
+  - Given: a Seized and a Downed survivor in front of the monster
+  - When: a shot is fired
+  - Then: passes through; the monster behind is hit
+  - Edge cases: all bodies skipped and nothing behind
+- **AC-4**: Rewind
+  - Given: a target that moved after the shooter's view tick
+  - When: a shot is fired
+  - Then: still hit at the rewound position; same path as the lunge test
+  - Edge cases: `view_tick` unset clamps to the cap (NA-7)
+
+**Estimated test count**: ~7 tests
 
 ---
 

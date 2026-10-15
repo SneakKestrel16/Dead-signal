@@ -55,7 +55,29 @@ Replace the stand-ins. Downing tests drive `SurvivorHit` directly, and Borrowed 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/monster-abilities/lunge_end_to_end_test.gd`
+
+- **AC-1**: Borrowed Face on the real module
+  - Given: `StubAbilities` replaced (or reduced to an adapter) and `set_attack_source` fed from `MonsterAbilities`
+  - When: the Borrowed Face 005 disguise-restriction tests run
+  - Then: they pass
+  - Edge cases: an adapter, if kept, holds no logic
+- **AC-2**: Downing unchanged and one real chain
+  - Given: the existing Downing tests that emit `SurvivorHit` directly; one new test
+  - When: run; then a real lunge drives a takedown commit
+  - Then: old tests pass; new test reaches `SurvivorDowned`
+  - Edge cases: second down gives `SurvivorEliminated`
+- **AC-3**: Five-client agreement
+  - Given: 20 lunges, 5 clients, one at 150 ms
+  - When: all clients' hit/miss and survivor state are compared
+  - Then: identical on every lunge; every dispute logged
+  - Edge cases: the dispute log being empty is asserted, not assumed
+
+**Re-run against the real module**: `tests/unit/borrowed-face/transform_state_machine_test.gd`; `tests/unit/borrowed-face/transform_immunity_test.gd`; `tests/integration/borrowed-face/stun_projection_test.gd`; `tests/integration/borrowed-face/disguise_gates_test.gd`; `tests/integration/borrowed-face/disguise_restrictions_test.gd`; the Downing files listed under Cross-Epic Re-Runs in the sprint plan
+
+**Estimated test count**: ~6 tests
 
 ---
 

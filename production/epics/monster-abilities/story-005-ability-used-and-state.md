@@ -55,7 +55,27 @@ Every accepted ability emits exactly one `AbilityUsed`; it never reaches a survi
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/monster-abilities/ability_used_hiding_test.gd`
+
+- **AC-1**: One AbilityUsed per accepted lunge
+  - Given: an accepted lunge and a rejected request
+  - When: events are captured
+  - Then: exactly one `AbilityUsed` (ability, position, target) at wind-up start; none for the rejection
+  - Edge cases: two lunges in a row
+- **AC-2**: Nothing reaches survivors
+  - Given: a captured stream per survivor peer during a lunge
+  - When: packets are inspected
+  - Then: no `AbilityUsed` and no monster position derived from it
+  - Edge cases: a survivor beside the monster
+- **AC-3**: State readable
+  - Given: a lunge in wind-up, Active, commit
+  - When: the registry is read
+  - Then: state visible; transformation blocked (rule 7); Survivor Defense can read it to end immunity
+  - Edge cases: state cleared on resolution
+
+**Estimated test count**: ~5 tests
 
 ---
 

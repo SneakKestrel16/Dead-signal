@@ -61,7 +61,32 @@ The module's first slice: a new `SurvivorDefense` that owns per-survivor taser c
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/survivor-defense/defense_charges_test.gd`
+
+- **AC-1**: Charges
+  - Given: a new survivor; `stun_item_charges` = 2
+  - When: three fire attempts
+  - Then: two fire; the third does nothing and spends nothing
+  - Edge cases: knob overridden to 1 and 3
+- **AC-2**: Reuse window and persistence
+  - Given: a fire, then a second inside `stun_item_reuse_s`; a down and rescue; an elimination
+  - When: each runs
+  - Then: second ignored; charges kept through down and rescue; lost on elimination
+  - Edge cases: fire exactly at `stun_item_reuse_s`
+- **AC-3**: Who cannot fire
+  - Given: a Downed, Seized and hidden survivor, and the monster
+  - When: each attempts to fire
+  - Then: no effect
+  - Edge cases: a survivor on the tick they are downed
+- **AC-4**: Forged messages
+  - Given: a client
+  - When: sends a fake stun hit, charge change, barricade complete
+  - Then: no state change
+  - Edge cases: message during an active hold
+
+**Estimated test count**: ~7 tests
 
 ---
 

@@ -59,7 +59,34 @@ Chooses and emits the right event for every hit: true form gets `MonsterStunned`
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/survivor-defense/identity_hiding_events_test.gd`
+
+- **AC-1**: Disguised monster is indistinguishable
+  - Given: a disguised monster; captured survivor-client streams
+  - When: a hit on a survivor, on a stunned monster, on an immune monster
+  - Then: three identical `PlayerShocked` payloads; no `MonsterStunned`
+  - Edge cases: byte-compare the three packets
+- **AC-2**: True form
+  - Given: a true-form monster
+  - When: a stun, then a resisted hit
+  - Then: `MonsterStunned` to all; the resisted hit is distinguishable as resisted to all
+  - Edge cases: resisted hit on the last immunity tick
+- **AC-3**: Transforming
+  - Given: a hit while Transforming
+  - When: out of a disguise, into a disguise
+  - Then: follows the body shown that moment: out of a disguise counts as disguised
+  - Edge cases: hit on the change-complete tick
+- **AC-4**: Per-peer payload
+  - Given: the shocked player and others
+  - When: events are captured
+  - Then: own client gets `{own: true}`; others get `{body: handle}` only if the body is relevant
+  - Edge cases: body not relevant to a peer: field absent
+
+**Re-run against the real module**: `tests/integration/borrowed-face/stun_projection_test.gd`
+
+**Estimated test count**: ~6 tests
 
 ---
 

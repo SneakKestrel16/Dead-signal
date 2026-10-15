@@ -62,7 +62,37 @@ A new `MonsterAbilities` module (`src/feature/monster_abilities/monster_abilitie
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/unit/monster-abilities/request_validation_test.gd`
+
+- **AC-1**: Rejections cost nothing
+  - Given: a monster in cooldown, then Disguised, Stunned, shock-locked, Transforming
+  - When: a lunge request arrives
+  - Then: rejected, no state change, cooldown value unchanged
+  - Edge cases: request on the exact tick cooldown ends; two rejection reasons at once
+- **AC-2**: False Signal and Blackout guard
+  - Given: a lunge in wind-up, Active, then takedown commit
+  - When: a False Signal or Blackout request arrives
+  - Then: rejected with no cooldown cost in all three states
+  - Edge cases: request on the tick the lunge resolves
+- **AC-3**: State machine
+  - Given: an accepted lunge
+  - When: the machine is stepped through every transition
+  - Then: Ready, Wind-up, Active, Takedown Commit, Resolved, Cooldown in GDD order; no illegal jump
+  - Edge cases: a miss skips Takedown Commit
+- **AC-4**: Cooldown independence
+  - Given: a lunge used
+  - When: the other ability and form-change cooldowns are read
+  - Then: unchanged
+  - Edge cases: lunge used on the tick a form change completes
+- **AC-5**: No knob literals
+  - Given: the module source
+  - When: scanned for numeric literals matching `AbilityKnobs` values
+  - Then: none found
+  - Edge cases: fails if a literal 0.6 / 4 / 10 is added
+
+**Estimated test count**: ~8 tests
 
 ---
 

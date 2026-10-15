@@ -58,7 +58,32 @@ The Lunge moves the monster: a rooted wind-up with a capped turn rate, then a 4 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (lean review mode); implement against the Acceptance Criteria above.*
+*Test specs from `/qa-plan sprint` (`production/qa/qa-plan-sprint-006-2026-10-15.md`). Tests emit the other epic's events directly until MA-6 and SD-12 re-run against both real modules.*
+
+**Test file path**: `tests/integration/monster-abilities/lunge_movement_test.gd`
+
+- **AC-1**: Wind-up timing
+  - Given: an accepted activation at tick T
+  - When: ticks advance
+  - Then: dash begins at T + 0.6 s (`lunge_windup_s`)
+  - Edge cases: one tick either side of the boundary
+- **AC-2**: Wind-up root and turn cap
+  - Given: the monster in wind-up with held move input and a fast turn input
+  - When: positions and facing are sampled each tick
+  - Then: position fixed; facing change <= 15 deg/s
+  - Edge cases: input exactly at the cap
+- **AC-3**: Dash distance and turn cap
+  - Given: wind-up ended in open floor
+  - When: the 0.3 s dash runs
+  - Then: travels 4 m along the facing at wind-up end; facing change <= 30 deg/s
+  - Edge cases: tick quantisation of 0.3 s
+- **AC-4**: Obstacle stops the dash
+  - Given: a wall, a closed door, a barricaded door, a non-target survivor body on the path
+  - When: the dash runs into each
+  - Then: stops at the obstacle and resolves as a miss
+  - Edge cases: obstacle at 0 m and at exactly 4 m
+
+**Estimated test count**: ~6 tests
 
 ---
 
