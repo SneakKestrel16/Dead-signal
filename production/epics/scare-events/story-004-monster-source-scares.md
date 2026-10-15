@@ -1,7 +1,7 @@
 # Story 004: Monster-source scares: door burst, reveal and Blackout
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -33,9 +33,9 @@ Player-triggered scares are a presentation layer over the gameplay cue that its 
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] A barricade break, a reveal and a Blackout each fire their Monster-source scare to the relevant clients.
-- [ ] Across 20 False Signals of every type, no `ScareTriggered` is emitted; a survivor client's capture of a fake callout or sound matches the real one except the absent gesture event.
-- [ ] No scare changes health, down state, objective progress, cooldowns or position on the server.
+- [x] A barricade break, a reveal and a Blackout each fire their Monster-source scare to the relevant clients.
+- [x] Across 20 False Signals of every type, no `ScareTriggered` is emitted; a survivor client's capture of a fake callout or sound matches the real one except the absent gesture event.
+- [x] No scare changes health, down state, objective progress, cooldowns or position on the server.
 
 ---
 
@@ -62,7 +62,7 @@ Player-triggered scares are a presentation layer over the gameplay cue that its 
 **Story Type**: Integration
 **Required evidence**: `tests/integration/scare-events/monster_source_scares_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/scare-events/monster_source_scares_test.gd` (3 cases, one over real ENet); packet half of AC-2 pending PC-7
 
 ---
 
@@ -70,3 +70,18 @@ Player-triggered scares are a presentation layer over the gameplay cue that its 
 
 - Depends on: Stories 001, 002
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se4. Full suite 1362/1362, no leak lines. Mutations caught: acting monster not excluded, any form change firing the reveal, False Signal firing the blackout scare, range check disabled.
+
+Notes:
+- `MonsterScares` (`TickOrder.SCARE_EVENTS - 2`): `BarricadeBroken` fires `door_burst` at the door, `FormChanged` into true form from a disguise fires `transformation_reveal` at the monster, a Blackout `AbilityUsed` fires `blackout` at its target. False Signal fires nothing (20 of each type over real ENet: 60 `AbilityUsed`, 0 `ScareTriggered`).
+- AC-3: every catalogue entry fired at every live player leaves positions, life state, downs, match status, objective state and every ability ready tick unchanged.
+
+**In Review:** the packet half of AC-2 (a survivor's capture of a fake callout matches a real one except the gesture) is the parity test of Pings & Callouts story 007, not yet built. AC-2 is ticked for its no-`ScareTriggered` half only; close this story when PC-7 merges.
+
+Deviations (inference):
+- The acting monster is excluded from its own scare (a Major would otherwise flinch it toward its own door or blackout). A designer ruling settles it.
+- Recipients by distance only (`recipients(scare_id, origin)`); swap for `ScareRelevance` (story 003) once merged. The reveal range in the catalogue (10 m) equals `reveal_radius_m`.
+- Tests emit trigger events on the bus rather than driving full holds; AC-3 reads private fuse arrays (no public fuse count).

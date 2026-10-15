@@ -235,6 +235,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.FOOTSTEPS: footsteps,
 		TickOrder.SURVIVOR_OBJECTIVES: objectives,
 		TickOrder.PINGS_CALLOUTS: pings,
+		TickOrder.SCARE_EVENTS - 2: MonsterScares.new(scares, catalogue, map, monster, _live_players, _position),
 		TickOrder.SCARE_EVENTS - 1: ambush,
 		TickOrder.SCARE_EVENTS: scares,
 		TickOrder.SCARE_EVENTS + 1: scare_state,
