@@ -1,7 +1,7 @@
 # Story 002: Taser trace along the view ray with rewind
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ Turns a validated fire intent into a hit: after `stun_use_delay_s` the server tr
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] The shot hits the first body within `stun_range_m` (5 m) inside the aim tolerance; at 5.1 m or outside 10 degrees it hits nothing, and one cartridge is still consumed (rule 8).
-- [ ] A survivor standing in front of the monster is the hit; the monster behind is not (rule 8, edge case).
-- [ ] Seized and Downed survivors are skipped: the shot passes through and the monster behind is hit (rule 8).
-- [ ] The shot resolves against positions rewound to the shooter's view tick, the same path as the lunge test, and a target that moved after that tick is still hit (rule 8).
+- [x] The shot hits the first body within `stun_range_m` (5 m) inside the aim tolerance; at 5.1 m or outside 10 degrees it hits nothing, and one cartridge is still consumed (rule 8).
+- [x] A survivor standing in front of the monster is the hit; the monster behind is not (rule 8, edge case).
+- [x] Seized and Downed survivors are skipped: the shot passes through and the monster behind is hit (rule 8).
+- [x] The shot resolves against positions rewound to the shooter's view tick, the same path as the lunge test, and a target that moved after that tick is still hit (rule 8).
 
 ---
 
@@ -95,7 +95,7 @@ Turns a validated fire intent into a hit: after `stun_use_delay_s` the server tr
 **Story Type**: Logic
 **Required evidence**: Logic: `tests/unit/survivor-defense/taser_trace_test.gd`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-defense/taser_trace_test.gd` (10 tests)
 
 ---
 
@@ -103,3 +103,19 @@ Turns a validated fire intent into a hit: after `stun_use_delay_s` the server tr
 
 - Depends on: Story 001
 - Unlocks: Stories 003, 004
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-180):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 954/954 after the wave merge, no leak warnings.
+- Bug caught in development: `Downing.action_locked` is also true for the monster during a takedown, so the pass-through skip applies to survivors only (the rescuer's shot must reach the monster).
+- Range measured to the target's nearest capsule-axis point so the AC's 5.1 m case misses (inference). Aim: angle <= 10 degrees or ray within capsule radius.
+- Walls and doors via an injected `blocked(from, to)`; composer must wire PROJECTILE-mask ray plus door leaves (MapQueries.clear_sight uses SIGHT).
+- A shooter Seized during the 0.2 s delay still resolves the shot (GDD silent).
+- Implementation written before the test file; mutations stand in for the red run.
+**Test Evidence**: 10 tests. Mutations caught: Seized/Downed skip removed, rewind 0, range loosened 0.2 m.
+**Code Review**: Complete (orchestrator review at merge)

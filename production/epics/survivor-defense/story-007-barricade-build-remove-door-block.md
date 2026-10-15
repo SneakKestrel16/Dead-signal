@@ -1,7 +1,7 @@
 # Story 007: Barricade build and remove, closed doors block the dash
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -34,10 +34,10 @@ Barricadable doors can be barricaded by a Healthy survivor in `barricade_duratio
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] Barricading takes `barricade_duration_s` (3 s), is not rooting, resets on cancel, and removing takes `barricade_remove_s` (1 s) (rules 25, 26, 28a).
-- [ ] A barricaded door cannot be opened by anyone until broken or removed; it fails to complete while the monster is in the doorway (rule 26, edge case).
-- [ ] A lunge whose path crosses a closed door stops at the door and resolves as a miss (rule 24).
-- [ ] Only one of barricade, remove and break runs on a door at a time; a forged 'barricade complete' message changes nothing.
+- [x] Barricading takes `barricade_duration_s` (3 s), is not rooting, resets on cancel, and removing takes `barricade_remove_s` (1 s) (rules 25, 26, 28a).
+- [x] A barricaded door cannot be opened by anyone until broken or removed; it fails to complete while the monster is in the doorway (rule 26, edge case).
+- [x] A lunge whose path crosses a closed door stops at the door and resolves as a miss (rule 24).
+- [x] Only one of barricade, remove and break runs on a door at a time; a forged 'barricade complete' message changes nothing.
 
 ---
 
@@ -95,7 +95,7 @@ Barricadable doors can be barricaded by a Healthy survivor in `barricade_duratio
 **Story Type**: Integration
 **Required evidence**: Integration: `tests/integration/survivor-defense/barricade_doors_test.gd`. Re-run: `tests/integration/borrowed-face/disguise_gates_test.gd` (barricade and remove rows) and the Facility Map door tests.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/barricade_doors_test.gd` (12 tests)
 
 ---
 
@@ -103,3 +103,18 @@ Barricadable doors can be barricaded by a Healthy survivor in `barricade_duratio
 
 - Depends on: Story 001
 - Unlocks: Story 008
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-181):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 954/954 after the wave merge, no leak warnings.
+- Holds have their own net ids; the client input that picks Barricade over the door toggle is not wired (designer or controller decision).
+- Remove uses the Healthy-survivor rule like Barricade (rule 28a says only 'Survivor'; inference).
+- Stand-in Break interactable and stub dash on the real Jolt doors layer, replaced at MA-6/SD-12.
+- Nothing builds Barricades or Doors in a round yet (composer); must be set up after Doors.setup.
+**Test Evidence**: 12 tests. Mutations caught: held-shut ignored, no monster-in-doorway check, no shared lock key, progress kept on cancel.
+**Code Review**: Complete (orchestrator review at merge)

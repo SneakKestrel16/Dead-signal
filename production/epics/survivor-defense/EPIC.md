@@ -53,18 +53,18 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Defense module, charges and intent validation | Logic | Ready | ADR-0002 |
-| 002 | Taser trace along the view ray with rewind | Logic | Ready | ADR-0003 |
-| 003 | One shock lock, no refresh, post-lock window | Logic | Ready | ADR-0007 |
-| 004 | Monster stun, immunity and cancels | Logic | Ready | ADR-0005 |
-| 005 | Identity-hiding stun and shock events | Integration | Ready | ADR-0004 |
-| 006 | Hiding spots: enter, exit, occupancy, search | Integration | Ready | ADR-0008 |
-| 007 | Barricade build and remove, closed doors block the dash | Integration | Ready | ADR-0008 |
-| 008 | Barricade break, persistence and rebarricade lockout | Logic | Ready | ADR-0005 |
-| 009 | Flashlight toggle and replicated cone | Integration | Ready | ADR-0004 |
-| 010 | Hiding noise and the long-hide cue | Integration | Blocked | ADR-0013 |
-| 011 | Shock presentation per form and cosmetic flashlight copy | Visual/Feel | Blocked | ADR-0010 |
-| 012 | Five-client agreement and retiring the stand-ins | Integration | Ready | ADR-0002 |
+| 001 | [Defense module, charges and intent validation](story-001-defense-module-charges-intents.md) | Logic | Complete | ADR-0002 |
+| 002 | [Taser trace along the view ray with rewind](story-002-taser-trace.md) | Logic | Complete | ADR-0003 |
+| 003 | [One shock lock, no refresh, post-lock window](story-003-shock-lock-post-lock-window.md) | Logic | Ready | ADR-0007 |
+| 004 | [Monster stun, immunity and cancels](story-004-monster-stun-immunity-cancels.md) | Logic | Ready | ADR-0005 |
+| 005 | [Identity-hiding stun and shock events](story-005-identity-hiding-events.md) | Integration | Ready | ADR-0004 |
+| 006 | [Hiding spots: enter, exit, occupancy, search](story-006-hiding-spots.md) | Integration | Ready | ADR-0008 |
+| 007 | [Barricade build and remove, closed doors block the dash](story-007-barricade-build-remove-door-block.md) | Integration | Complete | ADR-0008 |
+| 008 | [Barricade break, persistence and rebarricade lockout](story-008-barricade-break-lockout.md) | Logic | Ready | ADR-0005 |
+| 009 | [Flashlight toggle and replicated cone](story-009-flashlight-toggle.md) | Integration | Complete | ADR-0004 |
+| 010 | [Hiding noise and the long-hide cue](story-010-hide-noise-and-long-hide-cue.md) | Integration | Blocked | ADR-0013 |
+| 011 | [Shock presentation per form and cosmetic flashlight copy](story-011-per-form-presentation.md) | Visual/Feel | Blocked | ADR-0010 |
+| 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Ready | ADR-0002 |
 
 ## Definition of Done
 

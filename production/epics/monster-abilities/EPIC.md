@@ -55,16 +55,16 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Ability requests and Lunge state machine | Logic | Ready | ADR-0002 |
-| 002 | Lunge wind-up root and dash | Integration | Ready | ADR-0007 |
-| 003 | Lunge hit test with lag compensation | Logic | Ready | ADR-0003 |
-| 004 | Lunge resolution, cooldown and miss slow | Logic | Ready | ADR-0007 |
-| 005 | AbilityUsed emission and Lunge state publishing | Integration | Ready | ADR-0004 |
-| 006 | Integrate with Downing and Borrowed Face | Integration | Ready | ADR-0005 |
-| 007 | Lunge cue, coil pose and hit feedback | Visual/Feel | Blocked | ADR-0013 (Proposed) |
-| 008 | Ability stats for results | Logic | Blocked | ADR-0011 (Proposed) |
-| 009 | False Signal (Vertical Slice) | Logic | Blocked | ADR-0004; ADR-0013 (Proposed) |
-| 010 | Blackout (Vertical Slice) | Integration | Blocked | ADR-0009 (Proposed) |
+| 001 | [Ability requests and Lunge state machine](story-001-request-validation-and-lunge-states.md) | Logic | Complete | ADR-0002 |
+| 002 | [Lunge wind-up root and dash](story-002-wind-up-and-dash.md) | Integration | Ready | ADR-0007 |
+| 003 | [Lunge hit test with lag compensation](story-003-hit-test-and-survivor-hit.md) | Logic | Ready | ADR-0003 |
+| 004 | [Lunge resolution, cooldown and miss slow](story-004-resolution-cooldown-miss-slow.md) | Logic | Ready | ADR-0007 |
+| 005 | [AbilityUsed emission and Lunge state publishing](story-005-ability-used-and-state.md) | Integration | Complete | ADR-0004 |
+| 006 | [Integrate with Downing and Borrowed Face](story-006-integrate-downing-borrowed-face.md) | Integration | Ready | ADR-0005 |
+| 007 | [Lunge cue, coil pose and hit feedback](story-007-lunge-presentation.md) | Visual/Feel | Blocked | ADR-0013 (Proposed) |
+| 008 | [Ability stats for results](story-008-ability-stats.md) | Logic | Blocked | ADR-0011 (Proposed) |
+| 009 | [False Signal (Vertical Slice)](story-009-false-signal.md) | Logic | Blocked | ADR-0004; ADR-0013 (Proposed) |
+| 010 | [Blackout (Vertical Slice)](story-010-blackout.md) | Integration | Blocked | ADR-0009 (Proposed) |
 
 ## Definition of Done
 

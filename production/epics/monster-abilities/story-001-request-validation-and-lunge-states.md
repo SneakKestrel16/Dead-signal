@@ -1,12 +1,12 @@
 # Story 001: Ability requests and Lunge state machine
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,11 +34,11 @@ A new `MonsterAbilities` module (`src/feature/monster_abilities/monster_abilitie
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] Server rejects a lunge during cooldown, while Disguised, while Stunned, under the shock lock, or while Transforming; a rejection has no effect and costs no cooldown
-- [ ] While a lunge is in wind-up, Active or takedown commit, False Signal and Blackout requests are rejected with no cooldown cost (guard in place now; those abilities arrive in stories 009-010)
-- [ ] The Lunge state machine Ready, Wind-up, Active, Takedown Commit, Resolved, Cooldown exists with the GDD entry and exit conditions
-- [ ] Using one ability does not change the other abilities' cooldowns or the form-change cooldown
-- [ ] No ability code contains a literal for an `AbilityKnobs` parameter
+- [x] Server rejects a lunge during cooldown, while Disguised, while Stunned, under the shock lock, or while Transforming; a rejection has no effect and costs no cooldown
+- [x] While a lunge is in wind-up, Active or takedown commit, False Signal and Blackout requests are rejected with no cooldown cost (guard in place now; those abilities arrive in stories 009-010)
+- [x] The Lunge state machine Ready, Wind-up, Active, Takedown Commit, Resolved, Cooldown exists with the GDD entry and exit conditions
+- [x] Using one ability does not change the other abilities' cooldowns or the form-change cooldown
+- [x] No ability code contains a literal for an `AbilityKnobs` parameter
 
 ---
 
@@ -102,7 +102,7 @@ A new `MonsterAbilities` module (`src/feature/monster_abilities/monster_abilitie
 **Required evidence**:
 - Logic: `tests/unit/monster-abilities/request_validation_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/monster-abilities/request_validation_test.gd` (12 tests)
 
 ---
 
@@ -110,3 +110,20 @@ A new `MonsterAbilities` module (`src/feature/monster_abilities/monster_abilitie
 
 - Depends on: None (builds on existing Borrowed Face, Downing, `AbilityKnobs`)
 - Unlocks: Stories 002, 005
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-183):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 954/954 after the wave merge, no leak warnings.
+- Lunge cooldown set at resolution in this story (needed for AC-1); story 004 owns the miss slow and its cooldown tests.
+- Stun and shock lock read through one `locked(player)` Callable (StateKeys.SHOCK_STUN_LOCK stand-in); MonsterStunned only interrupts a lunge.
+- Takedown commit ends on any SurvivorDowned/SurvivorEliminated while committing (events don't name the monster; inference). `Downing.committing()` not wired yet.
+- False Signal and Blackout validated but have no effect yet. `on_lunge_state(state, tick)` hook added for the transition-order test.
+- Uncaught mutation: a cooldown written as a tick literal (+600) passes the knob-literal scan (it compares seconds).
+- Module written just before the test file; mutations stand in for the red run.
+**Test Evidence**: 12 tests. Mutations caught: lunge-in-progress guard dropped, cooldown one tick late, true-form check dropped, knob-literal scan.
+**Code Review**: Complete (orchestrator review at merge)

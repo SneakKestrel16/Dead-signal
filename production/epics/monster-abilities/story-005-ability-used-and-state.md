@@ -1,12 +1,12 @@
 # Story 005: AbilityUsed emission and Lunge state publishing
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,9 +34,9 @@ Every accepted ability emits exactly one `AbilityUsed`; it never reaches a survi
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] Every accepted Lunge emits exactly one `AbilityUsed` (ability, position, target) at wind-up start; a rejected request emits none
-- [ ] A capture of what every survivor peer receives contains no `AbilityUsed` and no monster position derived from it
-- [ ] Lunge wind-up, Active and commit are readable from the registry so transformation is blocked during them (Borrowed Face rule 7) and Survivor Defense can end stun immunity
+- [x] Every accepted Lunge emits exactly one `AbilityUsed` (ability, position, target) at wind-up start; a rejected request emits none
+- [x] A capture of what every survivor peer receives contains no `AbilityUsed` and no monster position derived from it
+- [x] Lunge wind-up, Active and commit are readable from the registry so transformation is blocked during them (Borrowed Face rule 7) and Survivor Defense can end stun immunity
 
 ---
 
@@ -85,7 +85,7 @@ Every accepted ability emits exactly one `AbilityUsed`; it never reaches a survi
 **Required evidence**:
 - Integration: `tests/integration/monster-abilities/ability_used_hiding_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/monster-abilities/ability_used_hiding_test.gd` (5 tests)
 
 ---
 
@@ -93,3 +93,17 @@ Every accepted ability emits exactly one `AbilityUsed`; it never reaches a survi
 
 - Depends on: Story 001
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-184):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 954/954 after the wave merge, no leak warnings.
+- AC-2 capture runs delivered bus events through EventBatch.build/decode per viewer (the path ServerMovement sends on), not a real-ENet capture; asserts no AbilityUsed entry and no monster-position float bytes.
+- Facing (GDD rule 3a) not carried: the ACs don't ask for it.
+- Position via injected `set_position_source`; composer must wire it from ServerMovement.
+**Test Evidence**: 5 tests. Mutations caught: project() leaks position, emitted on rejected requests, view ignores attacking(), view ignores player, position hardcoded.
+**Code Review**: Complete (orchestrator review at merge)

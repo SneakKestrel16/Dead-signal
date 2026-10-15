@@ -21,11 +21,11 @@ stories:
     name: "Ability requests and Lunge state machine"
     file: "production/epics/monster-abilities/story-001-request-validation-and-lunge-states.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-2"
     name: "Lunge wind-up root and dash"
     file: "production/epics/monster-abilities/story-002-wind-up-and-dash.md"
@@ -57,20 +57,20 @@ stories:
     name: "Defense module, charges and intent validation"
     file: "production/epics/survivor-defense/story-001-defense-module-charges-intents.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-2"
     name: "Taser trace along the view ray with rewind"
     file: "production/epics/survivor-defense/story-002-taser-trace.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-3"
     name: "One shock lock, no refresh, post-lock window"
     file: "production/epics/survivor-defense/story-003-shock-lock-post-lock-window.md"
@@ -102,11 +102,11 @@ stories:
     name: "AbilityUsed emission and Lunge state publishing"
     file: "production/epics/monster-abilities/story-005-ability-used-and-state.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-6"
     name: "Integrate with Downing and Borrowed Face"
     file: "production/epics/monster-abilities/story-006-integrate-downing-borrowed-face.md"
@@ -129,11 +129,11 @@ stories:
     name: "Barricade build and remove, closed doors block the dash"
     file: "production/epics/survivor-defense/story-007-barricade-build-remove-door-block.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-8"
     name: "Barricade break, persistence and rebarricade lockout"
     file: "production/epics/survivor-defense/story-008-barricade-break-lockout.md"
@@ -147,11 +147,11 @@ stories:
     name: "Flashlight toggle and replicated cone"
     file: "production/epics/survivor-defense/story-009-flashlight-toggle.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-12"
     name: "Five-client agreement and retiring the stand-ins"
     file: "production/epics/survivor-defense/story-012-five-client-agreement-retire-stand-ins.md"

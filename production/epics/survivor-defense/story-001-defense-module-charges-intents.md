@@ -1,7 +1,7 @@
 # Story 001: Defense module, charges and intent validation
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ The module's first slice: a new `SurvivorDefense` that owns per-survivor taser c
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] Each survivor starts with exactly `stun_item_charges` (2) cartridges; a third fire attempt does nothing and spends nothing (rules 7, 29).
-- [ ] A second fire inside `stun_item_reuse_s` is ignored; charges persist through a down and rescue and are lost on elimination (rules 8, 13).
-- [ ] A Downed, Seized or hidden survivor cannot fire; the monster has no items (rule 13).
-- [ ] A forged client message claiming a stun hit, a charge change or a completed barricade causes no state change (rule 1).
+- [x] Each survivor starts with exactly `stun_item_charges` (2) cartridges; a third fire attempt does nothing and spends nothing (rules 7, 29).
+- [x] A second fire inside `stun_item_reuse_s` is ignored; charges persist through a down and rescue and are lost on elimination (rules 8, 13).
+- [x] A Downed, Seized or hidden survivor cannot fire; the monster has no items (rule 13).
+- [x] A forged client message claiming a stun hit, a charge change or a completed barricade causes no state change (rule 1).
 
 ---
 
@@ -95,7 +95,7 @@ The module's first slice: a new `SurvivorDefense` that owns per-survivor taser c
 **Story Type**: Logic
 **Required evidence**: Logic: `tests/unit/survivor-defense/defense_charges_test.gd`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-defense/defense_charges_test.gd` (8 tests)
 
 ---
 
@@ -103,3 +103,19 @@ The module's first slice: a new `SurvivorDefense` that owns per-survivor taser c
 
 - Depends on: None (builds on merged Downing, Event Catalog and Data Config)
 - Unlocks: Stories 002, 003, 006, 007, 009
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-179):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 954/954 after the wave merge, no leak warnings.
+- Module at `src/feature/survivor_defense/` (story said `src/feature/defense/`).
+- Item gate reads `Downing.action_locked`, not `eligible`: post-release/rescue grace does not block items (inference; designer ruling settles it).
+- Intents come as a separate peer packet like Borrowed Face requests, not an InputFrame flag; aim left to story 002.
+- 'Message during an active hold' tested during a takedown commit (no defense hold existed yet); stories 006/007 re-run against real holds.
+- Nothing calls `request_intent` from the network side and no composer registers the module yet.
+**Test Evidence**: 8 tests. Mutations caught: reuse >= to >, hidden check removed, one-key intent check removed, charges not zeroed on elimination.
+**Code Review**: Complete (orchestrator review at merge)
