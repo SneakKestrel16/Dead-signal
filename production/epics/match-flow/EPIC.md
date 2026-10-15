@@ -5,7 +5,7 @@
 > **Architecture Module**: Match Flow (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready (results stories block on ADR-0011, Proposed)
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories match-flow`
+> **Stories**: 9 stories (8 Ready, 1 Blocked on Proposed ADR-0011)
 
 ## Overview
 
@@ -40,6 +40,20 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | TR-matchflow-010 | Host leaving closes the session; no result | ADR-0001 (Accepted) |
 | TR-matchflow-011 | Return to lobby; all gameplay state reset per round | ADR-0005 (Accepted) |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [Round clock and phase state machine](story-001-round-clock-phases.md) | Logic | Ready | ADR-0005 |
+| 002 | [Win evaluation order and immediate endings](story-002-win-evaluation.md) | Logic | Ready | ADR-0005 |
+| 003 | [Escape, evidence extraction and outcome lock](story-003-escape-and-outcome-lock.md) | Logic | Ready | ADR-0005 |
+| 004 | [Loading barrier, spawn, round end and return to lobby](story-004-round-lifecycle.md) | Integration | Ready | ADR-0005 |
+| 005 | [Survivor disconnect, grace and reconnect](story-005-survivor-disconnect-grace.md) | Integration | Ready | ADR-0001 |
+| 006 | [Shapeshifter disconnect and forfeit](story-006-shapeshifter-disconnect-forfeit.md) | Integration | Ready | ADR-0001 |
+| 007 | [Spectators and full state on reconnect](story-007-spectators-and-reconnect-state.md) | Integration | Ready | ADR-0004 |
+| 008 | [Results payload](story-008-results-payload.md) | Logic | Blocked | ADR-0011 |
+| 009 | [Clients display server phase and outcome only](story-009-client-display-authority.md) | Integration | Ready | ADR-0005 |
+
 ## Definition of Done
 
 This epic is complete when:
@@ -50,4 +64,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories match-flow` to break this epic into implementable stories.
+Run `/story-readiness production/epics/match-flow/story-001-round-clock-phases.md`, then `/dev-story`.
