@@ -13,6 +13,8 @@ const FACILITY_MAP := 450
 const FACILITY_LIGHTING := 460
 const DOWNING := 500
 const HOLDS := 550
+## After HOLDS: a hide completed in the Holds step starts its hide noise on the same tick (SD-10).
+const HIDING_SPOTS := 555
 ## Footsteps (controller story 014): after every speed owner, so it reads this tick's moved bodies.
 const FOOTSTEPS := 560
 const SURVIVOR_OBJECTIVES := 600
