@@ -10,6 +10,8 @@ const WAIT_S := 5.0
 ## ENet sends a ping once per second when idle (ENET_PEER_PING_INTERVAL, protocol constant); the timeout
 ## window starts at the oldest unacknowledged packet, so detection can lag timeout_max by up to one ping.
 const ENET_PING_INTERVAL_S := 1.0
+## One stalled frame of this length per ping, to inflate the RTT estimate.
+const JITTER_STALL_MS := 40
 const FILLER_TOKENS: Array[String] = ["f1", "f2", "f3", "f4", "f5"]
 
 static var _next_port := 25400
@@ -141,11 +143,25 @@ func test_killed_client_is_reported_dropped_within_the_enet_timeout() -> void:
 	assert_float(detect_s).is_between(_knobs.net.enet_timeout_min_ms / 1000.0 - tick_s, max_s + ENET_PING_INTERVAL_S + tick_s)
 
 
+## Raises the client's round-trip estimate the way a slow frame on a real link does: pings the host and
+## stalls the process before the reply is read. ENet's retransmit timeout starts at rtt + 4 * variance, so
+## this is what exposes a set_timeout limit that backs off past the bound (BUG-0012).
+func _jitter_rtt(client: NetAuthority) -> void:
+	var peer := (client._smp.multiplayer_peer as ENetMultiplayerPeer).get_peer(1)
+	for i in 6:
+		peer.ping()
+		await get_tree().process_frame
+		OS.delay_msec(JITTER_STALL_MS)
+		await get_tree().process_frame
+	print("client rtt %d ms, variance %d ms" % [peer.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME), peer.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME_VARIANCE)])
+
+
 func test_killed_server_is_detected_by_the_client_within_the_enet_timeout() -> void:
 	var port := _port()
 	var server := _net(FakeLobby.new())
 	assert_int(server.host(port)).is_equal(OK)
 	var client := await _join(server, port)
+	await _jitter_rtt(client)
 	var left_ms: Array[int] = []
 	client.host_left.connect(func() -> void: left_ms.append(Time.get_ticks_msec()))
 	var t0 := Time.get_ticks_msec()
@@ -153,6 +169,7 @@ func test_killed_server_is_detected_by_the_client_within_the_enet_timeout() -> v
 	var max_s := _knobs.net.enet_timeout_max_ms / 1000.0
 	await _until(func() -> bool: return not left_ms.is_empty(), "host_left", max_s + ENET_PING_INTERVAL_S + 2.0)
 	var tick_s := 1.0 / _knobs.net.sim_tick_hz
+	print("host-left detection: %.3f s" % ((left_ms[0] - t0) / 1000.0))
 	assert_float((left_ms[0] - t0) / 1000.0).is_less_equal(max_s + ENET_PING_INTERVAL_S + tick_s)
 
 

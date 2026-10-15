@@ -34,8 +34,11 @@ class_name NetKnobs extends Resource
 ## Range 64..65535 bytes: inference (floor fits an auth record, ceiling is one UDP datagram); the auth record size settles it.
 @export_range(64, 65535) var auth_payload_cap_bytes: int = KnobUnset.INT
 ## ENet dead-peer timeout (story network-authority/003), ENetPacketPeer.set_timeout(limit, min_ms, max_ms) on
-## both sides. Values from ADR-0001 verification (1): 32, 1000, 2000 detected a dead peer in 3.0 s on loopback
-## (the default took 5.8 s). Inference: real-network timing is NOT RUN (NA-V NAV-14 settles it).
+## both sides. ADR-0001 verification (1) measured 32, 1000, 2000 at 3.0 s on loopback (the default took 5.8 s),
+## but BUG-0012: ENet checks a timeout only when a retransmit fires, and the retransmit timeout doubles from
+## rtt + 4 * rtt_variance (rto0), so "limit" is reached after about limit * rto0 * 2 and the check lands
+## up to 2x past min. Under frame jitter (rto0 65 ms) 32 detected in 3.7-4.3 s. 8, 750, 2000 caps it at
+## about 2 * min + rto0 from the first unacknowledged ping (loopback 1.0-1.5 s). Inference: real-network timing is NOT RUN (NA-V NAV-14 settles it).
 ## Ranges: inference, only the values 32 / 1000 / 2000 are sourced (ADR-0001 verification 1); NAV-14 settles them.
 @export_range(1, 128) var enet_timeout_limit: int = KnobUnset.INT
 @export_range(100, 30000) var enet_timeout_min_ms: int = KnobUnset.INT
