@@ -9,10 +9,15 @@ class_name PingDelivery extends RefCounted
 ## (sender, displayed id) pair, so two bodies wearing one name stay apart (story 005) while one sender's
 ## disguises never share a handle; `identity` the warning target's displayed id; an item ping names the
 ## object only, so an occupied hiding spot carries no occupant (7a).
+## Story 007 (rule 28): the copied survivor's copy alone adds `not_you: true`, when the sender, not that survivor,
+## shows its displayed id and the two bodies are within `callout_range_m` (server positions, read in the
+## accepting tick's snapshot phase, which is the only tick a record is delivered). Decided per recipient here;
+## who really sent it never travels.
 ## Rejected requests are echoed to their sender's peer alone through `send_own`, in a batch of their own,
 ## so neither a spectator nor anyone else learns of a rejection (rule 7).
 ## Usage (composition root; keep a reference, a Callable does not keep this alive):
-##   ping_delivery = PingDelivery.new(pings, monster, _ping_in_play, bf.appearance_of, _tick, _send_own)
+##   ping_delivery = PingDelivery.new(pings, monster, _ping_in_play, bf.appearance_of, _tick, _send_own,
+##       _position, knobs.ping.callout_range_m)
 ##   sm.batch_extras.append(ping_delivery.entries)
 
 var _pings: PingsCallouts
@@ -21,6 +26,8 @@ var _in_play: Callable
 var _identity_of: Callable
 var _tick: Callable
 var _send_own: Callable
+var _position_of: Callable
+var _not_you_range_m: float
 ## This tick's [record, monster receives it] pairs; rebuilt when the tick moves on.
 var _out: Array = []
 var _out_tick := -1
@@ -32,14 +39,18 @@ var _rng := RandomNumberGenerator.new()
 ## `in_play(player) -> bool`: the monster, or a survivor Healthy or Downed (Seized is Healthy here).
 ## `identity_of(player) -> int`: displayed appearance id. `tick() -> int`: the running tick.
 ## `send_own(player, bytes)`: sends reliable bytes to that player's own peer only.
+## `position_of(player) -> Vector3`: server body position; unset = no "(not you)" mark. `not_you_range_m`:
+## callout_range_m (rule 28).
 func _init(pings: PingsCallouts, monster: int, in_play: Callable, identity_of: Callable, tick: Callable,
-		send_own: Callable) -> void:
+		send_own: Callable, position_of: Callable = Callable(), not_you_range_m: float = 0.0) -> void:
 	_pings = pings
 	_monster = monster
 	_in_play = in_play
 	_identity_of = identity_of
 	_tick = tick
 	_send_own = send_own
+	_position_of = position_of
+	_not_you_range_m = not_you_range_m
 	_rng.randomize()
 
 
@@ -59,8 +70,15 @@ func entries(player: int, full: bool = false) -> Array:
 		p["handle"] = handle_of(rec.sender, p["from"])
 		if player == rec.sender:
 			p["own"] = true
+		elif _not_you(player, rec.sender, p["from"]):
+			p["not_you"] = true
 		out.append([EventBatch.PING, p])
 	return out
+
+
+## Rule 28: `player` is a survivor whose own displayed id `from` is, and `sender` stands within range of it.
+func _not_you(player: int, sender: int, from: int) -> bool:
+	return _position_of.is_valid() and player != _monster and _identity_of.call(player) == from 			and (_position_of.call(player) as Vector3).distance_to(_position_of.call(sender)) <= _not_you_range_m
 
 
 ## The opaque marker handle of `sender` shown as displayed id `from`: random, stable for the pair, unique.

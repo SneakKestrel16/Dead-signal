@@ -1,7 +1,7 @@
 # Story 004: Monster-source scares: door burst, reveal and Blackout
 
 > **Epic**: Scare Events
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -85,3 +85,5 @@ Deviations (inference):
 - The acting monster is excluded from its own scare (a Major would otherwise flinch it toward its own door or blackout). A designer ruling settles it.
 - Recipients by distance only (`recipients(scare_id, origin)`); swap for `ScareRelevance` (story 003) once merged. The reveal range in the catalogue (10 m) equals `reveal_radius_m`.
 - Tests emit trigger events on the bus rather than driving full holds; AC-3 reads private fuse arrays (no public fuse count).
+
+Closed 2026-10-15: the packet half of AC-2 is proven by `tests/integration/pings-and-callouts/identity_fake_parity_test.gd` (pings-and-callouts story 007): a fake callout's captured entry equals the real one with `gesture` false.

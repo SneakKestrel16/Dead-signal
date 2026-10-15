@@ -8,10 +8,13 @@ class_name CalloutDelivery extends RefCounted
 ## appearance id (never a player id), `gesture` false for a hidden sender (rule 14a) and for a fake (rule 28).
 ## The monster gets the smaller [EventBatch.CALLOUT_AUDIO, {line, voice, origin}]: a different entry type, so
 ## no feed text, name or direction field can leak by being left filled (rule 11). The real/fake flag is never
-## sent (rule 27). A spectator's stream is projected as its watched survivor (ServerMovement), so it mirrors
+## sent (rule 27). Story 007 (rule 28): a survivor whose own displayed id a callout carries, and which did not
+## send it, gets `not_you: true` (real from a disguise or fake alike, so the mark tells impersonation, not
+## which kind); nobody else does. A spectator's stream is projected as its watched survivor (ServerMovement), so it mirrors
 ## that survivor. An attached item ping is in PingsCallouts.accepted() and goes through PingDelivery.
 ## Usage (composition root; keep a reference, a Callable does not keep this alive):
-##   callout_delivery = CalloutDelivery.new(pings, knobs, monster, _ping_in_play, _position, sd.is_hidden, _tick)
+##   callout_delivery = CalloutDelivery.new(pings, knobs, monster, _ping_in_play, _position, sd.is_hidden, _tick,
+##       bf.appearance_of)
 ##   sm.batch_extras.append(callout_delivery.entries)
 
 var _pings: PingsCallouts
@@ -20,6 +23,7 @@ var _in_play: Callable
 var _position_of: Callable
 var _is_hidden: Callable
 var _tick: Callable
+var _identity_of: Callable
 var _range_m: float
 var _rescue_range_m: float
 ## appearance id -> voice set (CharacterDef.voice_set).
@@ -31,15 +35,18 @@ var _out_tick := -1
 
 ## `in_play(player) -> bool`: the monster, or a survivor Healthy or Downed (the living listeners).
 ## `position_of(player) -> Vector3`: the listener's server body position. `is_hidden(player) -> bool`.
-## `tick() -> int`: the running tick. `cast`: the survivor characters (default: the shipped files).
+## `tick() -> int`: the running tick. `identity_of(player) -> int`: displayed appearance id; unset = no
+## "(not you)" mark. `cast`: the survivor characters (default: the shipped files).
 func _init(pings: PingsCallouts, knobs: Knobs, monster: int, in_play: Callable, position_of: Callable,
-		is_hidden: Callable, tick: Callable, cast: Array[CharacterDef] = CharacterDef.load_all()) -> void:
+		is_hidden: Callable, tick: Callable, identity_of: Callable = Callable(),
+		cast: Array[CharacterDef] = CharacterDef.load_all()) -> void:
 	_pings = pings
 	_monster = monster
 	_in_play = in_play
 	_position_of = position_of
 	_is_hidden = is_hidden
 	_tick = tick
+	_identity_of = identity_of
 	_range_m = knobs.ping.callout_range_m
 	_rescue_range_m = knobs.ping.rescue_callout_range_m
 	for c in cast:
@@ -64,8 +71,11 @@ func entries(player: int, full: bool = false) -> Array:
 		if player == _monster:
 			out.append([EventBatch.CALLOUT_AUDIO, {"line": rec.line, "voice": voice, "origin": rec.origin}])
 		else:
-			out.append([EventBatch.CALLOUT, {"line": rec.line, "identity": rec.identity, "origin": rec.origin,
-				"gesture": pair[1], "voice": voice}])
+			var p := {"line": rec.line, "identity": rec.identity, "origin": rec.origin, "gesture": pair[1],
+				"voice": voice}
+			if player != rec.sender and _identity_of.is_valid() and _identity_of.call(player) == rec.identity:
+				p["not_you"] = true
+			out.append([EventBatch.CALLOUT, p])
 	return out
 
 

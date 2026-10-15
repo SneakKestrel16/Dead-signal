@@ -1,7 +1,7 @@
 # Story 007: Displayed identity, (not you) mark and fake-callout parity
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -33,10 +33,10 @@ Every ping and callout carries the sender's displayed identity from server-side 
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A disguised monster's ping shows the borrowed survivor's name on every other living survivor client, and its callout shows that name and voice on every survivor client within `callout_range_m`.
-- [ ] The copied survivor's client shows "(not you)" on a ping only when the sender is within `callout_range_m` (server positions at acceptance), and always on a callout it receives; other survivors see no mark.
-- [ ] A False Signal fake callout is indistinguishable from a real one in the data received by survivor clients: the callout message has no real/fake field; the gesture event is the only difference. A real callout sends the gesture to every survivor client with line of sight to the speaker.
-- [ ] No ping or callout changes objective, downing, stun or outcome state on the server.
+- [x] A disguised monster's ping shows the borrowed survivor's name on every other living survivor client, and its callout shows that name and voice on every survivor client within `callout_range_m`.
+- [x] The copied survivor's client shows "(not you)" on a ping only when the sender is within `callout_range_m` (server positions at acceptance), and always on a callout it receives; other survivors see no mark.
+- [x] A False Signal fake callout is indistinguishable from a real one in the data received by survivor clients: the callout message has no real/fake field; the gesture event is the only difference. A real callout sends the gesture to every survivor client with line of sight to the speaker.
+- [x] No ping or callout changes objective, downing, stun or outcome state on the server.
 
 ---
 
@@ -64,7 +64,7 @@ Every ping and callout carries the sender's displayed identity from server-side 
 **Story Type**: Integration
 **Required evidence**: `tests/integration/pings-and-callouts/identity_fake_parity_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/pings-and-callouts/identity_fake_parity_test.gd` (2 cases, real ENet)
 
 ---
 
@@ -72,3 +72,16 @@ Every ping and callout carries the sender's displayed identity from server-side 
 
 - Depends on: Stories 004, 006
 - Unlocks: Story 008
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-pc7. Full suite 1372/1372, no leak lines. Mutations caught: ping range check ignored, callout marked on its own sender, `"fake": rec.fake` added to the callout entry (6 failures).
+
+Notes:
+- "(not you)": a ping carries `not_you: true` only for the survivor whose displayed id matches the ping's `from`, who did not send it, and who is within `callout_range_m` of the sender (server positions in the accepting tick). A callout carries it for any survivor it is shown under but did not send, real or fake. The key is present only when true.
+- Byte parity: a real and a False Signal fake callout at the same spot to the same survivor peer give entries of equal size, differing only in the gesture flag; the raw batches on `peer_packet` are byte-equal once tick and gesture are blanked; no key contains "fake", "real" or "sender". This also settles the packet half of scare-events story 004.
+- A snapshot of objective, match, downing, eligibility and stun-lock state is identical before and after pings and callouts. A callout packet carrying an extra `identity` field is rejected.
+
+Deviations (inference):
+- The gesture is the entry's `gesture` flag, sent to every survivor in callout range with a clear sight ray. A survivor out of callout range with sight of the speaker gets no gesture. A rule 12 ruling on gesture reach settles it.
+- Test pings aim 1 m above the floor; the test disguises the monster by setting `bf._form`.

@@ -75,11 +75,11 @@ stories:
     name: "Displayed identity, (not you) mark and fake-callout parity"
     file: "production/epics/pings-and-callouts/story-007-identity-fake-parity.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "pings-8"
     name: "Ping input, marker display, callout wheel and feed"
     file: "production/epics/pings-and-callouts/story-008-ping-callout-presentation.md"
@@ -120,11 +120,11 @@ stories:
     name: "Monster-source scares: door burst, reveal and Blackout"
     file: "production/epics/scare-events/story-004-monster-source-scares.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "packet half of AC-2 waits on pings-7"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "scare-5"
     name: "Ambush lunge scare and flinch suppression near a lunge"
     file: "production/epics/scare-events/story-005-ambush-lunge-flinch.md"
