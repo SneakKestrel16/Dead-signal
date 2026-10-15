@@ -19,6 +19,9 @@ class_name Downing extends RefCounted
 ## action restriction on the TAKEDOWN_ELIGIBILITY view. Crawl is the Controller's gait, chosen from
 ## the life state (first-person-controller.md gait order), not a modifier: a crawl slow on top of
 ## the crawl gait would apply crawl_speed_mult twice.
+## Story 004 adds the rescue hold (rules 7, 8, Formulas "Rescue progress"): with `set_holds(holds)`
+## every Downed survivor gets a RescueHold on HoldService; the composer's body_target maps a body to
+## `rescue_net_id(player)`.
 
 enum LifeState { HEALTHY, SEIZED, DOWNED, ELIMINATED }
 
@@ -36,6 +39,13 @@ var _bleed_ticks: int = 0
 var _camp_slow_radius_m: float = 0.0
 var _camp_slow_mult: float = 0.0
 var _release_grace_ticks: int = 0
+var _rescue_duration_s: float = 0.0
+var _rescue_range_m: float = 0.0
+var _rescue_decay_rate: float = 0.0
+## The round's HoldService; null means no rescue interactables (rescue cannot happen).
+var _holds: HoldService
+## Downed survivor -> its RescueHold, registered on HoldService while they are Downed.
+var _rescues: Dictionary[int, RescueHold] = {}
 var _rescue_grace_ticks: int = 0
 ## player id -> Vector3; invalid means no positions, so nothing slows bleed-out.
 var _position_of: Callable
@@ -138,6 +148,12 @@ func set_modifiers(source: Callable) -> void:
 	_modifiers_of = source
 
 
+## Injects the round's HoldService, on which each Downed survivor's RescueHold is registered. Call
+## before RoundServer.start_round. Unset, nobody can be rescued.
+func set_holds(holds: HoldService) -> void:
+	_holds = holds
+
+
 ## Injected by RoundServer. Reads knobs, resets every survivor to Healthy with 0 downs (rule 2),
 ## publishes the views and subscribes to SurvivorHit, MonsterStunned, PlayerConnectionChanged and
 ## SurvivorEscaped.
@@ -152,6 +168,10 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_camp_slow_mult = knobs.downing.camp_slow_mult
 	_release_grace_ticks = knobs.ticks(knobs.downing.post_release_grace_s)
 	_rescue_grace_ticks = knobs.ticks(knobs.downing.post_rescue_grace_s)
+	_rescue_duration_s = knobs.downing.rescue_duration_s
+	_rescue_range_m = knobs.downing.rescue_range_m
+	_rescue_decay_rate = knobs.downing.rescue_decay_rate
+	_rescues = {}
 	_grace_end = {}
 	_bleed = {}
 	_rescuing = {}
@@ -169,12 +189,21 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
+	bus.subscribe(&"PlayerShocked", _on_player_shocked)
 
 
 ## DOWNING slot: advances every bleed-out timer one tick, eliminating on expiry (rule 6), then
 ## completes the running commit on its end tick (rule 4.5). Bleed runs first, so a survivor Downed
 ## this tick starts bleeding on the next and is Eliminated exactly `bleedout_s` after the down.
+## Idle rescue progress decays and each rescue point follows its crawling body; the Holds step
+## (TickOrder.HOLDS) runs after this slot, so a hold cancelled on tick T starts decaying on T + 1.
 func server_tick(tick: int) -> void:
+	for s: int in _rescues:
+		var r := _rescues[s]
+		if r.rescuer < 0:
+			r.decay(_rescue_decay_rate, 1.0 / _hz)
+		if _position_of.is_valid():
+			r.point = _position_of.call(s)
 	var healthy := _healthy_survivors()
 	for s: int in _bleed.keys():
 		_bleed[s] = bleed_step(_bleed[s], 1.0, _rescuing.has(s), _nearest_distance_m(s), healthy,
@@ -207,6 +236,44 @@ func set_rescuing(player: int, on: bool) -> void:
 	else:
 		_rescuing.erase(player)
 	_apply_modifiers()
+
+
+## Rule 7: `actor` may hold Rescue on `downed`: another survivor in the roster, Healthy, not hidden,
+## and `downed` is Downed. The monster never can (Open Questions: no fake rescue, proposed). Range,
+## line of sight and the one-rescuer lock are HoldService's.
+func can_rescue(actor: int, downed: int) -> bool:
+	return actor != downed and _survivors.has(actor) and life_state(actor) == LifeState.HEALTHY 		and not (_is_hidden.is_valid() and _is_hidden.call(actor)) and life_state(downed) == LifeState.DOWNED
+
+
+## Net id of the RescueHold on Downed `player`, -1 when there is none. The composer's HoldService
+## body_target maps a rescuer's body handle through this.
+func rescue_net_id(player: int) -> int:
+	return _rescues[player].net_id if _rescues.has(player) else -1
+
+
+## Rescue progress on `player`, s: the active hold's elapsed time, else the stored (decaying) value;
+## 0 when not Downed. For the HUD ring (GDD Visual "Rescue progress").
+func rescue_progress_s(player: int) -> float:
+	if not _rescues.has(player):
+		return 0.0
+	var r := _rescues[player]
+	if r.rescuer >= 0 and _holds != null:
+		return _holds.hold_of(r.rescuer).get("elapsed_ticks", 0) / float(_hz)
+	return r.progress_s
+
+
+## RescueHold.on_complete: rule 8, stands `survivor` up and emits SurvivorRescued. Nothing else
+## should call this.
+func rescue_completed(survivor: int, rescuer: int) -> void:
+	if life_state(survivor) != LifeState.DOWNED:
+		return
+	_remove_rescue(survivor)
+	stand_up(survivor)
+	_apply_modifiers()
+	var e := EvSurvivorRescued.new()
+	e.survivor = survivor
+	e.rescuer = rescuer
+	_bus.emit(e)
 
 
 ## Seconds of bleed-out elapsed for `player` (0 when not Downed).
@@ -314,6 +381,15 @@ func _on_connection_changed(e: ServerEvent) -> void:
 		_cancel_commit()
 
 
+## Rule 7: a taser shock on the rescuer interrupts the rescue; progress is kept and decays.
+func _on_player_shocked(e: ServerEvent) -> void:
+	var p := (e as EvPlayerShocked).player
+	for s: int in _rescues:
+		if _rescues[s].rescuer == p:
+			_holds.cancel(p, &"shocked")
+			return
+
+
 func _on_escaped(e: ServerEvent) -> void:
 	_escaped[(e as EvSurvivorEscaped).survivor] = true
 
@@ -353,6 +429,7 @@ func _nearest_distance_m(s: int) -> float:
 func _bleed_out(s: int) -> void:
 	_bleed.erase(s)
 	_rescuing.erase(s)
+	_remove_rescue(s)
 	_life[s] = LifeState.ELIMINATED
 	var el := EvSurvivorEliminated.new()
 	el.survivor = s
@@ -384,7 +461,33 @@ func _complete_commit() -> void:
 	else:
 		_life[s] = LifeState.DOWNED
 		_bleed[s] = 0.0
+		_add_rescue(s)
 		var dn := EvSurvivorDowned.new()
 		dn.survivor = s
 		dn.bleed_out_s = _bleedout_s
 		_bus.emit(dn)
+
+
+## Registers Downed `s`'s RescueHold (rule 7): exclusive, roots the rescuer, all values from DowningKnobs.
+func _add_rescue(s: int) -> void:
+	if _holds == null:
+		return
+	var r := RescueHold.new()
+	r.survivor = s
+	r.owner = weakref(self)
+	r.range_m = _rescue_range_m
+	r.duration_s = _rescue_duration_s
+	r.roots_actor = true
+	r.lock_key = StringName("rescue:%d" % s)
+	if _position_of.is_valid():
+		r.point = _position_of.call(s)
+	_holds.register(r)
+	_rescues[s] = r
+
+
+func _remove_rescue(s: int) -> void:
+	if not _rescues.has(s):
+		return
+	var r := _rescues[s]
+	_rescues.erase(s)
+	_holds.unregister(r.net_id)
