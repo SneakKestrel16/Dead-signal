@@ -63,7 +63,7 @@ func play(entry: Dictionary) -> void:
 	var peak: float = entry.get("flash", 0.0)
 	if peak > 0.0:
 		var secs: float = entry.get("flash_s", 0.0)
-		if flash_scale > 0.0 and _limiter.try_flash(_now):
+		if try_flash():
 			_flash_run = [peak * flash_scale, secs, secs]
 		else:
 			# Inference: the dim is as dark as the flash would have been bright; no source gives its depth.
@@ -72,6 +72,12 @@ func play(entry: Dictionary) -> void:
 	if _fx != null and shake_s > 0.0:
 		_fx.shake(entry.get("shake_deg", 0.0), entry.get("shake_m", 0.0), shake_s)
 	advance(0.0)
+
+
+## True, and counted, when a luminance flash may start now: flash scale above 0 (rule 24) and under the
+## shared cap (rule 25). Every client flash source asks here, ScareVisuals' strobe too (story 009).
+func try_flash() -> bool:
+	return flash_scale > 0.0 and _limiter.try_flash(_now)
 
 
 ## Advances the flash and dim by `delta` seconds (both fade linearly).

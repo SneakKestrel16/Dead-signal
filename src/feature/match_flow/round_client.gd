@@ -201,6 +201,7 @@ func _on_connected() -> void:
 		feed = SurveillanceFeed.new(_map, knobs)
 		add_child(feed)
 		router.subscribe(EventBatch.CAMERA, feed.on_camera)
+		add_child(ScareVisuals.new(scares, facility_scare, lights, feed, router)) # scare-events story 009
 		hud = CanvasLayer.new()
 		add_child(hud)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)

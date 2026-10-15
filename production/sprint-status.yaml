@@ -165,10 +165,10 @@ stories:
     name: "Scare visuals and flash accessibility"
     file: "production/epics/scare-events/story-009-scare-visuals-accessibility.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "match-flow-11"
     name: "Client round scene"

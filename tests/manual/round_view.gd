@@ -58,6 +58,11 @@ const RESIST_AFTER_S := 3.0
 ## --reduced-flash turns the shown client's reduced flash on. --blackout has the shapeshifter's client request
 ## a Blackout of its own volume once spawned. --shot-when=dark,evac,power (any of) saves <state>.png on the first frame
 ## the shown client's own volume shows that state. --yaw=<deg> [--pitch=<deg>] fixes the shown client's view.
+## Story scare-events/009: --flash-scale=<0-1> sets every client's flash scale. --shot-when=strobe saves strobe.png
+## on the first frame the shown client, standing still in a beacon volume, draws its Emergency strobe lit, and
+## between.png 30 drawn frames later; hallucination.png on the first frame its monitor shows the impossible frame
+## (round_host --force=<s>:hallucinate), printing every client's hallucinating() at that frame. With strobe, every rising strobe energy prints
+## STROBE_ONSET with its drawn frame (the frame-sampled flash count).
 ## --measure prints the mean frame and GPU render time over MEASURE_FRAMES frames after spawning (run it
 ## without --write-movie, which fixes the frame step).
 
@@ -103,6 +108,7 @@ var _coil_at := Vector3.INF
 var _coil_seen := -1
 var _warp_frame := -1
 var _monster_client: RoundClient
+var _strobe_last := 0.0
 
 
 func _ready() -> void:
@@ -139,6 +145,7 @@ func _process(delta: float) -> void:
 		_link.pump(Time.get_ticks_msec() / 1000.0)
 	_pick_view()
 	_lighting()
+	_scare_shots()
 	var c0 := _shown
 	if c0 == null or not c0.is_spawned():
 		return
@@ -656,3 +663,35 @@ func _coil_frame() -> int:
 	if _coil_seen < 0:
 		_coil_seen = Engine.get_frames_drawn()
 	return _coil_seen + WINDUP_SHOT_FRAMES
+
+
+## Story scare-events/009 captures (see the class doc).
+func _scare_shots() -> void:
+	if _shown == null or not _shown.is_spawned() or _shown.scares == null:
+		return
+	if _args.has("flash-scale"):
+		for c in _clients:
+			if c.scares != null:
+				c.scares.flash_scale = float(_args["flash-scale"])
+	var sv := _shown.get_node(^"ScareVisuals") as ScareVisuals
+	var wants := String(_args.get("shot-when", "")).split(",", false)
+	var vol := String(MapQueries.new(_map).volume_at(_shown.body.global_position))
+	if "strobe" in wants and sv.strobe_energy() > _strobe_last:
+		print("STROBE_ONSET frame %d energy %.2f" % [Engine.get_frames_drawn(), sv.strobe_energy()])
+	if "strobe" in wants:
+		_strobe_last = sv.strobe_energy()
+	if "strobe" in wants and vol in _shown.lights.presets.beacon_volumes and _shown.body.velocity.length() < 0.05:
+		if not has_meta(&"strobe") and sv.strobe_energy() > 0.0:
+			set_meta(&"strobe", Engine.get_frames_drawn())
+			print("STROBE in %s energy %.2f scale %.2f state %d" % [vol, sv.strobe_energy(),
+					_shown.scares.flash_scale, _shown.facility_scare.state()])
+			_shot("strobe")
+		elif has_meta(&"strobe") and not has_meta(&"between") and Engine.get_frames_drawn() >= int(get_meta(&"strobe")) + 30:
+			set_meta(&"between", true)
+			print("BETWEEN energy %.2f" % sv.strobe_energy())
+			_shot("between")
+	if "hallucination" in wants and not has_meta(&"hallucination") and sv.hallucinating():
+		set_meta(&"hallucination", true)
+		for c in _clients:
+			print("HALLUCINATING %s %s" % [c.name, (c.get_node(^"ScareVisuals") as ScareVisuals).hallucinating()])
+		_shot("hallucination")

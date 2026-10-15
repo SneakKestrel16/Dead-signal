@@ -15,7 +15,8 @@ extends SceneTree
 ## shapeshifter beside the second survivor in B1, in camera c1's view; everyone else spawns as usual.
 ## --force=<s>:power,<s>:evac (story facility-map/010 screenshots) emits a forced event on the server bus that
 ## many seconds after round start: power = ObjectiveProgressChanged terminal POWERED (Power Restored), evac =
-## RoundPhaseChanged to Evacuation, blackout = AbilityUsed Blackout in B1 (story facility-map/011). Forced events skip the objective and timer rules; manual capture only.
+## RoundPhaseChanged to Evacuation, blackout = AbilityUsed Blackout in B1 (story facility-map/011), hallucinate =
+## the single-client surveillance_image scare to the first survivor at the C1 monitor (story scare-events/009). Forced events skip the objective and timer rules; manual capture only.
 
 const SERVER_VERSION := "0.1.0"
 const EVENTS: Array[StringName] = [&"RoundPhaseChanged", &"SurvivorDowned", &"SurvivorEliminated",
@@ -176,6 +177,9 @@ func _force(what: String) -> void:
 		a.ability = MonsterAbilities.Ability.BLACKOUT
 		a.target = Vector3(31.0, 0.0, 20.0)
 		_server.bus.emit(a)
+	elif what == "hallucinate": # story scare-events/009: the catalogue's single-client hallucination
+		var who: int = _c.survivors[0]
+		_c.scares.fire(ScareVisuals.HALLUCINATION, Vector3(51.0, 0.0, 7.0), [who], ScareEntry.Source.SURVIVOR, who)
 	print("FORCED %s" % what)
 
 

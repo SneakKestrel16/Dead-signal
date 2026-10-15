@@ -1,7 +1,7 @@
 # Story 009: Scare visuals and flash accessibility
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@ Visual scares: stinger flash and camera reaction (already in `ScarePresenter`), 
 **Story Type**: Visual/Feel
 **Required evidence**: retained screenshot in `production/qa/evidence/scare-visuals-accessibility/` + lead sign-off in `production/qa/evidence/scare-visuals-accessibility-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/scare-events/scare_visuals_accessibility_test.gd` (5 cases); `production/qa/evidence/scare-visuals-accessibility-evidence.md` (sign-off pending)
 
 ---
 
@@ -71,3 +71,26 @@ Visual scares: stinger flash and camera reaction (already in `ScarePresenter`), 
 
 - Depends on: Stories 003, 006
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se9. Full suite 1377/1377, no leak lines. Mutations caught: strobe skipping the limiter, reduced-flash sync removed, hallucination target check never matching.
+
+Evidence: `production/qa/evidence/scare-visuals-accessibility-evidence.md` (sign-off unchecked). Windowed `--write-movie` captures at 60 fps:
+- Flash scale 1: `framed1/strobe.png` (red pool under the H-S1 strobe) vs `framed1/between.png` (unlit, 30 frames later); at most 2 strobe onsets in any 60 frames.
+- Flash scale 0: `framed0/strobe.png` and `framed0/between.png` identical, a steady light; one onset in the run.
+- Hallucination: `hall/hallucination.png`, red static on the C1 screen of client 0 only (clients 1-4 false on the shot frame).
+
+Notes:
+- `ScareVisuals` (client): Emergency strobe gated by `FacilityScareDisplay.state()`, pulsing at `alarm_pulse_hz` with energy `beacon_energy * flash_scale` through `ScarePresenter.try_flash()` (shared `FlashLimiter`), off in a blacked-out volume, steady at scale 0. `ScarePresenter.play()` now uses `try_flash()` too.
+- Manual tooling: `round_host --force=<s>:hallucinate`; `round_view --flash-scale=`, `--shot-when=strobe,hallucination`.
+
+Gaps for sign-off:
+- The rotating beacons (Facility Map `LightingPresenter`) light no floor in H-S1: ceiling height and range clipping, the same problem the strobe had. A Facility Map placement follow-up.
+- The exit light is off in every shot (no run opened the exit).
+
+Deviations (inference):
+- No second beacon set: the Facility Map owns lighting (rule 22); `ScareVisuals` only sets reduced flash at scale 0.
+- The strobe sits at mid-height under each beacon fixture (at the ceiling its 2 m range did not reach the floor). Facility Map alarm fixtures settle it.
+- The hallucination uses the existing single-client `surveillance_image` (Survivor source); its server trigger (viewing the monitor) is not built, only the `round_host` force fires it.
+- Unsourced constants: `HALLUCINATION_S` 0.4 s, `STROBE_ON_S` 0.08 s, the red-static placeholder.
