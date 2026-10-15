@@ -111,3 +111,15 @@ No S1 bug is on file and no S2 bug is open. BUG-0005, BUG-0006 and BUG-0007 are 
 - The sprint-9 work stands on its sub-verdict. Do not advance the build on the overall verdict yet.
 - Once the designer has signed off the 10 Visual/Feel stories (condition 1), re-issue this report.
 - With the nine Fixed bugs verified first, the report can reach APPROVED. Otherwise the best outcome is APPROVED WITH CONDITIONS.
+
+### Addendum (2026-10-15, after the sign-off)
+
+- Condition 3 progress: an independent verifier re-checked the nine bugs on `aa581ab` (`2c8bbbe`).
+
+  - Verified Fixed: BUG-0008, 0009, 0010, 0011, 0012, 0013, 0015 and 0016.
+
+  - BUG-0014 reproduced in a window: a zero OS motion spent the discard.
+
+- BUG-0014 was re-fixed in `5887fda`. The windowed V4 test passed 5 of 5 runs, and the full suite is 1576/1576. Its status is Fixed and still awaits a second check.
+
+- Neither verdict changes: one S3 bug is still unverified, and the 10 Visual/Feel sign-offs are still outstanding.
