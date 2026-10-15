@@ -7,7 +7,9 @@ class_name MonsterAbilities extends RefCounted
 ## (rules 5-6, ADR-0007) as the "lunge" entry of the monster's MovementModifiers (set_modifiers). Story
 ## 003 adds the hit test (rules 7-8, ADR-0003 §3-6, set_hit_sources). Story 004 adds the resolution
 ## paths (rules 9-12, Edge Cases "Monster disconnects mid-lunge") and the miss slow as the "lunge_miss"
-## modifier entry (ADR-0007). The False Signal and Blackout bodies (009-010) are not here yet.
+## modifier entry (ADR-0007). Story 010 adds the Blackout body (rules 17, 20, 21; ADR-0009): target
+## validation through LightingView, the cooldown from activation, and AbilityUsed; FacilityLighting darkens
+## the zone and the backup switch (BackupSwitch) restores it. The False Signal body (009) is not here yet.
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   form() -> int            BorrowedFace.TRUE_FORM or the copied survivor (TransformView.get_form);
@@ -22,6 +24,7 @@ class_name MonsterAbilities extends RefCounted
 ##   ma.set_position_source(position_of)   # story 005: AbilityUsed position
 ##   ma.set_modifiers(server_movement.modifiers_of)
 ##   ma.set_hit_sources(lc, survivor_ids, downing.eligible, facing_of, sight)   # story 003
+##   ma.set_blackout_sources(map_queries.volume_at, blackout_sight)   # story 010
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
 ##   smp.peer_packet -> ma.request_ability(net.player_id_of(peer), bytes)
 
@@ -91,6 +94,15 @@ var _miss_slow_mult: float = 0.0
 var _miss_slow_ticks: int = 0
 ## Tick the running miss slow ends; -1 = none.
 var _miss_slow_end: int = -1
+## Story 010 Blackout sources (set_blackout_sources) and knobs; unset _volume_at rejects every Blackout.
+var _registry: StateRegistry
+var _volume_at: Callable
+var _blackout_sight: Callable
+var _blackout_range: float = 0.0
+var _blackout_cooldown_ticks: int = 0
+## Accepted Blackouts this round (ADR-0011 `stats.abilities`; story 008's AbilitiesStatsView subclass reads it).
+## Ticks (a list, not a counter: request_validation_test bars the literal 1, a knob value).
+var _blackout_ticks: Array[int] = []
 
 
 ## Injects the shapeshifter's player id. Call before RoundServer.start_round.
@@ -117,6 +129,20 @@ func set_hit_sources(lc: LagCompensation, survivors: Array[int], eligible: Calla
 	_eligible = eligible
 	_facing_of = facing_of
 	_sight = sight
+
+
+## Story 010: injects the Blackout target sources (rule 17). `volume_at.call(point) -> StringName` is
+## MapQueries.volume_at (&"" outside every lighting volume); `sight.call(monster, aim) -> bool` is true
+## when the monster's eye sees `aim` (MapQueries.clear_sight in the composer; unset = always clear).
+## Unset `volume_at`: every Blackout is rejected.
+func set_blackout_sources(volume_at: Callable, sight: Callable = Callable()) -> void:
+	_volume_at = volume_at
+	_blackout_sight = sight
+
+
+## Blackouts accepted this round (results payload, ADR-0011 `stats.abilities`).
+func blackouts_used() -> int:
+	return _blackout_ticks.size()
 
 
 ## The shapeshifter's player id (-1 before set_monster).
@@ -175,6 +201,10 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_miss_slow_mult = knobs.ability.miss_slow_multiplier
 	_miss_slow_ticks = knobs.ticks(knobs.ability.miss_slow_s)
 	_miss_slow_end = -1
+	_registry = registry
+	_blackout_range = knobs.ability.blackout_range_m
+	_blackout_cooldown_ticks = knobs.ticks(knobs.ability.blackout_cooldown_s)
+	_blackout_ticks = []
 	# Rule 6: lunge_distance_m over exactly the dash's whole ticks, so tick quantisation of lunge_dash_s
 	# changes the speed, never the distance.
 	# A dash of 0 ticks moves nothing.
@@ -216,7 +246,33 @@ func server_tick(tick: int) -> void:
 		_set_lunge(Lunge.WIND_UP, tick)
 		_phase_end_tick = tick + _windup_ticks
 		_emit_used(Ability.LUNGE, req[AIM_KEY])
-	# False Signal and Blackout bodies (and their cooldown start) arrive in stories 009-010.
+	elif req[ABILITY_KEY] == Ability.BLACKOUT and blackout_target_ok(req[AIM_KEY]):
+		_ready_tick[Ability.BLACKOUT] = tick + _blackout_cooldown_ticks ## rule 21: from activation
+		_blackout_ticks.append(tick)
+		_emit_used(Ability.BLACKOUT, req[AIM_KEY]) ## FacilityLighting darkens volume_at(aim) at flush
+	# The False Signal body (and its cooldown start) arrives in story 009.
+
+
+## Rules 17 and 20: the lighting volume at `aim` may be blacked out now. It must exist, be blackout_able
+## and not already dark (LightingView, ADR-0009 §4), and be the monster's own volume or have `aim` within
+## blackout_range_m of the monster with line of sight. Bounds are inclusive. Inference: range is the
+## straight distance from the monster's position to the aim point; a ruling on "zone within 15 m"
+## (nearest edge vs aim point) would settle it.
+func blackout_target_ok(aim: Vector3) -> bool:
+	if not _volume_at.is_valid():
+		return false
+	var zone: StringName = _volume_at.call(aim)
+	if zone == &"":
+		return false
+	var lighting := _registry.view(StateKeys.BLACKOUT_ABLE, LightingView) as LightingView
+	if lighting == null or not lighting.is_blackout_able(zone) or lighting.is_dark(zone):
+		return false
+	var at: Vector3 = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
+	if _volume_at.call(at) == zone:
+		return true
+	if at.distance_to(aim) > _blackout_range + HIT_EPS:
+		return false
+	return not _blackout_sight.is_valid() or _blackout_sight.call(_monster, aim)
 
 
 ## Rules 2 and 4: whether `ability` may activate now. Lunge needs Ready and true form; no ability while

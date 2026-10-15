@@ -1,7 +1,7 @@
 # Story survivor-defense/009: flashlight toggle and replicated cone (design/gdd/survivor-defense.md rules
 # 2-5, 23; ADR-0002, ADR-0004). Server state, local prediction, no battery and no monster effect, Blackout
-# (a lighting-flag fixture until Monster Abilities story 010 lands), and one real-ENet run showing every
-# client the same cone state.
+# (the real MonsterAbilities and FacilityLighting since monster-abilities/010), and one real-ENet run
+# showing every client the same cone state.
 extends GdUnitTestSuite
 
 const MONSTER := 1
@@ -13,13 +13,18 @@ const WAIT_S := 5.0
 const CLIENTS := 5
 ## Long-held beam: well past any plausible battery (rule 2 says none).
 const HOLD_S := 120.0
-const BLACKOUT_S := 2.0
+## The monster's room, which it blacks out.
+const ROOM := &"A3"
 
 static var _next_port := 27300
 
 var _server: RoundServer
 var _def: SurvivorDefense
 var _fx: Fixture
+var _ma: MonsterAbilities
+var _queries: MapQueries
+var _lighting: LightingView
+var _room_centre := Vector3.ZERO
 var _knobs: Knobs
 var _monster_events: Array[ServerEvent] = []
 # real-ENet rig
@@ -40,12 +45,10 @@ class FakeLobby extends RefCounted:
 		return 0
 
 
-## Stands in for Monster Abilities: scheduled events, and Blackout as a lighting flag (story 010 pending).
+## Scheduled events (stun, elimination) emitted just after the Monster Abilities slot.
 class Fixture extends RefCounted:
 	var _bus: EventBus
 	var _due: Dictionary[int, Array] = {}
-	var blackout_end_tick := -1
-	var blackout_active := false
 
 	func setup(_runner: TickRunner, bus: EventBus, _registry: StateRegistry, _knobs: Knobs) -> void:
 		_bus = bus
@@ -56,7 +59,6 @@ class Fixture extends RefCounted:
 		_due[tick].append(e)
 
 	func server_tick(tick: int) -> void:
-		blackout_active = tick < blackout_end_tick
 		for e: ServerEvent in _due.get(tick, []):
 			_bus.emit(e)
 
@@ -69,8 +71,19 @@ func _start() -> void:
 	_def.set_roster(SURVIVORS, MONSTER)
 	_fx = Fixture.new()
 	_monster_events.clear()
-	assert_array(_server.start_round({TickOrder.SURVIVOR_DEFENSE: _def,
-		TickOrder.MONSTER_ABILITIES: _fx}, _knobs)).is_empty()
+	var map := MapData.load_map()
+	_queries = MapQueries.new(map)
+	for v in map.volumes:
+		if v.id == ROOM:
+			_room_centre = v.box.get_center()
+	_ma = MonsterAbilities.new()
+	_ma.set_monster(MONSTER)
+	_ma.set_position_source(_monster_position)
+	_ma.set_blackout_sources(_queries.volume_at)
+	assert_array(_server.start_round({TickOrder.SURVIVOR_DEFENSE: _def, TickOrder.MONSTER_ABILITIES: _ma,
+		TickOrder.MONSTER_ABILITIES + 1: _fx, TickOrder.FACILITY_LIGHTING: FacilityLighting.new(map)},
+		_knobs)).is_empty()
+	_lighting = _server.registry.view(StateKeys.LIGHTING_STATE, LightingView) as LightingView
 	for t: StringName in [&"MonsterStunned", &"FormChanged"]:
 		_server.bus.subscribe(t, _on_monster_event)
 
@@ -93,6 +106,14 @@ func after_test() -> void:
 		get_tree().set_multiplayer(null, r.get_path())
 		r.free()
 	_roots.clear()
+
+
+func _monster_position(_p: int) -> Vector3:
+	return _room_centre
+
+
+func _dark() -> bool:
+	return _lighting.is_dark(ROOM)
 
 
 func _on_monster_event(e: ServerEvent) -> void:
@@ -206,24 +227,24 @@ func test_eliminated_survivor_shows_no_cone_and_cannot_toggle() -> void:
 
 func test_flashlight_works_in_blackout_and_does_not_end_it() -> void:
 	_start()
-	var now := _server.tick_runner.current_tick()
-	_fx.blackout_end_tick = now + 1 + _knobs.ticks(BLACKOUT_S)
+	_ma.request_ability(MONSTER, MonsterAbilities.request_packet(MonsterAbilities.Ability.BLACKOUT, _room_centre))
 	_step()
-	assert_bool(_fx.blackout_active).is_true()
+	var end := _server.tick_runner.current_tick() + _knobs.ticks(_knobs.ability.blackout_duration_s)
+	assert_bool(_dark()).is_true()
 	_want_light(S1, true)
 	_step()
 	assert_bool(_def.flashlight_on(S1)).is_true()
-	assert_bool(_fx.blackout_active).is_true()
-	while _server.tick_runner.current_tick() + 1 < _fx.blackout_end_tick:
+	assert_bool(_dark()).is_true()
+	while _server.tick_runner.current_tick() + 1 < end:
 		_want_light(S1, not _def.flashlight_on(S1))
 		_step()
-		assert_bool(_fx.blackout_active).is_true()
+		assert_bool(_dark()).is_true()
 	# Edge: toggle on the Blackout end tick.
 	var was := _def.flashlight_on(S1)
 	_want_light(S1, not was)
 	_step()
-	assert_int(_server.tick_runner.current_tick()).is_equal(_fx.blackout_end_tick)
-	assert_bool(_fx.blackout_active).is_false()
+	assert_int(_server.tick_runner.current_tick()).is_equal(end)
+	assert_bool(_dark()).is_false()
 	assert_bool(_def.flashlight_on(S1)).is_equal(not was)
 
 
