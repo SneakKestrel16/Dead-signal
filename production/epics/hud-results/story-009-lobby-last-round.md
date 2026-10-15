@@ -12,7 +12,7 @@
 
 `results.md` Entry & Exit Points and `lobby-role-assignment.md` (line 222) give the lobby a "Last round" button that reopens the previous round's results without the countdown, so the 20-second auto-return never costs a player the read (AD-31). `lobby_screen.gd` has no such button.
 
-**GDD**: `design/ux/hud.md` Entry & Exit Points; lobby-role-assignment UI Requirements
+**GDD**: `design/ux/results.md` Entry & Exit Points; lobby-role-assignment UI Requirements
 **Requirement**: `TR-ui-002`, UX-results-03
 *(Requirement text lives in `docs/architecture/tr-registry.yaml` — read fresh at review time)*
 
@@ -31,7 +31,7 @@
 
 ## Acceptance Criteria
 
-*From GDD `design/ux/hud.md`, scoped to this story:*
+*From GDD `design/ux/results.md`, scoped to this story:*
 
 - [ ] After a round, the lobby shows a "Last round" button that opens the stored results with no countdown and closes back to the lobby with focus restored.
 - [ ] Before any round, or after the host leaves, the button is absent.

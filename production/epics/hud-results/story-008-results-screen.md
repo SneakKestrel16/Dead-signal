@@ -12,7 +12,7 @@
 
 `results.md` specifies the screen shown at round end: outcome R1, survivor rows with fate, cause, downs, rescues and stuns landed, the shapeshifter row, team and monster stats including lunges interrupted, the Leave session confirm (P29) and the countdown back to the lobby. Only the data exists: `RoundResults` (match-flow 008) and `MatchDisplay.results()`.
 
-**GDD**: `design/ux/hud.md` R1-R9; States & Variants; Interaction Map; Acceptance Criteria
+**GDD**: `design/ux/results.md` R1-R9; States & Variants; Interaction Map; Acceptance Criteria
 **Requirement**: `TR-ui-001`, UX-results-01, UX-results-02, UX-results-04
 *(Requirement text lives in `docs/architecture/tr-registry.yaml` — read fresh at review time)*
 
@@ -32,12 +32,13 @@
 
 ## Acceptance Criteria
 
-*From GDD `design/ux/hud.md`, scoped to this story:*
+*From GDD `design/ux/results.md`, scoped to this story:*
 
 - [ ] At round end every client shows the outcome, each survivor's fate word and cause, downs, rescues and stuns landed, the shapeshifter row and the team and monster stats, matching the payload field for field.
 - [ ] A stats group listed in `missing` shows "Results unavailable" and an empty survivor name shows "Unknown player" (test forces a `missing` entry).
 - [ ] Keyboard and gamepad reach every focus stop in the spec's order; Leave session opens the P29 confirm; after `results_duration_s` the client returns to the lobby.
 - [ ] The screen opens within 100 ms of RoundEnded; retained screenshots of a survivors-win, a shapeshifter-win and a missing-group case.
+- [ ] All five clients show the screen within 500 ms of each other; at 150% UI scale menu text measures at least 24 px and nothing clips; a corrupted payload field shows the payload error state, never a crash.
 
 ---
 
