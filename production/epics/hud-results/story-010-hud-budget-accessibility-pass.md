@@ -1,7 +1,7 @@
 # Story 010: Visual budget and accessibility verification pass
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@ Four `hud.md` acceptance criteria measure the HUD as a whole rather than one ele
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/hud-budget-accessibility-pass/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/hud-budget-accessibility-evidence.md
 
 ---
 
@@ -71,3 +71,13 @@ Four `hud.md` acceptance criteria measure the HUD as a whole rather than one ele
 
 - Depends on: Stories 002-007
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+- tools/hud_measure.py (stdlib PNG reader): coverage, Machado CVD simulation, contrast, frame diff. round_view --bot=budget captures exploration and busiest states.
+- AC1 PASS: exploration 6.13% (limit 8%), busiest 8.77% (limit 12%), markers excluded.
+- AC2 PASS: every roster state, checklist line and ping type differs by word or shape under protanopia, deuteranopia and tritanopia; markers keep at least 3.44:1.
+- AC3 FAIL, filed: BUG-0008 (prompt and marker fades ignore reduced motion; no client setting), BUG-0009 (install alert 18 px), BUG-0010 (shapeshifter HUD text 16 px). BUG-0011: a zone-ambience debug label is drawn in the HUD.
+- AC4 PASS: production/qa/evidence/hud-budget-accessibility-evidence.md lists every number with its screenshot.
+- Text size pass/fail uses the font size set in code; measured glyph height recorded alongside. Ruling on which the spec means is open.
+- Full suite on merge: 1551 tests, 0 failures, 0 leak lines.

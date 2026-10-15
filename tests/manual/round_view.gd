@@ -85,6 +85,14 @@ extends Node3D
 ## --pad (story hud-results/012) with --bot=hold: until prompt.png, feeds a synthetic
 ## InputEventJoypadButton (A, bound to no game action) through Input.parse_input_event, so prompt.png shows
 ## the pad glyph (InputGlyphs switches by event type).
+## --bot=budget (story hud-results/010; --count=6 --view=survivor against round_host --players=6 --force=<s>:evac):
+## explore.png at BUDGET_EXPLORE_F, then once the shown HUD says Evacuation the five survivors call out and ping,
+## the shown one holds at the nearest hiding spot, and busy.png is saved with the ring at half. Each <tag>.png has a
+## <tag>_hud.png of the next frame with the 3D world culled over a flat BUDGET_BG (HUD pixels only) and a
+## <tag>.json of rects: world markers (excluded from coverage), roster/checklist/marker rects, text rects.
+## Phase-label and prompt changes save BUDGET_RUN consecutive HUD-only frames (evac_NN, prompt_NN); --clock waits
+## for 26 s left and saves clock_off_NN with reduced motion off, then clock_on_NN at 22 s with it on, then quits.
+## --reduced-motion sets the shown client's AlwaysOnHud, EdgeCues and OwnStateHud reduced_motion.
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -243,6 +251,8 @@ func _process(delta: float) -> void:
 		_aim_bot(c0)
 	elif _args.get("bot", "") == "picker":
 		_picker_bot(c0)
+	elif _args.get("bot", "") == "budget":
+		_budget_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -1260,3 +1270,138 @@ func _picker_bot(c0: RoundClient) -> void:
 				print("PICKER refused: label '%s' at frame %d, transform progress %.2f" % [
 						c0.interaction.label_text(), frame, c0.hud_model.transform_progress()])
 				_picker_step = 6
+
+
+const BUDGET_EXPLORE_F := 60
+const BUDGET_RUN := 8
+const BUDGET_BG := Color(1.0, 0.0, 1.0)
+var _hud_only_left := 0
+var _hud_only_tag := ""
+var _saved_env: Environment
+
+
+## Story hud-results/010: see the header (--bot=budget).
+func _budget_bot(c0: RoundClient) -> void:
+	_hud_only_tick(c0)
+	if _step_frame < 0:
+		_step_frame = Engine.get_frames_drawn()
+		_set_reduced_motion(c0, _args.has("reduced-motion"))
+	var f := Engine.get_frames_drawn() - _step_frame
+	var all := _clients.filter(func(c: RoundClient) -> bool: return c.is_spawned() and not _role(c))
+	if _args.has("clock"):
+		var left := c0.hud_model.time_remaining_s()
+		if left <= 26.0 and not has_meta(&"clock_off"):
+			set_meta(&"clock_off", true)
+			_set_reduced_motion(c0, false)
+			_hud_only(c0, "clock_off", BUDGET_RUN)
+		elif left <= 22.0 and not has_meta(&"clock_on"):
+			set_meta(&"clock_on", true)
+			_set_reduced_motion(c0, true)
+			_hud_only(c0, "clock_on", BUDGET_RUN)
+		elif left <= 20.0:
+			get_tree().quit()
+		return
+	if f < BUDGET_EXPLORE_F:
+		_look(c0)
+		return
+	if f == BUDGET_EXPLORE_F:
+		_budget_shot(c0, "explore")
+		return
+	if c0.hud_model.phase() != MatchFlow.Phase.EVACUATION:
+		return
+	if not has_meta(&"evac"):
+		set_meta(&"evac", f)
+		_hud_only(c0, "evac", BUDGET_RUN)
+		var lines := CalloutSet.load_shipped().lines
+		for i in all.size():
+			(all[i] as RoundClient).callouts.request(lines[i % lines.size()])
+		return
+	var since: int = f - int(get_meta(&"evac"))
+	if since == 10:
+		for c: RoundClient in all:
+			c.scripted.pitch = -0.2
+			c.ping_hud.ping()
+	if since < 12 or _hud_only_left > 0:
+		return
+	_bot(c0)
+	var ui := c0.interaction
+	if ui.shown() == &"prompt" and not has_meta(&"prompt_run"):
+		set_meta(&"prompt_run", true)
+		_hud_only(c0, "prompt", BUDGET_RUN)
+	if ui.shown() == &"ring" and ui.ring_value() >= 0.5 and not has_meta(&"busy"):
+		set_meta(&"busy", true)
+		print("BUDGET busy feed=%d markers=%d since_evac=%d" % [c0.ping_hud.feed_lines().size(),
+			c0.ping_hud.markers_now().size(), since])
+		_budget_shot(c0, "busy")
+		set_meta(&"quit_at", Engine.get_frames_drawn() + 20)
+	if has_meta(&"quit_at") and Engine.get_frames_drawn() >= int(get_meta(&"quit_at")):
+		get_tree().quit()
+
+
+func _set_reduced_motion(c0: RoundClient, on: bool) -> void:
+	for n in c0.hud.get_children():
+		if n is AlwaysOnHud or n is EdgeCues or n is OwnStateHud:
+			n.set(&"reduced_motion", on)
+	print("BUDGET reduced_motion=%s" % on)
+
+
+## This frame as <tag>.png and the next one HUD-only as <tag>_hud.png, with <tag>.json of rects.
+func _budget_shot(c0: RoundClient, tag: String) -> void:
+	_shot(tag)
+	var size := get_viewport().get_visible_rect().size
+	var font := c0.ping_hud.get_theme_default_font()
+	var markers: Array = []
+	var named := {}
+	var text := {}
+	var i := 0
+	for m in c0.ping_hud.markers_now():
+		var pl := PingCalloutHud.place(c0.camera, m["point"], size, PingCalloutHud.INSET_PX)
+		var at: Vector2 = pl[0]
+		var tw := font.get_string_size(m["label"], HORIZONTAL_ALIGNMENT_LEFT, -1, PingCalloutHud.MARKER_FONT).x
+		var lx := clampf(at.x - tw / 2.0, PingCalloutHud.INSET_PX, size.x - PingCalloutHud.INSET_PX - tw)
+		var r := Rect2(at - Vector2(16, 16), Vector2(32, 32)).merge(Rect2(lx - 4, at.y - 16 - 24, tw + 8, 32))
+		markers.append([r.position.x, r.position.y, r.size.x, r.size.y])
+		named["marker%d_kind%d_shape" % [i, m["kind"]]] = [at.x - 14, at.y - 14, 28, 28]
+		text["marker%d_label" % i] = [lx, at.y - 16 - 22, tw, 30]
+		i += 1
+	var hud := c0.hud.get_node(^"AlwaysOnHud") as AlwaysOnHud
+	for box: VBoxContainer in [hud.roster_box, hud.objectives_box]:
+		for l: Label in box.get_children():
+			if l.visible:
+				var gr := l.get_global_rect()
+				named["%s:%s" % ["roster" if box == hud.roster_box else "checklist", l.text]] = 					[gr.position.x, gr.position.y, gr.size.x, gr.size.y]
+				text["%s:%s" % ["roster" if box == hud.roster_box else "checklist", l.text]] = 					[gr.position.x, gr.position.y, gr.size.x, gr.size.y]
+	for l: Label in [hud.clock_label, hud.phase_label]:
+		var gr := l.get_global_rect()
+		text[l.text] = [gr.position.x, gr.position.y, gr.size.x, gr.size.y]
+	var f := FileAccess.open("%s/%s.json" % [_args["shots"], tag], FileAccess.WRITE)
+	f.store_string(JSON.stringify({"markers": markers, "named": named, "text": text}, " "))
+	f.close()
+	print("BUDGET %s rects markers=%d named=%d" % [tag, markers.size(), named.size()])
+	_hud_only(c0, tag + "_hud", 1, false)
+
+
+## Culls the 3D world over a flat BUDGET_BG for `n` drawn frames from the next one, saving each.
+func _hud_only(c0: RoundClient, tag: String, n: int, numbered := true) -> void:
+	_hud_only_tag = tag if not numbered else tag + "_%02d"
+	_hud_only_left = n
+	set_meta(&"hud_only_n", n)
+
+
+func _hud_only_tick(c0: RoundClient) -> void:
+	if _hud_only_left <= 0:
+		if _saved_env != null or c0.camera.cull_mask == 0:
+			c0.camera.cull_mask = 0xFFFFF
+			c0.camera.environment = _saved_env
+			_saved_env = null
+		return
+	if c0.camera.cull_mask != 0:
+		_saved_env = c0.camera.environment
+		var env := Environment.new()
+		env.background_mode = Environment.BG_COLOR
+		env.background_color = BUDGET_BG
+		c0.camera.environment = env
+		c0.camera.cull_mask = 0
+	var k: int = int(get_meta(&"hud_only_n")) - _hud_only_left
+	_shot(_hud_only_tag % k if _hud_only_tag.contains("%") else _hud_only_tag)
+	_hud_only_left -= 1

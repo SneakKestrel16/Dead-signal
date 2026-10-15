@@ -77,7 +77,7 @@ This epic is complete when:
 | 007 | Feed cap, opaque backing, marker cap, shapes and wheel stick steering | UI | In Review | ADR-0014 |
 | 008 | Results screen | UI | In Review | ADR-0014 |
 | 009 | Lobby "Last round" view | UI | In Review | ADR-0014 |
-| 010 | Visual budget and accessibility verification pass | UI | Ready | ADR-0014 |
+| 010 | Visual budget and accessibility verification pass | UI | In Review | ADR-0014 |
 | 011 | Server feeds the HUD still lacks: round roster names and hold refusal reasons | Integration | Complete | ADR-0004 |
 | 012 | Gamepad bindings for every action | UI | In Review | ADR-0014 |
 

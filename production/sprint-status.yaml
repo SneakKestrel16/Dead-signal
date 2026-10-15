@@ -264,10 +264,10 @@ stories:
     name: "Visual budget and accessibility verification pass"
     file: "production/epics/hud-results/story-010-hud-budget-accessibility-pass.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "monster-abilities-11"
     name: "Shipped client input for Lunge, False Signal and Blackout, with placement preview"

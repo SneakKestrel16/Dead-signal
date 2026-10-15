@@ -1,0 +1,115 @@
+{
+ "markers": [],
+ "named": {
+  "checklist:Drives 0/2": [
+   1637.0,
+   60.0,
+   223.0,
+   39.0
+  ],
+  "checklist:Fuses 0/2": [
+   1637.0,
+   103.0,
+   223.0,
+   39.0
+  ],
+  "checklist:Terminal Locked": [
+   1637.0,
+   146.0,
+   223.0,
+   39.0
+  ],
+  "roster:View0  ● Healthy": [
+   60.0,
+   60.0,
+   223.0,
+   40.0
+  ],
+  "roster:View1  ● Healthy": [
+   60.0,
+   104.0,
+   223.0,
+   40.0
+  ],
+  "roster:View2  ● Healthy": [
+   60.0,
+   148.0,
+   223.0,
+   40.0
+  ],
+  "roster:View3  ● Healthy": [
+   60.0,
+   192.0,
+   223.0,
+   40.0
+  ],
+  "roster:View5  ● Healthy": [
+   60.0,
+   236.0,
+   223.0,
+   40.0
+  ]
+ },
+ "text": {
+  "08:59": [
+   865.0,
+   60.0,
+   190.0,
+   61.0
+  ],
+  "INFILTRATION": [
+   865.0,
+   125.0,
+   190.0,
+   39.0
+  ],
+  "checklist:Drives 0/2": [
+   1637.0,
+   60.0,
+   223.0,
+   39.0
+  ],
+  "checklist:Fuses 0/2": [
+   1637.0,
+   103.0,
+   223.0,
+   39.0
+  ],
+  "checklist:Terminal Locked": [
+   1637.0,
+   146.0,
+   223.0,
+   39.0
+  ],
+  "roster:View0  ● Healthy": [
+   60.0,
+   60.0,
+   223.0,
+   40.0
+  ],
+  "roster:View1  ● Healthy": [
+   60.0,
+   104.0,
+   223.0,
+   40.0
+  ],
+  "roster:View2  ● Healthy": [
+   60.0,
+   148.0,
+   223.0,
+   40.0
+  ],
+  "roster:View3  ● Healthy": [
+   60.0,
+   192.0,
+   223.0,
+   40.0
+  ],
+  "roster:View5  ● Healthy": [
+   60.0,
+   236.0,
+   223.0,
+   40.0
+  ]
+ }
+}
