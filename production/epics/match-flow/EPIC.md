@@ -53,8 +53,8 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 007 | [Spectators and full state on reconnect](story-007-spectators-and-reconnect-state.md) | Integration | Complete | ADR-0004 |
 | 008 | [Results payload](story-008-results-payload.md) | Logic | Complete | ADR-0011 |
 | 009 | [Clients display server phase and outcome only](story-009-client-display-authority.md) | Integration | Complete | ADR-0005 |
-| 010 | [Round composer (server composition root)](story-010-round-composer.md) | Integration | Ready | ADR-0005 |
-| 011 | [Client round scene](story-011-client-round-scene.md) | Integration | Ready | ADR-0002 |
+| 010 | [Round composer (server composition root)](story-010-round-composer.md) | Integration | Complete | ADR-0005 |
+| 011 | [Client round scene](story-011-client-round-scene.md) | Integration | In Review | ADR-0002 |
 | 012 | [Display state catch-up on rejoin](story-012-display-catch-up-on-rejoin.md) | Integration | Complete | ADR-0004 |
 
 ## Definition of Done

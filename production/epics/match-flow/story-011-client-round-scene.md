@@ -1,7 +1,7 @@
 # Story 011: Client round scene
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 2 days

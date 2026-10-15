@@ -21,16 +21,16 @@ stories:
     name: "Round composer (server composition root)"
     file: "production/epics/match-flow/story-010-round-composer.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 2
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "match-flow-11"
     name: "Client round scene"
     file: "production/epics/match-flow/story-011-client-round-scene.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 2
     blocker: ""
@@ -165,7 +165,7 @@ stories:
     name: "Disguise and true-form rendering"
     file: "production/epics/borrowed-face/story-009-disguise-rendering.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
     blocker: ""

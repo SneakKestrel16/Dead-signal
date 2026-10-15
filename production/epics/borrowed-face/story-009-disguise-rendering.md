@@ -1,7 +1,7 @@
 # Story 009: Disguise and true-form rendering
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
