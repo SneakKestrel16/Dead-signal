@@ -309,10 +309,10 @@ stories:
     name: "Gamepad bindings for every action"
     file: "production/epics/hud-results/story-012-gamepad-bindings.md"
     priority: nice-to-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 0.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "match-flow-14"
     name: "Register every round stats view so live Results show real values"

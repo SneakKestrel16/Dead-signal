@@ -82,6 +82,9 @@ extends Node3D
 ## picker aimed at that face (picker.png), releases it, waits out the transformation (disguised.png), then
 ## opens it again aimed at the true form (picker-disguised.png) and releases inside the form cooldown, so the
 ## server refuses and the HUD-3 label shows it (refused.png).
+## --pad (story hud-results/012) with --bot=hold: until prompt.png, feeds a synthetic
+## InputEventJoypadButton (A, bound to no game action) through Input.parse_input_event, so prompt.png shows
+## the pad glyph (InputGlyphs switches by event type).
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -288,6 +291,11 @@ func _bot(c: RoundClient) -> void:
 	var near := flat.length() < _knobs.objectives.interact_range_m * 0.6
 	c.scripted.move = Vector2.ZERO if near else Vector2(0, 1)
 	var ui := c.interaction
+	if _args.has("pad") and not has_meta(&"prompt"): # each frame until the shot: a stray mouse move flips back
+		var pad := InputEventJoypadButton.new()
+		pad.button_index = JOY_BUTTON_A
+		pad.pressed = true
+		Input.parse_input_event(pad)
 	if ui != null and _args.has("shots"):
 		# the prompt fades in over InteractionHud.FADE_S: shoot it once it has shown 10 drawn frames
 		set_meta(&"prompt_frames", get_meta(&"prompt_frames", 0) + 1 if ui.shown() == &"prompt" else 0)

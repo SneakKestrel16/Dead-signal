@@ -1,7 +1,7 @@
 # Story 012: Gamepad bindings for every action
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 0.5 day
@@ -62,7 +62,7 @@
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/gamepad-bindings/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/gamepad-bindings/
 
 ---
 
@@ -70,3 +70,11 @@
 
 - Depends on: Stories 003, 007
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+- project.godot: one pad event per pinned action (18), device -1, no two game actions share a pad input. Layout is inference; a controls pass settles it. Recorded in hud.md Platform Adaptation.
+- Right-stick look in LocalInput (stick_rate 3.0 rad/s, STICK_DEADZONE 0.2, both inference); zeroed while the top context disallows look.
+- Unit test tests/unit/hud-results/gamepad_bindings_test.gd (5 cases); three mutations caught.
+- Evidence: production/qa/evidence/gamepad-bindings/prompt-pad.png shows the X pad glyph. AC2 (wheel steered by the right stick) has no screenshot; it rests on the tested steer_wheel path, now reached via LB.
+- Full suite on merge: 1550 tests, 0 failures, 0 leak lines.

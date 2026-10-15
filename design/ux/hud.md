@@ -229,6 +229,8 @@ Nothing is held back during a chase: the HUD has no combat suppression, because 
 | Gamepad (Partial) | Same HUD; prompts use gamepad glyphs (P18); wheel uses right stick |
 | Console, mobile | Not targeted |
 
+Gamepad layout (story hud-results/012; **inference**, a controls pass with a pad playtest settles it): left stick move, right stick look and wheel steering, LS click sprint, B crouch, X interact, Y interact_alt, RT use_item, RB ping, LB callout wheel, D-pad up flashlight / down warning ping / left False Signal / right Blackout, Back feed scrollback, RS click Lunge, LT form picker. No two game actions share an input (all are live in GAMEPLAY); the built-in `ui_*` actions reuse A, B and the D-pad only in cursor contexts. Pinned by `tests/unit/hud-results/gamepad_bindings_test.gd`.
+
 ---
 
 ## Accessibility

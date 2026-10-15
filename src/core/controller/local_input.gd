@@ -1,5 +1,5 @@
 class_name LocalInput extends Node
-## The owning client's input (ADR-0007 §11): the eleven named actions and mouse look. Mouse motion is
+## The owning client's input (ADR-0007 §11): the named actions, mouse look and right-stick look. Mouse motion is
 ## read from InputEventMouseMotion.screen_relative (not `relative`, which the canvas_items stretch
 ## scales, so sensitivity would change with window size), is not scaled by delta, and is only taken
 ## while the mouse is captured. The mouse is captured again when the window regains focus.
@@ -19,6 +19,11 @@ class_name LocalInput extends Node
 ## Mouse look sensitivity in radians per screen pixel. NOT SOURCEABLE: no GDD or ADR number (a player
 ## setting the options menu will own); 0.0025 rad (~0.14°) per pixel is a common default (inference).
 var sensitivity := 0.0025
+## Right-stick look in radians per second at full deflection (hud-results story 012). NOT SOURCEABLE: no
+## GDD or ADR number (an options-menu setting later); ~170°/s is a common pad default (inference).
+var stick_rate := 3.0
+## Radial stick dead zone; the 0.2 action dead zone in project.godot (inference, a pad playtest settles it).
+const STICK_DEADZONE := 0.2
 var yaw := 0.0
 var pitch := 0.0
 ## ADR-0014 §2: mouse look reaches the view only while the top context allows look (the callout wheel
@@ -27,6 +32,8 @@ var contexts: InputContextStack
 
 ## The record the owner renders with: record 0 of epoch 0 (no offset) until the server sends one.
 var _record := FlinchRecord.new()
+## Last right-stick deflection; held between motion events, which only fire on change.
+var _stick := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -40,11 +47,30 @@ func _input(event: InputEvent) -> void:
 		handle(event)
 
 
-## Applies one input event to the view (mouse motion only). Public so tests can feed events.
+func _process(delta: float) -> void:
+	if contexts != null and not contexts.allows_look():
+		_stick = Vector2.ZERO ## the wheel steers with it; the view takes it again from the next motion
+	stick_look(delta)
+
+
+## Applies one input event to the view: mouse motion turns it, right-stick motion sets the stick that
+## stick_look() turns it by. Public so tests can feed events.
 func handle(event: InputEvent) -> void:
 	var motion := event as InputEventMouseMotion
 	if motion != null:
 		look(motion.screen_relative)
+	var joy := event as InputEventJoypadMotion
+	if joy != null and joy.axis == JOY_AXIS_RIGHT_X:
+		_stick.x = joy.axis_value
+	elif joy != null and joy.axis == JOY_AXIS_RIGHT_Y:
+		_stick.y = joy.axis_value
+
+
+## Turns the view by the held right stick over `delta` seconds: right turns right, up looks up.
+func stick_look(delta: float) -> void:
+	if _stick.length() < STICK_DEADZONE:
+		return
+	look(_stick * stick_rate * delta / sensitivity)
 
 
 ## Turns the view by a screen-pixel delta: right turns right (yaw falls), up looks up.
