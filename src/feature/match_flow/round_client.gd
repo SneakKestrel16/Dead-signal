@@ -48,6 +48,8 @@ var disguise: DisguisePresenter
 var ambience: ZoneAmbience
 ## Map lighting from the server's records (story facility-map/010, ADR-0009 §6); null when not rendering.
 var lights: LightingPresenter
+## Lunge cue, coil, stumble and hit-stop (story monster-abilities/007); null when not rendering.
+var lunge_fx: LungePresenter
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -162,6 +164,10 @@ func _on_connected() -> void:
 		add_child(lights)
 		camera.environment = lights.presets.environment()
 		router.subscribe(EventBatch.LIGHTING, lights.on_lighting)
+		lunge_fx = LungePresenter.new(knobs, remotes, func(h: int) -> bool:
+			return puppets.state_of(h).get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID)
+		add_child(lunge_fx)
+		router.subscribe(EventBatch.SOUND, lunge_fx.on_sound)
 		hud = CanvasLayer.new()
 		add_child(hud)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)

@@ -15,6 +15,7 @@ lunge_hit_radius_m = 1.2
 lunge_cone_deg = 60.0
 miss_slow_multiplier = 0.5
 miss_slow_s = 1.5
+lunge_hit_stop_s = 0.08
 max_rewind_ms = 180
 false_signal_cooldown_s = 25.0
 false_signal_range_m = 20.0

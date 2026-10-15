@@ -11,6 +11,10 @@ extends Node3D
 ## --bot=look turns the shown client to face the nearest remote body it draws (the screenshots).
 ## --bot=walk walks a survivor from the A1 spawn through the A1-H-S archway into H-S1 (zone A -> link) and
 ## saves zone_a.png, crossfade.png (half a crossfade after the border) and link.png (FM-12 ambience overlay).
+## --bot=lunge (story monster-abilities/007): the shown client faces the shapeshifter's body; the shapeshifter's
+## client (another --count client) walks at the shown client and requests one Lunge within LUNGE_FROM_M. With
+## --shots it saves windup.png (mid wind-up), dash.png (just after it) and hit.png (the hit-stop), as the
+## shown client's LungePresenter shows them. Use --view=survivor.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
 ## --shots=<dir> saves press.png and bar.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
@@ -40,6 +44,11 @@ const REQUEST_EVERY := 15
 ## without --write-movie, which fixes the frame step).
 
 const MEASURE_FRAMES := 300
+## --bot=lunge: request range, inside lunge_distance_m + lunge_hit_radius_m (test harness value, not a knob).
+const LUNGE_FROM_M := 3.0
+## --bot=lunge: drawn movement that counts as the dash having started, and frames into the coil for windup.png.
+const DASH_SEEN_M := 0.3
+const WINDUP_SHOT_FRAMES := 4
 
 var _args: Dictionary = {}
 var _knobs: Knobs
@@ -63,6 +72,9 @@ var _since_border := -1.0
 var _blackout_sent := false
 var _routed: Dictionary[int, bool] = {}
 var _measure: Array[float] = []
+var _lunged := false
+var _coil_at := Vector3.INF
+var _coil_seen := -1
 
 
 func _ready() -> void:
@@ -122,6 +134,8 @@ func _process(delta: float) -> void:
 		_stage(c0)
 	elif _args.get("bot", "") == "walk":
 		_walk(c0, delta)
+	elif _args.get("bot", "") == "lunge":
+		_lunge_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -384,3 +398,56 @@ func _walk(c: RoundClient, delta: float) -> void:
 			set_meta(&"link", true)
 			print("LINK %s" % c.ambience.debug_text())
 			_shot("link")
+
+
+## --bot=lunge: see the class doc. Shots are timed from the shown client's coil, so they show what it drew.
+func _lunge_bot(c: RoundClient) -> void:
+	var m: RoundClient = null
+	for o in _clients:
+		if o != c and o.is_spawned() and o.is_monster():
+			m = o
+	var drawn := Vector3.INF ## the shapeshifter's body as the shown client draws it
+	for h: int in c.remotes:
+		if c.puppets.state_of(h).get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID:
+			drawn = c.remotes[h].position
+			var d := c.remotes[h].position - c.body.global_position
+			c.scripted.yaw = atan2(-d.x, -d.z)
+			c.scripted.pitch = -0.15
+	if m == null:
+		return
+	if m.scripted == null:
+		m.scripted = InputFrame.new()
+	var to := c.body.global_position - m.body.global_position
+	m.scripted.yaw = atan2(-to.x, -to.z)
+	var near := Vector2(to.x, to.z).length() <= LUNGE_FROM_M
+	m.scripted.move = Vector2.ZERO if near or _lunged else Vector2(0, 1)
+	if near and not _lunged:
+		_lunged = true
+		(m.multiplayer as SceneMultiplayer).send_bytes(
+				MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		print("LUNGE requested at %.2f m (frame %d)" % [Vector2(to.x, to.z).length(), Engine.get_frames_drawn()])
+	var pose := c.lunge_fx.pose()
+	if pose == &"coil" and _coil_at == Vector3.INF:
+		_coil_at = drawn
+		print("COIL seen at frame %d, monster drawn at %s" % [Engine.get_frames_drawn(), drawn])
+	if pose == &"coil" and not has_meta(&"windup") and Engine.get_frames_drawn() >= _coil_frame():
+		set_meta(&"windup", true)
+		_shot("windup")
+	# Dash: the first frame the drawn body has left its wind-up spot (the client is not told when Active starts).
+	if _coil_at != Vector3.INF and drawn != Vector3.INF and drawn.distance_to(_coil_at) > DASH_SEEN_M 			and not has_meta(&"dash"):
+		set_meta(&"dash", true)
+		_shot("dash")
+	if pose == &"hit_stop" and not has_meta(&"hit"):
+		set_meta(&"hit", true)
+		_shot("hit")
+		print("HIT-STOP seen at frame %d" % Engine.get_frames_drawn())
+	if pose == &"stumble" and not has_meta(&"miss"):
+		set_meta(&"miss", true)
+		_shot("miss")
+		print("STUMBLE seen at frame %d" % Engine.get_frames_drawn())
+
+
+func _coil_frame() -> int:
+	if _coil_seen < 0:
+		_coil_seen = Engine.get_frames_drawn()
+	return _coil_seen + WINDUP_SHOT_FRAMES

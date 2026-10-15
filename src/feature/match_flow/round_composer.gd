@@ -130,6 +130,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	ma.set_status_sources(bf.form, bf.transforming, sd.locked)
 	ma.set_modifiers(_modifiers)
 	ma.set_blackout_sources(queries.volume_at, _monster_sees)
+	ma.set_sound_sink(sm.emit_sound) # MA-7: lunge cue, scrape and hit sounds
 	bars = Barricades.new(holds, doors, map, _survivor_free, _monster_capsules, _monster_free)
 	hs = HidingSpots.new(holds, map, _survivor_free, _is_monster, _set_hidden, _modifiers, _place)
 	objectives = SurvivorObjectives.new(holds, map, _objective_healthy, sd.is_hidden, _position)

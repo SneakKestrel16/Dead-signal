@@ -15,6 +15,9 @@ class_name AbilityKnobs extends Resource
 @export_range(40.0, 69.0) var lunge_cone_deg: float = NAN
 @export_range(0.3, 0.8) var miss_slow_multiplier: float = NAN
 @export_range(0.5, 3.0) var miss_slow_s: float = NAN
+## Lunge hit-stop, seconds (monster-abilities.md Impact Moments: 80 ms, "Configurable? Yes"; story 007).
+## Presentation only. No Safe Range in the GDD, so a plain export.
+@export var lunge_hit_stop_s: float = NAN
 @export_range(0, 250) var max_rewind_ms: int = KnobUnset.INT
 @export_range(15.0, 60.0) var false_signal_cooldown_s: float = NAN
 @export_range(10.0, 30.0) var false_signal_range_m: float = NAN

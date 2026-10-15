@@ -27,6 +27,7 @@ class_name MonsterAbilities extends RefCounted
 ##   ma.set_modifiers(server_movement.modifiers_of)
 ##   ma.set_hit_sources(lc, survivor_ids, downing.eligible, facing_of, sight)   # story 003
 ##   ma.set_blackout_sources(map_queries.volume_at, blackout_sight)   # story 010
+##   ma.set_sound_sink(server_movement.emit_sound)   # story 007: lunge cue, scrape and hit sounds
 ##   ma.set_false_signal_sources(server_movement.emit_sound, snap, bf.observed, match_flow.status_of,
 ##       footstep_set_of, {SurvivorObjectives.INSTALL_SOUND: radius}, step_s, path_end)   # story 009
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
@@ -58,6 +59,13 @@ const MOD_OWNER := &"lunge"
 const MISS_SLOW_OWNER := &"lunge_miss"
 ## Float tolerance of the hit test's inclusive radius and cone bounds (geometry, not a tuning value).
 const HIT_EPS := 1e-6
+## Story 007 positional sound sets (Visual/Audio Requirements; ADR-0013 §2 catalog ids): the wind-up cue
+## (rule 5), the miss scrape and the server-confirmed hit. All three go out at lunge_cue_radius_m.
+## Inference: the GDD gives a radius for the cue only; the scrape and hit reuse it until a sound designer
+## sets their own (a lunge_scrape/hit radius knob would settle it).
+const CUE_SOUND := &"lunge_cue"
+const SCRAPE_SOUND := &"lunge_scrape"
+const HIT_SOUND := &"lunge_hit"
 
 var _monster: int = -1
 var _form: Callable
@@ -127,6 +135,8 @@ const SIGNAL_FIELDS: Array[String] = [ABILITY_KEY, AIM_KEY, TYPE_KEY, SURVIVOR_K
 const SIGNAL_CAP_BYTES := 192
 ## Story 009 sources (set_false_signal_sources); unset _snap rejects every False Signal.
 var _emit_sound: Callable
+## Story 007: send radius of the Lunge sounds (AbilityKnobs.lunge_cue_radius_m).
+var _cue_radius: float = 0.0
 var _snap: Callable
 var _observed: Callable
 var _status_of: Callable
@@ -161,6 +171,13 @@ func set_monster(monster: int) -> void:
 ## Injects the position source for AbilityUsed (story 005; ServerMovement's body position).
 func set_position_source(position_of: Callable) -> void:
 	_position_of = position_of
+
+
+## Story 007: injects the positional sound sink, `emit_sound(position, sound_set, radius_m)`
+## (ServerMovement.emit_sound, no source: the monster's own client hears its cue too). Shared with
+## set_false_signal_sources, which sets the same sink. Unset: the Lunge sends no sound.
+func set_sound_sink(emit_sound: Callable) -> void:
+	_emit_sound = emit_sound
 
 
 ## Story 003: injects the hit test sources (rule 7, ADR-0003 §3-6). `lc` gives the rewind and the
@@ -337,6 +354,7 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_windup_turn = deg_to_rad(knobs.ability.lunge_windup_turn_deg_s)
 	_dash_turn = deg_to_rad(knobs.ability.lunge_dash_turn_deg_s)
 	_hit_radius = knobs.ability.lunge_hit_radius_m
+	_cue_radius = knobs.ability.lunge_cue_radius_m
 	_cone = deg_to_rad(knobs.ability.lunge_cone_deg)
 	_miss_slow_mult = knobs.ability.miss_slow_multiplier
 	_miss_slow_ticks = knobs.ticks(knobs.ability.miss_slow_s)
@@ -388,6 +406,7 @@ func server_tick(tick: int) -> void:
 		# Rule 12: a stun landing this tick (not flushed yet; see _try_hit) interrupts it: no slow.
 		if not (_locked.is_valid() and _locked.call(_monster)):
 			_start_miss_slow(tick)
+			_emit(_monster_at(), SCRAPE_SOUND, _cue_radius) ## story 007: the miss scrape and stumble
 	_step_footsteps(tick)
 	var req := _pending
 	_pending = {}
@@ -396,6 +415,9 @@ func server_tick(tick: int) -> void:
 	if req[ABILITY_KEY] == Ability.LUNGE:
 		_set_lunge(Lunge.WIND_UP, tick)
 		_phase_end_tick = tick + _windup_ticks
+		# Story 007, rule 5: the cue goes out from the Lunge state (AbilityUsed is never replicated), so it
+		# reaches every client in range lunge_windup_s before the dash.
+		_emit(_monster_at(), CUE_SOUND, _cue_radius)
 		_emit_used(Ability.LUNGE, req[AIM_KEY])
 	elif req[ABILITY_KEY] == Ability.BLACKOUT and blackout_target_ok(req[AIM_KEY]):
 		_ready_tick[Ability.BLACKOUT] = tick + _blackout_cooldown_ticks ## rule 21: from activation
@@ -445,6 +467,10 @@ func _step_footsteps(tick: int) -> void:
 	var n := tick - _steps_start
 	if n == 0 or (_step_ticks > 0 and n % _step_ticks == 0):
 		_emit(_steps_from + _steps_dir * minf(_walk_speed * n / _hz, _steps_len), _steps_set, _walk_radius)
+
+
+func _monster_at() -> Vector3:
+	return _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
 
 
 func _emit(position: Vector3, sound_set: StringName, radius_m: float) -> void:
@@ -596,6 +622,7 @@ func _set_lunge(state: Lunge, tick: int) -> void:
 func _on_survivor_hit(e: ServerEvent) -> void:
 	if _lunge == Lunge.ACTIVE:
 		_landed_ticks.append(e.tick)
+		_emit((e as EvSurvivorHit).position, HIT_SOUND, _cue_radius) ## story 007: server-confirmed hit
 		_set_lunge(Lunge.TAKEDOWN_COMMIT, e.tick)
 
 

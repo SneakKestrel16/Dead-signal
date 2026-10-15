@@ -18,6 +18,9 @@ const CAPSULE_HEIGHT := 1.8
 ## The shared step: same function for the server body and the owner's body.
 static func apply(body: CharacterBody3D, frame: InputFrame, modifiers: MovementModifiers) -> void:
 	var dt := 1.0 / Engine.physics_ticks_per_second
+	if modifiers.dash_speed > 0.0 and not (modifiers.rooted or modifiers.locked):
+		MovementStep._dash(body, frame.yaw, modifiers, dt) ## the real Lunge dash, so harness rounds lunge (MA-7)
+		return
 	var move := Vector2.ZERO if modifiers.rooted or modifiers.locked else frame.move
 	var dir := Basis(Vector3.UP, frame.yaw) * Vector3(move.x, 0.0, -move.y)
 	var target := dir * WALK_SPEED * modifiers.speed_scale

@@ -4,10 +4,10 @@ extends GdUnitTestSuite
 
 const BUILD := "0.1.0"
 const WAIT_S := 5.0
-## Digest of the shipped data/knobs/*.tres on 2026-10-14. Any change to a shipped knob value changes it:
+## Digest of the shipped data/knobs/*.tres on 2026-10-15 (MA-7: lunge_hit_stop_s). Any change to a shipped knob value changes it:
 ## update this constant in the same commit (that is the point: it proves the digest is stable across
 ## runs, and that a value change is visible to the join check).
-const SHIPPED_DIGEST := "213e885ad2dc59ba00c1bcef363adfe43411515150bfbb51ecabcff9357a019e"
+const SHIPPED_DIGEST := "8d872dbd15b09fb964d8ae41a7f3bda37adfdf11860cbdeeb52259c0747a2e99"
 
 static var _next_port := 25900
 
