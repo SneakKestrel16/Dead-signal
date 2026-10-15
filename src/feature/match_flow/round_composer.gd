@@ -59,6 +59,8 @@ var offset: ViewOffset
 var scares: ScareEvents
 ## Facility scare state and RoundScript anchor scares (scare-events story 006).
 var scare_state: FacilityScareState
+## The shapeshifter HUD state sender (hud-results/006); held here, batch_extras holds only its method.
+var monster_hud: MonsterHudFeed
 var round_script: RoundScript
 ## The ambush test and the Major-scare flinch request (scare-events story 005).
 var ambush: AmbushTest
@@ -214,6 +216,9 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 			bf.appearance_of)
 	sm.batch_extras.append(callout_delivery.entries)
 	sm.batch_extras.append(scare_state.entries)
+	monster_hud = MonsterHudFeed.new(monster, survivors, _tick, ma.ready_tick, bf.cooldown_end_tick,
+			bf.transform_end_tick, sd.lock_end_tick, sd.free_tick, bf.observation_s, bf.appearance_of)
+	sm.batch_extras.append(monster_hud.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
 	for id in roster.player_ids():

@@ -382,6 +382,16 @@ func _end_immunity(player: int, tick: int) -> void:
 		_free_tick.erase(player)
 
 
+## Tick `player`'s running shock lock (the monster's stun) ends; -1 when none runs (HUD S5).
+func lock_end_tick(player: int) -> int:
+	return _lock_start[player] + _duration_ticks if _lock_start.has(player) else -1
+
+
+## First tick a hit may lock `player` again: lock end + post-lock immunity; -1 when no window runs (HUD S5).
+func free_tick(player: int) -> int:
+	return _free_tick.get(player, -1)
+
+
 func _locked_at(player: int, tick: int) -> bool:
 	return _lock_start.has(player) and tick < _lock_start[player] + _duration_ticks
 

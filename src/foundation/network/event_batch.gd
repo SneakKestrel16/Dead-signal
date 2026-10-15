@@ -44,6 +44,10 @@ const FACILITY_SCARE := &"FacilityScare"
 ## to survivor viewers in range; CALLOUT_AUDIO {line, voice, origin} to the monster in range (audio only, rule 11).
 const CALLOUT := &"Callout"
 const CALLOUT_AUDIO := &"CalloutAudio"
+## Entry type of the shapeshifter's own HUD state (MonsterHudFeed.entries, story hud-results/006, ADR-0004 §5):
+## {ready: {lunge, false_signal, blackout, form}, transform_end, stun_end, immune_end, faces: [[survivor,
+## observed_ticks, appearance], ...]}, all times server ticks. Sent to the shapeshifter's peer only, on change.
+const MONSTER_HUD := &"MonsterHud"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

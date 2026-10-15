@@ -6,8 +6,12 @@ class_name HudModel extends RefCounted
 ## hold a gameplay module, the snapshot or the router. Untrusted payloads are shape-checked and ignored if bad.
 ## Deviation from ADR-0014 §6: a sixth signal, roster_changed, because the roster is its own element group
 ## (hud.md) and none of the five covers it.
-## Cooldowns: no server message carries them yet (inference: {ability, remaining_s} in a batch entry, wired
-## when the ability HUD story names the producer); on_cooldown() is the handler for it.
+## Shapeshifter state (story 006, S1-S6): the producer is MonsterHudFeed, one EventBatch.MONSTER_HUD entry
+## sent to the shapeshifter's peer only (ready ticks, transformation end, stun and immunity ends, observation);
+## on_monster_hud() fills the cooldowns from it. The install alert is the shapeshifter-only form of
+## ObjectiveProgressChanged ({centre, radius_m, duration_s}). A survivor client never receives either, so
+## is_shapeshifter() stays false there. Deviation from ADR-0014 §6: a seventh signal, monster_state_changed,
+## for that element group. on_cooldown() keeps story 001's single-cooldown shape for tests; nothing sends it.
 ## Usage (client composition root):
 ##   var model := HudModel.new(match_display, knobs, router)
 ##   model.own_state_changed.connect(widget.refresh); widget.show(model.objective_lines())
@@ -18,6 +22,7 @@ signal feed_line_added(line: Dictionary)
 signal marker_changed(marker_id: int)
 signal cooldowns_changed
 signal own_state_changed
+signal monster_state_changed
 
 ## Roster life states.
 const LIFE_UNKNOWN := -1
@@ -39,6 +44,10 @@ var _own: Dictionary = {}
 var _feed: Array[Dictionary] = []
 var _markers: Array[Dictionary] = [] ## oldest first; "expires" is a server tick
 var _ready_tick: Dictionary[StringName, int] = {} ## ability -> server tick it is ready again
+var _transform_ticks: int
+var _observe_s: float
+var _monster: Dictionary = {} ## the newest MONSTER_HUD payload; empty on a survivor client
+var _alerts: Array[Dictionary] = [] ## install alerts {centre, radius_m, expires (server tick)}
 var _names: Dictionary[int, String] = {} ## survivor player id -> display name (set_survivors)
 var _activation: Dictionary = {} ## {remaining_s, paused} (on_activation); empty = unknown
 
@@ -49,12 +58,15 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 	_hz = knobs.net.sim_tick_hz
 	_marker_life_ticks = knobs.ticks(knobs.ping.ping_lifetime_s)
 	_marker_max_active = knobs.ping.ping_max_active
+	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
+	_observe_s = knobs.borrowed_face.observe_time_s
 	if router != null:
 		router.subscribe(&"ObjectiveProgressChanged", on_objective)
 		for t: StringName in [&"SurvivorDowned", &"SurvivorRescued", &"SurvivorEliminated", &"SurvivorEscaped"]:
 			router.subscribe(t, on_survivor_event.bind(t))
 		router.subscribe(EventBatch.CALLOUT, on_callout)
 		router.subscribe(EventBatch.PING, on_ping)
+		router.subscribe(EventBatch.MONSTER_HUD, on_monster_hud)
 
 
 ## Current Phase (MatchFlow.Phase), -1 before the round begins (MatchDisplay).
@@ -160,8 +172,14 @@ func on_own_body(body: Dictionary) -> void:
 		own_state_changed.emit()
 
 
-## ClientEventRouter handler for ObjectiveProgressChanged. An install alert (no `objective`) is not a line.
-func on_objective(_tick: int, p: Dictionary) -> void:
+## ClientEventRouter handler for ObjectiveProgressChanged. An install alert (no `objective`) is not a line:
+## it becomes an S6 alert living duration_s from `tick`.
+func on_objective(tick: int, p: Dictionary) -> void:
+	if p.get("centre") is Vector3 and p.get("radius_m") is float and p.get("duration_s") is float:
+		_alerts.append({"centre": p["centre"], "radius_m": p["radius_m"],
+			"expires": tick + roundi(p["duration_s"] * _hz)})
+		monster_state_changed.emit()
+		return
 	if not (p.get("objective") is int and p.get("state") is int):
 		return
 	_objectives[p["objective"]] = {"objective": p["objective"], "state": p["state"],
@@ -225,3 +243,67 @@ func on_cooldown(tick: int, p: Dictionary) -> void:
 		return
 	_ready_tick[p["ability"]] = tick + roundi(p["remaining_s"] * _hz)
 	cooldowns_changed.emit()
+
+
+## Handler for EventBatch.MONSTER_HUD (MonsterHudFeed): the shapeshifter's own HUD state. Bad shape: ignored.
+func on_monster_hud(_tick: int, p: Dictionary) -> void:
+	var ready: Variant = p.get("ready")
+	var faces: Variant = p.get("faces")
+	if not (ready is Dictionary and faces is Array and p.get("transform_end") is int
+			and p.get("stun_end") is int and p.get("immune_end") is int):
+		return
+	for k: Variant in ready:
+		if not (k is StringName and ready[k] is int):
+			return
+	for f: Variant in faces:
+		if not (f is Array and f.size() == 3 and f[0] is int and f[1] is float and f[2] is int):
+			return
+	_monster = p.duplicate(true)
+	for k: StringName in ready:
+		_ready_tick[k] = ready[k]
+	cooldowns_changed.emit()
+	monster_state_changed.emit()
+
+
+## True once the shapeshifter's own HUD state arrived: only ever on the shapeshifter's client.
+func is_shapeshifter() -> bool:
+	return not _monster.is_empty()
+
+
+## S1: one row per survivor {survivor, appearance, progress 0..1, available}, in the server's roster order.
+func faces() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for f: Array in _monster.get("faces", []):
+		var progress := clampf(f[1] / _observe_s, 0.0, 1.0) if _observe_s > 0.0 else 1.0
+		out.append({"survivor": f[0], "appearance": f[2], "progress": progress, "available": progress >= 1.0})
+	return out
+
+
+## S4: transformation progress 0..1, or -1.0 when none runs.
+func transform_progress() -> float:
+	var end: int = _monster.get("transform_end", -1)
+	if end < 0 or _transform_ticks <= 0:
+		return -1.0
+	return clampf(1.0 - float(end - maxi(_display.server_tick(), 0)) / _transform_ticks, 0.0, 1.0)
+
+
+## S5: seconds of stun left; 0.0 when not stunned.
+func stun_remaining_s() -> float:
+	return _until_s(_monster.get("stun_end", -1))
+
+
+## S5: seconds of post-stun immunity left (not counting a running stun); 0.0 when none.
+func immunity_remaining_s() -> float:
+	if stun_remaining_s() > 0.0:
+		return 0.0
+	return _until_s(_monster.get("immune_end", -1))
+
+
+## S6: live install alerts {centre, radius_m, expires} at the newest server tick, oldest first.
+func install_alerts() -> Array[Dictionary]:
+	var now := _display.server_tick()
+	return _alerts.filter(func(a: Dictionary) -> bool: return a["expires"] > now)
+
+
+func _until_s(end_tick: int) -> float:
+	return float(maxi(0, end_tick - maxi(_display.server_tick(), 0))) / float(_hz)

@@ -314,6 +314,16 @@ func transform_target() -> int:
 	return _target
 
 
+## First tick a form-change request may be accepted again (rule 9); 0 = no cooldown has run (HUD S2).
+func cooldown_end_tick() -> int:
+	return _cooldown_end_tick
+
+
+## Tick the running transformation completes; -1 when none runs (HUD S4).
+func transform_end_tick() -> int:
+	return _transform_end_tick if _transforming else -1
+
+
 ## Rule 2: one tick of valid observation for each unobserved survivor meeting every condition.
 ## Survivor Defense (slot 200) runs first, so a stun landing this tick blocks it.
 func _observe() -> void:

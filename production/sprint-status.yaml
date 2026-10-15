@@ -237,10 +237,10 @@ stories:
     name: "Shapeshifter HUD and survivor-side absence"
     file: "production/epics/hud-results/story-006-shapeshifter-hud.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-7"
     name: "Feed cap, opaque backing, marker cap, shapes and wheel stick steering"

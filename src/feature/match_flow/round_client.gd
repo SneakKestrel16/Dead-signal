@@ -244,6 +244,7 @@ func _on_connected() -> void:
 		add_child(hud)
 		match_display = MatchDisplay.new(knobs, smp)
 		hud_model = HudModel.new(match_display, knobs, router)
+		ShapeshifterHud.mount(hud, hud_model, camera) # hud-results/006: instanced on shapeshifter state only
 		hud.add_child(AlwaysOnHud.new(hud_model, smp.get_unique_id())) # H1-H6 (hud-results story 002)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)

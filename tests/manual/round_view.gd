@@ -53,6 +53,10 @@ extends Node3D
 ## the other clients ping where they look and call out (Danger, Wait), the shown client pings ahead, then
 ## spams pings past its bucket, then opens the wheel aimed at a line. Shots: pending.png (own pending marker),
 ## markers.png (server markers and feed), toofast.png (rejection tick), wheel.png (wheel open).
+## --bot=shifter (story hud-results/006; --count=5 --view=monster): the shown shapeshifter requests a Lunge,
+## walks to the nearest survivor watching it, and once the face is available changes into it; that survivor
+## then tases it. Shots of its HUD (S1-S5): trueform.png (Lunge cooling, observation filling), transforming.png
+## (S4 mid-bar), disguised.png (form cooldown) and stunned.png (S5).
 ## --bot=warn (story pings-and-callouts/011; --count=5 --view=survivor): the shown client faces the true-form
 ## body it draws (else the nearest) and warning-pings it, another survivor warning-pings where it looks, two
 ## call out. Shots: warning.png (warning markers), expired.png (feed past its 8 s), scrollback.png (the
@@ -203,6 +207,8 @@ func _process(delta: float) -> void:
 		_ping_bot(c0)
 	elif _args.get("bot", "") == "warn":
 		_warn_bot(c0)
+	elif _args.get("bot", "") == "shifter":
+		_shifter_bot(c0)
 	elif _args.get("bot", "") == "conform":
 		_conform_bot(c0)
 
@@ -921,3 +927,70 @@ func _on_scare_audio(_tick: int, payload: Dictionary) -> void:
 	print("SCARE %s intensity %s at %s frame %d: bearing %.1f deg, distance %.2f m" % [payload.get("scare"),
 			payload.get("intensity"), at, Engine.get_frames_drawn(), TransformPresenter.bearing_deg(cam, at),
 			cam.origin.distance_to(at)])
+
+
+## --bot=shifter step: 0 walk and observe, 1 transforming, 2 disguised, 3 tased, 4 done.
+var _shifter_step := 0
+var _shifter_frame := -1
+var _shifter_face: RoundClient
+
+
+func _shifter_bot(c0: RoundClient) -> void:
+	var frame := Engine.get_frames_drawn()
+	if _shifter_face == null:
+		var best := INF
+		for c in _clients:
+			if c != c0 and c.is_spawned() and c.body.global_position.distance_to(c0.body.global_position) < best:
+				best = c.body.global_position.distance_to(c0.body.global_position)
+				_shifter_face = c
+		if _shifter_face == null:
+			return
+		_shifter_frame = frame
+		(c0.multiplayer as SceneMultiplayer).send_bytes(MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE),
+				1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		print("SHIFTER lunge requested; watching %s from %.1f m" % [_shifter_face.name, best])
+	var s := _shifter_face
+	var d := s.body.global_position - c0.body.global_position
+	d.y = 0.0
+	c0.scripted.yaw = atan2(-d.x, -d.z)
+	c0.scripted.move = Vector2(0, 1) if d.length() > 3.0 and frame > _shifter_frame + 40 else Vector2.ZERO
+	var m := c0.hud_model
+	var faces := m.faces().filter(func(f: Dictionary) -> bool: return f["survivor"] == s.net.local_player_id)
+	if faces.is_empty():
+		return
+	var face: Dictionary = faces[0]
+	match _shifter_step:
+		0:
+			if face["progress"] >= 0.4 and not has_meta(&"trueform"):
+				set_meta(&"trueform", true)
+				_shot("trueform")
+				print("HUD trueform: lunge %.1f s, face %.2f" % [m.cooldown_remaining_s(&"lunge"), face["progress"]])
+			if face["available"] and frame % REQUEST_EVERY == 0:
+				(c0.multiplayer as SceneMultiplayer).send_bytes(BorrowedFace.request_packet(s.net.local_player_id), 1,
+						MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+			if m.transform_progress() >= 0.4:
+				_shot("transforming")
+				print("HUD transforming: %.2f" % m.transform_progress())
+				_shifter_step = 1
+		1:
+			if c0.predictor.last_own.get("appearance", -1) == s.predictor.last_own.get("appearance", -2):
+				_shifter_step = 2
+				_shifter_frame = frame
+		2:
+			if frame == _shifter_frame + 30:
+				_shot("disguised")
+				print("HUD disguised: form cooldown %.1f s" % m.cooldown_remaining_s(&"form"))
+				_shifter_step = 3
+				_shifter_frame = frame
+		3:
+			var back := c0.body.global_position - s.body.global_position
+			s.scripted.yaw = atan2(-back.x, -back.z)
+			s.scripted.pitch = -0.1
+			if frame == _shifter_frame + 10:
+				(s.multiplayer as SceneMultiplayer).send_bytes(SurvivorDefense.fire_packet(), 1,
+						MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+			if m.stun_remaining_s() > 0.0 and not has_meta(&"stunned"):
+				set_meta(&"stunned", true)
+				_shot("stunned")
+				print("HUD stunned: %.1f s" % m.stun_remaining_s())
+				_shifter_step = 4

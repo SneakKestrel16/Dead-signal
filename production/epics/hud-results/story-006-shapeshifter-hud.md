@@ -1,7 +1,7 @@
 # Story 006: Shapeshifter HUD and survivor-side absence
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1.5 days
@@ -62,7 +62,7 @@ S1-S7 are the shapeshifter's elements: face list with observation progress, form
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/shapeshifter-hud/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/shapeshifter-hud-evidence.md (4 png); tests/unit/hud-results/shapeshifter_hud_test.gd; tests/integration/hud-results/shapeshifter_hud_absence_test.gd
 
 ---
 
@@ -70,3 +70,7 @@ S1-S7 are the shapeshifter's elements: face list with observation progress, form
 
 - Depends on: Story 001
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged ddb94c6..9ea6b90. Server: MonsterHudFeed (batch_extras, shapeshifter peer only; survivors and spectators get []) sends EventBatch.MONSTER_HUD {ready per ability and form, transform_end, stun_end, immune_end, faces [survivor, observed_s, appearance]} as absolute ticks, re-sent on change; getters BorrowedFace.cooldown_end_tick/transform_end_tick, SurvivorDefense.lock_end_tick/free_tick; composer keeps a reference to the feed (integration test caught it being freed). Client: HudModel on_monster_hud, faces, transform_progress, stun/immunity remaining, install_alerts, signal monster_state_changed (seventh signal, deviation from ADR-0014 §6); widgets shapeshifter_hud/face_list/kit/status/install_alert, mounted on first shapeshifter state so survivors never instance S nodes. NOT DONE: S7 placement preview (no client ability input exists; follow-up monster-abilities 011); S6 unit-tested only, no screenshot; S3 greybox text, icons and sweep for the art pass; face names are CharacterDef ids; ambience debug overlay draws over the face list. on_cooldown from HUD-1 kept with no sender. Unit + integration (survivor-tree absence, real ENet); 4 mutations caught. Full suite 1458/1458.
