@@ -1,12 +1,12 @@
 # Story 006: Disconnects during a commit or while Downed
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Disconnecting can never dodge a takedown or stall the round: commits resolve on 
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A victim who disconnects while Seized is Downed (or Eliminated, with `downs_taken` 1) when the commit timer ends, and returns in that state on reconnect.
-- [ ] A Downed survivor who disconnects keeps bleeding out and is Eliminated ("Bled out") while still disconnected if the timer expires.
-- [ ] A Healthy survivor who disconnects stops slowing bleed-out at once and no longer counts as Healthy (edge cases).
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] A victim who disconnects while Seized is Downed (or Eliminated, with `downs_taken` 1) when the commit timer ends, and returns in that state on reconnect.
+- [x] A Downed survivor who disconnects keeps bleeding out and is Eliminated ("Bled out") while still disconnected if the timer expires.
+- [x] A Healthy survivor who disconnects stops slowing bleed-out at once and no longer counts as Healthy (edge cases).
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -67,7 +67,7 @@ Disconnecting can never dodge a takedown or stall the round: commits resolve on 
 **Required evidence**:
 - Integration: `tests/integration/downing-and-rescue/disconnects_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/downing-and-rescue/disconnects_test.gd` (7 tests)
 
 ---
 
@@ -75,3 +75,17 @@ Disconnecting can never dodge a takedown or stall the round: commits resolve on 
 
 - Depends on: Stories 001, 003
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-151):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 806/806 after the wave merge, no leak warnings.
+- Most of the story already held (seized commit resolves, bleed-out runs while away, only the monster's disconnect cancels); tests confirm it.
+- Fixed: a Downed survivor disconnecting mid-rescue stalled bleed-out forever; `can_rescue` now requires both bodies present.
+- No ENet test: PlayerConnectionChanged emitted directly (Match Flow owns grace). Assumes the composer drops a disconnected player from HoldService (inference).
+**Test Evidence**: 7 tests (3 failed before the fix). Mutations caught: hold cancel removed, rescuer presence check dropped, commit cancelled on any disconnect.
+**Code Review**: Complete (orchestrator review at merge)

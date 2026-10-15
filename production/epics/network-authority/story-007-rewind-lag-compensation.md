@@ -1,12 +1,12 @@
 # Story 007: Rewind history and lag compensation
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,10 +36,10 @@ A hit lands on what the attacker saw. The server keeps 16 ticks of target histor
 
 *From ADR-0003 and Validation Criteria, scoped to this story:*
 
-- [ ] At simulated 50, 100 and 150 ms RTT the full-rewind error is 0.00 m up to the cap; the capped error at 150 ms is reported.
-- [ ] A frame with a non-finite or future `view_tick` gives rewind 0 and a log entry.
-- [ ] `sample()` outside history returns `ok = false`, current positions are used, and the case is logged.
-- [ ] Eligibility read in a hit test is the current tick's, not the rewound tick's (a target hidden after the rewound time is not hit).
+- [x] At simulated 50, 100 and 150 ms RTT the full-rewind error is 0.00 m up to the cap; the capped error at 150 ms is reported.
+- [x] A frame with a non-finite or future `view_tick` gives rewind 0 and a log entry.
+- [x] `sample()` outside history returns `ok = false`, current positions are used, and the case is logged.
+- [x] Eligibility read in a hit test is the current tick's, not the rewound tick's (a target hidden after the rewound time is not hit).
 
 ---
 
@@ -71,7 +71,7 @@ A hit lands on what the attacker saw. The server keeps 16 ticks of target histor
 **Required evidence**:
 - Logic: `tests/unit/network/lag_compensation_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/network/rewind_lag_compensation_test.gd` (12 tests)
 
 ---
 
@@ -79,3 +79,19 @@ A hit lands on what the attacker saw. The server keeps 16 ticks of target histor
 
 - Depends on: Story 006
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-150):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 806/806 after the wave merge, no leak warnings.
+- `RewindHistory`, `LagCompensation`; ServerMovement owns the history; `position_at` reads it.
+- `slack_ticks` value 1 (range 0-10) and chest height (feet + height - radius) are inference; real-network clamp counts and a controller knob settle them. SHIPPED_DIGEST re-pinned.
+- Capped rewind error at 150 ms RTT: 0.055 m; under 0.005 m at 50 and 100 ms.
+- No client fills `view_tick` / `ack_snapshot_tick` yet: until one does, every hit test clamps to the cap and logs. Composition root must construct LagCompensation.
+- Test file written first but first run after implementation; mutations stand in for the red run.
+**Test Evidence**: 12 tests. Mutations caught: RTT bound dropped, interpolation removed, future view_tick accepted, full-height capsule axis.
+**Code Review**: Complete (orchestrator review at merge)

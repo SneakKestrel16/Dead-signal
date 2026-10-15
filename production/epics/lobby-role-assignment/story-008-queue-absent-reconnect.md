@@ -1,12 +1,12 @@
 # Story 008: Queue positions for absent, reconnecting and new players (post-M1)
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -32,9 +32,9 @@ Post-M1 phase. Absent tokens are skipped but keep their place; a reconnect with 
 
 *From `lobby-role-assignment.md` AC-LB-14, AC-LB-17, AC-LB-18, scoped to this story:*
 
-- [ ] Q_1 = [A, B, C, D, E], A in round 1, B absent for round 2 and present for round 3: C is the shapeshifter in round 2, the queue becomes [B, D, E, A, C], and B is the shapeshifter in round 3.
-- [ ] A reconnect with the same token under a new peer ID keeps its queue position; a new token (lost token or first join after round 1) is appended at the back.
-- [ ] A client role-request RPC is ignored and roles are unchanged.
+- [x] Q_1 = [A, B, C, D, E], A in round 1, B absent for round 2 and present for round 3: C is the shapeshifter in round 2, the queue becomes [B, D, E, A, C], and B is the shapeshifter in round 3.
+- [x] A reconnect with the same token under a new peer ID keeps its queue position; a new token (lost token or first join after round 1) is appended at the back.
+- [x] A client role-request RPC is ignored and roles are unchanged.
 
 ---
 
@@ -64,7 +64,7 @@ Post-M1 phase. Absent tokens are skipped but keep their place; a reconnect with 
 **Required evidence**:
 - Logic: `tests/unit/lobby/rotation_queue_absent_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/lobby/queue_absent_reconnect_test.gd` (6 tests)
 
 ---
 
@@ -72,3 +72,18 @@ Post-M1 phase. Absent tokens are skipped but keep their place; a reconnect with 
 
 - Depends on: Story 007
 - Unlocks: Story 011
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-149):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 806/806 after the wave merge, no leak warnings.
+- The rotation queue already skipped absent tokens; the gap was NetAuthority giving a returning lobby leaver a new token, losing their queue place.
+- `tokens_reconnect_test`: the old 'known token after drop is a new join' test replaced by 'rejoins with same token and id' (watched failing first) plus a cap test.
+- Reading ADR-0001 as allowing this is inference; an ADR note from the designer settles it.
+- AC-LB-14 checked by a static scan for role RPCs.
+**Test Evidence**: 6 tests. Mutations caught: rebind flag on Waiting return, pick() ignoring presence, new tokens at the front.
+**Code Review**: Complete (orchestrator review at merge)

@@ -42,7 +42,7 @@ The authoritative server that every rule depends on. It hosts a listen-server se
 | 004 | [TickRunner and the server clock](story-004-tick-runner.md) | Logic | Complete | ADR-0002 |
 | 005 | [Input frames and the server input queue](story-005-input-frames-queue.md) | Logic | Complete | ADR-0002 |
 | 006 | [Snapshots, owner prediction and reconciliation](story-006-snapshots-prediction.md) | Integration | Ready | ADR-0002, ADR-0007 |
-| 007 | [Rewind history and lag compensation](story-007-rewind-lag-compensation.md) | Logic | Ready | ADR-0003 |
+| 007 | [Rewind history and lag compensation](story-007-rewind-lag-compensation.md) | Logic | Complete | ADR-0003 |
 | 008 | [Per-peer handles and relevance](story-008-handles-relevance.md) | Integration | Ready | ADR-0004 |
 | 009 | [Event projection batches and positional sounds](story-009-event-projection-sounds.md) | Integration | Ready | ADR-0004, ADR-0005 |
 | 010 | [Hidden entities, RPC paths, spectators and reconnect re-issue](story-010-hidden-entities-spectators.md) | Integration | Ready | ADR-0004 |
