@@ -260,6 +260,11 @@ func _position(id: int) -> Vector3:
 	return _pos[id]
 
 
+## Line of sight always clear: relevance then keeps every live player (story 003 is checked on its own).
+func _clear(_from: Vector3, _to: Vector3) -> bool:
+	return true
+
+
 func _on_fired(e: ServerEvent) -> void:
 	_fired.append(e as EvScareTriggered)
 
@@ -293,7 +298,8 @@ class SpyScares extends ScareEvents:
 
 
 func _round_script_rig(scares: ScareEvents, fss: FacilityScareState) -> void:
-	var rs := RoundScript.new(scares, ScareCatalogue.load_shipped(), fss, _map_with_anchors(), _players, _position)
+	var rs := RoundScript.new(scares, ScareCatalogue.load_shipped(), fss, _map_with_anchors(), _players, _position,
+			ScareRelevance.new(_position, _clear))
 	_emit = EmitStep.new()
 	_server = auto_free(RoundServer.new())
 	add_child(_server)
@@ -321,7 +327,7 @@ func test_roundscript_fires_only_on_entering_an_anchor_volume_in_a_listed_phase(
 		assert_bool(want.has(c[0])).is_true()
 		assert_vector(c[1]).is_equal(want.get(c[0], Vector3.INF))
 		want.erase(c[0])
-		assert_array(c[2]).contains_exactly_in_any_order([1, 2]) ## every live player until story 003
+		assert_array(c[2]).contains_exactly_in_any_order([1, 2]) ## both relevant: line of sight is stubbed clear
 		assert_int(c[3]).is_equal(ScareEntry.Source.ROUND_SCRIPT)
 		assert_int(c[4]).is_equal(-1)
 	scares.calls.clear()

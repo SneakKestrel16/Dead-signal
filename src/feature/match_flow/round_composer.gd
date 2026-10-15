@@ -120,7 +120,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		return PackedStringArray(["scare catalogue invalid, round not started"])
 	scares = ScareEvents.new(catalogue)
 	scare_state = FacilityScareState.new()
-	round_script = RoundScript.new(scares, catalogue, scare_state, map, _live_players, _position)
+	round_script = RoundScript.new(scares, catalogue, scare_state, map, _live_players, _position,
+			ScareRelevance.new(_eye, _clear_sight))
 	ambush = AmbushTest.new(scares)
 	holds = HoldService.new(knobs, _live_players, sm.frames_of, _centre, _hold_sight, _aim, _body_target,
 			_is_monster)

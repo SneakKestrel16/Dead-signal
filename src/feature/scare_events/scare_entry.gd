@@ -59,6 +59,9 @@ func errors() -> PackedStringArray:
 	for p in phases:
 		if not p in Phase.values():
 			errs.append("%s: phase %d is not Low/Rising/Emergency" % [id, p])
+	# Rule 21: a Monster-source hallucination plays the monster's own action, its real position, to one client.
+	if scope == Scope.SINGLE_CLIENT and source == Source.MONSTER:
+		errs.append("%s: a hallucination may not be Monster source (rule 21)" % id)
 	if source == Source.ROUND_SCRIPT and (phases.is_empty() or zones.is_empty()):
 		errs.append("%s: a RoundScript scare needs phases and zones (rule 6)" % id)
 	return errs

@@ -54,7 +54,7 @@ This epic is complete when:
 |---|-------|------|--------|-----|
 | 001 | Scare catalogue data and the server Scare module | Logic | Complete | ADR-0005 |
 | 002 | Per-recipient scare gating, budgets and repeat block | Logic | Complete | ADR-0015 |
-| 003 | Scoped delivery: shared relevance and single-client hallucinations | Integration | Ready | ADR-0004 |
+| 003 | Scoped delivery: shared relevance and single-client hallucinations | Integration | Complete | ADR-0004 |
 | 004 | Monster-source scares: door burst, reveal and Blackout | Integration | In Review | ADR-0005 |
 | 005 | Ambush lunge scare and flinch suppression near a lunge | Integration | Complete | ADR-0015 |
 | 006 | Facility scare state machine and RoundScript anchors | Integration | In Review | ADR-0009 |
