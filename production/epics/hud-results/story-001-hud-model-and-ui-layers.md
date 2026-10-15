@@ -1,7 +1,7 @@
 # Story 001: HudModel, UiLayers and the full InputContextStack
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,9 +34,9 @@ ADR-0014 names a client `HudModel` as the HUD's only source, fixed `UiLayers`, a
 
 *From GDD `design/ux/hud.md`, scoped to this story:*
 
-- [ ] `InputContextStack` supports GAMEPLAY, WHEEL, OVERLAY, MENU and MODAL with the ADR-0014 flag table; it resets to GAMEPLAY at round start and to MENU at round end; a stale pop is an error; the existing wheel behaviour is unchanged.
-- [ ] `UiLayers` holds WORLD_MARKERS 1, HUD 2, SCARE_FX 3, CAPTIONS 4, OVERLAY 10, MODAL 20, and every existing CanvasLayer in `src` uses it.
-- [ ] `HudModel` exposes phase, clock, roster, objective lines, own state, cooldowns, feed lines and markers through typed getters and the five ADR-0014 signals, fed only by the snapshot handler and `ClientEventRouter`; a unit test drives each signal from a recorded payload.
+- [x] `InputContextStack` supports GAMEPLAY, WHEEL, OVERLAY, MENU and MODAL with the ADR-0014 flag table; it resets to GAMEPLAY at round start and to MENU at round end; a stale pop is an error; the existing wheel behaviour is unchanged.
+- [x] `UiLayers` holds WORLD_MARKERS 1, HUD 2, SCARE_FX 3, CAPTIONS 4, OVERLAY 10, MODAL 20, and every existing CanvasLayer in `src` uses it.
+- [x] `HudModel` exposes phase, clock, roster, objective lines, own state, cooldowns, feed lines and markers through typed getters and the five ADR-0014 signals, fed only by the snapshot handler and `ClientEventRouter`; a unit test drives each signal from a recorded payload.
 
 ---
 
@@ -65,7 +65,7 @@ ADR-0014 names a client `HudModel` as the HUD's only source, fixed `UiLayers`, a
 **Story Type**: Logic
 **Required evidence**: `tests/unit/hud-results/hud_model_and_ui_layers_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] tests/unit/hud-results/hud_model_and_ui_layers_test.gd (13); full suite 1423/1423; rendered round_view 0 errors
 
 ---
 
@@ -73,3 +73,7 @@ ADR-0014 names a client `HudModel` as the HUD's only source, fixed `UiLayers`, a
 
 - Depends on: match-flow 009; pings-and-callouts 008
 - Unlocks: Stories 002-008
+
+## Progress Notes (2026-10-15)
+
+Merged 4965789. InputContextStack gains viewport, focus restore on pop, reset(base), wants_cursor, reapply_mouse_mode (FOCUS_IN). UiLayers holds the six layers; ScarePresenter, ShockPresenter and RoundClient use it. HudModel reads MatchDisplay for phase and clock; getters for objectives, roster, own state, feed, markers, cooldowns; fed by ClientEventRouter handlers and on_own_body. DEVIATIONS: sixth signal roster_changed (none of the five ADR signals covers the roster); cooldown feed shape on_cooldown(tick, {ability, remaining_s}) is inference, no server message carries cooldowns yet (HUD-6 names the producer); layer show/hide on push/pop and first-motion discard after capture wait for the first screens; PingCalloutHud/PingMarkers not migrated (HUD-7). 13 unit tests; 3 mutations caught. Full suite 1423/1423. Orchestrator ran round_host + rendered round_view (5 clients, 600 frames): exit 0, 0 ERROR lines.

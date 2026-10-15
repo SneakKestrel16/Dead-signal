@@ -69,6 +69,10 @@ var warp: TransformPresenter
 var ping_hud: PingCalloutHud
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
+## The HUD's only data source (hud-results story 001) and the client's display of phase and clock; null when
+## not rendering.
+var hud_model: HudModel
+var match_display: MatchDisplay
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
 var flinch_enabled := true
 ## When set, used instead of LocalInput each tick (scripted runs and tests); yaw/pitch come from it.
@@ -128,6 +132,8 @@ func close() -> void:
 		predictor.close()
 	if puppets != null:
 		puppets.close()
+	if match_display != null:
+		match_display.close()
 	if router != null:
 		router.close()
 	if net != null:
@@ -215,7 +221,10 @@ func _on_connected() -> void:
 		router.subscribe(EventBatch.CAMERA, feed.on_camera)
 		add_child(ScareVisuals.new(scares, facility_scare, lights, feed, router)) # scare-events story 009
 		hud = CanvasLayer.new()
+		hud.layer = UiLayers.HUD
 		add_child(hud)
+		match_display = MatchDisplay.new(knobs, smp)
+		hud_model = HudModel.new(match_display, knobs, router)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)
 		hud.add_child(ambience.make_overlay())
@@ -225,6 +234,9 @@ func _on_connected() -> void:
 				func() -> int: return predictor.last_own.get("appearance", -1), _map)
 		hud.add_child(ping_hud)
 		input.contexts = ping_hud.contexts
+		ping_hud.contexts.viewport = get_viewport()
+		router.subscribe(&"RoundPhaseChanged", _on_phase_changed)
+		router.subscribe(&"RoundEnded", _on_round_ended)
 		bar = PredictedHoldBar.new()
 		hud.add_child(bar)
 		bar.set_anchors_preset(Control.PRESET_CENTER)
@@ -316,6 +328,8 @@ func _physics_process(_delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_now_ms += delta * 1000.0
+	if match_display != null:
+		match_display.advance(delta)
 	if predictor != null:
 		predictor.advance_visual(delta)
 	if head != null:
@@ -382,6 +396,8 @@ func receive(bytes: PackedByteArray) -> void:
 	_last_tick = snap.tick
 	_present.clear()
 	for b: Dictionary in snap.bodies:
+		if b.get("own", false) and hud_model != null:
+			hud_model.on_own_body(b)
 		if b.get("own", false) or not puppets.has(b.id):
 			continue
 		_present[b.id] = true
@@ -390,6 +406,21 @@ func receive(bytes: PackedByteArray) -> void:
 		_buf[b.id].append([_now_ms, b.pos, b.yaw])
 		if _buf[b.id].size() > 8:
 			_buf[b.id].remove_at(0)
+
+
+## ADR-0014 §1: the input stack resets to GAMEPLAY at round start and to MENU at round end.
+func _on_phase_changed(_tick: int, p: Dictionary) -> void:
+	if p.get("phase") == MatchFlow.Phase.INFILTRATION:
+		ping_hud.contexts.reset(InputContextStack.Ctx.GAMEPLAY)
+
+
+func _on_round_ended(_tick: int, _p: Dictionary) -> void:
+	ping_hud.contexts.reset(InputContextStack.Ctx.MENU)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and ping_hud != null:
+		ping_hud.contexts.reapply_mouse_mode() # alt-tab drops the capture (ADR-0014 §3)
 
 
 func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:

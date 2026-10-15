@@ -92,7 +92,7 @@ func _init(disguise: DisguisePresenter, remotes: Dictionary[int, Node3D], state_
 	_edge.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_edge.modulate.a = 0.0
 	var layer := CanvasLayer.new()
-	layer.layer = ScarePresenter.SCARE_FX_LAYER
+	layer.layer = UiLayers.SCARE_FX
 	layer.add_child(_edge)
 	add_child(layer)
 

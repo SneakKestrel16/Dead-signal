@@ -14,9 +14,8 @@ class_name ScarePresenter extends CanvasLayer
 ##   var p := ScarePresenter.new(FlashLimiter.new(knobs.facility.max_flashes_per_s), camera_fx, catalog)
 ##   add_child(p); router.subscribe(&"ScareTriggered", p.on_scare); p.flash_scale = settings.flash_scale
 
-## UiLayers.SCARE_FX (ADR-0014 §4 as amended by ADR-0015 §5: between HUD and CAPTIONS). UiLayers is not
-## in code yet; this is its value.
-const SCARE_FX_LAYER := 3
+## Alias of UiLayers.SCARE_FX (ADR-0014 §4 as amended by ADR-0015 §5: between HUD and CAPTIONS).
+const SCARE_FX_LAYER := UiLayers.SCARE_FX
 ## ADR-0015 §5: the non-flashing dim lasts 0.4 s.
 const DIM_S := 0.4
 
