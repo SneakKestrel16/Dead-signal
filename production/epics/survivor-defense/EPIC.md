@@ -5,7 +5,7 @@
 > **Architecture Module**: Survivor Defense (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
 > **Control Manifest**: 2026-10-13
-> **Stories**: 13 stories, see the Stories table below
+> **Stories**: 15 stories, see the Stories table below
 
 ## Overview
 
@@ -67,6 +67,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Complete | ADR-0002 |
 | 013 | [Hiding marker facing and eject in front](story-013-hiding-marker-facing.md) | Logic | Complete | ADR-0008 |
 | 014 | [Barricade input distinct from the door toggle](story-014-barricade-input.md) | Integration | In Review | ADR-0008 |
+| 015 | [Shipped client fires the taser on use_item](story-015-taser-fire-input.md) | Integration | Ready | ADR-0014 |
 
 ## Definition of Done
 

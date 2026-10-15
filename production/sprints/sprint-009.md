@@ -42,6 +42,18 @@ The plan below is 10.5 agent-days. Agents run in parallel worktrees, as in sprin
 | hud-9 | [Lobby "Last round" view](../epics/hud-results/story-009-lobby-last-round.md) | ui-programmer | 0.5 | hud-8 | Screenshots |
 | hud-10 | [Visual budget and accessibility verification pass](../epics/hud-results/story-010-hud-budget-accessibility-pass.md) | qa-tester | 1 | hud-2 to hud-7 | Measured numbers in an evidence file |
 
+### Added mid-sprint (AD-236)
+
+The shipped client sends no ability, transform or taser requests (only `tests/manual/round_view.gd` does), so the shapeshifter cannot attack or disguise in the playable loop. HUD stories also found missing server feeds and gamepad bindings.
+
+| ID | Task | Priority | Est. Days |
+|----|------|----------|-----------|
+| monster-abilities-11 | [Client input for Lunge, False Signal and Blackout, with placement preview](../epics/monster-abilities/story-011-client-ability-input.md) | Must Have | 1.5 |
+| borrowed-face-11 | [Client form picker and transform input](../epics/borrowed-face/story-011-client-form-picker.md) | Must Have | 1 |
+| survivor-defense-15 | [Client fires the taser on use_item](../epics/survivor-defense/story-015-taser-fire-input.md) | Must Have | 0.5 |
+| hud-11 | [Server feeds: roster names and hold refusal reasons](../epics/hud-results/story-011-hud-server-feeds.md) | Should Have | 1 |
+| hud-12 | [Gamepad bindings for every action](../epics/hud-results/story-012-gamepad-bindings.md) | Nice to Have | 0.5 |
+
 ## Carryover from Previous Sprint
 
 | Task | Reason | New Estimate |

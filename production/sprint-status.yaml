@@ -269,3 +269,48 @@ stories:
     estimate_days: 1
     blocker: ""
     completed: ""
+  - id: "monster-abilities-11"
+    name: "Shipped client input for Lunge, False Signal and Blackout, with placement preview"
+    file: "production/epics/monster-abilities/story-011-client-ability-input.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "borrowed-face-11"
+    name: "Shipped client form picker and transform input"
+    file: "production/epics/borrowed-face/story-011-client-form-picker.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-15"
+    name: "Shipped client fires the taser on use_item"
+    file: "production/epics/survivor-defense/story-015-taser-fire-input.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "hud-11"
+    name: "Server feeds the HUD still lacks: round roster names and hold refusal reasons"
+    file: "production/epics/hud-results/story-011-hud-server-feeds.md"
+    priority: should-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-12"
+    name: "Gamepad bindings for every action"
+    file: "production/epics/hud-results/story-012-gamepad-bindings.md"
+    priority: nice-to-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""

@@ -4,7 +4,7 @@
 > **GDD**: none. The design record is the two UX specs, `design/ux/hud.md` and `design/ux/results.md` (both reviewed by `/ux-review` 2026-10-15; fixes in AD-227 to AD-232), with patterns from `design/ux/interaction-patterns.md`.
 > **Architecture Module**: HUD & Results (`docs/architecture/architecture.md` Presentation layer)
 > **Status**: Ready
-> **Stories**: 10 stories, see the Stories table below
+> **Stories**: 12 stories, see the Stories table below
 
 ## Overview
 
@@ -78,6 +78,8 @@ This epic is complete when:
 | 008 | Results screen | UI | Ready | ADR-0014 |
 | 009 | Lobby "Last round" view | UI | Ready | ADR-0014 |
 | 010 | Visual budget and accessibility verification pass | UI | Ready | ADR-0014 |
+| 011 | Server feeds the HUD still lacks: round roster names and hold refusal reasons | Integration | Ready | ADR-0004 |
+| 012 | Gamepad bindings for every action | UI | Ready | ADR-0014 |
 
 ## Next Step
 
