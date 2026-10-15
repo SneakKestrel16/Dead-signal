@@ -18,7 +18,8 @@ class_name RoundLifecycle extends RefCounted
 ## Story 007 (rule 10, ADR-0004 §8): a survivor who is Eliminated or Escaped loses their body (`remove`,
 ## unless a disconnect already took it) and spectates: `watch` points them at the lowest-id survivor still
 ## inside and connected. When that survivor goes Out or drops, every spectator on them moves to the next;
-## a reconnect does not pull them back. With nobody left to watch nothing switches; the round is ending.
+## a reconnect does not pull them back. With nobody left to watch nothing switches; the round is ending
+## (a spectator that never watched anyone gets `watch(id, -1)` so it still receives RoundEnded, BUG-0007).
 ## A spectator's own disconnect removes no body and its reconnect spawns none.
 ## A host that quits ends the process: over is never called, so no result is recorded (rule 19 of
 ## lobby-role-assignment.md; clients see NetAuthority.host_left).
@@ -227,7 +228,9 @@ func _watchable(id: int) -> bool:
 	return (s == MatchFlow.Status.HEALTHY or s == MatchFlow.Status.DOWNED) and not _mf.in_grace(id)
 
 
-## Moves every spectator whose survivor is not watchable to the lowest-id watchable survivor.
+## Moves every spectator whose survivor is not watchable to the lowest-id watchable survivor. With none,
+## a spectator that never watched anyone (the last survivor out) is watched as -1: it still needs the
+## tick's event batch, RoundEnded included (BUG-0007; ServerMovement.watch).
 func _retarget() -> void:
 	var ids := _mf.survivor_ids.duplicate()
 	ids.sort()
@@ -237,6 +240,9 @@ func _retarget() -> void:
 			target = id
 			break
 	if target == -1:
+		for sp: int in _spectators:
+			if _spectators[sp] == -1 and watch.is_valid():
+				watch.call(sp, -1)
 		return
 	for sp: int in _spectators:
 		var cur := _spectators[sp]

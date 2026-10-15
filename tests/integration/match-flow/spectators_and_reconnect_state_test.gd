@@ -182,7 +182,8 @@ func test_when_no_living_survivor_is_left_spectating_ends_with_the_round() -> vo
 		assert_int(_watches.size()).is_equal(n + i + 1) # every spectator so far moves
 	var before := _watches.size()
 	_tick([_elim(s[s.size() - 1])])
-	assert_int(_watches.size()).is_equal(before) # nobody left to watch: no switch
+	# Nobody left to watch: no switch; only the last one out is watched as -1, for RoundEnded (BUG-0007).
+	assert_array(_watches.slice(before)).is_equal([[s[s.size() - 1], -1]])
 	assert_int(_lc.state()).is_equal(RoundLifecycle.State.RESULTS)
 
 

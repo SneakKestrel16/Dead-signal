@@ -568,7 +568,8 @@ func _set_hidden(id: int, on: bool) -> void:
 ## record is sent again (ADR-0015 §2: the record reaches the owner's spectators).
 func _watch(spectator: int, survivor: int) -> void:
 	sm.watch(spectator, survivor)
-	offset.resend(survivor)
+	if survivor != -1: ## -1: nobody left to watch (BUG-0007)
+		offset.resend(survivor)
 
 
 ## A hit survivor is Seized: ViewOffset re-baselines it (ADR-0015).

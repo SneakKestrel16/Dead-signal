@@ -164,13 +164,15 @@ func remove_player(player_id: int) -> void:
 ## projected for `survivor` (ADR-0004 §8): its snapshot mirrors the survivor's, own entry included,
 ## under the spectator's own handles. A switch drops every handle: the client discards its puppet map
 ## (a RESET message, in order before the new INTRODUCEs) and the next send re-introduces every relevant
-## body with a full snapshot. If the watched survivor leaves, the spectator gets nothing until the caller
-## watches another (a rejoining survivor resumes the same stream: server and client maps still agree).
+## body with a full snapshot. `survivor` -1 (nobody is watchable, e.g. the last survivor is out) or a
+## watched survivor with no body: the spectator still gets every tick's event batch, but no snapshot
+## (BUG-0007; see _snapshot_phase). A rejoining survivor resumes the same stream: server and client maps
+## still agree.
 func watch(spectator: int, survivor: int) -> void:
 	if spectator == survivor or _players.has(spectator):
 		push_error("ServerMovement.watch: player %d still has a body or watches itself" % spectator)
 		return
-	if _watching.get(spectator, -1) == survivor:
+	if _watching.has(spectator) and _watching[spectator] == survivor:
 		return
 	_watching[spectator] = survivor
 	scope.reset_viewer(spectator)
@@ -312,24 +314,33 @@ func _snapshot_phase(tick: int) -> void:
 		_send_stream(tick, pid, pid, positions, positions, events, sounds, scope.handles)
 	for spectator: int in _watching:
 		var watched := _watching[spectator]
+		var mirror := HandleMirror.new(scope.handles, spectator)
 		if not _players.has(watched):
+			# Nothing to watch: the event batch still goes (RoundEnded when the last survivor is out,
+			# BUG-0007), projected as the watched survivor (as itself when none: an Out survivor's own
+			# projection, ADR-0004), with no sounds and no snapshot: there is no body for the own entry.
+			var none: Array[EventBatch.Sound] = []
+			_send_stream(tick, spectator, watched if watched != -1 else spectator, {}, positions, events, none,
+				mirror)
 			continue
 		# Relevance from the watched survivor's eye, the spectator as viewer; the survivor is the own entry.
 		var eyes := positions.duplicate()
 		eyes.erase(watched)
 		eyes[spectator] = positions[watched]
-		_send_stream(tick, spectator, watched, eyes, positions, events, sounds,
-			HandleMirror.new(scope.handles, spectator))
+		_send_stream(tick, spectator, watched, eyes, positions, events, sounds, mirror)
 
 
 ## Sends `viewer`'s peer this tick's handle messages, event batch and snapshot, projected for `as_player`
 ## (the viewer itself, or the survivor a spectator watches). `eyes` places the viewer for relevance.
+## When `as_player` has no body in `positions`, only the handle messages and event batches are sent.
 func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, positions: Dictionary,
 		events: Array[ServerEvent], sounds: Array[EventBatch.Sound], handles: HandleTable) -> void:
 	var peer := _net.peer_id_of(viewer)
 	if peer == -1:
 		return
-	var seen := scope.bodies_for(tick, viewer, eyes)
+	var body := positions.has(as_player)
+	var pos: Vector3 = positions.get(as_player, Vector3.ZERO)
+	var seen := scope.bodies_for(tick, viewer, eyes) if body else {}
 	var msgs := scope.handles.take(viewer)
 	if not msgs.is_empty():
 		_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
@@ -338,15 +349,17 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 		for provider in catch_up:
 			for e: ServerEvent in provider.call():
 				var one: Array[ServerEvent] = [e]
-				var old := EventBatch.build(e.tick, as_player, one, [], positions[as_player], handles, monster)
+				var old := EventBatch.build(e.tick, as_player, one, [], pos, handles, monster)
 				if not old.is_empty():
 					_smp.send_bytes(old, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
 	var extra: Array = []
 	for provider in batch_extras:
 		extra.append_array(provider.call(as_player, full))
-	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster, extra)
+	var batch := EventBatch.build(tick, as_player, events, sounds, pos, handles, monster, extra)
 	if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
 		_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+	if not body:
+		return
 	var bodies: Array[Dictionary] = [_entry(as_player, as_player, true)]
 	for other: int in seen: ## handle order (ReplicationScope.bodies_for)
 		bodies.append(_entry(other, seen[other], false))
