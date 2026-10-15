@@ -56,7 +56,7 @@ The body, view and interaction layer every player shares. The server moves each 
 | 010 | [Shapeshifter fake holds](story-010-fake-holds.md) | Integration | Complete | ADR-0008 |
 | 011 | [Server authority, input timeout and round-end freeze](story-011-authority-timeout-round-end.md) | Integration | Complete | ADR-0002, ADR-0008 |
 | 012 | [Doors: instant toggle and swing-area close check](story-012-doors.md) | Integration | Complete | ADR-0007 |
-| 013 | [Flinch view offset and client-only camera effects](story-013-view-offset-camera-effects.md) | Logic | Ready | ADR-0015 (Proposed), ADR-0002 |
+| 013 | [Flinch view offset and client-only camera effects](story-013-view-offset-camera-effects.md) | Logic | Complete | ADR-0015 (Proposed), ADR-0002 |
 | 014 | [Footstep events from gait and disguise](story-014-footsteps.md) | Integration | Complete | ADR-0013 (Proposed), ADR-0004, ADR-0010 (Proposed) |
 | 015 | [Chase closing check and controller tick budget](story-015-chase-closing-tick-budget.md) | Integration | Complete | ADR-0002, ADR-0007 |
 | 016 | [Predicted hold bar responsiveness](story-016-predicted-hold-bar.md) | Visual/Feel | In Review | ADR-0008 |

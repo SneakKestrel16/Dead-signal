@@ -120,11 +120,11 @@ stories:
     name: "Flinch view offset and client-only camera effects"
     file: "production/epics/controller-interaction/story-013-view-offset-camera-effects.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: "Server side merged (bc5b9b0); client fold, CameraFx, ScarePresenter, spectator projection, flinch-toggle RPC remain; ADR-0015 epoch deviation AD-210"
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-9"
     name: "False Signal (Vertical Slice)"
     file: "production/epics/monster-abilities/story-009-false-signal.md"

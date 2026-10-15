@@ -1,12 +1,12 @@
 # Story 013: Flinch view offset and client-only camera effects
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 
 ## Context
@@ -33,10 +33,10 @@ The scare flinch is the one sanctioned server-side view change; every other came
 
 *From `first-person-controller.md` Acceptance Criteria (Look and view ray: flinch criteria), scoped to this story:*
 
-- [ ] The downing camera impact and shake and the survivor-defense jitter and jolt leave the server view direction and aim ray unchanged.
-- [ ] A flinch for a toggled-on player makes the server view direction equal client yaw/pitch plus the offset within 0.3 s and keeps it; for a toggled-off player the view direction never changes; no flinch starts during a lunge wind-up.
-- [ ] A second flinch replaces the offset (ramp from current to new target, at most `flinch_max_angle_deg`), and a wind-up cancelling a running flinch freezes the offset.
-- [ ] On round end, Downed, Hidden, Seized, reconnect or toggle-off, the offset re-baselines to 0 with no change in view direction on that tick; after a reconnect server and client agree on the first tick.
+- [x] The downing camera impact and shake and the survivor-defense jitter and jolt leave the server view direction and aim ray unchanged.
+- [x] A flinch for a toggled-on player makes the server view direction equal client yaw/pitch plus the offset within 0.3 s and keeps it; for a toggled-off player the view direction never changes; no flinch starts during a lunge wind-up.
+- [x] A second flinch replaces the offset (ramp from current to new target, at most `flinch_max_angle_deg`), and a wind-up cancelling a running flinch freezes the offset.
+- [x] On round end, Downed, Hidden, Seized, reconnect or toggle-off, the offset re-baselines to 0 with no change in view direction on that tick; after a reconnect server and client agree on the first tick.
 
 ---
 
@@ -67,7 +67,7 @@ The scare flinch is the one sanctioned server-side view change; every other came
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/view_offset_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/first-person-controller/view_offset_test.gd` (22), `camera_fx_test.gd` (5), `tests/unit/scare-events/scare_presenter_test.gd` (5), `tests/unit/network/player_settings_test.gd` (4); client chain screenshot `production/qa/evidence/client-round-scene/client-view-ci13-chain.png`
 
 ---
 
@@ -136,3 +136,21 @@ Remaining:
 - Screenshot evidence is deferred until the client scene lands (run-and-observe: a flinch, a reset, a flash and a dim, the shake).
 - ADR-0015 Verification 1-4.
 - The story stays In Progress.
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-220):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1256/1256 after the wave merge, no leak warnings.
+- offset_tick is a full int32, not the ADR's 16 bits.
+- ADR names player_settings / flinch_enabled(); implemented as the existing camera_flinch_toggle row and is_flinch_enabled() (getter-only view rule).
+- The ADR's RPC is a reliable byte packet (project pattern for Ready and flashlight).
+- The 0.4 s dim depth is inference (as dark as the flash peak would be bright).
+- ScareTriggered projects scope only; ScarePresenter plays nothing until Scare Events adds a scare id and ScareCatalog. Stinger and edge pulse not built (need AudioDirector, UiLayers).
+- Settings store absent: flash_scale, camera_fx.enabled and the flinch toggle keep their defaults in the client scene.
+- Spectator camera and Downing/Defense presenter calls into CameraFx partly wired (SD-11 uses jitter and jolt).
+**Test Evidence**: Server side 11 tests (bc5b9b0) plus client side; 10 mutations caught (old epoch not clamped, no epoch base, reconnect as plain rebaseline, no fold, record_id unstamped, double fold, toggle not forwarded, flash window boundary, shake setting ignored, flash at scale 0).
+**Code Review**: Complete (orchestrator review at merge)
