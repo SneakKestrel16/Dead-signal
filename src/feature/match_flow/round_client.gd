@@ -43,6 +43,7 @@ var camera_fx: CameraFx
 var router: ClientEventRouter
 ## Ping requests and delivered pings (pings-and-callouts story 004).
 var pings: PingReceiver
+var callouts: CalloutReceiver
 ## The facility scare state the server sent (scare-events story 006); presentation is story 009.
 var facility_scare: FacilityScareDisplay
 var scares: ScarePresenter
@@ -148,6 +149,7 @@ func _on_connected() -> void:
 	smp.peer_packet.connect(_on_packet) # after PuppetMap: handle introductions land first
 	router = ClientEventRouter.new(smp)
 	pings = PingReceiver.new(router, smp)
+	callouts = CalloutReceiver.new(router, smp)
 	facility_scare = FacilityScareDisplay.new(router)
 	if _render:
 		head = Node3D.new()

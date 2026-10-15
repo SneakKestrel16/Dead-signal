@@ -40,6 +40,10 @@ const PING_REJECTED := &"PingRejected"
 ## Entry type of the facility scare state (FacilityScareState.entries, story scare-events/006): {state, power}.
 ## Not a catalog event; sent to every viewer on change and in full on a rejoin.
 const FACILITY_SCARE := &"FacilityScare"
+## Callout entries (CalloutDelivery, story pings-and-callouts/006): CALLOUT {line, identity, origin, gesture, voice}
+## to survivor viewers in range; CALLOUT_AUDIO {line, voice, origin} to the monster in range (audio only, rule 11).
+const CALLOUT := &"Callout"
+const CALLOUT_AUDIO := &"CalloutAudio"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

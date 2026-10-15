@@ -50,6 +50,7 @@ var _door_net: Dictionary[StringName, int] = {}
 var lighting_rep: LightingReplication
 ## Delivers accepted pings per recipient (pings-and-callouts story 004); sm holds only its Callable.
 var ping_delivery: PingDelivery
+var callout_delivery: CalloutDelivery
 ## Runs HoldService in the HOLDS slot and owns the RoundEnded freeze.
 var controller: ControllerAuthority
 var footsteps: Footsteps
@@ -206,6 +207,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.batch_extras.append(lighting_rep.entries)
 	ping_delivery = PingDelivery.new(pings, monster, _ping_in_play, bf.appearance_of, _tick, _send_own)
 	sm.batch_extras.append(ping_delivery.entries)
+	callout_delivery = CalloutDelivery.new(pings, knobs, monster, _ping_in_play, _position, sd.is_hidden, _tick)
+	sm.batch_extras.append(callout_delivery.entries)
 	sm.batch_extras.append(scare_state.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0

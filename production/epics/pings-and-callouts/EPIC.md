@@ -55,7 +55,7 @@ This epic is complete when:
 | 003 | Callout acceptance limits and attached item ping | Logic | Complete | ADR-0002 |
 | 004 | Ping recipients and per-peer delivery | Integration | Complete | ADR-0004 |
 | 005 | Marker lifecycle: static position, lifetime and max active | Logic | Complete | ADR-0014 |
-| 006 | Callout recipients, range and monster audio-only | Integration | Ready | ADR-0004 |
+| 006 | Callout recipients, range and monster audio-only | Integration | Complete | ADR-0004 |
 | 007 | Displayed identity, (not you) mark and fake-callout parity | Integration | Ready | ADR-0004 |
 | 008 | Ping input, marker display, callout wheel and feed | UI | Ready | ADR-0014 |
 | 009 | Optional proximity voice rules | Integration | Blocked | ADR-0013 |

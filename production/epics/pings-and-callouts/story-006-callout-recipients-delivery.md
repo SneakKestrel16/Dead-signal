@@ -1,7 +1,7 @@
 # Story 006: Callout recipients, range and monster audio-only
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -33,10 +33,10 @@ A callout reaches every living player within the line's range: `callout_range_m`
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A player outside the line's range receives neither audio nor feed line; straight-line distance decides, walls do not.
-- [ ] A survivor's callout within range reaches the monster's client as audio only: no feed line, name or direction field, including "Need rescue" at 40 m through a wall.
-- [ ] A hidden survivor's callout plays from the hiding spot and carries no speaker gesture; a downed survivor can send "Need rescue".
-- [ ] With proximity voice Off, each information type of rule 4 (objective found, objective location, rescue needed, danger, distrust, regroup) is sent with only a ping or callout and received by the other 3 survivor clients.
+- [x] A player outside the line's range receives neither audio nor feed line; straight-line distance decides, walls do not.
+- [x] A survivor's callout within range reaches the monster's client as audio only: no feed line, name or direction field, including "Need rescue" at 40 m through a wall.
+- [x] A hidden survivor's callout plays from the hiding spot and carries no speaker gesture; a downed survivor can send "Need rescue".
+- [x] With proximity voice Off, each information type of rule 4 (objective found, objective location, rescue needed, danger, distrust, regroup) is sent with only a ping or callout and received by the other 3 survivor clients.
 
 ---
 
@@ -65,7 +65,7 @@ A callout reaches every living player within the line's range: `callout_range_m`
 **Story Type**: Integration
 **Required evidence**: `tests/integration/pings-and-callouts/callout_recipients_delivery_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/pings-and-callouts/callout_recipients_delivery_test.gd` (real ENet, 5 clients)
 
 ---
 
@@ -73,3 +73,17 @@ A callout reaches every living player within the line's range: `callout_range_m`
 
 - Depends on: Stories 002, 003
 - Unlocks: Stories 007, 008
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-pc6. Full suite 1359 tests: the only failure was `round_composer_test` counting `batch_extras` (8, now 9 with callout delivery); fixed on merge with an explicit wiring check, then `tests/integration/match-flow` and `pings-and-callouts` 37/37. Mutations caught: always `callout_range_m`, monster given the full survivor entry, hidden senders keeping the gesture.
+
+Notes:
+- `CalloutDelivery` (server, `batch_extras`) and `CalloutReceiver` (client). Survivors get `Callout {line, identity, origin, gesture, voice}`; the monster gets `CalloutAudio {line, voice, origin}` only. The fake flag is never sent; rejoin sends nothing; spectators mirror their watched survivor; attached pings stay on `PingDelivery`.
+- The test proves every authored line reaches the other 3 survivors with voice off (rule 4's callout half; the ping half is story 004).
+
+Deviations (inference):
+- The survivor entry also carries `voice` (story 008 plays it; `identity` already implies it). Voice sets come from `CharacterDef.load_all()` keyed by appearance id.
+- A hidden sender's origin is its body position (assumes the body stands in the spot); a hiding-spot anchor settles it.
+- A disguised monster is judged by the same range rule, so it hears its own callout as `CalloutAudio` only.
+- Test shortcuts: bodies frozen with `sm.set_frozen` (greybox partial floors); story 003's cooldown state cleared between lines.

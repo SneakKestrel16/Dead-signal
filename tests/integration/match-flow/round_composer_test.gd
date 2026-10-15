@@ -209,10 +209,11 @@ func test_every_module_built_and_every_hook_wired() -> void:
 		assert_object(m).is_not_null()
 		unset.append_array(_unset(m))
 	assert_array(unset).override_failure_message("unset hooks:\n" + "\n".join(unset)).is_empty()
-	assert_int(_c.sm.batch_extras.size()).is_equal(8)
+	assert_int(_c.sm.batch_extras.size()).is_equal(9)
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.scare_state, &"entries"))).is_true() ## scare-events story 006
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.lighting_rep, &"entries"))).is_true() ## facility-map story 010
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.ping_delivery, &"entries"))).is_true() ## pings-and-callouts story 004
+	assert_bool(_c.sm.batch_extras.has(Callable(_c.callout_delivery, &"entries"))).is_true() ## pings-and-callouts story 006
 	assert_int(_c.sm.catch_up.size()).is_equal(3)
 	# Every registered hold is reachable from some map object the aim ray can pick.
 	var reachable := 0
