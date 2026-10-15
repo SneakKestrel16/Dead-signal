@@ -184,3 +184,22 @@ Waived by the designer 2026-10-14 (AD-103). The cases stay in `production/qa/tes
 - [ ] No regressions introduced
 - [ ] Code reviewed (via `/code-review`)
 - [ ] Story file updated to `Status: Complete` (via `/story-done`)
+
+---
+
+## QA Cycle (/team-qa sprint, 2026-10-14)
+
+Strategy: `production/qa/qa-strategy-sprint-004-2026-10-14.md`. The story classification above stands: 2 Logic, 7 Integration, 1 review task (SR-1), 1 Config/Data (EX-1). No Visual/Feel or UI story is in scope.
+
+**Automated test requirements**: the ten test files in the Test Summary, all present and run by the smoke check (484/484).
+
+**Manual QA scope**: none gating. Every story's criteria are covered by an automated test. EX-1's export check ran in the smoke check. Designer checks carried from earlier sprints (CI-6 mouse-look, FM-2 greybox sign-off) are outside this cycle.
+
+**Out of scope**: NA-V, the real-network session (waived, AD-103). Production wiring of CI-4's `set_low(crouch, others)` and CI-9's hold state into `MoveState`: no caller exists yet (AD-111, AD-112), so those criteria are proven on test loops only. The CI-8 hold path on a greybox interactable: the map places none yet.
+
+**Entry criteria** (all met):
+1. Smoke report PASS: `production/qa/smoke-2026-10-14-sprint-004.md`.
+2. Build stable: windowed and headless boot, exported build boots.
+3. Every Must Have story is `done` in `production/sprint-status.yaml`. Every Should Have and Nice to Have story is also `done`.
+
+**Exit criteria**: every in-scope story PASS on its executed evidence or FAIL with a bug filed; open bugs in scope listed in the sign-off.
