@@ -2,7 +2,8 @@ class_name BorrowedFace extends RefCounted
 ## Borrowed Face: the shapeshifter's disguise (Core layer). Story borrowed-face/001 implements the
 ## observation accumulator: design/gdd/borrowed-face.md rules 1-3 and Formulas "Observation
 ## accumulation"; ADR-0005 (tick order slot BORROWED_FACE), ADR-0007 §5 (sight rays on SIGHT, doors
-## analytic), ADR-0006 (BorrowedFaceKnobs). Later stories add form, transform and cooldown.
+## analytic), ADR-0006 (BorrowedFaceKnobs). Story 002 adds form-change requests and target
+## persistence (rules 5-6, 13, Edge Cases "Target ..." rows). Story 003 adds cooldown, stun and FormChanged.
 ## Server only. Observation counts ticks of `net.sim_tick_hz`, never wall time, and never decays.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   eye_of(player) -> Vector3                  the shapeshifter's eye position
@@ -12,17 +13,29 @@ class_name BorrowedFace extends RefCounted
 ##   locked(player) -> bool                     Stunned or under the shock lock (Survivor Defense rule
 ##                                              14). Stub until Survivor Defense publishes
 ##                                              StateKeys.SHOCK_STUN_LOCK; unset = never locked
+##   status_of(player) -> int                   MatchFlow.Status (MatchFlow.status_of); unset = no
+##                                              survivor is a valid target
 ## Usage:
 ##   var bf := BorrowedFace.new()
 ##   bf.set_roster([2, 3, 4, 5], 1)   # BEFORE start_round
 ##   bf.set_sight_sources(eye_of, view.yaw_of, body_points_of, sight, locked)
+##   bf.set_status_source(match_flow.status_of)
 ##   server.start_round({TickOrder.BORROWED_FACE: bf}, knobs)
 ##   bf.observed(2)
+##   smp.peer_packet -> bf.request_form_change(net.player_id_of(peer), bytes)
 
 ## Index of the chest point in body_points_of: the cone is measured to it (rule 2).
 const CHEST := 1
 ## Float tolerance so a survivor exactly on observe_range_m counts.
 const RANGE_EPS_M := 1e-6
+## Form value for the shapeshifter's true form; any other form is a survivor's player id.
+const TRUE_FORM := -1
+## decode_request's result for bytes that are not a form-change request.
+const INVALID_FORM := -2
+## Size cap of a form-change request packet; anything larger is not one (untrusted client bytes).
+const REQUEST_CAP_BYTES := 64
+## Request packet dictionary key.
+const REQUEST_KEY := "form"
 
 var _survivors: Array[int] = []
 var _monster: int = -1
@@ -31,12 +44,21 @@ var _yaw_of: Callable
 var _body_points_of: Callable
 var _sight: Callable
 var _locked: Callable
+var _status_of: Callable
 var _hz: int = 0
 var _observe_ticks: int = 0
 var _range_m: float = 0.0
 var _half_fov: float = 0.0
 ## survivor -> valid observation ticks this round (rule 1: obs_time in ticks)
 var _obs: Dictionary[int, int] = {}
+var _transform_ticks: int = 0
+var _form: int = TRUE_FORM
+## Target of the transformation in progress; TRUE_FORM is a valid target, so _transforming says if one runs.
+var _target: int = TRUE_FORM
+var _transforming := false
+var _transform_end_tick: int = 0
+## The first request received since the last tick, or INVALID_FORM: one request per tick.
+var _pending: int = INVALID_FORM
 
 
 ## Injects the round's roster. Call before RoundServer.start_round (setup resets state from it).
@@ -56,20 +78,104 @@ func set_sight_sources(eye_of: Callable, yaw_of: Callable, body_points_of: Calla
 	_locked = locked
 
 
-## Injected by RoundServer. Reads knobs and resets every survivor's observation to 0 (rule 1).
+## Injects the survivor status source (see the class comment).
+func set_status_source(status_of: Callable) -> void:
+	_status_of = status_of
+
+
+## The bytes the shapeshifter's client sends to request a change into `form` (a survivor id or TRUE_FORM).
+static func request_packet(form: int) -> PackedByteArray:
+	return var_to_bytes({REQUEST_KEY: form})
+
+
+## The form requested by untrusted `bytes`, or INVALID_FORM when they are not a request. Only checks
+## the shape; whether the form is a valid target is decided in server_tick.
+static func decode_request(bytes: PackedByteArray) -> int:
+	if bytes.is_empty() or bytes.size() > REQUEST_CAP_BYTES:
+		return INVALID_FORM
+	var d: Variant = bytes_to_var(bytes)
+	if not (d is Dictionary and d.size() == 1 and d.get(REQUEST_KEY) is int):
+		return INVALID_FORM
+	return d[REQUEST_KEY]
+
+
+## Server entry for a client's form-change request from `player` (the sender as the network layer
+## identifies it, never a field of the bytes). Ignored unless it is the shapeshifter and the bytes
+## decode; only the first request of a tick is kept, and it is validated at the BORROWED_FACE step.
+func request_form_change(player: int, bytes: PackedByteArray) -> void:
+	if player != _monster or _pending != INVALID_FORM:
+		return
+	_pending = decode_request(bytes)
+
+
+## Injected by RoundServer. Reads knobs, resets every survivor's observation to 0 (rule 1) and puts
+## the shapeshifter in true form, not transforming (rule 5).
 func setup(_tick_runner: TickRunner, _bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
 	_hz = knobs.net.sim_tick_hz
 	_observe_ticks = knobs.ticks(knobs.borrowed_face.observe_time_s)
 	_range_m = knobs.borrowed_face.observe_range_m
 	_half_fov = deg_to_rad(knobs.borrowed_face.observe_fov_deg / 2.0)
+	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
 	_obs = {}
 	for s in _survivors:
 		_obs[s] = 0
+	_form = TRUE_FORM
+	_target = TRUE_FORM
+	_transforming = false
+	_pending = INVALID_FORM
 
 
-## BORROWED_FACE slot: one tick of valid observation for each unobserved survivor meeting every
-## rule 2 condition. Survivor Defense (slot 200) runs first, so a stun landing this tick blocks it.
-func server_tick(_tick: int) -> void:
+## BORROWED_FACE slot: observation, then a transformation due this tick completes, then this
+## tick's request is validated (a request accepted this tick never completes on it).
+func server_tick(tick: int) -> void:
+	_observe()
+	if _transforming and tick >= _transform_end_tick:
+		# Rule 13 and Edge Cases: the target was valid at request time; its status now does not matter.
+		_form = _target
+		_transforming = false
+	var req := _pending
+	_pending = INVALID_FORM
+	if req != INVALID_FORM and _can_change_into(req):
+		_target = req
+		_transforming = true
+		_transform_end_tick = tick + _transform_ticks
+
+
+## Rule 6 and the part of rule 7 this story owns (not already transforming). A request into the
+## current form is rejected (inference: no rule names it, and accepting it would only spend the
+## change; a designer ruling settles it). Disconnected means Match Flow's DISCONNECTED (grace
+## expired); a survivor inside reconnect grace keeps its last status and stays a valid target
+## (inference from Match Flow rule 13; a Borrowed Face ruling on in-grace targets settles it).
+func _can_change_into(form: int) -> bool:
+	if _transforming or form == _form:
+		return false
+	if form == TRUE_FORM:
+		return true
+	if not (_survivors.has(form) and observed(form) and _status_of.is_valid()):
+		return false
+	var st: int = _status_of.call(form)
+	return st == MatchFlow.Status.HEALTHY or st == MatchFlow.Status.DOWNED
+
+
+## Current form: TRUE_FORM or the copied survivor's player id. Unchanged by the copied survivor
+## being downed, eliminated, escaping or disconnecting (rule 13).
+func form() -> int:
+	return _form
+
+
+## True while a transformation is in progress.
+func transforming() -> bool:
+	return _transforming
+
+
+## Target form of the transformation in progress; meaningless when not transforming.
+func transform_target() -> int:
+	return _target
+
+
+## Rule 2: one tick of valid observation for each unobserved survivor meeting every condition.
+## Survivor Defense (slot 200) runs first, so a stun landing this tick blocks it.
+func _observe() -> void:
 	if not (_eye_of.is_valid() and _yaw_of.is_valid() and _body_points_of.is_valid() and _sight.is_valid()):
 		return
 	if _locked.is_valid() and _locked.call(_monster):
