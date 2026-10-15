@@ -16,6 +16,7 @@ class_name MonsterAbilities extends RefCounted
 ##   var ma := MonsterAbilities.new()
 ##   ma.set_monster(1)   # BEFORE start_round
 ##   ma.set_status_sources(view.get_form, view.get_transforming, locked)
+##   ma.set_position_source(position_of)   # story 005: AbilityUsed position
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
 ##   smp.peer_packet -> ma.request_ability(net.player_id_of(peer), bytes)
 
@@ -56,11 +57,24 @@ var _ready_tick: Dictionary[int, int] = {}
 var _pending: Dictionary = {}
 ## Callable(state: Lunge, tick: int) run on every Lunge transition (telemetry, tests); unset = nothing.
 var on_lunge_state: Callable
+## Story 005: position_of(player) -> Vector3, the monster's server position for AbilityUsed; unset = origin.
+var _position_of: Callable
+var _bus: EventBus
 
 
 ## Injects the shapeshifter's player id. Call before RoundServer.start_round.
 func set_monster(monster: int) -> void:
 	_monster = monster
+
+
+## Injects the position source for AbilityUsed (story 005; ServerMovement's body position).
+func set_position_source(position_of: Callable) -> void:
+	_position_of = position_of
+
+
+## The shapeshifter's player id (-1 before set_monster).
+func monster() -> int:
+	return _monster
 
 
 ## Injects the status collaborators (see the class comment).
@@ -100,8 +114,10 @@ func request_ability(player: int, bytes: PackedByteArray) -> void:
 
 ## Injected by RoundServer. Reads knobs and puts every ability Ready with no cooldown. Subscribes to
 ## SurvivorHit (Active -> Takedown Commit), the commit's end (SurvivorDowned, SurvivorEliminated) and
-## MonsterStunned (interrupt).
-func setup(_tick_runner: TickRunner, bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+## MonsterStunned (interrupt). Publishes the Lunge state as StateKeys.LUNGE_STATE (story 005).
+func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+	_bus = bus
+	registry.register_view(StateKeys.LUNGE_STATE, &"MonsterAbilities", LungeView.new(self))
 	_windup_ticks = knobs.ticks(knobs.ability.lunge_windup_s)
 	_dash_ticks = knobs.ticks(knobs.ability.lunge_dash_s)
 	_lunge_cooldown_ticks = knobs.ticks(knobs.ability.lunge_cooldown_s)
@@ -133,6 +149,7 @@ func server_tick(tick: int) -> void:
 	if req[ABILITY_KEY] == Ability.LUNGE:
 		_set_lunge(Lunge.WIND_UP, tick)
 		_phase_end_tick = tick + _windup_ticks
+		_emit_used(Ability.LUNGE, req[AIM_KEY])
 	# False Signal and Blackout bodies (and their cooldown start) arrive in stories 009-010.
 
 
@@ -202,3 +219,14 @@ func _on_commit_end(e: ServerEvent) -> void:
 func _on_monster_stunned(e: ServerEvent) -> void:
 	if attacking() and (e as EvMonsterStunned).monster == _monster:
 		_resolve(e.tick)
+
+
+## Rule 3a (story 005): one AbilityUsed per accepted activation, at Lunge wind-up start. Server-internal:
+## its project() is empty (ADR-0004 §5). Inference: Lunge has no aimed target, so `target` carries the
+## request's aim point; the GDD's "target point or zone" for Lunge (facing-based?) would settle it.
+func _emit_used(ability: Ability, target: Vector3) -> void:
+	var e := EvAbilityUsed.new()
+	e.ability = ability
+	e.position = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
+	e.target = target
+	_bus.emit(e)

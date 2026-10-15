@@ -6,6 +6,8 @@ extends ServerEvent
 
 var ability: int
 var position: Vector3
+## The aim point (Lunge: the request's aim) or the targeted zone's point (story monster-abilities/005).
+var target: Vector3
 var detail: StringName
 
 
