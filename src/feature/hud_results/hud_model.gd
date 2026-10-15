@@ -25,6 +25,8 @@ const LIFE_HEALTHY := 0
 const LIFE_DOWNED := 1
 const LIFE_ELIMINATED := 2
 const LIFE_ESCAPED := 3
+## hud.md Visual Budget: at most 6 world markers at once; further markers keep the newest (story 007).
+const MAX_MARKERS := 6
 
 var _display: MatchDisplay
 var _hz: int
@@ -100,7 +102,12 @@ func feed_lines() -> Array[Dictionary]:
 
 ## The live ping markers at the newest server tick, oldest first: the delivered payload plus "expires".
 func markers() -> Array[Dictionary]:
-	var now := _display.server_tick()
+	return markers_at(_display.server_tick())
+
+
+## The live ping markers at server tick `now`, oldest first (the HUD passes its estimated tick). A copy of
+## the list; do not mutate the entries.
+func markers_at(now: int) -> Array[Dictionary]:
 	return _markers.filter(func(m: Dictionary) -> bool: return m["expires"] > now)
 
 
@@ -146,15 +153,19 @@ func on_callout(tick: int, p: Dictionary) -> void:
 	if not (p.get("line") is StringName or p.get("line") is String):
 		return
 	var line := {"tick": tick, "line": StringName(p["line"]), "identity": p.get("identity", -1),
-		"origin": p.get("origin", Vector3.ZERO), "gesture": p.get("gesture", false)}
+		"origin": p.get("origin", Vector3.ZERO), "gesture": p.get("gesture", false),
+		"voice": p.get("voice", &""), "not_you": p.get("not_you", false)}
 	_feed.append(line)
 	if _feed.size() > _feed_cap:
 		_feed.remove_at(0)
 	feed_line_added.emit(line)
 
 
-## ClientEventRouter handler for EventBatch.PING. Same rules as PingMarkers: static markers keyed by the
-## sender's opaque `handle`, newest ping_max_active per handle, expiring ping_lifetime_s after `tick`.
+## ClientEventRouter handler for EventBatch.PING (pings-and-callouts rules 5, 8; story pings-and-callouts/005,
+## moved here from PingMarkers by hud-results/007): static markers keyed by the sender's opaque `handle`, never
+## by `from`, so two bodies wearing one name stay two markers; each keeps the identity it was sent under;
+## newest ping_max_active per handle, newest MAX_MARKERS overall, expiring ping_lifetime_s after `tick`. A
+## sender's disconnect sends nothing, so its markers expire normally.
 func on_ping(tick: int, p: Dictionary) -> void:
 	if not (p.get("handle") is int and p.get("from") is int and p.get("point") is Vector3):
 		return
@@ -168,6 +179,8 @@ func on_ping(tick: int, p: Dictionary) -> void:
 			count += 1
 			if count > _marker_max_active:
 				_markers.remove_at(i)
+	while _markers.size() > MAX_MARKERS:
+		_markers.remove_at(0)
 	marker_changed.emit(m["handle"])
 
 

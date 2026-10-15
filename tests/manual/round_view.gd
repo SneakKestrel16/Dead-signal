@@ -56,6 +56,10 @@ extends Node3D
 ## body it draws (else the nearest) and warning-pings it, another survivor warning-pings where it looks, two
 ## call out. Shots: warning.png (warning markers), expired.png (feed past its 8 s), scrollback.png (the
 ## feed_scrollback action held through Input.action_press: the retained lines again).
+## --bot=conform (story hud-results/007; --count=6 --view=survivor against round_host --players=6): the five
+## survivors each call out a different line in the same drawn frame, then each pings twice, turning between
+## the pings (the shown survivor's second one is a warning ping). Shots: feed.png (4 lines visible), scrollback.png (all 5 with feed_scrollback held),
+## markers.png (10 pings sent, at most 6 drawn). Prints the feed and marker counts.
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -197,6 +201,8 @@ func _process(delta: float) -> void:
 		_ping_bot(c0)
 	elif _args.get("bot", "") == "warn":
 		_warn_bot(c0)
+	elif _args.get("bot", "") == "conform":
+		_conform_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -437,6 +443,48 @@ func _warn_bot(c0: RoundClient) -> void:
 		print("WARN BOT scrollback=%s lines=%s" % [c0.ping_hud.scrollback, c0.ping_hud.feed_lines().size()])
 	elif f == 670:
 		Input.action_release(&"feed_scrollback")
+		get_tree().quit()
+
+
+func _conform_bot(c0: RoundClient) -> void:
+	if _step_frame < 0:
+		_step_frame = Engine.get_frames_drawn()
+	var f := Engine.get_frames_drawn() - _step_frame
+	var all := _clients.filter(func(c: RoundClient) -> bool: return c.is_spawned() and not _role(c))
+	var lines := CalloutSet.load_shipped().lines
+	c0.scripted.yaw = 0.6 + (0.25 if f >= 85 else 0.0)
+	c0.scripted.pitch = -0.7 if f < 75 else -0.15 # the lit floor behind the feed box, then the pings ahead
+	if f == 30:
+		for i in all.size():
+			(all[i] as RoundClient).callouts.request(lines[i % lines.size()])
+	elif f == 60:
+		_shot("feed")
+		print("CONFORM feed visible=%d history=%s" % [c0.ping_hud.feed_lines().size(), c0.ping_hud.feed_history()])
+	elif f == 62:
+		Input.action_press(&"feed_scrollback")
+	elif f == 70:
+		_shot("scrollback")
+		print("CONFORM scrollback lines=%d" % c0.ping_hud.feed_lines().size())
+	elif f == 72: # not in the shot's frame: _shot returns before the frame is drawn
+		Input.action_release(&"feed_scrollback")
+	elif f == 75 or f == 90:
+		for i in all.size():
+			var c: RoundClient = all[i]
+			if c != c0:
+				c.scripted.yaw = 0.6 + (i - 2) * 0.35 + (0.15 if f == 90 else 0.0)
+				c.scripted.pitch = -0.2
+	elif f == 80 or f == 95:
+		for c: RoundClient in all:
+			if f == 95 and c == c0:
+				c.ping_hud.warn() # a warning point among the location pings: its own shape
+			else:
+				c.ping_hud.ping()
+	elif f == 140:
+		_shot("markers")
+		print("CONFORM markers drawn=%d model=%d" % [c0.ping_hud.markers_now().size(), c0.hud_model.markers().size()])
+		for m in c0.ping_hud.markers_now():
+			print("CONFORM marker kind=%d %s" % [m["kind"], m["label"]])
+	elif f == 150:
 		get_tree().quit()
 
 

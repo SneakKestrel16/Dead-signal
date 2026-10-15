@@ -36,7 +36,8 @@ func before_test() -> void:
 	_remotes = {}
 	_states = {}
 	_now = 100.0
-	_hud = auto_free(PingCalloutHud.new(_knobs, _pings, PingMarkers.new(_router, _knobs), _callouts, _contexts,
+	_hud = auto_free(PingCalloutHud.new(_knobs, _pings, HudModel.new(MatchDisplay.new(_knobs), _knobs, _router),
+			_callouts, _contexts,
 			_audio, _camera, _remotes, _state_of, _now_tick, _no_item, _own, null))
 	add_child(_hud)
 
@@ -153,15 +154,17 @@ func test_callout_feed_line_audio_arrow_and_not_you() -> void:
 			.is_equal(String(PingCalloutHud.VOICE_BUS))
 
 
-func test_feed_keeps_ten_lines_each_visible_eight_seconds() -> void:
+## hud-results/007: 4 of the 10 retained lines are visible (hud.md Feedback & Notification Systems); the
+## rest are in scrollback.
+func test_feed_keeps_ten_lines_shows_four_each_visible_eight_seconds() -> void:
 	for i in 12:
 		_deliver(100 + i, [EventBatch.CALLOUT, {"line": &"wait", "identity": SPEAKER, "origin": Vector3.ZERO,
 			"gesture": false, "voice": &"C2"}])
 	_hud.advance(0.0)
 	assert_int(_hud.feed_history().size()).is_equal(PingCalloutHud.FEED_SCROLLBACK)
-	assert_int(_hud.feed_lines().size()).is_equal(PingCalloutHud.FEED_SCROLLBACK)
+	assert_int(_hud.feed_lines().size()).is_equal(PingCalloutHud.FEED_VISIBLE)
 	_hud.advance(PingCalloutHud.FEED_HOLD_S - 0.1)
-	assert_int(_hud.feed_lines().size()).is_equal(PingCalloutHud.FEED_SCROLLBACK)
+	assert_int(_hud.feed_lines().size()).is_equal(PingCalloutHud.FEED_VISIBLE)
 	_hud.advance(0.2)
 	assert_int(_hud.feed_lines().size()).is_equal(0)
 	assert_int(_hud.feed_history().size()).is_equal(PingCalloutHud.FEED_SCROLLBACK)

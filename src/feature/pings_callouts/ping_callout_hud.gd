@@ -1,8 +1,8 @@
 class_name PingCalloutHud extends Control
 ## Client presentation of pings and callouts (story pings-and-callouts/008; design/gdd/pings-and-callouts.md
 ## rules 2, 7, 10-12, Visual/Audio; design/ux/hud.md H9, H10, H12, H17; interaction-patterns P5-P7, P9-P10;
-## ADR-0014 §1, §7). Reads only the client's projected lists (PingReceiver.pending/rejections, PingMarkers,
-## CalloutReceiver.received/audio) and decides nothing.
+## ADR-0014 §1, §7). Reads only the client's projected lists (PingReceiver.pending/rejections, HudModel's
+## markers and feed lines, CalloutReceiver.audio) and decides nothing.
 ## - Ping action (one press): an item ping when the view ray picks a pingable object, else a location ping at
 ##   the view ray's hit (or its end at ping_max_range_m). The request shows at once as a pending marker; the
 ##   server's own copy replaces it, a rejection removes it with the local "Too fast" tick (H9) and a click.
@@ -24,6 +24,13 @@ class_name PingCalloutHud extends Control
 ## displayed identity ("Monster" for true form) or, for a point, the sender's. Holding feed_scrollback shows
 ## the last FEED_SCROLLBACK feed lines regardless of age (P9). Bindings (Z, Tab) are inference; a controls
 ## pass settles them.
+## Story hud-results/007 (hud.md H10, H12, H17, Visual Budget, Platform Adaptation, Accessibility; ADR-0014
+## §6, §7, §9): markers and feed lines come from HudModel (ADR-0014 §6), which keeps the newest
+## HudModel.MAX_MARKERS markers; with the pending ones the draw list is capped the same way. The feed shows
+## the newest FEED_VISIBLE live lines on one opaque box (older ones stay in scrollback) and is a polite live
+## region (`feed_region`). Each ping type has its own shape (shape_of). At wider than 16:9 the feed is placed
+## WIDE_MARGIN_PX inside the centred 16:9 safe rect (zone_rect); markers still clamp to the full screen edge.
+## The right stick steers the open wheel as an absolute direction (P6), the mouse by relative motion.
 ## Usage (client, rendering): see RoundClient._on_connected.
 
 ## hud.md H9: the rejection label shows 1.5 s.
@@ -34,6 +41,11 @@ const FADE_S := 0.15
 ## hud.md H10 / interaction-patterns P9 (AD-02): each feed line stays at least 8 s; the scrollback is 10.
 const FEED_HOLD_S := 8.0
 const FEED_SCROLLBACK := 10
+## hud.md Feedback & Notification Systems: 4 feed lines visible, the oldest scrolls off into scrollback.
+const FEED_VISIBLE := 4
+## hud.md Accessibility: the feed sits on an opaque box at 7:1 (white on black is 21:1).
+const FEED_BACKING := Color(0, 0, 0, 1)
+const FEED_TEXT := Color.WHITE
 ## GDD Animation Feel Targets: the callout gesture is ~30 frames at 60 fps.
 const GESTURE_S := 0.5
 ## Placeholder gesture: a lit sphere this far above the drawn body's feet. PLACEHOLDER, replaced by the
@@ -44,11 +56,15 @@ const GESTURE_MATCH_M := 1.5
 ## Callouts are never ducked (control manifest): the Voice bus sends straight to Master.
 const VOICE_BUS := &"Voice"
 const CLICK_SOUND := &"ping/rejected"
-## Layout (hud.md Layout Zones, 1080p reference): 48 px safe margin, feed in Z6 at bottom left with 28 px
-## text (P9); wheel and marker sizes are placeholder.
+## Layout (hud.md Layout Zones, 1080p reference): 48 px safe margin (64 px from the centred 16:9 safe rect when
+## wider, Platform Adaptation), feed in Z6 at bottom left with 28 px text (P9), marker labels 20 px (H12);
+## wheel and marker shape sizes are placeholder. Font sizes are the font's em size in px (inference: hud.md
+## says "measure at least 20 px tall"; a cap-height reading would need larger sizes, the art pass settles it).
 const INSET_PX := 48.0
+const WIDE_MARGIN_PX := 64.0
+const SAFE_ASPECT := 16.0 / 9.0
 const FEED_FONT := 28
-const MARKER_FONT := 18
+const MARKER_FONT := 20
 const WHEEL_RADIUS_PX := 170.0
 ## P6 "centre dead zone": no number given (inference, placeholder).
 const WHEEL_DEAD_PX := 40.0
@@ -71,8 +87,10 @@ var scrollback := false
 var _knobs: Knobs
 ## The client's input contexts (the wheel pushes WHEEL; LocalInput reads look from it).
 var contexts: InputContextStack
+## The feed's polite live region (ADR-0014 §9): its accessibility_name is the newest feed line.
+var feed_region: Control
 var _pings: PingReceiver
-var _markers: PingMarkers
+var _model: HudModel
 var _callouts: CalloutReceiver
 var _audio: PlaceholderAudio
 var _camera: Camera3D
@@ -86,7 +104,6 @@ var _set: CalloutSet
 var _names := {}
 var _colours := {}
 var _clock := 0.0
-var _seen_callouts := 0
 var _seen_audio := 0
 var _seen_rejections := 0
 ## Feed lines oldest first: {text, origin, at} (at = _clock when added).
@@ -95,17 +112,21 @@ var _feed: Array[Dictionary] = []
 var _gestures: Array = []
 var _wheel_open := false
 var _wheel_aim := Vector2.ZERO
+## Right stick deflection while the wheel is open.
+var _stick := Vector2.ZERO
 
 
 ## `state_of(handle) -> Dictionary` (PuppetMap.state_of), `now_tick() -> float` (estimated server tick),
 ## `item_of() -> int` (the interactable the view ray picks, -1 for none), `own() -> int` (own displayed
-## appearance id). `map` gives the pingable objects (null: location pings only).
-func _init(knobs: Knobs, pings: PingReceiver, markers: PingMarkers, callouts: CalloutReceiver,
+## appearance id). `model` gives the markers and feed lines; `callouts` sends requests and plays the monster's
+## audio-only lines. `map` gives the pingable objects (null: location pings only).
+func _init(knobs: Knobs, pings: PingReceiver, model: HudModel, callouts: CalloutReceiver,
 		contexts_: InputContextStack, audio: PlaceholderAudio, camera: Camera3D, remotes: Dictionary[int, Node3D],
 		state_of: Callable, now_tick: Callable, item_of: Callable, own: Callable, map: MapData) -> void:
 	_knobs = knobs
 	_pings = pings
-	_markers = markers
+	_model = model
+	_model.feed_line_added.connect(_on_callout)
 	_callouts = callouts
 	contexts = contexts_
 	_audio = audio
@@ -125,6 +146,12 @@ func _init(knobs: Knobs, pings: PingReceiver, markers: PingMarkers, callouts: Ca
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	focus_mode = Control.FOCUS_NONE
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	feed_region = Control.new()
+	feed_region.name = &"Feed"
+	feed_region.focus_mode = Control.FOCUS_NONE
+	feed_region.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	feed_region.accessibility_live = AccessibilityServer.LIVE_POLITE
+	add_child(feed_region)
 
 
 ## Sends a ping at what the view aims at (P5) and shows it pending.
@@ -181,12 +208,25 @@ func open_wheel() -> void:
 		return
 	_wheel_open = true
 	_wheel_aim = Vector2.ZERO
+	_stick = Vector2.ZERO
 	contexts.push(InputContextStack.Ctx.WHEEL, null)
 
 
 ## Steers the open wheel by a screen-pixel delta (mouse motion).
 func aim_wheel(delta: Vector2) -> void:
 	_wheel_aim = (_wheel_aim + delta).limit_length(WHEEL_RADIUS_PX)
+
+
+## Steers the open wheel by right-stick axis `axis` at `value` (P6): the stick's direction is the aim, so a
+## centred stick is the dead zone.
+func steer_wheel(axis: JoyAxis, value: float) -> void:
+	if axis == JOY_AXIS_RIGHT_X:
+		_stick.x = value
+	elif axis == JOY_AXIS_RIGHT_Y:
+		_stick.y = value
+	else:
+		return
+	_wheel_aim = (_stick * WHEEL_RADIUS_PX).limit_length(WHEEL_RADIUS_PX)
 
 
 ## The aimed line index, or -1 in the dead zone or when closed.
@@ -235,6 +275,25 @@ static func place(cam: Camera3D, point: Vector3, size: Vector2, inset: float) ->
 	return [centre + off, not on, off.angle()]
 
 
+## The corner-zone rect for a `size` view (hud.md Layout Zones, Platform Adaptation): INSET_PX inside the
+## screen, or, wider than 16:9, WIDE_MARGIN_PX inside the centred 16:9 safe rect.
+static func zone_rect(size: Vector2) -> Rect2:
+	if size.x <= size.y * SAFE_ASPECT + 0.5:
+		return Rect2(Vector2(INSET_PX, INSET_PX), size - Vector2(INSET_PX, INSET_PX) * 2.0)
+	var x := (size.x - size.y * SAFE_ASPECT) / 2.0 + WIDE_MARGIN_PX
+	return Rect2(x, WIDE_MARGIN_PX, size.x - 2.0 * x, size.y - 2.0 * WIDE_MARGIN_PX)
+
+
+## Marker outline of ping `kind` around (0, 0) (hud.md Accessibility: ping types are shapes): location a
+## diamond, item a square, warning (point or player) a triangle. PLACEHOLDER sizes; the art pass replaces them.
+static func shape_of(kind: int) -> PackedVector2Array:
+	if kind in WARNINGS:
+		return PackedVector2Array([Vector2(0, -12), Vector2(11, 8), Vector2(-11, 8)])
+	if kind == PingsCallouts.ITEM:
+		return PackedVector2Array([Vector2(-8, -8), Vector2(8, -8), Vector2(8, 8), Vector2(-8, 8)])
+	return PackedVector2Array([Vector2(0, -10), Vector2(8, 0), Vector2(0, 10), Vector2(-8, 0)])
+
+
 ## Displayed name of appearance `id`.
 func name_of(id: int) -> String:
 	if id == CharacterDef.TRUE_FORM_APPEARANCE_ID:
@@ -249,7 +308,8 @@ func colour_of(id: int) -> Color:
 	return _colours.get(id, UNKNOWN_COLOUR)
 
 
-## Markers to draw now, pending first: {point, label, colour, alpha, pending}.
+## Markers to draw now, pending first: {point, kind, label, colour, alpha, pending, warning}. At most
+## HudModel.MAX_MARKERS: the oldest server markers give way (hud.md Visual Budget: newest kept).
 func markers_now() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	var now: float = _now_tick.call()
@@ -260,10 +320,12 @@ func markers_now() -> Array[Dictionary]:
 		var who := own
 		if p["kind"] == PingsCallouts.WARNING_PLAYER:
 			who = _state_of.call(p["target"]).get("appearance", -1)
-		out.append({"point": p["at"], "colour": WARNING_COLOUR if warn else colour_of(own), "alpha": 0.5,
+		out.append({"point": p["at"], "kind": p["kind"], "colour": WARNING_COLOUR if warn else colour_of(own),
+			"alpha": 0.5,
 			"pending": true, "warning": warn, "label": _label(warn, who, from.distance_to(p["at"]))})
 	var fade := maxf(_knobs.ticks(FADE_S), 1.0)
-	for m: Dictionary in _markers.active(int(now)):
+	var live := _model.markers_at(int(now))
+	for m: Dictionary in live.slice(maxi(0, live.size() + out.size() - HudModel.MAX_MARKERS)):
 		var warn: bool = m.get("kind") in WARNINGS
 		var who: int = m.get("identity", -1) if m.get("kind") == PingsCallouts.WARNING_PLAYER else m["from"]
 		var label := _label(warn, who, from.distance_to(m["point"]))
@@ -271,7 +333,8 @@ func markers_now() -> Array[Dictionary]:
 			label = "%s  %s" % [tr(String(m["type"])), label]
 		if m.get("not_you", false):
 			label += " " + tr("(not you)")
-		out.append({"point": m["point"], "colour": WARNING_COLOUR if warn else colour_of(m["from"]),
+		out.append({"point": m["point"], "kind": m.get("kind", PingsCallouts.LOCATION),
+			"colour": WARNING_COLOUR if warn else colour_of(m["from"]),
 			"pending": false, "warning": warn, "label": label,
 			"alpha": clampf((m["expires"] - now) / fade, 0.0, 1.0)})
 	return out
@@ -283,14 +346,15 @@ func _label(warn: bool, who: int, dist: float) -> String:
 	return "%s %s" % [tr("Warning:"), text] if warn else text
 
 
-## Feed lines shown now (each for FEED_HOLD_S, every retained line while `scrollback`): {text, angle}; angle is the arrow's screen angle (0 right,
-## PI/2 down = behind).
+## Feed lines shown now, oldest first: the newest FEED_VISIBLE of those younger than FEED_HOLD_S, or every
+## retained line while `scrollback`. {text, angle}; angle is the arrow's screen angle (0 right, PI/2 down =
+## behind).
 func feed_lines() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for l in _feed:
 		if scrollback or _clock - l["at"] < FEED_HOLD_S:
 			out.append({"text": l["text"], "angle": _bearing(l["origin"])})
-	return out
+	return out if scrollback else out.slice(maxi(0, out.size() - FEED_VISIBLE))
 
 
 ## The last FEED_SCROLLBACK feed texts, oldest first.
@@ -309,9 +373,6 @@ func advance(delta: float) -> void:
 		_seen_rejections = _pings.rejections
 		too_fast_s = TOO_FAST_S
 		_audio.play_at(CLICK_SOUND, _camera.global_position if _camera.is_inside_tree() else Vector3.ZERO)
-	while _seen_callouts < _callouts.received.size():
-		_on_callout(_callouts.received[_seen_callouts])
-		_seen_callouts += 1
 	while _seen_audio < _callouts.audio.size():
 		var a: Dictionary = _callouts.audio[_seen_audio]
 		_seen_audio += 1
@@ -340,11 +401,17 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if not _wheel_open:
+		return
 	var motion := event as InputEventMouseMotion
-	if _wheel_open and motion != null:
+	if motion != null:
 		aim_wheel(motion.screen_relative)
+	var joy := event as InputEventJoypadMotion
+	if joy != null:
+		steer_wheel(joy.axis, joy.axis_value)
 
 
+## HudModel.feed_line_added handler.
 func _on_callout(c: Dictionary) -> void:
 	if not (c.get("origin") is Vector3 and c.get("identity") is int and c.get("line") is StringName):
 		return
@@ -355,6 +422,7 @@ func _on_callout(c: Dictionary) -> void:
 	_feed.append({"text": text, "origin": c["origin"], "at": _clock})
 	if _feed.size() > FEED_SCROLLBACK:
 		_feed.pop_front()
+	feed_region.accessibility_name = text
 	if c.get("gesture", false):
 		_gesture(c["identity"], c["origin"])
 
@@ -420,12 +488,8 @@ func _draw() -> void:
 			c.a = m["alpha"]
 			if pl[1]:
 				_arrow(pl[0], pl[2], 14.0, c)
-			elif m.get("warning", false):
-				draw_colored_polygon(PackedVector2Array([pl[0] + Vector2(0, -12), pl[0] + Vector2(11, 8),
-					pl[0] + Vector2(-11, 8)]), c)
 			else:
-				draw_colored_polygon(PackedVector2Array([pl[0] + Vector2(0, -10), pl[0] + Vector2(8, 0),
-					pl[0] + Vector2(0, 10), pl[0] + Vector2(-8, 0)]), c)
+				draw_colored_polygon(Transform2D(0.0, pl[0]) * shape_of(m["kind"]), c)
 			var tw := font.get_string_size(m["label"], HORIZONTAL_ALIGNMENT_LEFT, -1, MARKER_FONT).x
 			var at: Vector2 = (pl[0] as Vector2) + Vector2(-tw / 2.0, -16.0)
 			at.x = clampf(at.x, INSET_PX, size_px.x - INSET_PX - tw)
@@ -433,12 +497,18 @@ func _draw() -> void:
 				Color(0, 0, 0, c.a))
 			draw_string(font, at, m["label"], HORIZONTAL_ALIGNMENT_LEFT, -1, MARKER_FONT, c)
 	var lines := feed_lines()
-	var y := size_px.y - INSET_PX - (lines.size() - 1) * (FEED_FONT + 10)
+	var zone := zone_rect(size_px)
+	var x := zone.position.x
+	var y := zone.end.y - 8 - (lines.size() - 1) * (FEED_FONT + 10)
+	var box_w := 0.0
+	for l in lines:
+		box_w = maxf(box_w, font.get_string_size(l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT).x + 56)
+	if not lines.is_empty(): # one opaque box inside the zone's corner (hud.md: 7:1 on an opaque box)
+		draw_rect(Rect2(x, y - FEED_FONT - 2, box_w, zone.end.y - y + FEED_FONT + 2), FEED_BACKING)
 	for l in lines:
 		var tw := font.get_string_size(l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT).x
-		draw_rect(Rect2(INSET_PX - 8, y - FEED_FONT - 2, tw + 56, FEED_FONT + 10), Color(0, 0, 0, 0.85))
-		draw_string(font, Vector2(INSET_PX, y), l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT, Color.WHITE)
-		_arrow(Vector2(INSET_PX + tw + 24, y - FEED_FONT / 2.0 + 2), l["angle"], 10.0, Color.WHITE)
+		draw_string(font, Vector2(x + 8, y), l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT, FEED_TEXT)
+		_arrow(Vector2(x + tw + 32, y - FEED_FONT / 2.0 + 2), l["angle"], 10.0, FEED_TEXT)
 		y += FEED_FONT + 10
 	var centre := size_px / 2.0
 	if too_fast_s > 0.0:

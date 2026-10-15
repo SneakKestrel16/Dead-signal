@@ -247,7 +247,7 @@ func _on_connected() -> void:
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)
 		hud.add_child(ambience.make_overlay())
-		ping_hud = PingCalloutHud.new(knobs, pings, PingMarkers.new(router, knobs), callouts, InputContextStack.new(),
+		ping_hud = PingCalloutHud.new(knobs, pings, hud_model, callouts, InputContextStack.new(),
 				audio, camera, remotes, puppets.state_of, estimated_tick,
 				func() -> int: return local_target(head.rotation.y, head.rotation.x),
 				func() -> int: return predictor.last_own.get("appearance", -1), _map)

@@ -2,19 +2,20 @@ extends GdUnitTestSuite
 ## Story pings-and-callouts/005 (design/gdd/pings-and-callouts.md rules 5, 8): the client marker list.
 ## Markers are static, at most ping_max_active per sender handle (newest kept), expire ping_lifetime_s of
 ## server ticks after acceptance, and keep the identity they were sent under. Duplicate names stay apart.
+## hud-results/007 moved the list from PingMarkers into HudModel (ADR-0014 §7: marker data comes only from it).
 
 const SERVER_PEER := 1
 
 var _knobs: Knobs
 var _router: ClientEventRouter
-var _markers: PingMarkers
+var _markers: HudModel
 var _life: int
 
 
 func before_test() -> void:
 	_knobs = Knobs.load_all()
 	_router = ClientEventRouter.new()
-	_markers = PingMarkers.new(_router, _knobs)
+	_markers = HudModel.new(MatchDisplay.new(_knobs), _knobs, _router)
 	_life = _knobs.ticks(_knobs.ping.ping_lifetime_s)
 
 
@@ -28,7 +29,7 @@ func _deliver(tick: int, handle: int, from: int, point: Vector3, kind: int = Pin
 
 
 func _points(now: int) -> Array:
-	return _markers.active(now).map(func(m: Dictionary) -> Vector3: return m["point"])
+	return _markers.markers_at(now).map(func(m: Dictionary) -> Vector3: return m["point"])
 
 
 func test_warning_marker_stays_at_ping_time_point_with_frozen_identity() -> void:
@@ -36,7 +37,7 @@ func test_warning_marker_stays_at_ping_time_point_with_frozen_identity() -> void
 	_deliver(100, 7, 2, at, PingsCallouts.WARNING_PLAYER, 5)
 	# The target moves and transforms: later pings name its new identity, the old marker does not follow.
 	_deliver(110, 8, 3, Vector3(9, 0, 9), PingsCallouts.WARNING_PLAYER, CharacterDef.TRUE_FORM_APPEARANCE_ID)
-	var m: Dictionary = _markers.active(100 + _life - 1)[0]
+	var m: Dictionary = _markers.markers_at(100 + _life - 1)[0]
 	assert_vector(m["point"]).is_equal(at)
 	assert_int(m["identity"]).is_equal(5)
 	assert_int(m["from"]).is_equal(2)
@@ -54,16 +55,16 @@ func test_max_active_keeps_newest_per_sender() -> void:
 
 func test_marker_expires_lifetime_after_acceptance_on_server_ticks() -> void:
 	_deliver(50, 7, 2, Vector3.ONE)
-	assert_int(_markers.active(50 + _life - 1).size()).is_equal(1)
-	assert_int(_markers.active(50 + _life).size()).is_equal(0)
+	assert_int(_markers.markers_at(50 + _life - 1).size()).is_equal(1)
+	assert_int(_markers.markers_at(50 + _life).size()).is_equal(0)
 
 
 func test_sender_disconnect_leaves_markers_to_expire_normally() -> void:
 	_deliver(50, 7, 2, Vector3.ONE)
 	# A disconnect is no ping message: nothing reaches the list, so the marker lives out its lifetime.
 	_router.on_packet(SERVER_PEER, EventBatch.build(60, 0, [], [], Vector3.ZERO, null, -1, []))
-	assert_int(_markers.active(50 + _life - 1).size()).is_equal(1)
-	assert_int(_markers.active(50 + _life).size()).is_equal(0)
+	assert_int(_markers.markers_at(50 + _life - 1).size()).is_equal(1)
+	assert_int(_markers.markers_at(50 + _life).size()).is_equal(0)
 
 
 func test_two_bodies_sharing_a_name_show_two_markers() -> void:
@@ -71,7 +72,7 @@ func test_two_bodies_sharing_a_name_show_two_markers() -> void:
 	_deliver(10, 8, 2, Vector3(2, 0, 0))
 	_deliver(11, 7, 2, Vector3(3, 0, 0))
 	_deliver(11, 8, 2, Vector3(4, 0, 0))
-	var froms: Array = _markers.active(11).map(func(m: Dictionary) -> int: return m["from"])
+	var froms: Array = _markers.markers_at(11).map(func(m: Dictionary) -> int: return m["from"])
 	assert_array(froms).is_equal([2, 2, 2, 2])
 
 
@@ -80,7 +81,7 @@ func test_malformed_payload_is_ignored() -> void:
 	_router.on_packet(SERVER_PEER, EventBatch.build(10, 0, [], [], Vector3.ZERO, null, -1, [[EventBatch.PING, bad]]))
 	_router.on_packet(SERVER_PEER, EventBatch.build(10, 0, [], [], Vector3.ZERO, null, -1,
 		[[EventBatch.PING, {"point": Vector3.ONE}]]))
-	assert_int(_markers.active(10).size()).is_equal(0)
+	assert_int(_markers.markers_at(10).size()).is_equal(0)
 
 
 func test_server_handle_separates_bodies_sharing_a_name_and_reveals_no_player_id() -> void:

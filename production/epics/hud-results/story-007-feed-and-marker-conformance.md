@@ -1,7 +1,7 @@
 # Story 007: Feed cap, opaque backing, marker cap, shapes and wheel stick steering
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/feed-and-marker-conformance/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/feed-and-marker-conformance-evidence.md (6 png); tests/unit/hud-results/feed_and_marker_conformance_test.gd (7)
 
 ---
 
@@ -71,3 +71,7 @@
 
 - Depends on: Story 001; pings-and-callouts 011
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged 162ff92+081889e+1ef6535. PingCalloutHud reads markers and feed from HudModel; feed shows 4 lines (FEED_VISIBLE), rest in scrollback; one opaque black backing (21:1); feed_region is a polite live region (AccessibilityServer.LIVE_POLITE, confirmed by running on 4.7.2; not in the reference docs); marker font 20; shape per kind (location diamond, item square, warning triangle); right-stick wheel steering with centre dead zone; zone_rect 48 px or 64 px inside the 16:9 rect when wider; global marker cap HudModel.MAX_MARKERS 6 newest kept (const from Visual Budget). ping_markers.gd deleted (copy of HudModel.on_ping). CHANGED ASSERTIONS (justified by hud.md Feedback table "4 visible (10 in scrollback)" and AC "four visible, the first in scrollback"): ping_callout_presentation_test feed_lines size 10 to 4 (two asserts), warning_pings_feed_scrollback_test first feed_lines size 10 to 4; scrollback asserts unchanged; marker_lifecycle_test setup only (HudModel instead of PingMarkers, every expected value unchanged). OPEN: marker labels use font size 20, a capital measures 14 px; if hud.md means glyph height, sizes go to about 28 and 38 (designer). Item square and right stick unit-tested only (no item in view, no gamepad; project.godot has no gamepad bindings). Windowed client logs 12 ObjectDB leaked at exit, same on base 12d1f18. 7 new unit tests; 3 mutations caught. Full suite 1444 with 7 failures all in integration/match-flow from a concurrent agent run on the same ports (ENet create errors); re-run alone 37/37.

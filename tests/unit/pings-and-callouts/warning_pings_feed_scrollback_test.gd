@@ -32,7 +32,8 @@ func before_test() -> void:
 	view.add_child(_camera) # at the origin facing -Z
 	_remotes = {}
 	_states = {}
-	_hud = auto_free(PingCalloutHud.new(_knobs, _pings, PingMarkers.new(_router, _knobs), _callouts,
+	_hud = auto_free(PingCalloutHud.new(_knobs, _pings, HudModel.new(MatchDisplay.new(_knobs), _knobs, _router),
+			_callouts,
 			InputContextStack.new(), audio, _camera, _remotes, _state_of, _now_tick, _no_item, _own, null))
 	add_child(_hud)
 
@@ -121,10 +122,11 @@ func test_server_warning_marker_names_the_target_and_monster() -> void:
 
 
 func test_scrollback_shows_last_ten_regardless_of_age() -> void:
-	for i in 12:
-		_callouts.received.append({"origin": Vector3(0, 0, -5), "identity": C2, "line": &"danger"})
+	for i in 12: # hud-results/007: lines arrive through HudModel; 4 of them visible (was 10)
+		_router.on_packet(SERVER_PEER, EventBatch.build(100 + i, 0, [], [], Vector3.ZERO, null, -1,
+				[[EventBatch.CALLOUT, {"origin": Vector3(0, 0, -5), "identity": C2, "line": &"danger"}]]))
 	_hud.advance(0.1)
-	assert_int(_hud.feed_lines().size()).is_equal(10)
+	assert_int(_hud.feed_lines().size()).is_equal(PingCalloutHud.FEED_VISIBLE)
 	_hud.advance(PingCalloutHud.FEED_HOLD_S + 1.0)
 	assert_int(_hud.feed_lines().size()).is_equal(0)
 	_hud.scrollback = true

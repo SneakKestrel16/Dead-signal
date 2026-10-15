@@ -246,10 +246,10 @@ stories:
     name: "Feed cap, opaque backing, marker cap, shapes and wheel stick steering"
     file: "production/epics/hud-results/story-007-feed-and-marker-conformance.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-9"
     name: "Lobby \"Last round\" view"
