@@ -18,6 +18,9 @@ class_name NetAuthority extends Node
 ##   var net := NetAuthority.new(); net.setup(knobs, "1.0+ab12cd34", lobby)
 ##   add_child(net); net.host(knobs.net.port)          # or net.join("1.2.3.4", port, "Ann")
 
+## Client: the host kicked this player (lobby rule 20). The connection closes after this; host_left is
+## not raised for it. The player may join again with local_token.
+signal kicked(reason: StringName)
 ## Server: a player passed auth and its peer connected. Client-side nothing is emitted.
 signal player_joined(player_id: int)
 ## Server: a bound player's peer disconnected. Never raised for a peer evicted by a reconnect.
@@ -44,6 +47,10 @@ const REASON_BAD_NAME := &"bad_name"
 const REASON_BAD_PAYLOAD := &"bad_payload"
 ## A second join with the same token while the first is still authenticating (one wins).
 const REASON_TOKEN_IN_USE := &"token_in_use"
+## Sent to a kicked peer (kick()); the client raises kicked with it.
+const REASON_KICKED := &"kicked"
+## The kick notice on the wire (a static var: a const cannot call var_to_bytes).
+static var _kick_packet := var_to_bytes({"kicked": String(REASON_KICKED)})
 
 ## ENet's default throttle measurement interval (ENET_PEER_PACKET_THROTTLE_INTERVAL); protocol constant.
 const THROTTLE_INTERVAL_MS := 5000
@@ -60,6 +67,8 @@ var fail_hard: bool = OS.is_debug_build()
 ## Client: the player_id and token the server issued. The token is a secret: never log or send it on.
 var local_player_id: int = -1
 var local_token: String = ""
+## Client: the server kicked this session (kicked was raised).
+var was_kicked: bool = false
 
 var _knobs: Knobs
 var _version: String
@@ -127,10 +136,12 @@ func join(address: String, port: int, display_name: String, token: String = "") 
 	local_player_id = -1
 	local_token = ""
 	last_reject_details = {}
+	was_kicked = false
 	_attach(peer, _client_auth)
 	_smp.peer_authenticating.connect(_on_authenticating)
 	_smp.connected_to_server.connect(_on_connected_to_server)
 	_smp.server_disconnected.connect(_on_server_disconnected)
+	_smp.peer_packet.connect(_on_client_packet)
 	return OK
 
 
@@ -142,7 +153,7 @@ func close() -> void:
 		_smp.auth_callback = Callable()
 		_smp.multiplayer_peer = null
 		for sig in [&"peer_connected", &"peer_disconnected", &"peer_authentication_failed", &"peer_authenticating",
-				&"connected_to_server", &"server_disconnected"]:
+				&"connected_to_server", &"server_disconnected", &"peer_packet"]:
 			for c in _smp.get_signal_connection_list(sig):
 				if c.callable.get_object() == self:
 					_smp.disconnect(sig, c.callable)
@@ -183,6 +194,25 @@ func player_id_of_token(token: String) -> int:
 ## Server: `player_id`'s sanitized display name (the latest it joined with), or "" when unknown.
 func display_name_of(player_id: int) -> String:
 	return _names.get(player_id, "")
+
+
+## Server: disconnects `player_id`'s peer with REASON_KICKED (lobby rule 20; the lobby validated the
+## kick). The player is unbound at once, so its disconnect raises no player_dropped; the token and
+## player ID stay, so a later join with that token is the Waiting rejoin path (same ID, queue place).
+## The peer closes after reject_close_delay_s (a reason sent immediately before disconnect_peer is lost,
+## ADR-0001 verification 6). Returns false when the player has no connected peer.
+func kick(player_id: int) -> bool:
+	var peer := peer_id_of(player_id)
+	if peer == -1:
+		return false
+	_player_by_peer.erase(peer)
+	_peer_by_player.erase(player_id)
+	for sync: Variant in _visibility.get(player_id, []):
+		if is_instance_valid(sync):
+			(sync as MultiplayerSynchronizer).set_visibility_for(peer, false)
+	_smp.send_bytes(_kick_packet, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+	_close_after_delay(peer)
+	return true
 
 
 ## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
@@ -246,8 +276,16 @@ func _on_connected_to_server() -> void:
 		_set_timeout(enet.get_peer(1))
 
 
+## The server's kick notice (kick()), matched byte for byte: every snapshot and event batch passes
+## through here too, so nothing is decoded. Other packets belong to other listeners.
+func _on_client_packet(peer_id: int, data: PackedByteArray) -> void:
+	if peer_id == 1 and not was_kicked and data == _kick_packet:
+		was_kicked = true
+		kicked.emit(REASON_KICKED)
+
+
 func _on_server_disconnected() -> void:
-	if local_player_id >= 0:
+	if local_player_id >= 0 and not was_kicked:
 		host_left.emit()
 
 
@@ -339,6 +377,14 @@ static func sanitize_name(raw: String) -> String:
 			continue
 		out += raw.substr(i, 1)
 	return out
+
+
+## Disconnects connected `peer` after reject_close_delay_s, unless the session was closed or restarted.
+func _close_after_delay(peer: int) -> void:
+	var smp := _smp
+	await get_tree().create_timer(_knobs.net.reject_close_delay_s).timeout
+	if _smp == smp and peer in _smp.get_peers():
+		_smp.disconnect_peer(peer)
 
 
 func _on_peer_connected(id: int) -> void:

@@ -1,7 +1,7 @@
 class_name ConnectionRouter extends RefCounted
 ## Routes NetAuthority's join and drop notifications to the owner of the current phase (ADR-0001 §6).
 ## Lobby phase (Waiting, Countdown): a join adds the player to the lobby, a drop removes them at once
-## (lobby rule 18). In a round (In Match): a drop starts the player's reconnect grace at the detection
+## (lobby rule 18); a host kick the lobby accepted disconnects the player's peer (lobby rule 20). In a round (In Match): a drop starts the player's reconnect grace at the detection
 ## tick and emits PlayerConnectionChanged (DISCONNECTED); a rejoin inside grace emits RECONNECTED.
 ## Stand-in for Match Flow's half until the Match Flow epic exists: grace expiry and forfeit are its
 ## (story 003 Out of Scope), and it takes over emitting PlayerConnectionChanged (systems-index emitter).
@@ -33,6 +33,7 @@ func _init(knobs: Knobs, net: NetAuthority, lobby: LobbyState, clock: Callable) 
 	net.player_joined.connect(_on_joined)
 	net.player_dropped.connect(_on_dropped)
 	net.player_rejoined.connect(_on_rejoined)
+	lobby.player_kicked.connect(_on_kicked)
 
 
 ## Server tick at which `player_id`'s grace started, or -1 when it is not in grace.
@@ -63,6 +64,10 @@ func _on_dropped(player_id: int) -> void:
 		return
 	_grace_start[player_id] = _clock.call()
 	_emit(player_id, EvPlayerConnectionChanged.DISCONNECTED)
+
+
+func _on_kicked(token: String) -> void:
+	_net.kick(_net.player_id_of_token(token))
 
 
 func _on_rejoined(player_id: int, _new_peer: int) -> void:

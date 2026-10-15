@@ -23,6 +23,9 @@ signal roster_locked(tokens: PackedStringArray)
 ## The host changed proximity voice (rule 16). The lobby replication layer fans it out to every client
 ## (AC-LB-26); nothing does yet (story 004 deviation: no lobby replication channel exists).
 signal proximity_voice_changed(on: bool)
+## The host kicked `token` (rule 20); the player is already out of the lobby. ConnectionRouter
+## disconnects its peer with NetAuthority.kick.
+signal player_kicked(token: String)
 
 const WAITING := &"waiting"
 const COUNTDOWN := &"countdown"
@@ -117,6 +120,19 @@ func set_proximity_voice(requester_token: String, on: bool) -> bool:
 	if _proximity_voice != on:
 		_proximity_voice = on
 		proximity_voice_changed.emit(on)
+	return true
+
+
+## Host request to kick `target_token` (rule 20, AC-LB-30, TR-lobby-009). Accepted (true) only from
+## `host_token` in Waiting, for another player in the lobby: the player is removed like a leaver (their
+## token keeps its preference and queue place, rule 10) and player_kicked is emitted. Anything else gets
+## false and nothing changes. No ban list (MVP): the token may join again.
+func kick(requester_token: String, target_token: String) -> bool:
+	if host_token == "" or requester_token != host_token or _state != WAITING \
+			or target_token == host_token or not _ready_by_token.has(target_token):
+		return false
+	leave(target_token)
+	player_kicked.emit(target_token)
 	return true
 
 
