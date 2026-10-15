@@ -9,7 +9,9 @@ class_name MonsterAbilities extends RefCounted
 ## paths (rules 9-12, Edge Cases "Monster disconnects mid-lunge") and the miss slow as the "lunge_miss"
 ## modifier entry (ADR-0007). Story 010 adds the Blackout body (rules 17, 20, 21; ADR-0009): target
 ## validation through LightingView, the cooldown from activation, and AbilityUsed; FacilityLighting darkens
-## the zone and the backup switch (BackupSwitch) restores it. The False Signal body (009) is not here yet.
+## the zone and the backup switch (BackupSwitch) restores it. Story 009 adds the False Signal body (rules
+## 13-16, ADR-0004 §5-6, ADR-0013): a signal request (signal_packet), its validation, the cooldown from
+## activation, and the fake as the same positional sound a real one sends (set_false_signal_sources).
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   form() -> int            BorrowedFace.TRUE_FORM or the copied survivor (TransformView.get_form);
@@ -25,6 +27,8 @@ class_name MonsterAbilities extends RefCounted
 ##   ma.set_modifiers(server_movement.modifiers_of)
 ##   ma.set_hit_sources(lc, survivor_ids, downing.eligible, facing_of, sight)   # story 003
 ##   ma.set_blackout_sources(map_queries.volume_at, blackout_sight)   # story 010
+##   ma.set_false_signal_sources(server_movement.emit_sound, snap, bf.observed, match_flow.status_of,
+##       footstep_set_of, {SurvivorObjectives.INSTALL_SOUND: radius}, step_s, path_end)   # story 009
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
 ##   smp.peer_packet -> ma.request_ability(net.player_id_of(peer), bytes)
 
@@ -109,6 +113,45 @@ var _blackout_cooldown_ticks: int = 0
 ## Ticks (a list, not a counter: request_validation_test bars the literal 1, a knob value).
 var _blackout_ticks: Array[int] = []
 
+## Story 009: False Signal signal types (rule 14), and their AbilityUsed `detail`.
+enum SignalType { CALLOUT, FOOTSTEPS, INTERACTION }
+const SIGNAL_DETAILS: Array[StringName] = [&"callout", &"footsteps", &"interaction"]
+## Extra keys of a False Signal request: signal type, survivor (callout voice / footstep set), footstep
+## direction, interaction sound set.
+const TYPE_KEY := "type"
+const SURVIVOR_KEY := "survivor"
+const DIR_KEY := "dir"
+const SOUND_KEY := "sound"
+const SIGNAL_FIELDS: Array[String] = [ABILITY_KEY, AIM_KEY, TYPE_KEY, SURVIVOR_KEY, DIR_KEY, SOUND_KEY]
+## Size cap of a False Signal request (untrusted client bytes); room for a short sound set name.
+const SIGNAL_CAP_BYTES := 192
+## Story 009 sources (set_false_signal_sources); unset _snap rejects every False Signal.
+var _emit_sound: Callable
+var _snap: Callable
+var _observed: Callable
+var _status_of: Callable
+var _footstep_set_of: Callable
+var _interaction_radius: Dictionary[StringName, float] = {}
+var _step_s: float = 0.0
+var _path_end: Callable
+## False Signal knobs (AbilityKnobs; walk speed and the walk footstep radius from ControllerKnobs).
+var _signal_range: float = 0.0
+var _signal_cooldown_ticks: int = 0
+var _footstep_ticks: int = 0
+var _step_ticks: int = 0
+var _walk_speed: float = 0.0
+var _walk_radius: float = 0.0
+var _hz: float = 0.0
+## Accepted False Signals this round, as accept ticks (see _blackout_ticks).
+var _signal_ticks: Array[int] = []
+## Running fake footsteps: start point, unit direction, path length, footstep set, first and end tick.
+var _steps_from := Vector3.ZERO
+var _steps_dir := Vector3.ZERO
+var _steps_len: float = 0.0
+var _steps_set: StringName = &""
+var _steps_start: int = 0
+var _steps_end: int = -1
+
 
 ## Injects the shapeshifter's player id. Call before RoundServer.start_round.
 func set_monster(monster: int) -> void:
@@ -145,7 +188,93 @@ func set_blackout_sources(volume_at: Callable, sight: Callable = Callable()) -> 
 	_blackout_sight = sight
 
 
-## Blackouts accepted this round (results payload, ADR-0011 `stats.abilities`).
+## Story 009: injects the False Signal sources (rules 13-15). `emit_sound(position, sound_set, radius_m)` is
+## ServerMovement.emit_sound, the send real sounds use (no source: every listener in range gets it);
+## `snap(point) -> Variant` is the nearest walkable floor point, or null inside a wall or off the
+## facility (unset: every False Signal is rejected); `observed(survivor) -> bool` is BorrowedFace.observed;
+## `status_of(survivor) -> int` is MatchFlow.status_of (unset: every survivor in play);
+## `footstep_set_of(survivor) -> StringName` is the catalog id of that survivor's walk footsteps, the same
+## one their real footsteps send (&"" for a non-survivor); `interaction_radius` maps each imitable
+## interaction sound set to the radius its real sound is sent with; `step_s` is the real walk footstep
+## interval; `path_end(from, to) -> Vector3` cuts the footstep path at the first wall or the facility edge
+## and ends it on walkable floor (unset: a straight path).
+## Inference: no real footstep emitter or walk cadence knob exists yet, so the composer passes the cadence
+## its real footsteps use; a Controller cadence knob would settle it.
+func set_false_signal_sources(emit_sound: Callable, snap: Callable, observed: Callable, status_of: Callable,
+		footstep_set_of: Callable, interaction_radius: Dictionary[StringName, float], step_s: float,
+		path_end: Callable = Callable()) -> void:
+	_emit_sound = emit_sound
+	_snap = snap
+	_observed = observed
+	_status_of = status_of
+	_footstep_set_of = footstep_set_of
+	_interaction_radius = interaction_radius.duplicate()
+	_step_s = step_s
+	_path_end = path_end
+
+
+## False Signals accepted this round (results payload, ADR-0011 `stats.abilities`).
+func falsesignals_used() -> int:
+	return _signal_ticks.size()
+
+
+## The bytes the shapeshifter's client sends for a False Signal of `type` aimed at `aim`. `survivor` is
+## the impersonated voice (CALLOUT) or footstep set (FOOTSTEPS); `dir` the footstep direction; `sound`
+## the interaction sound set (INTERACTION).
+static func signal_packet(type: SignalType, aim: Vector3, survivor: int = -1, dir: Vector3 = Vector3.ZERO,
+		sound: StringName = &"") -> PackedByteArray:
+	return var_to_bytes({ABILITY_KEY: Ability.FALSE_SIGNAL, AIM_KEY: aim, TYPE_KEY: type,
+		SURVIVOR_KEY: survivor, DIR_KEY: dir, SOUND_KEY: sound})
+
+
+## The False Signal request in untrusted `bytes`, or {} when they are not one. Only checks the shape.
+static func decode_signal(bytes: PackedByteArray) -> Dictionary:
+	if bytes.is_empty() or bytes.size() > SIGNAL_CAP_BYTES:
+		return {}
+	var d: Variant = bytes_to_var(bytes)
+	if not (d is Dictionary and d.size() == SIGNAL_FIELDS.size()):
+		return {}
+	if not (d.get(ABILITY_KEY) is int and d.get(AIM_KEY) is Vector3 and d.get(TYPE_KEY) is int
+			and d.get(SURVIVOR_KEY) is int and d.get(DIR_KEY) is Vector3 and d.get(SOUND_KEY) is StringName):
+		return {}
+	var aim: Vector3 = d[AIM_KEY]
+	var dir: Vector3 = d[DIR_KEY]
+	if d[ABILITY_KEY] != Ability.FALSE_SIGNAL or not SignalType.values().has(d[TYPE_KEY]) \
+			or not aim.is_finite() or not dir.is_finite():
+		return {}
+	var out := {}
+	for k: String in SIGNAL_FIELDS:
+		out[k] = d[k]
+	return out
+
+
+## Rules 13-14: the snapped floor point of the False Signal `req`, or null when it is rejected. The aim
+## point must be within false_signal_range_m of the monster (inclusive) and snap to walkable floor; a
+## callout must name an observed survivor who is not Eliminated or Escaped; footsteps need a survivor's
+## footstep set and a horizontal direction; an interaction sound must be one a real interaction sends.
+## Inference: the range is measured to the requested aim point, before snapping.
+func false_signal_point(req: Dictionary) -> Variant:
+	if not _snap.is_valid() or not req.has(TYPE_KEY):
+		return null
+	var at: Vector3 = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
+	if at.distance_to(req[AIM_KEY]) > _signal_range + HIT_EPS:
+		return null
+	var s: int = req[SURVIVOR_KEY]
+	match req[TYPE_KEY]:
+		SignalType.CALLOUT:
+			if not (_observed.is_valid() and _observed.call(s)):
+				return null
+			if _status_of.is_valid() and _status_of.call(s) in [MatchFlow.Status.ELIMINATED, MatchFlow.Status.ESCAPED]:
+				return null
+		SignalType.FOOTSTEPS:
+			var d: Vector3 = req[DIR_KEY]
+			if not _footstep_set_of.is_valid() or _footstep_set_of.call(s) == &"" or Vector2(d.x, d.z).is_zero_approx():
+				return null
+		SignalType.INTERACTION:
+			if not _interaction_radius.has(req[SOUND_KEY]):
+				return null
+	return _snap.call(req[AIM_KEY])
+
 func blackouts_used() -> int:
 	return _blackout_ticks.size()
 
@@ -188,6 +317,8 @@ func request_ability(player: int, bytes: PackedByteArray) -> void:
 	if player != _monster or not _pending.is_empty():
 		return
 	_pending = decode_request(bytes)
+	if _pending.is_empty():
+		_pending = decode_signal(bytes)
 
 
 ## Injected by RoundServer. Reads knobs and puts every ability Ready with no cooldown. Subscribes to
@@ -214,6 +345,15 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_blackout_range = knobs.ability.blackout_range_m
 	_blackout_cooldown_ticks = knobs.ticks(knobs.ability.blackout_cooldown_s)
 	_blackout_ticks = []
+	_signal_range = knobs.ability.false_signal_range_m
+	_signal_cooldown_ticks = knobs.ticks(knobs.ability.false_signal_cooldown_s)
+	_footstep_ticks = knobs.ticks(knobs.ability.false_signal_footstep_duration_s)
+	_step_ticks = knobs.ticks(_step_s)
+	_walk_speed = knobs.controller.walk_speed
+	_walk_radius = knobs.controller.footstep_radius_walk_m
+	_hz = knobs.net.sim_tick_hz
+	_signal_ticks = []
+	_steps_end = -1
 	# Rule 6: lunge_distance_m over exactly the dash's whole ticks, so tick quantisation of lunge_dash_s
 	# changes the speed, never the distance.
 	# A dash of 0 ticks moves nothing.
@@ -248,6 +388,7 @@ func server_tick(tick: int) -> void:
 		# Rule 12: a stun landing this tick (not flushed yet; see _try_hit) interrupts it: no slow.
 		if not (_locked.is_valid() and _locked.call(_monster)):
 			_start_miss_slow(tick)
+	_step_footsteps(tick)
 	var req := _pending
 	_pending = {}
 	if req.is_empty() or not can_activate(req[ABILITY_KEY], tick):
@@ -260,7 +401,55 @@ func server_tick(tick: int) -> void:
 		_ready_tick[Ability.BLACKOUT] = tick + _blackout_cooldown_ticks ## rule 21: from activation
 		_blackout_ticks.append(tick)
 		_emit_used(Ability.BLACKOUT, req[AIM_KEY]) ## FacilityLighting darkens volume_at(aim) at flush
-	# The False Signal body (and its cooldown start) arrives in story 009.
+	elif req[ABILITY_KEY] == Ability.FALSE_SIGNAL:
+		var point: Variant = false_signal_point(req)
+		if point == null:
+			return
+		_ready_tick[Ability.FALSE_SIGNAL] = tick + _signal_cooldown_ticks ## rule 16: from activation
+		_signal_ticks.append(tick)
+		_start_signal(req, point, tick)
+		_emit_used(Ability.FALSE_SIGNAL, point, SIGNAL_DETAILS[req[TYPE_KEY]], req[SURVIVOR_KEY])
+
+
+## Rule 15: the fake goes out as the positional sound the real one sends (ADR-0004 §6: position and set
+## only). A callout is only AbilityUsed: Pings & Callouts owns its voice line and feed line (story note).
+## An interaction sound is a sound only, so no objective state changes.
+func _start_signal(req: Dictionary, point: Vector3, tick: int) -> void:
+	if req[TYPE_KEY] == SignalType.INTERACTION:
+		_emit(point, req[SOUND_KEY], _interaction_radius[req[SOUND_KEY]])
+	elif req[TYPE_KEY] == SignalType.FOOTSTEPS:
+		var d: Vector3 = req[DIR_KEY]
+		_steps_dir = Vector3(d.x, 0.0, d.z).normalized()
+		_steps_from = point
+		var end: Vector3 = point + _steps_dir * _walk_speed * _footstep_ticks / _hz
+		if _path_end.is_valid():
+			end = _path_end.call(point, end)
+		_steps_len = point.distance_to(end)
+		_steps_set = _footstep_set_of.call(req[SURVIVOR_KEY])
+		_steps_start = tick
+		# Rule 14 and Edge Cases: the steps stop at the path end (a wall cuts them short).
+		_steps_end = tick + mini(_footstep_ticks, ceili(_steps_len / _walk_speed * _hz - HIT_EPS)) if _walk_speed > 0.0 else tick
+		_step_footsteps(tick)
+
+
+## Rule 14: one walk footstep every step_s while the fake runs, at its current point along the path at
+## walk_speed, sent at the walk radius around that point (rule 15). The activation tick sends the first.
+## Inference: Facility Map footstep masking (ADR-0013 §7) is not applied; the real footstep sender, which
+## does not exist yet, should apply it to both.
+func _step_footsteps(tick: int) -> void:
+	if _steps_end < 0:
+		return
+	if tick >= _steps_end and tick > _steps_start:
+		_steps_end = -1
+		return
+	var n := tick - _steps_start
+	if n == 0 or (_step_ticks > 0 and n % _step_ticks == 0):
+		_emit(_steps_from + _steps_dir * minf(_walk_speed * n / _hz, _steps_len), _steps_set, _walk_radius)
+
+
+func _emit(position: Vector3, sound_set: StringName, radius_m: float) -> void:
+	if _emit_sound.is_valid():
+		_emit_sound.call(position, sound_set, radius_m)
 
 
 ## Rules 17 and 20: the lighting volume at `aim` may be blacked out now. It must exist, be blackout_able
@@ -484,9 +673,12 @@ func _end_miss_slow() -> void:
 ## Rule 3a (story 005): one AbilityUsed per accepted activation, at Lunge wind-up start. Server-internal:
 ## its project() is empty (ADR-0004 §5). Inference: Lunge has no aimed target, so `target` carries the
 ## request's aim point; the GDD's "target point or zone" for Lunge (facing-based?) would settle it.
-func _emit_used(ability: Ability, target: Vector3) -> void:
+## Story 009: a False Signal also carries its signal type as `detail` and the impersonated `survivor`.
+func _emit_used(ability: Ability, target: Vector3, detail: StringName = &"", survivor: int = -1) -> void:
 	var e := EvAbilityUsed.new()
 	e.ability = ability
+	e.detail = detail
+	e.survivor = survivor
 	e.position = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
 	e.target = target
 	_bus.emit(e)
