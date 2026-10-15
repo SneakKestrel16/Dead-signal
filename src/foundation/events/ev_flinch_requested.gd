@@ -6,6 +6,8 @@ class_name EvFlinchRequested
 extends ServerEvent
 
 var player: int
+## Requested yaw/pitch offset in radians; the Controller caps it at flinch_max_angle_deg (ADR-0015 §1).
+var target: Vector2
 
 
 func type() -> StringName:

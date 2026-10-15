@@ -25,6 +25,11 @@ var pitch: float = 0.0
 var view_tick: float = 0.0
 ## ADR-0003 §2: the newest snapshot tick the client had received; the server's RTT bound comes from it.
 var ack_snapshot_tick: int = 0
+## ADR-0015 §2: the FlinchRecord id the client rendered with (a byte) and its estimated server tick when
+## it sampled. Untrusted: the server only looks the id up among its own records and clamps the tick.
+## ponytail: offset_tick is a full int32, not the ADR's low 16 bits; pack it if bandwidth matters.
+var record_id: int = 0
+var offset_tick: int = 0
 
 
 ## Packs the four booleans into the flags byte, whole. Example: sprint+crouch -> 3.
@@ -49,6 +54,8 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 	var targets := PackedInt32Array()
 	var views := PackedFloat32Array()
 	var acks := PackedInt32Array()
+	var records: Array[int] = []
+	var offset_ticks := PackedInt32Array()
 	for f in frames:
 		seqs.append(f.seq)
 		moves.append(f.move)
@@ -58,8 +65,10 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 		targets.append(f.interact_target)
 		views.append(f.view_tick)
 		acks.append(f.ack_snapshot_tick)
+		records.append(f.record_id)
+		offset_ticks.append(f.offset_tick)
 	return {
 		"seq": seqs, "move": moves, "flags": PackedByteArray(flag_bytes),
 		"yaw": yaws, "pitch": pitches, "interact_target": targets, "view_tick": views,
-		"ack_snapshot_tick": acks,
+		"ack_snapshot_tick": acks, "record_id": PackedByteArray(records), "offset_tick": offset_ticks,
 	}

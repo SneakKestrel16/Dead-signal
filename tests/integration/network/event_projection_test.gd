@@ -144,10 +144,11 @@ func test_flinch_and_view_offset_reach_only_their_own_player() -> void:
 	f.player = S1
 	var v := EvViewOffsetChanged.new()
 	v.player = S1
-	v.offset = Vector2(0.1, -0.2)
+	v.record = FlinchRecord.new()
+	v.record.target = Vector2(0.1, -0.2)
 	var events: Array[ServerEvent] = [f, v]
 	assert_array(_got(S1, events)).is_equal([[&"FlinchRequested", {"flinch": true}],
-		[&"ViewOffsetChanged", {"offset": Vector2(0.1, -0.2)}]])
+		[&"ViewOffsetChanged", v.record.to_dict()]])
 	assert_array(_got(S2, events)).is_empty()
 	assert_array(_got(M, events)).is_empty()
 

@@ -1,20 +1,19 @@
 ## Emitter: First-Person Controller & Interaction
-## From ADR-0015 (Proposed): fields and projection may change when it is accepted.
-## A new flinch record, freeze or re-baseline.
-## Field types are inferred from the systems-index.md Meaning column.
+## A new flinch record, freeze or re-baseline (ADR-0015 §2; story controller-interaction/013).
 class_name EvViewOffsetChanged
 extends ServerEvent
 
 var player: int
-var offset: Vector2
+var record: FlinchRecord
 
 
 func type() -> StringName:
 	return &"ViewOffsetChanged"
 
 
-## The owning player's client only (ADR-0015 Proposed: may change when it is accepted).
+## The owning player's client only. ADR-0015 §2 also sends it to that player's spectators; the
+## projection has no spectator input yet, so they are not reached.
 func project(peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
 	if peer != player:
 		return {}
-	return {"offset": offset}
+	return record.to_dict()

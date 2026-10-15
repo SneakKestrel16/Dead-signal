@@ -5,7 +5,7 @@ class_name InputQueue extends RefCounted
 ## `move` PackedVector2Array, `flags` PackedByteArray (bits: InputFrame.FLAG_*), `yaw` and `pitch`
 ## PackedFloat32Array in RADIANS; optional `interact_target` PackedInt32Array,
 ## `view_tick` PackedFloat32Array (not finiteness-checked: LagCompensation rejects it) and `ack_snapshot_tick`
-## PackedInt32Array.
+## PackedInt32Array, `record_id` PackedByteArray and `offset_tick` PackedInt32Array (ADR-0015 §2).
 ## Any other key (e.g. a position) is never read. Invalid packets are dropped whole and recorded.
 ## No fail_hard: a remote peer must not be able to trip an assert, so violations only count and record.
 ## Tuning comes from Knobs (net.input_queue_cap, max_seq_ahead, starvation_*; controller.intent_timeout_ms).
@@ -77,6 +77,8 @@ func push(packet: Dictionary) -> int:
 	var targets: PackedInt32Array = packet.get("interact_target", PackedInt32Array())
 	var views: PackedFloat32Array = packet.get("view_tick", PackedFloat32Array())
 	var acks: PackedInt32Array = packet.get("ack_snapshot_tick", PackedInt32Array())
+	var records: PackedByteArray = packet.get("record_id", PackedByteArray())
+	var offset_ticks: PackedInt32Array = packet.get("offset_tick", PackedInt32Array())
 	var pitch_limit := deg_to_rad(PITCH_LIMIT_DEG)
 	var added := 0
 	for i in seqs.size():
@@ -92,6 +94,8 @@ func push(packet: Dictionary) -> int:
 		f.interact_target = targets[i] if not targets.is_empty() else 0
 		f.view_tick = views[i] if not views.is_empty() else 0.0
 		f.ack_snapshot_tick = acks[i] if not acks.is_empty() else 0
+		f.record_id = records[i] if not records.is_empty() else 0
+		f.offset_tick = offset_ticks[i] if not offset_ticks.is_empty() else 0
 		f.yaw = yaws[i]
 		f.pitch = clampf(pitches[i], -pitch_limit, pitch_limit)
 		_newest_seq = f.seq
@@ -173,6 +177,8 @@ func _released_frame() -> InputFrame:
 		r.pitch = _last.pitch
 		r.view_tick = _last.view_tick
 		r.ack_snapshot_tick = _last.ack_snapshot_tick
+		r.record_id = _last.record_id
+		r.offset_tick = _last.offset_tick
 	return r
 
 
@@ -197,7 +203,8 @@ func _validate(packet: Dictionary) -> String:
 	var types := {"seq": TYPE_PACKED_INT32_ARRAY, "move": TYPE_PACKED_VECTOR2_ARRAY,
 		"flags": TYPE_PACKED_BYTE_ARRAY, "yaw": TYPE_PACKED_FLOAT32_ARRAY, "pitch": TYPE_PACKED_FLOAT32_ARRAY}
 	var optional := {"interact_target": TYPE_PACKED_INT32_ARRAY, "view_tick": TYPE_PACKED_FLOAT32_ARRAY,
-		"ack_snapshot_tick": TYPE_PACKED_INT32_ARRAY}
+		"ack_snapshot_tick": TYPE_PACKED_INT32_ARRAY, "record_id": TYPE_PACKED_BYTE_ARRAY,
+		"offset_tick": TYPE_PACKED_INT32_ARRAY}
 	for key in types:
 		if typeof(packet.get(key)) != types[key]:
 			return "missing or wrong type: " + key
