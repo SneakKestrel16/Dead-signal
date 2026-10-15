@@ -9,7 +9,7 @@ Accepted 2026-10-15 by the user ("accept all seven"). Any Verification Required 
 2026-10-12
 
 ## Last Verified
-2026-10-12
+2026-10-15 (Verification 1, 2, 4, 5, 6 run on 4.7.2; see Verification Results)
 
 ## Decision Makers
 Designer (SneakKestrel16), with Claude Code (`/architecture-decision`, autonomous mode, AD-47) and `godot-specialist` engine validation. TD-ADR skipped — Lean mode. `godot-specialist` found no blocking issue; its MEDIUM findings (focus restore validity, layer hide order, `_unhandled_input` gating, NOT SOURCEABLE API names) are folded into §3–5, §9 and Verification 2 and 6.
@@ -27,6 +27,9 @@ The HUD, callout wheel, in-round overlay, lobby, results and dialogs all compete
 | **References Consulted** | `docs/engine-reference/godot/VERSION.md`, `modules/ui.md`, `modules/input.md`, `breaking-changes.md`, `deprecated-apis.md`, `current-best-practices.md`; ADR-0002, ADR-0004, ADR-0005, ADR-0007, ADR-0008; `design/ux/hud.md`, `design/ux/results.md`, `design/ux/interaction-patterns.md`, `design/accessibility-requirements.md` |
 | **Post-Cutoff APIs Used** | Dual focus (4.6); `Control` accessibility properties (`accessibility_name`, `accessibility_live`, 4.5; live-mode enum on `AccessibilityServer`, 4.7); `InputEvent.DEVICE_ID_MOUSE` / `DEVICE_ID_KEYBOARD` (4.7) |
 | **Verification Required** | (1) `Input.get_vector` and `Input.is_action_pressed` still report held keys while a focused `Control` consumes the same keys, so the gameplay mask in §2 is needed (expected; inference); (2) after `grab_focus()` on a context push, keyboard and gamepad (SDL3 driver, 4.5) navigation start from that control, a mouse hover elsewhere does not move it (4.6 dual focus), and a pop restores focus correctly even after a mouse click moved it; (3) NVDA on Windows reads `accessibility_name` of focused results rows and a polite live region announces a feed line, and the results countdown is never announced; (4) switching `MOUSE_MODE_CAPTURED` → `VISIBLE` → `CAPTURED` produces no camera jump on the first relative motion after capture; (5) 40 world markers projected and clamped per frame cost under 0.2 ms, and markers land on their targets at `content_scale_factor` 1.0 and 1.5 (`unproject_position` space vs marker `Control` space); (6) `Input.mouse_mode`, the `MOUSE_MODE_*` constants and the `AccessibilityServer.AccessibilityLiveMode` value names exist as written in the 4.7.2 editor (NOT SOURCEABLE in the reference; `godot-specialist`, 2026-10-12) |
+
+### Verification Results
+2026-10-15, Godot 4.7.2, `tests/integration/ui-input-focus/adr_0014_verification_test.gd`; evidence `production/qa/evidence/ui-input-focus/adr-0014-verification.md`. Items 1, 2, 4, 5 and 6 PASS (5: 40 markers p99 47 us, 0.000 px error at scale 1.0 and 1.5). Item 4 failed first (nothing discarded the first motion after recapture, BUG-0014) and passes after the fix. Item 3 (NVDA) NOT ASSESSED, manual steps in the evidence file.
 
 ## ADR Dependencies
 

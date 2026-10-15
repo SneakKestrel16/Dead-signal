@@ -7,8 +7,10 @@ class_name InputContextStack extends RefCounted
 ## Focus (§5): set `viewport` (a RefCounted has no get_viewport()); push remembers the focused control and
 ## grabs focus on `focus_owner`; pop restores the remembered control if it is still valid and visible, else
 ## the lower screen's default control.
-## Not built yet: showing and hiding each context's UiLayers root on push/pop (§4), and discarding the
-## first relative motion after a switch to captured (§3, Verification 4); both wait for the first screens.
+## Every write of the captured mode (a switch back to it, or reapply_mouse_mode() on focus-in) arms a one-shot
+## discard of the next relative mouse motion, which LocalInput takes with take_motion_discard() (§3,
+## Verification 4, BUG-0014).
+## Not built yet: showing and hiding each context's UiLayers root on push/pop (§4); waits for the first screens.
 ## Usage (client root):
 ##   var contexts := InputContextStack.new()   # GAMEPLAY at the base
 ##   contexts.push(InputContextStack.Ctx.WHEEL, null); ...; contexts.pop(InputContextStack.Ctx.WHEEL)
@@ -35,6 +37,8 @@ var _stack: Array[Ctx] = []
 ## typed Array[Control] element read would error on.
 var _remembered: Array = [] ## the control focused when the entry was pushed
 var _defaults: Array = [] ## the screen's default control (push's focus_owner)
+## True from a switch to the captured mouse until the next relative motion is taken.
+var _discard_motion := false
 
 
 func _init(base: Ctx = Ctx.GAMEPLAY) -> void:
@@ -100,9 +104,19 @@ static func wants_cursor(ctx: Ctx) -> bool:
 
 ## Writes Input.mouse_mode for the top context; the client root calls it on NOTIFICATION_APPLICATION_FOCUS_IN
 ## because alt-tab drops the capture (ADR-0014 §3).
+## Captured also arms the one-shot motion discard (take_motion_discard), headless included so tests see it.
 func reapply_mouse_mode() -> void:
+	_discard_motion = not wants_cursor(top())
 	if DisplayServer.get_name() != "headless":
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if wants_cursor(top()) else Input.MOUSE_MODE_CAPTURED
+
+
+## True once after each switch to the captured mouse: the caller drops that relative motion, which on
+## recapture can carry the cursor's whole travel while it was free (ADR-0014 §3).
+func take_motion_discard() -> bool:
+	var was := _discard_motion
+	_discard_motion = false
+	return was
 
 
 func _restore_focus(remembered: Variant, lower_default: Variant) -> void:

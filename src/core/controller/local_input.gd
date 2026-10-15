@@ -2,7 +2,8 @@ class_name LocalInput extends Node
 ## The owning client's input (ADR-0007 §11): the named actions, mouse look and right-stick look. Mouse motion is
 ## read from InputEventMouseMotion.screen_relative (not `relative`, which the canvas_items stretch
 ## scales, so sensitivity would change with window size), is not scaled by delta, and is only taken
-## while the mouse is captured. The mouse is captured again when the window regains focus.
+## while the mouse is captured. The mouse is captured again when the window regains focus (by the
+## InputContextStack when `contexts` is set, which also drops the first motion after it).
 ## Yaw and pitch accumulate here and go into the InputFrame sampled at the physics tick.
 ## Device checks, if ever needed, use the event type, never `device == 0` (4.7 device IDs).
 ## Flinch view offset (ADR-0015 §2-3; story controller-interaction/013): the owner keeps the newest
@@ -57,8 +58,8 @@ func _process(delta: float) -> void:
 ## stick_look() turns it by. Public so tests can feed events.
 func handle(event: InputEvent) -> void:
 	var motion := event as InputEventMouseMotion
-	if motion != null:
-		look(motion.screen_relative)
+	if motion != null and not (contexts != null and contexts.take_motion_discard()):
+		look(motion.screen_relative) # the first motion after a recapture is dropped (ADR-0014 §3, BUG-0014)
 	var joy := event as InputEventJoypadMotion
 	if joy != null and joy.axis == JOY_AXIS_RIGHT_X:
 		_stick.x = joy.axis_value
@@ -133,5 +134,5 @@ func sample(offset_tick: int = 0) -> InputFrame:
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and contexts == null: # with a stack, the root re-applies it
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
