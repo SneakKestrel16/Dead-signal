@@ -1,12 +1,12 @@
 # Story 006: Drive extraction at the exit
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ A Healthy carrier entering the open exit extracts the drives they carry; the sur
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A Healthy survivor entering the open exit with 1 drive marks that drive Extracted; the win is reported to Match Flow only when the second drive is Extracted (rule 22).
-- [ ] After activation ejects both drives, one survivor can pick up both and Extract them alone.
-- [ ] A survivor entering the open exit with no drive is recorded Escaped by Match Flow and changes no objective state; a Downed survivor or the shapeshifter in the exit changes nothing (rules 23, 25).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] A Healthy survivor entering the open exit with 1 drive marks that drive Extracted; the win is reported to Match Flow only when the second drive is Extracted (rule 22).
+- [x] After activation ejects both drives, one survivor can pick up both and Extract them alone.
+- [x] A survivor entering the open exit with no drive is recorded Escaped by Match Flow and changes no objective state; a Downed survivor or the shapeshifter in the exit changes nothing (rules 23, 25).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -83,7 +83,7 @@ A Healthy carrier entering the open exit extracts the drives they carry; the sur
 **Required evidence**:
 - Integration: `tests/integration/survivor-objectives/extraction_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/extraction_test.gd` (6 tests)
 
 ---
 
@@ -91,3 +91,17 @@ A Healthy carrier entering the open exit extracts the drives they carry; the sur
 
 - Depends on: Stories 002, 005
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-134):
+- Implemented by gameplay-programmer in a git worktree, in parallel with MF-3; reviewed and merged by the orchestrator.
+- The agent first built its own escape detection (exit radius knob, `SurvivorEscaped` emitted by Survivor Objectives). MF-3 built the same in Match Flow, which the GDD and the event file name as the emitter, so the orchestrator had SO-6 reworked: Survivor Objectives now only reacts to `SurvivorEscaped` (rule 22), marking every drive that survivor carries EXTRACTED and emitting one `ObjectiveProgressChanged` per drive. No knob added.
+- Merge fix (orchestrator): with MF-3's outcome lock, extracting both drives while survivors remain inside locks the win instead of ending the round; the carry-both test now asserts `is_locked()` and no RoundEnded yet.
+- Test file `extraction_test.gd` (snake case); tests emit `EvSurvivorEscaped` directly, since escape detection is Match Flow's and is tested there.
+**Test Evidence**: `tests/integration/survivor-objectives/extraction_test.gd`, 6 tests. Mutations caught: every carried drive extracted instead of the escaper's, no EXTRACTED event emitted.
+**Code Review**: Complete (orchestrator review; duplicate escape ownership resolved in Match Flow's favour)

@@ -50,7 +50,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 003 | [Fuses, fuse boxes and power restored](story-003-fuses-and-power.md) | Integration | Complete | ADR-0008 |
 | 004 | [Install alert to the shapeshifter](story-004-install-alert.md) | Logic | Ready | ADR-0004 |
 | 005 | [Docking and the evacuation terminal](story-005-docking-and-terminal.md) | Logic | Complete | ADR-0005 |
-| 006 | [Drive extraction at the exit](story-006-extraction.md) | Integration | Ready | ADR-0005 |
+| 006 | [Drive extraction at the exit](story-006-extraction.md) | Integration | Complete | ADR-0005 |
 | 007 | [Shapeshifter fake interactions](story-007-shapeshifter-fake-interactions.md) | Integration | Ready | ADR-0008 |
 | 008 | [Active point selection](story-008-active-point-selection.md) | Logic | Blocked | ADR-0012 |
 | 009 | [Objective discovery](story-009-discovery.md) | Integration | Blocked | ADR-0012 |

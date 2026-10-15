@@ -6,6 +6,8 @@ class_name SurvivorObjectives extends RefCounted
 ## message: the only way to change objective state is the server's own hold timer.
 ## Story 005: two dock slots, the activation panel and one pickup per drive at the terminal; the
 ## activation countdown runs in server_tick. Match Flow reads ARMED and ACTIVATED from the events alone.
+## Story 006 (rule 22): on SurvivorEscaped (Match Flow decides the escape) the drives that survivor
+## carries become Extracted. Match Flow counts the EXTRACTED events toward the win.
 ## Not yet here: dropping and pickup of dropped items away from the terminal (story 002), install noise
 ## and the monster alert (004), fake holds (007), the registry view of objective state (no StateKeys row).
 ## Usage:
@@ -92,6 +94,8 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_slots = []
 	_terminal = TerminalState.LOCKED
 	_activation_ticks = 0
+	## Named method, not a lambda: the bus must not keep the module alive (no RefCounted cycle).
+	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 	var o := knobs.objectives
 	for m: MapMarker in _first(&"drive", ACTIVE_DRIVES):
 		_add(DriveConsole.new(), _states.size(), m, o.drive_extract_s)
@@ -313,6 +317,16 @@ func _activate() -> void:
 		_states[drive] = DriveState.DROPPED
 		_emit(DRIVE_ID + drive, DriveState.DROPPED)
 	_emit(TERMINAL_ID, TerminalState.ACTIVATED)
+
+
+## Rule 22: the drives an escaping survivor carries leave with them as Extracted.
+func _on_escaped(e: ServerEvent) -> void:
+	var actor := (e as EvSurvivorEscaped).survivor
+	for drive in _carriers.size():
+		if _carriers[drive] == actor:
+			_states[drive] = DriveState.EXTRACTED
+			_carriers[drive] = -1
+			_emit(DRIVE_ID + drive, DriveState.EXTRACTED)
 
 
 ## Every event here is about something carried, installed or always marked, so `discovered` is true.

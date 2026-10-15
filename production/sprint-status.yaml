@@ -101,11 +101,11 @@ stories:
     name: "Drive extraction at the exit"
     file: "production/epics/survivor-objectives/story-006-extraction.md"
     priority: should-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "downing-and-rescue-1"
     name: "Life state and takedown commit"
