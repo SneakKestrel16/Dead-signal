@@ -78,6 +78,7 @@ event. Only the owner writes it. Readers never change it.
 | Round stats `stats.borrowed_face` (form changes) **(proposed)** | Borrowed Face (ADR-0011) | Match Flow (results) | Round counters for the results screen |
 | Round stats `stats.objectives` (per line count and completion tick; drives carried at escape) **(proposed)** | Survivor Objectives (ADR-0011) | Match Flow (results) | Round counters for the results screen |
 | Round stats `stats.match` (survivor fates, round start and end tick) **(proposed)** | Match Flow & Win Conditions (ADR-0011) | Match Flow (results) | Round counters for the results screen |
+| Round clock (`phase`, `time_remaining_s`) | Match Flow & Win Conditions | Survivor Objectives, Monster Abilities, Scare Events, Facility Map, HUD | Current round phase and seconds to the deadline; clients mirror it from `RoundPhaseChanged` |
 
 ---
 

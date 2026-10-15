@@ -4,7 +4,7 @@ extends GdUnitTestSuite
 const INDEX_PATH := "res://design/gdd/systems-index.md"
 const SRC_DIR := "res://src/"
 ## Hard-coded on purpose: editing the systems-index state table or StateKeys must fail deliberately.
-const EXPECTED_KEYS := 22
+const EXPECTED_KEYS := 23
 
 
 ## Fixture owner: holds private state, hands out a view.

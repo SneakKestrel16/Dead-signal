@@ -47,3 +47,5 @@ const STATS_BORROWED_FACE := &"stats_borrowed_face"
 const STATS_OBJECTIVES := &"stats_objectives"
 ## Row "Round stats `stats.match`".
 const STATS_MATCH := &"stats_match"
+## Row "Round clock (phase, time remaining)".
+const ROUND_CLOCK := &"round_clock"

@@ -13,6 +13,13 @@ class_name MatchFlowKnobs extends Resource
 @export_range(10.0, 45.0) var results_duration_s: float = NAN
 
 
-## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.
+## Cross-knob rules within this section; [] = valid. Rule: Infiltration must end before Evacuation
+## starts (match-flow.md Formulas "Phase from elapsed time"; equality also fails). Unset (NaN) knobs
+## compare false here; the unset check reports them.
 func validate_cross() -> PackedStringArray:
-	return []
+	var errs := PackedStringArray()
+	var evac_start_s := round_duration_s - evacuation_window_s
+	# Source: design/gdd/match-flow.md Formulas "Phase from elapsed time" (evac_start_s = round_duration_s - evacuation_window_s).
+	if infiltration_end_s >= evac_start_s:
+		errs.append("match_flow.infiltration_end_s (%s) must be < round_duration_s - evacuation_window_s (%s)" % [infiltration_end_s, evac_start_s])
+	return errs

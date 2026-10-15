@@ -1,12 +1,12 @@
 # Story 001: Round clock and phase state machine
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ The server-only round clock and the phase machine (Infiltration, Investigation, 
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] With default knobs and nothing done, the phase is Infiltration at 0:00, Investigation at 2:00 and Evacuation at 7:00, and `elapsed_s` reaches the deadline at 9:00 (rule 5, Formulas "Phase from elapsed time").
-- [ ] Arming the terminal at 5:00 switches to Evacuation at 5:00 and the deadline stays 9:00; arming it at 1:00 moves Infiltration straight to Evacuation with exactly one `RoundPhaseChanged` (rule 6, States and Transitions).
-- [ ] Every phase change sends exactly one `RoundPhaseChanged`; the phase never moves backwards.
-- [ ] All Tuning Knobs are read from `MatchFlowKnobs`; a config with `infiltration_end_s >= round_duration_s - evacuation_window_s` fails load-time validation (`MatchFlowKnobs.validate_cross`) and the game refuses to host.
+- [x] With default knobs and nothing done, the phase is Infiltration at 0:00, Investigation at 2:00 and Evacuation at 7:00, and `elapsed_s` reaches the deadline at 9:00 (rule 5, Formulas "Phase from elapsed time").
+- [x] Arming the terminal at 5:00 switches to Evacuation at 5:00 and the deadline stays 9:00; arming it at 1:00 moves Infiltration straight to Evacuation with exactly one `RoundPhaseChanged` (rule 6, States and Transitions).
+- [x] Every phase change sends exactly one `RoundPhaseChanged`; the phase never moves backwards.
+- [x] All Tuning Knobs are read from `MatchFlowKnobs`; a config with `infiltration_end_s >= round_duration_s - evacuation_window_s` fails load-time validation (`MatchFlowKnobs.validate_cross`) and the game refuses to host.
 
 ---
 
@@ -90,9 +90,9 @@ The server-only round clock and the phase machine (Infiltration, Investigation, 
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/match-flow/round-clock-phases_test.gd` — must exist and pass
+- Logic: `tests/unit/match-flow/round_clock_phases_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (14 tests)
 
 ---
 
@@ -100,3 +100,19 @@ The server-only round clock and the phase machine (Infiltration, Investigation, 
 
 - Depends on: None (RoundServer, TickOrder and the event catalog exist)
 - Unlocks: Stories 002–009
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (automated)
+**Deviations** (AD-125):
+- Implemented by gameplay-programmer in a git worktree, in parallel with SO-1 and BUG-0002; reviewed and merged by the orchestrator.
+- New Feature-layer folder `src/feature/match_flow/`. `MatchFlow` registers at `MATCH_FLOW_BEGIN`; `resolve_step()` returns the object for `MATCH_FLOW_RESOLVE`, which calls an empty `_on_resolve(tick)` hook for story 002. The view and the resolve step hold the module through `WeakRef` (no RefCounted cycle; tested).
+- New state key `StateKeys.ROUND_CLOCK` (getter-only `ClockView`: phase, `time_remaining_s`, `elapsed_s`), with its row added to `design/gdd/systems-index.md` (`state_registry_test` requires one per key). The row's "Read by" list is an inference from the `RoundPhaseChanged` consumers; the designer confirms it in the AD review.
+- An armed terminal arriving during the bus flush moves the phase in that flush, not at the next Match Flow slot: that is what makes "Evacuation at that tick" true.
+- Merge fix (orchestrator): the agent's placeholder armed check (`state == 1`, any objective) would have armed the terminal on SO-1's drive CARRIED event (also state 1). MatchFlow now arms only on `objective == SurvivorObjectives.TERMINAL_ID` and `state == SurvivorObjectives.TerminalState.ARMED` (enum added to SurvivorObjectives; story 005 emits it). Regression test watched failing.
+- Test file `round_clock_phases_test.gd` (snake case), not the story's hyphenated name.
+**Test Evidence**: `tests/unit/match-flow/round_clock_phases_test.gd`, 14 tests. Mutations caught: Evacuation boundary `>=` to `>` (2 tests), a strong reference in `ClockView` (cycle test), the terminal-id guard removed (2 tests). Equivalent: the never-backwards guard `<=` to `==` (the phase rule cannot produce a lower phase).
+**Code Review**: Complete (orchestrator review; the cross-module armed-state collision found and fixed at merge)

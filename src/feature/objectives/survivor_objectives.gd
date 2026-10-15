@@ -11,6 +11,8 @@ class_name SurvivorObjectives extends RefCounted
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
 
 enum DriveState { SECURED, CARRIED, DROPPED, DOCKED, EXTRACTED }
+## Terminal states (GDD States and Transitions); reported with `objective` = TERMINAL_ID (story 005).
+enum TerminalState { LOCKED, ARMED, ACTIVATING, ACTIVATED }
 
 ## Active drive rooms for now: the first two authored drive markers. Placeholder until story 008
 ## (random active point selection, ADR-0012, Proposed) replaces it.

@@ -157,4 +157,4 @@ func test_every_cross_check_has_a_source_comment() -> void:
 				assert_bool(cited).override_failure_message("%s: check without a source comment: %s" % [path, t]).is_true()
 				cited = false
 				checked += 1
-	assert_int(checked).is_equal(15) ## 6 spanning + 3 net + 2 scare + 2 controller + 2 lobby: a new check must update this
+	assert_int(checked).is_equal(16) ## 6 spanning + 3 net + 2 scare + 2 controller + 2 lobby + 1 match_flow: a new check must update this
