@@ -32,5 +32,5 @@ func on_start(_actor: int) -> void:
 
 @abstract func on_complete(actor: int) -> void
 ## `reason` names why: &"released", &"replaced", &"unregistered", &"left", &"ineligible", &"range",
-## &"sight", or the owner's own (holds.cancel). The owner maps it to reset, keep or decay.
+## &"sight", &"round_ended", &"disconnected" (ControllerAuthority), or the owner's own (holds.cancel). The owner maps it to reset, keep or decay.
 @abstract func on_cancel(actor: int, progress_s: float, reason: StringName) -> void

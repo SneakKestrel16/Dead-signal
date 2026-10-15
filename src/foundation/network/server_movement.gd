@@ -198,8 +198,12 @@ func last_valid_position_of(player_id: int) -> Vector3:
 
 ## The frames the input phase consumed this tick, oldest first; the repeated (or released) frame when
 ## it starved. HoldService reads every one so a press and release in one catch-up tick are both seen.
+## Empty while frozen: a frozen player's intent is ignored (round end, Out; controller story 011).
 func frames_of(player_id: int) -> Array[InputFrame]:
 	var p: PlayerState = _players[player_id]
+	if p.frozen:
+		var none: Array[InputFrame] = []
+		return none
 	var taken := p.queue.taken()
 	if not taken.is_empty():
 		return taken.duplicate()
