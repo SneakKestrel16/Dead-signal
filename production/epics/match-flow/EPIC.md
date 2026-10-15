@@ -48,8 +48,8 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 002 | [Win evaluation order and immediate endings](story-002-win-evaluation.md) | Logic | Complete | ADR-0005 |
 | 003 | [Escape, evidence extraction and outcome lock](story-003-escape-and-outcome-lock.md) | Logic | Complete | ADR-0005 |
 | 004 | [Loading barrier, spawn, round end and return to lobby](story-004-round-lifecycle.md) | Integration | Complete | ADR-0005 |
-| 005 | [Survivor disconnect, grace and reconnect](story-005-survivor-disconnect-grace.md) | Integration | Ready | ADR-0001 |
-| 006 | [Shapeshifter disconnect and forfeit](story-006-shapeshifter-disconnect-forfeit.md) | Integration | Ready | ADR-0001 |
+| 005 | [Survivor disconnect, grace and reconnect](story-005-survivor-disconnect-grace.md) | Integration | Complete | ADR-0001 |
+| 006 | [Shapeshifter disconnect and forfeit](story-006-shapeshifter-disconnect-forfeit.md) | Integration | Complete | ADR-0001 |
 | 007 | [Spectators and full state on reconnect](story-007-spectators-and-reconnect-state.md) | Integration | Ready | ADR-0004 |
 | 008 | [Results payload](story-008-results-payload.md) | Logic | Blocked | ADR-0011 |
 | 009 | [Clients display server phase and outcome only](story-009-client-display-authority.md) | Integration | Complete | ADR-0005 |

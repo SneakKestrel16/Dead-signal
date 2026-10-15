@@ -1,12 +1,12 @@
 # Story 002: Grace windows and takedown eligibility
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,9 +34,9 @@ After a rescue or a stun release a survivor cannot be taken down for a short gra
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A rescued survivor cannot be taken down for `post_rescue_grace_s` (3 s ±1 tick) after standing up; a survivor freed by a stun cannot for `post_release_grace_s` (2 s ±1 tick) (rules 4.4, 8).
-- [ ] Eligibility (Healthy, not hidden, not in grace, not in a commit) is published read-only in the registry; a hidden survivor (Survivor Defense state; absent owner reads as not hidden) is ineligible (rule 3).
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] A rescued survivor cannot be taken down for `post_rescue_grace_s` (3 s ±1 tick) after standing up; a survivor freed by a stun cannot for `post_release_grace_s` (2 s ±1 tick) (rules 4.4, 8).
+- [x] Eligibility (Healthy, not hidden, not in grace, not in a commit) is published read-only in the registry; a hidden survivor (Survivor Defense state; absent owner reads as not hidden) is ineligible (rule 3).
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -64,9 +64,9 @@ After a rescue or a stun release a survivor cannot be taken down for a short gra
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/downing-and-rescue/grace-and-eligibility_test.gd` — must exist and pass
+- Logic: `tests/unit/downing-and-rescue/grace_and_eligibility_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/downing-and-rescue/grace_and_eligibility_test.gd` (10 tests)
 
 ---
 
@@ -74,3 +74,17 @@ After a rescue or a stun release a survivor cannot be taken down for a short gra
 
 - Depends on: Story 001
 - Unlocks: Story 004
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-139):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- Release grace starts in `_cancel_commit()` (stun or monster disconnect); `stand_up(player)` gives post_rescue_grace for story 004.
+- Pure `Downing.is_eligible(state, hidden, tick, grace_end_tick)`; `eligible(player)` and the view use it.
+- Hidden comes from an injected `set_hidden(Callable)`; unset, nobody is hidden.
+**Test Evidence**: 10 tests. Mutations caught: release grace dropped, grace `>=` to `>`, hidden check removed, wrong grace length.
+**Code Review**: Complete (orchestrator review at merge)

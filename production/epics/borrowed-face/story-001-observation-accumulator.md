@@ -1,12 +1,12 @@
 # Story 001: Observation accumulator
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -33,10 +33,10 @@ The shapeshifter must watch a survivor for 3 s, close and in view, before it can
 
 *From `borrowed-face.md` Acceptance Criteria (observation), scoped to this story:*
 
-- [ ] A survivor is marked observed only after 3 s cumulative valid observation within 15 m and the view cone; behind a wall or a closed door nothing accumulates.
-- [ ] A survivor 46° off the look direction accumulates nothing; at 44° it does. A survivor 46° off measured horizontally to the chest point accumulates nothing even if the head is in view at any pitch.
-- [ ] While Stunned, and during the shock lock (Survivor Defense rule 14), no observation accumulates on a survivor that otherwise qualifies.
-- [ ] `observe_time_s`, range and cone half-angle are read from `BorrowedFaceKnobs`.
+- [x] A survivor is marked observed only after 3 s cumulative valid observation within 15 m and the view cone; behind a wall or a closed door nothing accumulates.
+- [x] A survivor 46° off the look direction accumulates nothing; at 44° it does. A survivor 46° off measured horizontally to the chest point accumulates nothing even if the head is in view at any pitch.
+- [x] While Stunned, and during the shock lock (Survivor Defense rule 14), no observation accumulates on a survivor that otherwise qualifies.
+- [x] `observe_time_s`, range and cone half-angle are read from `BorrowedFaceKnobs`.
 
 ---
 
@@ -67,7 +67,7 @@ The shapeshifter must watch a survivor for 3 s, close and in view, before it can
 **Required evidence**:
 - Logic: `tests/unit/borrowed-face/observation_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/borrowed-face/observation_accumulator_test.gd` (13 tests)
 
 ---
 
@@ -75,3 +75,18 @@ The shapeshifter must watch a survivor for 3 s, close and in view, before it can
 
 - Depends on: controller-interaction stories 001, 006; event-catalog story 003
 - Unlocks: Story 002
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-144):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- New `BorrowedFace` module at `TickOrder.BORROWED_FACE`; collaborators injected via `set_roster` and `set_sight_sources`.
+- `MapQueries.clear_sight` added; `_door_blocks` now takes a `door_closed` Callable (callers updated).
+- Range eye-to-chest is inference (GDD: `dist(monster_eye, survivor)`). Stun and shock lock are one injected `locked` Callable until Survivor Defense publishes SHOCK_STUN_LOCK.
+- Not wired into a live round yet.
+**Test Evidence**: 13 tests. Mutations caught: cone to head, full FOV, lock check removed, wrong ray mask.
+**Code Review**: Complete (orchestrator review at merge)

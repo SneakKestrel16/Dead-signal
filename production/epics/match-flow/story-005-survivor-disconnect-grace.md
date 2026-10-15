@@ -1,12 +1,12 @@
 # Story 005: Survivor disconnect, grace and reconnect
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,9 +34,9 @@ A survivor who drops keeps their place for `reconnect_grace_s`: their carried it
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] Disconnecting a survivor drops their carried items at once and removes their character; `PlayerConnectionChanged` (disconnect) is emitted (rule 19).
-- [ ] Reconnecting within 60 s restores their position, Healthy/Downed state and down count; staying away 60 s counts them as eliminated for the win check and lists them "Disconnected".
-- [ ] A Downed survivor who disconnects with 20 s of bleed-out left is Eliminated ("Bled out") 20 s later, while still disconnected; no reconnect is accepted after grace expires.
+- [x] Disconnecting a survivor drops their carried items at once and removes their character; `PlayerConnectionChanged` (disconnect) is emitted (rule 19).
+- [x] Reconnecting within 60 s restores their position, Healthy/Downed state and down count; staying away 60 s counts them as eliminated for the win check and lists them "Disconnected".
+- [x] A Downed survivor who disconnects with 20 s of bleed-out left is Eliminated ("Bled out") 20 s later, while still disconnected; no reconnect is accepted after grace expires.
 
 ---
 
@@ -67,9 +67,9 @@ A survivor who drops keeps their place for `reconnect_grace_s`: their carried it
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/match-flow/survivor-disconnect-grace_test.gd` OR playtest doc
+- Integration: `tests/integration/match-flow/survivor_disconnect_grace_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/match-flow/survivor_disconnect_grace_test.gd` (6 tests)
 
 ---
 
@@ -77,3 +77,18 @@ A survivor who drops keeps their place for `reconnect_grace_s`: their carried it
 
 - Depends on: Story 004
 - Unlocks: Story 007
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-138):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- Grace timer in Match Flow for any role (story 006 reuses it); expiry marks a still-inside survivor Disconnected before the win check and emits grace-expired.
+- New RoundLifecycle hook `remove(player) -> Vector3`; reconnect inside grace respawns at the stored spot.
+- The router, not Match Flow, still emits disconnect/reconnect events (ADR and systems-index name Match Flow); moving it is later work.
+- Rule 22 logging reads the bus's delivered-event list as the log path: inference, telemetry owner confirms.
+**Test Evidence**: 6 tests (one real ENet). Mutations caught: grace one tick early, reconnect not stopping the timer, respawn at the wrong position.
+**Code Review**: Complete (orchestrator review at merge)

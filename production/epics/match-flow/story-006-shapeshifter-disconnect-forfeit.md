@@ -1,12 +1,12 @@
 # Story 006: Shapeshifter disconnect and forfeit
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,9 +34,9 @@ If the shapeshifter drops, the round keeps running; if it does not come back wit
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] Disconnecting the shapeshifter for more than 60 s ends the round as a survivor win, reason "Shapeshifter forfeited", on all clients; one that reconnects within 60 s appears at its disconnect position in true form (rule 20).
-- [ ] Disconnecting the shapeshifter at 8:30 with no drives out ends the round at 9:00 as a monster win, reason "Evacuation deadline expired", not a forfeit.
-- [ ] If the evidence escapes in the same tick the shapeshifter's grace expires, the survivors win by "Evidence escaped", not by forfeit (rule 16 order, outcome lock).
+- [x] Disconnecting the shapeshifter for more than 60 s ends the round as a survivor win, reason "Shapeshifter forfeited", on all clients; one that reconnects within 60 s appears at its disconnect position in true form (rule 20).
+- [x] Disconnecting the shapeshifter at 8:30 with no drives out ends the round at 9:00 as a monster win, reason "Evacuation deadline expired", not a forfeit.
+- [x] If the evidence escapes in the same tick the shapeshifter's grace expires, the survivors win by "Evidence escaped", not by forfeit (rule 16 order, outcome lock).
 
 ---
 
@@ -66,9 +66,9 @@ If the shapeshifter drops, the round keeps running; if it does not come back wit
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/match-flow/shapeshifter-disconnect-forfeit_test.gd` OR playtest doc
+- Integration: `tests/integration/match-flow/shapeshifter_disconnect_forfeit_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/match-flow/shapeshifter_forfeit_test.gd` (5 tests)
 
 ---
 
@@ -76,3 +76,17 @@ If the shapeshifter drops, the round keeps running; if it does not come back wit
 
 - Depends on: Stories 002, 004
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-147):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- `MatchFlow.shapeshifter_id`, set by RoundLifecycle from the Roster.
+- No ENet test: router agreement is already covered by MF-5's ENet test (inference that a second adds nothing).
+- 'True form' on return is Borrowed Face's.
+**Test Evidence**: 5 tests. Mutations caught: forfeit before the lock, any grace expiry forfeiting, shapeshifter_id never set.
+**Code Review**: Complete (orchestrator review at merge)

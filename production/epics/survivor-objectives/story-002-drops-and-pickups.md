@@ -1,12 +1,12 @@
 # Story 002: Item drops and pickups
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Carried drives and fuses drop when their carrier is downed, eliminated or discon
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] Downing a carrier drops every item they carry at their position, and another Healthy survivor can pick it up with a `pickup_s` hold; a rescued former carrier does not get it back automatically (rule 12).
-- [ ] Elimination or disconnect drops carried items at the last position at once; a dropped item never despawns, respawns or is destroyed, and is placed at the nearest valid floor point (rule 13, edge cases).
-- [ ] A survivor can drop a drive or fuse on purpose (instant) (rules 11, 15).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] Downing a carrier drops every item they carry at their position, and another Healthy survivor can pick it up with a `pickup_s` hold; a rescued former carrier does not get it back automatically (rule 12).
+- [x] Elimination or disconnect drops carried items at the last position at once; a dropped item never despawns, respawns or is destroyed, and is placed at the nearest valid floor point (rule 13, edge cases).
+- [x] A survivor can drop a drive or fuse on purpose (instant) (rules 11, 15).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -82,9 +82,9 @@ Carried drives and fuses drop when their carrier is downed, eliminated or discon
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/survivor-objectives/drops-and-pickups_test.gd` OR playtest doc
+- Integration: `tests/integration/survivor-objectives/drops_and_pickups_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/drops_and_pickups_test.gd` (18 tests)
 
 ---
 
@@ -92,3 +92,18 @@ Carried drives and fuses drop when their carrier is downed, eliminated or discon
 
 - Depends on: Story 001
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-137):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- Carried drives and fuses drop on SurvivorDowned, SurvivorEliminated and disconnect; `drop(actor, objective)` is the deliberate drop; `dropped_at(objective)` gives the pickup point.
+- Drop point = `position_of(actor)` snapped to the nearest map volume's floor (inference: no floor data finer than volumes; props not avoided). Without `position_of`, items drop at the terminal.
+- Moved pickup points instead of the story's new Interactable per drop: net ids stay stable, no unregister. FuseSpawn is eligible only while UNFOUND.
+- Nothing in the input layer calls `drop()` yet; drop replication is story 010.
+**Test Evidence**: 18 tests. Mutations caught: drop on every connection status, fuse spawn eligible while DROPPED, floor snap 0, ejection not resetting the pickup (test added).
+**Code Review**: Complete (orchestrator review at merge)

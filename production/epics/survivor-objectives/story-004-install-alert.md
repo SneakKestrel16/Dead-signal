@@ -1,12 +1,12 @@
 # Story 004: Install alert to the shapeshifter
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Starting a fuse install alerts the shapeshifter to the general area: an offset c
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] When an install starts the shapeshifter's client alone receives an area marker of radius `alert_area_radius_m` lasting `alert_duration_s`, whose circle contains the box (rule 16, Formulas "Install alert placement").
-- [ ] With a fixed seed, in at least 90% of 50 tests the circle's centre is more than 1 m from the box.
-- [ ] A cancelled and restarted install raises a new alert; a fake install raises none (rules 16, 26).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] When an install starts the shapeshifter's client alone receives an area marker of radius `alert_area_radius_m` lasting `alert_duration_s`, whose circle contains the box (rule 16, Formulas "Install alert placement").
+- [x] With a fixed seed, in at least 90% of 50 tests the circle's centre is more than 1 m from the box.
+- [x] A cancelled and restarted install raises a new alert; a fake install raises none (rules 16, 26).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -66,9 +66,9 @@ Starting a fuse install alerts the shapeshifter to the general area: an offset c
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/survivor-objectives/install-alert_test.gd` — must exist and pass
+- Logic: `tests/unit/survivor-objectives/install_alert_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/install_alert_test.gd` (6 tests)
 
 ---
 
@@ -76,3 +76,18 @@ Starting a fuse install alerts the shapeshifter to the general area: an offset c
 
 - Depends on: Story 003
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-146):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- `ObjectiveProgressChanged` gains `alert_centre`, `alert_radius_m`, `alert_duration_s`; with a radius it projects only to the monster and omits the box id.
+- New `FuseState.INSTALLING` (last); Match Flow ignores it.
+- `rng` and `emit_sound` are public, not yet wired into a live round.
+- Merge: resolved a doc-comment conflict with SO-2.
+**Test Evidence**: 6 tests. Mutations caught: monster-only check removed, zero offset, offset beyond radius, on_start not raising the alert.
+**Code Review**: Complete (orchestrator review at merge)

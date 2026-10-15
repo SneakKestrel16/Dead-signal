@@ -53,9 +53,9 @@ The body, view and interaction layer every player shares. The server moves each 
 | 007 | [Interaction targeting by the server's view ray](story-007-interaction-targeting.md) | Logic | Ready | ADR-0007, ADR-0008 |
 | 008 | [HoldService: Start, contested locks and completion](story-008-hold-start-complete.md) | Integration | Ready | ADR-0008 |
 | 009 | [Hold continuation, cancels and movement while Holding](story-009-hold-continue-cancel.md) | Integration | Ready | ADR-0008 |
-| 010 | [Shapeshifter fake holds](story-010-fake-holds.md) | Integration | Ready | ADR-0008 |
+| 010 | [Shapeshifter fake holds](story-010-fake-holds.md) | Integration | Complete | ADR-0008 |
 | 011 | [Server authority, input timeout and round-end freeze](story-011-authority-timeout-round-end.md) | Integration | Ready | ADR-0002, ADR-0008 |
-| 012 | [Doors: instant toggle and swing-area close check](story-012-doors.md) | Integration | Ready | ADR-0007 |
+| 012 | [Doors: instant toggle and swing-area close check](story-012-doors.md) | Integration | Complete | ADR-0007 |
 | 013 | [Flinch view offset and client-only camera effects](story-013-view-offset-camera-effects.md) | Logic | Blocked | ADR-0015 (Proposed), ADR-0002 |
 | 014 | [Footstep events from gait and disguise](story-014-footsteps.md) | Integration | Blocked | ADR-0013 (Proposed), ADR-0004, ADR-0010 (Proposed) |
 | 015 | [Chase closing check and controller tick budget](story-015-chase-closing-tick-budget.md) | Integration | Ready | ADR-0002, ADR-0007 |

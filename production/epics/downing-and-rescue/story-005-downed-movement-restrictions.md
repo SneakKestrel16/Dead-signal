@@ -1,12 +1,12 @@
 # Story 005: Downed crawl and action restrictions
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Downed survivors crawl slowly and can do little else; Seized victims and the Com
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A Downed survivor moves at `crawl_speed_mult` × walk speed (1 m/s at defaults) and cannot sprint, interact with objectives, barricade, hide or use items (rule 6, Formulas "Crawl speed").
-- [ ] During a commit the victim and the monster are rooted; the monster cannot use abilities, transform or interact (rule 4.2).
-- [ ] Rescuer and Downed survivor are rooted while a rescue is held; all modifiers are removed when the state ends.
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] A Downed survivor moves at `crawl_speed_mult` × walk speed (1 m/s at defaults) and cannot sprint, interact with objectives, barricade, hide or use items (rule 6, Formulas "Crawl speed").
+- [x] During a commit the victim and the monster are rooted; the monster cannot use abilities, transform or interact (rule 4.2).
+- [x] Rescuer and Downed survivor are rooted while a rescue is held; all modifiers are removed when the state ends.
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -65,9 +65,9 @@ Downed survivors crawl slowly and can do little else; Seized victims and the Com
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/downing-and-rescue/downed-movement-restrictions_test.gd` OR playtest doc
+- Integration: `tests/integration/downing-and-rescue/downed_movement_restrictions_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/downing-and-rescue/downed_movement_restrictions_test.gd` (10 tests)
 
 ---
 
@@ -75,3 +75,19 @@ Downed survivors crawl slowly and can do little else; Seized victims and the Com
 
 - Depends on: Story 001
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-140):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 748/748 after the wave merge, no leak warnings.
+- Seized victim LOCK, Committing monster ROOT, Downed survivor ROOT during a rescue hold; Downing never touches other owners' modifiers.
+- Crawl is not a modifier: the controller already picks the CRAWL gait from `MoveState.downed`; a modifier would apply crawl_speed_mult twice.
+- The rescuer's root is the rescue Interactable's `roots_actor` (story 004).
+- Production server still steps with TestMoveStep: the composer story wires `set_modifiers` and `MoveState.downed`.
+- Merge: resolved a conflict with DR-2 in downing.gd (both sides kept).
+**Test Evidence**: 10 tests. Mutations caught: no Seized lock, rescue root not immediate, action_locked missing Downed.
+**Code Review**: Complete (orchestrator review at merge)
