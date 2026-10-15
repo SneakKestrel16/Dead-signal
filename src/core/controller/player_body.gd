@@ -56,12 +56,15 @@ func capsule() -> CapsuleShape3D:
 
 
 ## Crouch (true) or stand (false). Standing is refused while the standing capsule would overlap world,
-## glass or doors; returns false then and the body stays low. Other players are not tested here
-## (ADR-0007 §6a, story 004). Ignored while Downed or Out (returns false).
-func set_low(low: bool) -> bool:
+## glass or doors, or one of `others`: other players' capsules at their current-tick positions, each
+## Vector4(feet x, y, z, capsule height), tested analytically (ADR-0007 §6a; the physics space does not
+## have this tick's positions yet). Returns false then and the body stays low. Call it every tick with
+## the crouch input, so a released crouch stands up on the first tick there is head room (story 004).
+## Ignored while Downed or Out (returns false).
+func set_low(low: bool, others: Array[Vector4] = []) -> bool:
 	if _downed or _out:
 		return false
-	if not low and _low and _standing_blocked():
+	if not low and _low and (_standing_blocked() or _player_blocks(others)):
 		return false
 	_low = low
 	_apply()
@@ -104,6 +107,30 @@ func _apply() -> void:
 	else:
 		collision_layer = PhysicsLayers.PLAYERS
 		collision_mask = _mask
+
+
+## True when the standing capsule, raised like the space probe, overlaps one of `others` (Vector4 feet
+## and height, the same radius: every player's capsule uses player_radius_m).
+func _player_blocks(others: Array[Vector4]) -> bool:
+	var feet := global_position + Vector3(0.0, STAND_CHECK_LIFT_M, 0.0)
+	for o in others:
+		if capsules_overlap(feet, _standing.height, Vector3(o.x, o.y, o.z), o.w, _standing.radius):
+			return true
+	return false
+
+
+## ADR-0003 §6 capsule maths: two upright capsules of radius `r`, standing on `a_feet` and `b_feet` with
+## heights `a_h` and `b_h`, overlap when their axis segments (half-length height / 2 - r, centred at
+## half height) come closer than 2r. Touching is not overlap. A capsule shorter than 2r is a sphere:
+## its segment is clamped to a point.
+static func capsules_overlap(a_feet: Vector3, a_h: float, b_feet: Vector3, b_h: float, r: float) -> bool:
+	var a0 := a_feet.y + r
+	var a1 := maxf(a0, a_feet.y + a_h - r)
+	var b0 := b_feet.y + r
+	var b1 := maxf(b0, b_feet.y + b_h - r)
+	var gap := maxf(0.0, maxf(a0, b0) - minf(a1, b1))
+	var flat := Vector2(a_feet.x - b_feet.x, a_feet.z - b_feet.z).length()
+	return flat * flat + gap * gap < 4.0 * r * r
 
 
 ## ADR-0007 §2: the standing capsule raised 0.01 m, margin 0, own RID excluded, world | glass | doors.

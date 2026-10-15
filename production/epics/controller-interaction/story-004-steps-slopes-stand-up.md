@@ -1,12 +1,12 @@
 # Story 004: Steps, slopes and the stand-up check
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -33,10 +33,10 @@ Players climb stairs through invisible ramps, never jump, and stay crouched unti
 
 *From `first-person-controller.md` Acceptance Criteria (Body and gaits) and Edge Cases (standing up blocked), scoped to this story:*
 
-- [ ] Test geometry with steps of 0.18, 0.35 and 0.40 m and ramps of 40° and 41°: a player climbs the 0.18 and 0.35 m steps (each with its ramp collider) and the 40° ramp, and is blocked by the 0.40 m step and the 41° ramp.
-- [ ] A crouched player under a 1.5 m ceiling who releases crouch stays at 1.2 m until reaching open floor, then stands within 1 tick.
-- [ ] A player whose head room is blocked only by another player's capsule stays crouched (analytic test), and stands once that player leaves.
-- [ ] No jump action exists in the input map (test reads `InputMap`).
+- [x] Test geometry with steps of 0.18, 0.35 and 0.40 m and ramps of 40° and 41°: a player climbs the 0.18 and 0.35 m steps (each with its ramp collider) and the 40° ramp, and is blocked by the 0.40 m step and the 41° ramp.
+- [x] A crouched player under a 1.5 m ceiling who releases crouch stays at 1.2 m until reaching open floor, then stands within 1 tick.
+- [x] A player whose head room is blocked only by another player's capsule stays crouched (analytic test), and stands once that player leaves.
+- [x] No jump action exists in the input map (test reads `InputMap`).
 
 ---
 
@@ -77,7 +77,7 @@ Players climb stairs through invisible ramps, never jump, and stay crouched unti
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/steps_stand_up_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (10 tests). AC4 is `tests/unit/first-person-controller/view_direction_test.gd` `test_input_map_holds_exactly_the_eleven_actions_and_no_jump` (story 005)
 
 ---
 
@@ -85,3 +85,17 @@ Players climb stairs through invisible ramps, never jump, and stay crouched unti
 
 - Depends on: Stories 001, 002
 - Unlocks: facility-map collision authoring
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (automated; AC4 by an existing test)
+**Deviations** (AD-111):
+- `PlayerBody.set_low(low, others)` takes other players' capsules as `Vector4(feet x, y, z, height)` at current-tick positions and tests them analytically (`PlayerBody.capsules_overlap`, ADR-0003 §6 maths; a capsule shorter than 2r is clamped to a sphere). The physics probe still tests world, glass and doors only.
+- Step ramp colliders are tested at 35° and at the 40° maximum (ADR-0007 §4); the 0.40 m step has no ramp, as §4 gives ramps only to steps up to 0.35 m.
+- Not wired yet: nothing in production calls `set_low(crouch, others)` once per tick, and the `others` feed from current-tick positions is not built. AC2 ("stands within 1 tick") and AC3 are proven on a test loop that does what that caller must do. The caller belongs to the story that first drives PlayerBody from ServerMovement and the owner's prediction (no scene drives MovementStep yet; see story 002 notes).
+- The margin-0 probe clears a float hair before the exact geometric edge; the test allows the stand one tick either side of the computed clear tick and asserts the body is crouched on every tick it is still under the ceiling.
+**Test Evidence**: Integration: `tests/integration/first-person-controller/steps_stand_up_test.gd`; 8 mutations each caught. Full suite 455/455.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester; S2 test gap fixed: 40° step ramps; S2 wiring gap recorded above)
