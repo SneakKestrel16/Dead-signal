@@ -36,6 +36,9 @@ var _last: InputFrame = null
 var _empty_ticks: int = 0
 var _released: bool = false
 var _target: int = 1
+## Catch-up credit: one per starved tick, capped at _cap; each two-frame tick spends one, so a client
+## can never be consumed faster than the clock over a run (SR-1 review: flooding gave double speed).
+var _credit: int = 0
 ## Ring of the last _window_ticks ticks: 1 = the queue was empty on that tick.
 var _ring: PackedByteArray = []
 var _ring_pos: int = 0
@@ -97,7 +100,7 @@ func push(packet: Dictionary) -> int:
 
 
 ## The frame to simulate this tick. Normally consumes one queued frame, two when the backlog exceeds
-## target depth + 1 (the later one is returned). Empty queue: repeats the last frame; after
+## target depth + 1 and a starved tick left credit (the later one is returned). Empty queue: repeats the last frame; after
 ## intent_timeout_ms (in ticks) with none, returns a released frame and is_released() is true.
 ## `_tick` is accepted for the phase-1 hook signature; consumption is per call, not per clock.
 func next(_tick: int) -> InputFrame:
@@ -105,8 +108,14 @@ func next(_tick: int) -> InputFrame:
 		return _take_or_starve(1)
 	var starved := _frames.is_empty()
 	_record_starvation(starved)
-	# ponytail: dropping the older of two frames loses a one-tick edge; discrete intents ride the reliable channel.
-	return _take_or_starve(2 if _frames.size() > _target + 1 else 1)
+	if starved:
+		_credit = mini(_credit + 1, _cap)
+	# ponytail: a backlog grown by jitter without a starved tick keeps its extra latency until one
+	# starves; spending credit on it instead would hand a flooding client free speed.
+	if _frames.size() > _target + 1 and _credit > 0:
+		_credit -= 1
+		return _take_or_starve(2)
+	return _take_or_starve(1)
 
 
 ## True once input has been treated as released (no frame for intent_timeout_ms); cleared by the next frame.

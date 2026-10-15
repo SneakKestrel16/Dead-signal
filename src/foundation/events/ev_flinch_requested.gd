@@ -12,5 +12,7 @@ func type() -> StringName:
 	return &"FlinchRequested"
 
 
+## Fails closed: only the flinching player's client may receive it; roles are not known here yet, so no peer gets it
+## until the network-authority projection (NA-9, ADR-0004 §5) lands. SR-1 review 2026-10-14.
 func project(_peer: int, _handles: HandleTable) -> Dictionary:
-	return {"player": player}
+	return {}

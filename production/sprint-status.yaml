@@ -19,13 +19,13 @@ updated: "2026-10-14"
 stories:
   - id: "sprint1-review"
     name: "Retroactive Sprint 1 code review"
-    file: ""
+    file: "production/qa/sr-1-sprint-1-review-2026-10-14.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "controller-interaction-3"
     name: "Speed modifiers"

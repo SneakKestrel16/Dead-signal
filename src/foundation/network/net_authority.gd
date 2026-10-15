@@ -244,6 +244,10 @@ func _reject_client(reason: StringName, details: Dictionary) -> void:
 # --- server ------------------------------------------------------------------
 
 func _server_auth(id: int, data: PackedByteArray) -> void:
+	# A peer gets one verdict: a repeat packet while pending or after joining would mint a second
+	# player ID and token and orphan the first (SR-1 review 2026-10-14).
+	if _pending.has(id) or player_id_of(id) != -1:
+		return
 	var verdict := _validate(data)
 	if verdict.ok:
 		var rebind := verdict.has("player_id")

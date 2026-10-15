@@ -18,6 +18,10 @@ static func validate(section_name: String, section: Resource) -> PackedStringArr
 		if (prop.type == TYPE_FLOAT and is_nan(value)) or (prop.type == TYPE_INT and value == KnobUnset.INT) 				or (prop.type == TYPE_PACKED_INT32_ARRAY and value.is_empty()):
 			errs.append("%s unset" % path)
 			continue
+		# Every float must be finite, ranged or not: INF passes a missing range (SR-1 review).
+		if prop.type == TYPE_FLOAT and not is_finite(value):
+			errs.append("%s = %s is not finite" % [path, value])
+			continue
 		if prop.hint != PROPERTY_HINT_RANGE:
 			continue
 		var bounds := parse_range(prop.hint_string)

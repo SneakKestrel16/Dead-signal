@@ -203,3 +203,39 @@ func test_no_script_but_tick_runner_assigns_physics_ticks_per_second() -> void:
 		if p != RUNNER_PATH and _assigns_hz(FileAccess.get_file_as_string(p)):
 			offenders.append(p)
 	assert_array(offenders).is_empty()
+
+
+## A Node module that logs its ticks; freed by the test to model a module dying mid-round.
+class NodeFeature extends Node:
+	var log: Array
+
+	func server_tick(_tick: int) -> void:
+		log.append("node")
+
+
+## SR-1 review 2026-10-14: step() called server_tick on a freed module and crashed the tick.
+## The freed module is now dropped with a violation and the others still run.
+func test_freed_module_is_dropped_with_a_violation_and_the_rest_still_run() -> void:
+	var r := _runner()
+	var log: Array = []
+	var dead := NodeFeature.new()
+	dead.log = log
+	r.register_feature(dead, 5)
+	r.register_feature(Feature.new("a", log), 10)
+	dead.free()
+	r.step()
+	r.step()
+	assert_array(log).is_equal(["a", "a"])
+	assert_int(r.violations.size()).is_equal(1)
+
+
+## SR-1 review 2026-10-14: every test called step() directly, so a runner whose _physics_process
+## never stepped passed. In the tree, N physics frames advance the tick by exactly N.
+func test_physics_frames_drive_the_tick() -> void:
+	var r := _runner()
+	add_child(r)
+	await get_tree().physics_frame
+	var t0 := r.current_tick()
+	for i in 5:
+		await get_tree().physics_frame
+	assert_int(r.current_tick() - t0).is_equal(5)

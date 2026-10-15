@@ -23,6 +23,7 @@ var _queue: Array[ServerEvent] = []
 ## type -> Array of Callable, in subscribe order (Array[Callable] as a value type does not parse).
 var _handlers: Dictionary[StringName, Array] = {}
 var _collected: Array[ServerEvent] = []
+var _cleared := false ## set by clear(); flush() stops delivering when a handler clears mid-batch
 
 
 ## `rounds` must come from data (`Knobs.core.max_flush_rounds`), never a literal in game code.
@@ -59,8 +60,11 @@ func flush() -> void:
 		rounds += 1
 		var batch := _queue
 		_queue = []
+		_cleared = false
 		for e in batch:
 			_deliver(e)
+			if _cleared:
+				return ## a handler ended the round: the rest of this batch is dropped with it
 
 
 ## Every event delivered since the last call, in delivery order; resets the list.
@@ -73,6 +77,7 @@ func take_tick_events() -> Array[ServerEvent]:
 
 ## Empties the queue, all subscribers and the collected events (and the overflow record).
 func clear() -> void:
+	_cleared = true
 	_queue = []
 	_handlers = {}
 	_collected = []

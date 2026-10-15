@@ -20,9 +20,14 @@ var _modules: Array[Object] = []
 
 ## Starts a round. `modules` maps a TickOrder slot (int) to a module object with
 ## `setup(tick_runner, bus, registry, knobs)` and `server_tick(tick)`. Modules subscribe and
-## register views inside setup(). Ends a still-running round first.
-func start_round(modules: Dictionary, knobs: Knobs) -> void:
+## register views inside setup(). Ends a still-running round first. Returns knobs.errors():
+## when not empty no round starts (control manifest: refuse, never run on bad knobs).
+func start_round(modules: Dictionary, knobs: Knobs) -> PackedStringArray:
 	end_round()
+	var errs := knobs.errors()
+	if not errs.is_empty():
+		push_error("RoundServer: knobs invalid, round not started: %s" % "; ".join(errs))
+		return errs
 	bus = EventBus.new(knobs.core.max_flush_rounds)
 	registry = StateRegistry.new()
 	tick_runner = TickRunner.new()
@@ -34,10 +39,12 @@ func start_round(modules: Dictionary, knobs: Knobs) -> void:
 		_modules.append(module)
 		module.setup(tick_runner, bus, registry, knobs)
 		tick_runner.register_feature(FeatureStep.new(module, bus), slot)
+	return errs
 
 
 ## Ends the round: clears bus and registry (breaks module <-> view cycles), frees the
-## TickRunner and drops every module reference. Safe to call when no round is running.
+## TickRunner and drops every module reference. Safe to call when no round is running, and from
+## inside a tick: the runner is queue_free()d, so a step in progress finishes on a live object.
 func end_round() -> void:
 	if bus != null:
 		bus.clear()
@@ -45,7 +52,7 @@ func end_round() -> void:
 		registry.clear()
 	if tick_runner != null:
 		remove_child(tick_runner)
-		tick_runner.free()
+		tick_runner.queue_free()
 	tick_runner = null
 	bus = null
 	registry = null

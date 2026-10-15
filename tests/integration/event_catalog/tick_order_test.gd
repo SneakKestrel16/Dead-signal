@@ -168,9 +168,11 @@ func test_end_round_leaves_nothing_alive_and_no_orphans() -> void:
 	assert_int(registry.violations.size()).is_equal(1)  # unregistered: the views are gone
 	bus = null
 	registry = null
+	await get_tree().process_frame # the runner is queue_free()d (SR-1: safe to end a round mid-tick)
 	for r in refs:
 		assert_object(r.get_ref()).is_null()
-	assert_float(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)).is_equal(orphans_before)
+	# <=: the awaited frame also frees orphans gdUnit left before orphans_before was read.
+	assert_float(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT)).is_less_equal(orphans_before)
 
 
 ## Flags every [autoload] entry: no gameplay service may be a global (control manifest).

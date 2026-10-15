@@ -373,3 +373,23 @@ func test_server_role_runs_with_no_local_player() -> void:
 func test_sanitize_name_strips_controls_and_bidi() -> void:
 	assert_str(NetAuthority.sanitize_name("a" + _chars([0x202E]) + "b" + _chars([1, 0x7F, 0x85, 0x2069, 0x200E]) + "c")).is_equal("abc")
 	assert_str(NetAuthority.sanitize_name("Zo" + _chars([0xEB, 0x65E5, 0x672C]))).is_equal("Zo" + _chars([0xEB, 0x65E5, 0x672C]))
+
+
+## SR-1 review 2026-10-14: a second auth packet from a peer still authenticating ran _server_auth
+## again, overwriting its pending entry and minting a second player ID and token (the engine then
+## refuses the second reply, so only the skipped ID shows it). Now ignored: the next join gets the
+## very next ID.
+func test_second_auth_packet_from_a_pending_peer_is_ignored() -> void:
+	var port := _port()
+	_server(port)
+	var raw := _raw_client(port, _good_payload())
+	var api: SceneMultiplayer = raw.api
+	api.peer_authenticating.connect(func(id: int) -> void: api.send_auth(id, _good_payload()))
+	var replies: Array = raw.replies
+	await _until(func() -> bool: return not replies.is_empty(), "first auth reply")
+	for i in 20:
+		await get_tree().process_frame
+	var first: int = bytes_to_var(replies[0]).player_id
+	var b := _client(port, "Bob")
+	assert_str(String(await _outcome(b))).is_equal("ok")
+	assert_int(b.net.local_player_id).is_equal(first + 1)

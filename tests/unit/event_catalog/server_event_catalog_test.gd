@@ -129,7 +129,9 @@ func test_each_override_restates_return_types() -> void:
 		var src := s.source_code
 		assert_bool(src.contains("func type() -> StringName:")).override_failure_message(
 			"%s type() return type" % s.resource_path).is_true()
-		assert_bool(src.contains(") -> Dictionary:")).override_failure_message(
+		# SR-1 review: match project() itself; any other function returning Dictionary passed before.
+		var re := RegEx.create_from_string("func project[(][^)]*[)] -> Dictionary:")
+		assert_bool(re.search(src) != null).override_failure_message(
 			"%s project() return type" % s.resource_path).is_true()
 
 
@@ -154,3 +156,12 @@ func test_round_ended_projection_does_not_share_results() -> void:
 	var d: Dictionary = e.project(1, HandleTable.new())
 	d.results["a"] = 2
 	assert_int(e.results["a"]).is_equal(1)
+
+
+## SR-1 review 2026-10-14: these returned their fields for every peer, so the first NA-9 batch would
+## have sent AbilityUsed and SurvivorHit to survivors (ADR-0004 §5: never sent) and another player's
+## flinch to everyone. They fail closed, like FormChanged, until NA-9 knows each peer's role.
+func test_secret_and_owner_only_events_reach_no_peer_yet() -> void:
+	for e: ServerEvent in [EvAbilityUsed.new(), EvSurvivorHit.new(), EvFlinchRequested.new(), EvViewOffsetChanged.new()]:
+		for peer in [1, 2, 3]:
+			assert_dict(e.project(peer, HandleTable.new())).override_failure_message(str(e.type())).is_empty()

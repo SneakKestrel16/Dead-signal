@@ -219,6 +219,21 @@ func test_input_released_after_timeout_ticks_not_before() -> void:
 	assert_float(released.yaw).is_equal_approx(1.0, 0.0001) # view kept
 
 
+## SR-1 review 2026-10-14: only 60 Hz was tested, so a hard-coded 30-tick timeout passed. 500 ms
+## at 30 Hz is 15 ticks.
+func test_timeout_follows_the_tick_rate() -> void:
+	var k := _knobs()
+	k.net.sim_tick_hz = 30
+	var q := InputQueue.new(k)
+	_push1(q, 1)
+	q.next(0)
+	for t in 14:
+		q.next(1 + t)
+	assert_bool(q.is_released()).is_false()
+	q.next(15)
+	assert_bool(q.is_released()).is_true()
+
+
 func test_new_frame_clears_released() -> void:
 	var q := InputQueue.new(_knobs())
 	for t in TIMEOUT_TICKS:
@@ -231,10 +246,41 @@ func test_new_frame_clears_released() -> void:
 
 func test_backlog_above_target_plus_one_consumes_two_per_tick() -> void:
 	var q := InputQueue.new(_knobs())
+	q.next(0) # one starved tick earns the credit a catch-up spends
 	q.push(_packet([1, 2, 3]))
 	assert_int(q.target_depth()).is_equal(1)
 	assert_int(q.next(1).seq).is_equal(2) # 3 > 1 + 1: two consumed, later returned
 	assert_int(q.size()).is_equal(1)
+
+
+## SR-1 review 2026-10-14: a client sending two frames per tick kept the backlog above target + 1,
+## so the server consumed two per tick and the client moved at double speed. A catch-up now only
+## repays ticks that starved, so over a run frames consumed never exceed ticks + one cap of credit.
+func test_flooding_two_frames_per_tick_never_runs_faster_than_the_clock() -> void:
+	var q := InputQueue.new(_knobs())
+	var seq := 1
+	var consumed := 0
+	var ticks := 3 * WINDOW_TICKS
+	for t in ticks:
+		q.push(_packet([seq, seq + 1]))
+		seq += 2
+		q.next(t)
+		consumed += q.taken().size()
+	assert_int(consumed).is_less_equal(ticks + CAP)
+
+
+func test_catch_up_credit_is_capped_so_a_long_stall_buys_no_sprint() -> void:
+	var q := InputQueue.new(_knobs())
+	for t in 10 * CAP:
+		q.next(t) # long stall: credit stops at the cap
+	var seq := 1
+	var consumed := 0
+	for t in 4 * CAP:
+		q.push(_packet([seq, seq + 1]))
+		seq += 2
+		q.next(100 + t)
+		consumed += q.taken().size()
+	assert_int(consumed).is_equal(4 * CAP + CAP)
 
 
 func test_backlog_exactly_target_plus_one_consumes_one() -> void:

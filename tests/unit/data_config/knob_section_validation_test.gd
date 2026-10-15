@@ -140,6 +140,15 @@ func test_ticks_half_second_at_60hz_returns_30() -> void:
 	assert_int(k.ticks(0.5)).is_equal(30)
 
 
+## SR-1 review 2026-10-14: 0.5 s at 60 Hz is exactly 30, so truncation passed too; 1.5 ticks
+## tells roundi from int().
+func test_ticks_rounds_half_a_tick_up_not_down() -> void:
+	var k := Knobs.new()
+	k.net = NetKnobs.new()
+	k.net.sim_tick_hz = 60
+	assert_int(k.ticks(0.025)).is_equal(2)
+
+
 func test_ticks_zero_seconds_returns_zero() -> void:
 	var k := Knobs.new()
 	k.net = NetKnobs.new()
@@ -155,3 +164,21 @@ func test_validate_filled_int_array_is_valid() -> void:
 	var s := ArraySection.new()
 	s.budget = PackedInt32Array([2, 6, 4])
 	assert_array(KnobValidator.validate("arr", s)).is_empty()
+
+
+## SR-1 review 2026-10-14: max_flush_rounds had no range, so 0 passed and every flush overflowed on
+## its first round, delivering no event at all.
+func test_max_flush_rounds_zero_is_rejected() -> void:
+	var k := CoreKnobs.new()
+	k.max_flush_rounds = 0
+	assert_str(" ".join(KnobValidator.validate("core", k))).contains("core.max_flush_rounds")
+	k.max_flush_rounds = 8
+	assert_array(KnobValidator.validate("core", k)).is_empty()
+
+
+## SR-1 review 2026-10-14: a float knob with no range hint skipped every check but unset, so
+## INF (e.g. net.starvation_window_s) loaded clean. Non-finite floats are now rejected everywhere.
+func test_infinite_float_without_a_range_is_rejected() -> void:
+	var k := Knobs.load_all()
+	k.net.starvation_window_s = INF
+	assert_str(" ".join(KnobValidator.validate("net", k.net))).contains("net.starvation_window_s")

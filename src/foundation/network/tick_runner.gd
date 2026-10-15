@@ -74,7 +74,13 @@ func step() -> void:
 	_run(input_stage)
 	_run(movement_stage)
 	_run(history_stage)
-	for f in _features:
+	# A copy: a server_tick that registers a module must not re-sort the list mid-loop. A freed
+	# module is dropped with a violation instead of crashing the tick (SR-1 review 2026-10-14).
+	for f in _features.duplicate():
+		if not is_instance_valid(f.module):
+			_features.erase(f)
+			_violate("module at phase_order %d was freed; dropped" % f.order)
+			continue
 		f.module.server_tick(_tick)
 	if bus != null:
 		bus.flush()
