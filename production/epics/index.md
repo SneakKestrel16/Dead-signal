@@ -19,3 +19,4 @@ Engine: Godot 4.7.2
 | [Monster Abilities](monster-abilities/EPIC.md) | Feature | Monster Abilities | monster-abilities.md | 10 stories | Ready |
 | [Pings & Callouts](pings-and-callouts/EPIC.md) | Feature | Pings & Callouts | pings-and-callouts.md | 11 stories | Ready |
 | [Scare Events](scare-events/EPIC.md) | Feature | Scare Events | scare-events.md | 10 stories | Ready |
+| [HUD & Results Screen](hud-results/EPIC.md) | Presentation | HUD & Results Screen | none (design/ux/hud.md, results.md) | Not yet created | Ready |
