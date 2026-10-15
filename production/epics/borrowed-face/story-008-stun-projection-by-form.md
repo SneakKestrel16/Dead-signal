@@ -1,12 +1,12 @@
 # Story 008: Stun events projected by the form shown
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -32,8 +32,8 @@ A stunned disguise must look exactly like a shocked survivor. The server project
 
 *From `borrowed-face.md` Acceptance Criteria (stun during transformation; stunned disguise), scoped to this story:*
 
-- [ ] A stun during a transformation out of a disguise sends survivor clients `PlayerShocked` and no `MonsterStunned`; out of true form they get `MonsterStunned`.
-- [ ] A stunned disguised shapeshifter stays in the borrowed form on every client, and survivor clients receive the borrowed survivor's shock payload with no monster pain cry event; a true-form stun sends the monster stagger and pain cry.
+- [x] A stun during a transformation out of a disguise sends survivor clients `PlayerShocked` and no `MonsterStunned`; out of true form they get `MonsterStunned`.
+- [x] A stunned disguised shapeshifter stays in the borrowed form on every client, and survivor clients receive the borrowed survivor's shock payload with no monster pain cry event; a true-form stun sends the monster stagger and pain cry.
 
 ---
 
@@ -63,7 +63,7 @@ A stunned disguise must look exactly like a shocked survivor. The server project
 **Required evidence**:
 - Integration: `tests/integration/borrowed-face/stun_projection_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/borrowed-face/stun_projection_test.gd` (4 tests)
 
 ---
 
@@ -71,3 +71,17 @@ A stunned disguise must look exactly like a shocked survivor. The server project
 
 - Depends on: Stories 004, 007; network-authority story 009
 - Unlocks: Survivor Defense epic
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-166):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 895/895 after the wave merge, no leak warnings.
+- StubDefense in the Survivor Defense slot (reads BorrowedFace.form); replace with the real module when it lands.
+- 'On every client' checked through appearance_of (BF-7 proves it over ENet); PlayerShocked byte identity belongs to NA-9.
+- Passed on first run (behaviour present); mutations stand in for the red run.
+**Test Evidence**: 4 tests. Mutations caught: true-form check removed from EvMonsterStunned.project, stun not stopping the transformation, PlayerShocked not sent for the shapeshifter's body.
+**Code Review**: Complete (orchestrator review at merge)

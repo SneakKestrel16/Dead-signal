@@ -1,7 +1,7 @@
 # Story 005: Action restrictions while Disguised or Transforming
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -33,8 +33,8 @@ A disguise is a costume, not a power: the shapeshifter must change to true form 
 
 *From `borrowed-face.md` Acceptance Criteria (Lunge, Transforming), scoped to this story:*
 
-- [ ] A Lunge requested while Disguised is rejected; a transformation requested during a Lunge takedown commit is rejected.
-- [ ] While Transforming, the shapeshifter can walk, but sprint, interact and ability requests are rejected.
+- [x] A Lunge requested while Disguised is rejected; a transformation requested during a Lunge takedown commit is rejected.
+- [x] While Transforming, the shapeshifter can walk, but sprint, interact and ability requests are rejected.
 - [ ] Every client receives the transforming state within 250 ms of acceptance (simulated 150 ms RTT).
 
 ---
@@ -73,3 +73,17 @@ A disguise is a costume, not a power: the shapeshifter must change to true form 
 
 - Depends on: Story 003; controller-interaction stories 002, 008
 - Unlocks: Monster Abilities epic
+
+---
+
+## Completion Notes
+
+**Implemented**: 2026-10-15 (worktree agent, squash-merged as e128b83). Full suite 895/895 after the borrowed-face wave, no leak warnings.
+**Criteria**: AC1 and AC2 passing (automated). AC3 (every client sees the transforming state within 250 ms at 150 ms RTT) **not done**: no transport carries the transforming state to clients. BF-7's snapshot carries only appearance; AC3 needs a presentation bit or field in the snapshot entry (SnapshotCodec VERSION 6). Story stays In Review until that lands.
+**Deviations** (AD-167):
+- New getter-only `TransformView` registered under `StateKeys.TRANSFORMING` (`get_transforming`, `get_target`, `get_form`); `get_form` on this view is inference until a `SHAPESHIFTER_FORM` view exists.
+- `BorrowedFace.set_attack_source(Callable)` rejects a form change while attacking (rule 11); a rejected request starts no cooldown.
+- `HoldService.set_barred(Callable)`: a barred actor's Start is rejected (fake holds included) and a running hold cancels `&"ineligible"`. ADR-0008 puts disguise checks in owners' `eligible()`, but fake holds skip it, so the actor-level bar sits in HoldService.
+- Lunge and ability gates exist only as `StubAbilities` in the test (Monster Abilities not built). Nothing in production calls `set_barred`/`set_attack_source` or sets `MoveState.transforming` yet.
+**Test Evidence**: `tests/integration/borrowed-face/disguise_restrictions_test.gd` (5 tests). Mutations caught: attack gate disabled, barred check at Start disabled, barred check on a running hold disabled.
+**Code Review**: Complete (orchestrator review at merge)
