@@ -18,8 +18,13 @@ var target_is_body: bool = false
 var interact_target: int = 0
 var yaw: float = 0.0
 var pitch: float = 0.0
-## ADR-0003 view tick; 0 when the packet carries none.
-var view_tick: int = 0
+## ADR-0003 §2: the server tick (fractional) the client was rendering remote players at; 0 when the
+## packet carries none. Not validated by InputQueue: LagCompensation rejects a non-finite or future one.
+## ponytail: float32 on the wire, 1/128-tick resolution up to tick 131072 (36 min at 60 Hz), 1/64 to 73 min;
+## send an offset from ack_snapshot_tick if rounds outgrow that.
+var view_tick: float = 0.0
+## ADR-0003 §2: the newest snapshot tick the client had received; the server's RTT bound comes from it.
+var ack_snapshot_tick: int = 0
 
 
 ## Packs the four booleans into the flags byte, whole. Example: sprint+crouch -> 3.
@@ -42,7 +47,8 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 	var yaws := PackedFloat32Array()
 	var pitches := PackedFloat32Array()
 	var targets := PackedInt32Array()
-	var views := PackedInt32Array()
+	var views := PackedFloat32Array()
+	var acks := PackedInt32Array()
 	for f in frames:
 		seqs.append(f.seq)
 		moves.append(f.move)
@@ -51,7 +57,9 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 		pitches.append(f.pitch)
 		targets.append(f.interact_target)
 		views.append(f.view_tick)
+		acks.append(f.ack_snapshot_tick)
 	return {
 		"seq": seqs, "move": moves, "flags": PackedByteArray(flag_bytes),
 		"yaw": yaws, "pitch": pitches, "interact_target": targets, "view_tick": views,
+		"ack_snapshot_tick": acks,
 	}

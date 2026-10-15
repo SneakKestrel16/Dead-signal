@@ -3,7 +3,6 @@ class_name NetKnobs extends Resource
 ## Defaults are unset sentinels; values come only from res://data/knobs/net.tres. Ranges are the GDD Safe Range;
 ## a knob with no sourced range has a plain @export (unset is still caught). Values the GDD marks proposed ship as proposed.
 ## Usage: `var k := Knobs.load_all(); var v = k.net.sim_tick_hz`
-## NOT SOURCEABLE (no number in ADR-0001/0002/0003): slack_ticks.
 ## sim_tick_hz range 30..128 kept by designer decision 2026-10-13; ADR-0002 fixes only the value 60.
 
 @export_range(30, 128) var sim_tick_hz: int = KnobUnset.INT
@@ -17,6 +16,10 @@ class_name NetKnobs extends Resource
 @export_range(0, 200) var max_extrapolation_ms: int = KnobUnset.INT
 ## Range 1..120 ticks: inference, ADR-0003 §4 gives only the value 16; the longest max_rewind_ms settles the floor.
 @export_range(1, 120) var history_ticks: int = KnobUnset.INT
+## ADR-0003 §3 rtt_bound slack: extra ticks a claimed view lag may exceed (T - ack_snapshot_tick) + interp + 2.
+## Value 1 and range 0..10: inference (story network-authority/007), the ADR names the knob but no number; it
+## absorbs the client's tick-estimate error. Clamp counts in LagCompensation.records on a real network settle it.
+@export_range(0, 10) var slack_ticks: int = KnobUnset.INT
 @export var reject_close_delay_s: float = NAN
 ## Join knobs (story network-authority/001): inference, AD-63, no ADR/GDD number.
 ## ENet listen port for a hosted game.

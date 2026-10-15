@@ -81,7 +81,7 @@ func test_mismatched_lengths_drop_whole_packet() -> void:
 	p["flags"] = PackedByteArray([0, 0, 0])
 	_assert_dropped(q, p)
 	p = _packet([2, 3])
-	p["view_tick"] = PackedInt32Array([1])
+	p["view_tick"] = PackedFloat32Array([1.0])
 	_assert_dropped(q, p)
 
 

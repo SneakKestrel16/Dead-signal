@@ -1,7 +1,7 @@
 class_name ServerMovement extends RefCounted
 ## Server-side movement, position history and snapshots for every player (ADR-0002 rules 2-5, 9).
 ## Plugs into TickRunner's phase hooks: 1 dequeue one frame per player, 2 movement (the shared step),
-## 3 push positions into the history ring, 6 build and send per-peer snapshots. Server only.
+## 3 push positions and capsules into `history` (RewindHistory, ADR-0003 §4), 6 build and send per-peer snapshots. Server only.
 ## State is keyed by player ID; a peer ID is looked up through NetAuthority on each use, never stored.
 ## The caller creates each player's CharacterBody3D (in the tree, with a CapsuleShape3D CollisionShape3D
 ## child) and passes it to add_player(). Remote input arrives on SceneMultiplayer.peer_packet; the
@@ -51,6 +51,9 @@ var monster: int = -1
 var _sounds: Array[EventBatch.Sound] = []
 ## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
 var _watching: Dictionary[int, int] = {}
+## Every player's last net.history_ticks ticks of position, capsule and chest (ADR-0003 §4), pushed in
+## the history phase; LagCompensation reads it.
+var history: RewindHistory
 
 
 class PlayerState extends RefCounted:
@@ -67,8 +70,6 @@ class PlayerState extends RefCounted:
 	var shape_node: CollisionShape3D
 	## No movement and no inside-geometry restore (an Out player, set_frozen).
 	var frozen := false
-	var history_pos := PackedVector3Array()
-	var history_tick := PackedInt32Array()
 
 
 ## `step` is the shared Callable(body, frame, modifiers) (ADR-0002 apply_move). `static_mask` is the
@@ -80,6 +81,7 @@ func _init(knobs: Knobs, net: NetAuthority, smp: SceneMultiplayer, step: Callabl
 	_step = step
 	_static_mask = static_mask
 	scope = ReplicationScope.new(knobs)
+	history = RewindHistory.new(knobs.net.history_ticks)
 
 
 ## Sets the runner's four hook Callables and starts listening for input packets.
@@ -113,10 +115,6 @@ func add_player(player_id: int, body: CharacterBody3D, host_mode: bool = false) 
 	p.body = body
 	p.queue = InputQueue.new(_knobs, host_mode)
 	p.last_valid = body.global_position
-	var n := _knobs.net.history_ticks
-	p.history_pos.resize(n)
-	p.history_tick.resize(n)
-	p.history_tick.fill(-1)
 	for c in body.get_children():
 		var cs := c as CollisionShape3D
 		if cs != null and cs.shape is CapsuleShape3D:
@@ -134,6 +132,7 @@ func add_player(player_id: int, body: CharacterBody3D, host_mode: bool = false) 
 func remove_player(player_id: int) -> void:
 	_players.erase(player_id)
 	_watching.erase(player_id)
+	history.remove(player_id)
 	scope.remove_player(player_id)
 
 
@@ -224,11 +223,8 @@ func queue_of(player_id: int) -> InputQueue:
 ## The recorded position at `tick`, or null when it is older than history_ticks or never recorded.
 ## ADR-0003 reads this for lag compensation.
 func position_at(player_id: int, tick: int) -> Variant:
-	if tick < 0:
-		return null ## unrecorded slots hold tick -1
-	var p: PlayerState = _players[player_id]
-	var i := tick % p.history_tick.size()
-	return p.history_pos[i] if p.history_tick[i] == tick else null
+	var s := history.sample(player_id, tick)
+	return s.pos if s.ok else null
 
 
 func _input_phase(tick: int) -> void:
@@ -255,11 +251,20 @@ func _movement_phase(_tick: int) -> void:
 			p.last_valid = p.body.global_position
 
 
+## Chest point: the top of the capsule axis, feet + height - radius (1.5 m standing, 0.9 m low with the
+## shipped sizes). Inference: no GDD gives a chest height (monster-abilities.md rule 7 says only "chest
+## height"); a controller knob for it settles it. A body with no capsule records height and radius 0.
 func _history_phase(tick: int) -> void:
-	for p: PlayerState in _players.values():
-		var i := tick % p.history_tick.size()
-		p.history_pos[i] = p.body.global_position
-		p.history_tick[i] = tick
+	for pid: int in _players:
+		var p: PlayerState = _players[pid]
+		var pos := p.body.global_position
+		var h := 0.0
+		var r := 0.0
+		if p.shape_node != null:
+			var cap := p.shape_node.shape as CapsuleShape3D
+			h = cap.height
+			r = cap.radius
+		history.push(tick, pid, pos, h, r, pos + Vector3(0.0, h - r, 0.0))
 
 
 ## Per viewer: its own entry, then every relevant body under the viewer's handle, in handle order

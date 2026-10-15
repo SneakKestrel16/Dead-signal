@@ -12,6 +12,7 @@ correction_smooth_s = 0.1
 interp_delay_ms = 50
 max_extrapolation_ms = 50
 history_ticks = 16
+slack_ticks = 1
 reject_close_delay_s = 0.2
 input_queue_cap = 8
 max_seq_ahead = 16

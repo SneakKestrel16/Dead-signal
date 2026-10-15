@@ -7,7 +7,7 @@ const WAIT_S := 5.0
 ## Digest of the shipped data/knobs/*.tres on 2026-10-14. Any change to a shipped knob value changes it:
 ## update this constant in the same commit (that is the point: it proves the digest is stable across
 ## runs, and that a value change is visible to the join check).
-const SHIPPED_DIGEST := "2f791db14e6d19e087b994de578b406f642a1c8dbfcf5436bd820caca56e25de"
+const SHIPPED_DIGEST := "90139accaeee758a2f8209ccd7ba50c8b71d3d44d3873ca5b25756d299794239"
 
 static var _next_port := 25900
 
