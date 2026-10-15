@@ -28,7 +28,7 @@ gesture) is covered by `tests/unit/pings-and-callouts/ping_callout_presentation_
 | AC-1 | Pressing ping shows a pending marker immediately; it becomes the server's marker on acceptance or disappears on rejection with a local "too fast" tick | PASS | pending.png: dimmed own marker on the press frame; markers.png: full-alpha server marker; toofast.png: "Too fast" under the crosshair |
 | AC-2 | Markers draw through walls with the sender's name, colour, direction and distance, and fade at expiry | PASS (fade by unit test) | markers.png: four senders' names, colours and metres; off-screen ones clamp to the edge as arrows |
 | AC-3 | Wheel lists the 8 lines; a callout plays positional audio and adds `[Name]: [text]` with a direction arrow; 10-line scrollback, each line at least 8 s | PASS | wheel.png: 8 lines, aimed one boxed; feed lines with arrows in markers.png; audio, scrollback and hold by unit test |
-| AC-4 | A real callout plays a visible gesture on the speaker's body | PASS (unit test only) | Placeholder sphere over the speaker; not captured on screen in this run |
+| AC-4 | A real callout plays a visible gesture on the speaker's body | PASS | gesture.png: yellow placeholder sphere over C3's body as its Danger callout lands in the feed |
 
 ---
 

@@ -67,6 +67,9 @@ extends Node3D
 ## body it draws (else the nearest) and warning-pings it, another survivor warning-pings where it looks, two
 ## call out. Shots: warning.png (warning markers), expired.png (feed past its 8 s), scrollback.png (the
 ## feed_scrollback action held through Input.action_press: the retained lines again).
+## --bot=gesture (story pings-and-callouts/008 AC-4; --count=5 --view=survivor): the shown client faces the
+## nearest other survivor, which calls out Danger; gesture.png is saved GESTURE_SHOT_F drawn frames later
+## (inside the 0.5 s placeholder gesture sphere over the speaker).
 ## --bot=conform (story hud-results/007; --count=6 --view=survivor against round_host --players=6): the five
 ## survivors each call out a different line in the same drawn frame, then each pings twice, turning between
 ## the pings (the shown survivor's second one is a warning ping). Shots: feed.png (4 lines visible), scrollback.png (all 5 with feed_scrollback held),
@@ -128,6 +131,7 @@ const DASH_SEEN_M := 0.3
 const WINDUP_SHOT_FRAMES := 4
 const WARP_EARLY := 10
 const WARP_LATE := 45
+const GESTURE_SHOT_F := 12
 
 var _args: Dictionary = {}
 var _knobs: Knobs
@@ -241,6 +245,8 @@ func _process(delta: float) -> void:
 		_ping_bot(c0)
 	elif _args.get("bot", "") == "warn":
 		_warn_bot(c0)
+	elif _args.get("bot", "") == "gesture":
+		_gesture_bot(c0)
 	elif _args.get("bot", "") == "shifter":
 		_shifter_bot(c0)
 	elif _args.get("bot", "") == "conform":
@@ -498,6 +504,36 @@ func _warn_bot(c0: RoundClient) -> void:
 		print("WARN BOT scrollback=%s lines=%s" % [c0.ping_hud.scrollback, c0.ping_hud.feed_lines().size()])
 	elif f == 670:
 		Input.action_release(&"feed_scrollback")
+		get_tree().quit()
+
+
+func _gesture_bot(c0: RoundClient) -> void:
+	if _step_frame < 0:
+		_step_frame = Engine.get_frames_drawn()
+	var f := Engine.get_frames_drawn() - _step_frame
+	var speaker: RoundClient = null
+	for c in _clients:
+		if c != c0 and c.is_spawned() and not _role(c) and (speaker == null or c.body.global_position.distance_to(
+				c0.body.global_position) < speaker.body.global_position.distance_to(c0.body.global_position)):
+			speaker = c
+	if speaker == null:
+		return
+	var eye := c0.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
+	var top := speaker.body.global_position + Vector3.UP * _knobs.controller.capsule_height_m
+	var flat := Vector2(top.x - eye.x, top.z - eye.z)
+	c0.scripted.yaw = atan2(-flat.x, -flat.y)
+	c0.scripted.pitch = atan2(top.y - eye.y, flat.length())
+	if f == 60:
+		speaker.callouts.request(&"danger")
+		print("GESTURE BOT %s calls out at %.2f m (frame %d)" % [speaker.name, flat.length(), Engine.get_frames_drawn()])
+	elif f > 60 and not has_meta(&"gesture") and c0.remotes.values().any(
+			func(n: Node3D) -> bool: return n.has_node(^"Gesture")):
+		set_meta(&"gesture", Engine.get_frames_drawn())
+		print("GESTURE drawn at frame %d" % Engine.get_frames_drawn())
+	elif has_meta(&"gesture") and Engine.get_frames_drawn() == int(get_meta(&"gesture")) + GESTURE_SHOT_F:
+		_shot("gesture")
+		print("GESTURE BOT feed=%s" % [c0.ping_hud.feed_history()])
+	elif f == 200:
 		get_tree().quit()
 
 
