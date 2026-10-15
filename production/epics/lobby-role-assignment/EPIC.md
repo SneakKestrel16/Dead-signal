@@ -46,7 +46,7 @@ Brings 4–6 players together by direct join (over Tailscale for MVP, ADR-0001) 
 | 003 | [Character data and M1 character assignment](story-003-character-data-m1-assignment.md) | Logic | Ready | ADR-0006 |
 | 004 | [Host session setting: proximity voice](story-004-proximity-voice-setting.md) | Integration | Complete | ADR-0001 |
 | 005 | [Lobby screen: player list, Ready and countdown](story-005-lobby-screen.md) | UI | Ready | ADR-0014 (Proposed), ADR-0001 |
-| 006 | [No name tags or role indicators on bodies](story-006-no-role-indicators.md) | Visual/Feel | Ready | ADR-0004 |
+| 006 | [No name tags or role indicators on bodies](story-006-no-role-indicators.md) | Visual/Feel | In Review | ADR-0004 |
 | 007 | [Shapeshifter rotation queue (post-M1)](story-007-rotation-queue.md) | Logic | Ready | N/A |
 | 008 | [Queue positions for absent, reconnecting and new players (post-M1)](story-008-queue-absent-reconnect.md) | Logic | Complete | ADR-0001 |
 | 009 | [Character preferences and clash resolution (post-M1)](story-009-character-preferences.md) | Logic | Complete | N/A |

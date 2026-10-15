@@ -1,7 +1,7 @@
 # Story 006: No name tags or role indicators on bodies
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]

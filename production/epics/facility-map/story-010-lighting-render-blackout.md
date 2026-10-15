@@ -1,7 +1,7 @@
 # Story 010: Lighting replication, Blackout scope and reduced flash
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]

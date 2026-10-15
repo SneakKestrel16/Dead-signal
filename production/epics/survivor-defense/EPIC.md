@@ -63,9 +63,10 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 008 | [Barricade break, persistence and rebarricade lockout](story-008-barricade-break-lockout.md) | Logic | Complete | ADR-0005 |
 | 009 | [Flashlight toggle and replicated cone](story-009-flashlight-toggle.md) | Integration | Complete | ADR-0004 |
 | 010 | [Hiding noise and the long-hide cue](story-010-hide-noise-and-long-hide-cue.md) | Integration | Complete | ADR-0013 |
-| 011 | [Shock presentation per form and cosmetic flashlight copy](story-011-per-form-presentation.md) | Visual/Feel | Ready | ADR-0010 |
+| 011 | [Shock presentation per form and cosmetic flashlight copy](story-011-per-form-presentation.md) | Visual/Feel | In Review | ADR-0010 |
 | 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Complete | ADR-0002 |
 | 013 | [Hiding marker facing and eject in front](story-013-hiding-marker-facing.md) | Logic | Complete | ADR-0008 |
+| 014 | [Barricade input distinct from the door toggle](story-014-barricade-input.md) | Integration | Ready | ADR-0008 |
 
 ## Definition of Done
 

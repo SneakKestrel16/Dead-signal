@@ -183,7 +183,7 @@ stories:
     name: "No name tags or role indicators on bodies"
     file: "production/epics/lobby-role-assignment/story-006-no-role-indicators.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 0.5
     blocker: ""
@@ -192,7 +192,7 @@ stories:
     name: "Lighting replication, Blackout scope and reduced flash"
     file: "production/epics/facility-map/story-010-lighting-render-blackout.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
     blocker: ""
@@ -210,7 +210,7 @@ stories:
     name: "Zone ambience and B3 footstep masking"
     file: "production/epics/facility-map/story-012-zone-ambience.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
     blocker: ""
@@ -228,7 +228,7 @@ stories:
     name: "Lunge cue, coil pose and hit feedback"
     file: "production/epics/monster-abilities/story-007-lunge-presentation.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
     blocker: ""
@@ -237,7 +237,7 @@ stories:
     name: "Shock presentation per form and cosmetic flashlight copy"
     file: "production/epics/survivor-defense/story-011-per-form-presentation.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
     blocker: ""
@@ -249,5 +249,14 @@ stories:
     status: review
     owner: ""
     estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-14"
+    name: "Barricade input distinct from the door toggle"
+    file: "production/epics/survivor-defense/story-014-barricade-input.md"
+    priority: should-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
     blocker: ""
     completed: ""

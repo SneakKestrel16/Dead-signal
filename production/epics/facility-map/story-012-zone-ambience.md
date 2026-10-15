@@ -1,7 +1,7 @@
 # Story 012: Zone ambience and B3 footstep masking
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]

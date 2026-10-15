@@ -1,7 +1,7 @@
 # Story 007: Lunge cue, coil pose and hit feedback
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: 1-2 days

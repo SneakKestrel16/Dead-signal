@@ -1,7 +1,7 @@
 # Story 011: Shock presentation per form and cosmetic flashlight copy
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: 1.5 days
