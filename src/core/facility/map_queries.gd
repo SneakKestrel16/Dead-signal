@@ -1,6 +1,7 @@
 class_name MapQueries extends RefCounted
-## Lookups over MapData (ADR-0007 §9-10). Analytic: reads the map data, never Area3D. The one physics
-## query is interactable_on_ray's wall-and-glass ray (ADR-0007 §10); doors are tested analytically.
+## Lookups over MapData (ADR-0007 §9-10). Analytic: reads the map data, never Area3D. The physics
+## queries are single rays: PROJECTILE for interaction (ADR-0007 §10), SIGHT for clear_sight (§5);
+## doors are tested analytically.
 ## Facility-map story 004 added zone_at, in_zone and in_exit over the authored zones; controller story 012
 ## added capsule_overlaps_swing.
 ## Usage: `var q := MapQueries.new(map); var v := q.volume_at(position)`
@@ -76,7 +77,7 @@ func interactable_on_ray(eye: Vector3, dir: Vector3, centre: Vector3, rules: Int
 		var range_m: float = rules.door_range_m if door else rules.range_by_type.get(marker.type, 0.0)
 		if centre.distance_to(p) > range_m + 1e-6:
 			continue
-		if _door_blocks(eye, eye + dir * t, id, rules):
+		if _door_blocks(eye, eye + dir * t, id, rules.door_closed):
 			continue
 		best = id
 		best_t = t
@@ -95,16 +96,32 @@ func clear_line(eye: Vector3, point: Vector3, target_id: int, rules: InteractRul
 	q.collide_with_areas = false
 	if not space.intersect_ray(q).is_empty():
 		return false
-	return not _door_blocks(eye, point, target_id, rules)
+	return not _door_blocks(eye, point, target_id, rules.door_closed)
+
+
+## Line of sight for observation, pings and the lunge (ADR-0007 §5, ADR-0003 §6): true when no world
+## surface (one ray on `space` over SIGHT, so glass does not block) and no closed or barricaded door
+## leaf lies between `eye` and `point`. `door_closed` is InteractRules.door_closed's Callable(net_id)
+## -> bool; unset = every door open.
+## Usage: `q.clear_sight(eye, chest, rules.door_closed, space, [monster_body.get_rid()])`
+func clear_sight(eye: Vector3, point: Vector3, door_closed: Callable,
+		space: PhysicsDirectSpaceState3D, exclude: Array[RID] = []) -> bool:
+	if _targets.is_empty():
+		_targets = _map.interactables()
+	var q := PhysicsRayQueryParameters3D.create(eye, point, PhysicsLayers.SIGHT, exclude)
+	q.collide_with_areas = false
+	if not space.intersect_ray(q).is_empty():
+		return false
+	return not _door_blocks(eye, point, -1, door_closed)
 
 
 ## A closed door's leaf (other than the target itself) crossing the segment eye -> point.
-func _door_blocks(from: Vector3, to: Vector3, target_id: int, rules: InteractRules) -> bool:
-	if not rules.door_closed.is_valid():
+func _door_blocks(from: Vector3, to: Vector3, target_id: int, door_closed: Callable) -> bool:
+	if not door_closed.is_valid():
 		return false
 	for id in _targets.size():
 		var p := _targets[id] as MapPassage
-		if p == null or id == target_id or not rules.door_closed.call(id):
+		if p == null or id == target_id or not door_closed.call(id):
 			continue
 		if _leaf(p).intersects_segment(from, to):
 			return true
