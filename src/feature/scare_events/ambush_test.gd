@@ -96,5 +96,4 @@ func _sees(survivor: int) -> bool:
 	var p := _points.call(survivor) as PackedVector3Array
 	if m.is_empty() or p.is_empty():
 		return false
-	# fov INF, not 360: at exactly 180 degrees angle_to can round above PI and drop a point straight behind.
-	return SightTest.sees(p[CHEST], 0.0, PackedVector3Array([m[CHEST]]), INF, INF, _clear)
+	return SightTest.sees(p[CHEST], 0.0, PackedVector3Array([m[CHEST]]), 360.0, INF, _clear)
