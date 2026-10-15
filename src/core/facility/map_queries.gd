@@ -1,7 +1,7 @@
 class_name MapQueries extends RefCounted
 ## Lookups over MapData (ADR-0007 §9-10). Analytic: reads the map data, never Area3D. The one physics
 ## query is interactable_on_ray's wall-and-glass ray (ADR-0007 §10); doors are tested analytically.
-## Later stories add in_zone and capsule_overlaps_swing. Match-flow story 003 added in_exit.
+## Later stories add in_zone. Match-flow story 003 added in_exit; controller story 012 capsule_overlaps_swing.
 ## Usage: `var q := MapQueries.new(map); var v := q.volume_at(position)`
 
 ## Door leaf thickness for the analytic door test (the greybox leaf, tools/level/greybox_from_map.gd).
@@ -117,6 +117,24 @@ static func _leaf(p: MapPassage) -> AABB:
 	var along_x := s.x <= s.z
 	var size := Vector3(p.width_m if along_x else DOOR_LEAF_T, s.y, DOOR_LEAF_T if along_x else p.width_m)
 	return AABB(Vector3(p.position.x - size.x / 2.0, 0.0, p.position.z - size.z / 2.0), size)
+
+
+## ADR-0007 §8 (first-person-controller.md rule 18): true when the upright capsule centred on
+## `capsule_center` (`height`, `radius`) overlaps door `door_id`'s swing_box. Analytic: the capsule's
+## vertical axis segment comes closer than `radius` to the box. Touching is not overlap, as in
+## PlayerBody.capsules_overlap. False for an id that is not a passage.
+## Usage: `q.capsule_overlaps_swing(&"D7", feet + Vector3.UP * h / 2.0, h, r)`
+func capsule_overlaps_swing(door_id: StringName, capsule_center: Vector3, height: float, radius: float) -> bool:
+	for p in _map.passages:
+		if p.id != door_id:
+			continue
+		var box := p.swing_box
+		var half := maxf(0.0, height / 2.0 - radius)
+		var dx := maxf(0.0, maxf(box.position.x - capsule_center.x, capsule_center.x - box.end.x))
+		var dz := maxf(0.0, maxf(box.position.z - capsule_center.z, capsule_center.z - box.end.z))
+		var dy := maxf(0.0, maxf(box.position.y - (capsule_center.y + half), capsule_center.y - half - box.end.y))
+		return dx * dx + dy * dy + dz * dz < radius * radius
+	return false
 
 
 ## The volumes `volume_id` sees (its `sees` keys), minus those behind a door `door_closed` reports
