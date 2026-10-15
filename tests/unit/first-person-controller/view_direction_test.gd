@@ -3,7 +3,7 @@ extends GdUnitTestSuite
 
 const PID := 0
 const ACTIONS: PackedStringArray = ["move_forward", "move_back", "move_left", "move_right", "sprint",
-	"crouch", "interact", "use_item", "ping", "callout_wheel", "flashlight"]
+	"crouch", "interact", "interact_alt", "use_item", "ping", "callout_wheel", "flashlight"]
 const EPS := 0.0001
 
 var _knobs: Knobs
@@ -125,7 +125,7 @@ func test_mouse_look_clamps_pitch_and_wraps_yaw() -> void:
 	assert_float(li.sample().pitch).is_equal_approx(ViewState.PITCH_LIMIT, EPS)
 
 
-func test_input_map_holds_exactly_the_eleven_actions_and_no_jump() -> void:
+func test_input_map_holds_exactly_the_twelve_actions_and_no_jump() -> void:
 	var game := PackedStringArray()
 	for a in InputMap.get_actions():
 		if not String(a).begins_with("ui_") and not String(a).contains("/"):

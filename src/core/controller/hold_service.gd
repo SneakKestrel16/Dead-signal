@@ -206,7 +206,8 @@ func _resolve(actor: int, f: InputFrame) -> Interactable:
 		var item := _item(id)
 		# Inference: the first startable id wins, a fake included; no object yet carries both a fakeable
 		# and a real hold for one actor. A designer ruling on such an object would settle the order.
-		if _startable(actor, item):
+		# SD-14: only the holds of the pressed input; an alt press on an object with none starts nothing.
+		if item != null and item.alt == f.interact_alt and _startable(actor, item):
 			return item
 	return null
 

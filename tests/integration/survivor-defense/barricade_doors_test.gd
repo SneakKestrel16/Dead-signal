@@ -122,6 +122,9 @@ func _f(actor: int, interact: bool, target: int) -> InputFrame:
 	var f := InputFrame.new()
 	f.interact = interact
 	f.interact_target = target
+	# SD-14: Barricade, Remove and Break answer interact_alt; these tests name hold net ids directly.
+	var item: Interactable = _holds._items[target] if target >= 0 and target < _holds._items.size() else null
+	f.interact_alt = item != null and item.alt
 	_aim[actor] = target
 	return f
 

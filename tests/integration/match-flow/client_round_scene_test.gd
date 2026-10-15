@@ -15,6 +15,7 @@ var _roots: Array[Node] = []
 var _clients: Array[RoundClient] = []
 var _c: RoundComposer
 var _net: NetAuthority
+var _map: MapData
 
 
 class FakeLobby extends RefCounted:
@@ -122,13 +123,15 @@ func test_sample_interpolates_between_snapshots_and_caps_extrapolation() -> void
 	assert_vector(RoundClient.sample(buf, 400.0, 20.0)[0]).is_equal_approx(Vector3(12, 0, 0), Vector3.ONE * 1e-4)
 
 
-func test_five_clients_join_composed_round_predict_and_see_each_other() -> void:
+## Hosts, joins five clients and composes a round on the greybox; returns once every body has settled.
+func _compose() -> void:
 	var server_root := Node3D.new()
 	server_root.name = "Host"
 	get_tree().root.add_child(server_root)
 	_roots.append(server_root)
 	get_tree().set_multiplayer(SceneMultiplayer.new(), server_root.get_path())
-	var map := MapData.load_map()
+	_map = MapData.load_map()
+	var map := _map
 	MapGreybox.build(server_root, map)
 	var version := _knobs.join_version(RoundClient.VERSION_BUILD)
 	_net = NetAuthority.new()
@@ -164,11 +167,22 @@ func test_five_clients_join_composed_round_predict_and_see_each_other() -> void:
 	await _until(_all_settled, "every predicted body at its server body")
 	for c in _clients:
 		assert_float(c.body.global_position.y).override_failure_message("stands on the greybox floor").is_greater(-0.5)
-	# Survivors spawn together: each survivor draws at least one remote, and only the handles it was sent.
+
+
+## The survivor client whose player is not the monster (the last one).
+func _survivor() -> RoundClient:
 	var survivor: RoundClient = null
 	for c in _clients:
 		if c.net.local_player_id != _c.monster:
 			survivor = c
+	return survivor
+
+
+func test_five_clients_join_composed_round_predict_and_see_each_other() -> void:
+	await _compose()
+	var map := _map
+	# Survivors spawn together: each survivor draws at least one remote, and only the handles it was sent.
+	var survivor := _survivor()
 	await _until(func() -> bool: return survivor.remotes.values().any(func(n: Node3D) -> bool: return n.visible),
 			"a survivor draws a remote body")
 	for c in _clients:
@@ -189,10 +203,7 @@ func test_five_clients_join_composed_round_predict_and_see_each_other() -> void:
 	var point := (targets[spot] as MapMarker).position + Vector3.UP * _knobs.controller.capsule_height_m * 0.5
 	_c.bodies[sid].global_position = (targets[spot] as MapMarker).position + Vector3(0.0, 0.0, 1.0)
 	await _until(_all_settled, "the survivor's predicted body at the spot")
-	var eye := survivor.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
-	var flat := Vector2(point.x - eye.x, point.z - eye.z)
-	survivor.scripted.yaw = atan2(-flat.x, -flat.y)
-	survivor.scripted.pitch = atan2(point.y - eye.y, flat.length())
+	_aim(survivor, point)
 	assert_int(survivor.local_target(survivor.scripted.yaw, survivor.scripted.pitch)).is_equal(spot)
 	survivor.scripted.interact = true
 	await _until(func() -> bool: return not _c.holds.hold_of(sid).is_empty(), "the server starts the hiding hold")
@@ -220,3 +231,79 @@ func _cone_seen(owner: RoundClient) -> bool:
 			if n.visible and (n.get_node(^"Cone") as SpotLight3D).visible:
 				return true
 	return false
+
+
+## Points `c`'s scripted view from its predicted eye at `point`.
+func _aim(c: RoundClient, point: Vector3) -> void:
+	var eye := c.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
+	var flat := Vector2(point.x - eye.x, point.z - eye.z)
+	c.scripted.yaw = atan2(-flat.x, -flat.y)
+	c.scripted.pitch = atan2(point.y - eye.y, flat.length())
+
+
+## Story survivor-defense/014 (AD-219): at a barricadable door a plain press toggles the door on its Start
+## tick; an interact_alt press starts Barricade, then Remove, and the shapeshifter's starts Break.
+func test_interact_alt_barricades_removes_and_breaks_while_interact_toggles() -> void:
+	await _compose()
+	var door := -1
+	var targets := _map.interactables()
+	for i in targets.size():
+		if targets[i] is MapPassage and (targets[i] as MapPassage).kind == MapPassage.BARRICADABLE:
+			door = i
+			break
+	var p := targets[door] as MapPassage
+	var point := p.position + Vector3.UP * _c.rules.point_height_m
+	# Stand off the leaf's swing box, across its thin axis, so the close is not refused for overlap.
+	var thin_z := p.swing_box.size.z < p.swing_box.size.x
+	var axis := Vector3.BACK if thin_z else Vector3.RIGHT
+	var off := (p.swing_box.size.z if thin_z else p.swing_box.size.x) * 0.5 + _knobs.controller.player_radius_m + 0.3
+	var survivor := _survivor()
+	var sid := survivor.net.local_player_id
+	var monster: RoundClient = null
+	for c in _clients:
+		if c.net.local_player_id == _c.monster:
+			monster = c
+	_c.bodies[sid].global_position = p.position + axis * off
+	_c.bodies[_c.monster].global_position = p.position - axis * off
+	await _until(_all_settled, "survivor and monster beside the door")
+	_aim(survivor, point)
+	_aim(monster, point)
+	assert_int(survivor.local_target(survivor.scripted.yaw, survivor.scripted.pitch)).is_equal(door)
+	assert_bool(_c.doors.is_closed(door)).is_false()
+	# Plain interact: the instant toggle, no hold, the door closed on the press's own Holds step.
+	survivor.scripted.interact = true
+	await _until(func() -> bool: return _c.doors.is_closed(door), "the plain press closes the door")
+	assert_dict(_c.holds.hold_of(sid)).is_empty()
+	assert_bool(_c.bars.is_barricaded(door)).is_false()
+	await _alt_release(survivor)
+	# interact_alt: Barricade (3 s), never the toggle.
+	await _alt_hold(survivor, _c.bars.build_id(door))
+	await _until(func() -> bool: return _c.bars.is_barricaded(door), "the barricade completes")
+	assert_bool(_c.doors.is_closed(door)).is_true()
+	await _alt_release(survivor)
+	await _alt_hold(survivor, _c.bars.remove_id(door))
+	await _until(func() -> bool: return not _c.bars.is_barricaded(door), "the barricade is removed")
+	await _alt_release(survivor)
+	await _alt_hold(survivor, _c.bars.build_id(door))
+	await _until(func() -> bool: return _c.bars.is_barricaded(door), "barricaded again")
+	await _alt_release(survivor)
+	await _alt_hold(monster, _c.bars.break_id(door))
+	await _until(func() -> bool: return not _c.bars.is_barricaded(door), "the shapeshifter breaks it")
+	assert_bool(_c.bars.lockout_end(door) > 0).is_true()
+
+
+## Presses interact with interact_alt on `c`'s scripted frame and waits for the server to start `net_id`.
+func _alt_hold(c: RoundClient, net_id: int) -> void:
+	c.scripted.interact = true
+	c.scripted.interact_alt = true
+	var id := c.net.local_player_id
+	await _until(func() -> bool: return _c.holds.hold_of(id).get("net_id", -1) == net_id, "alt hold %d starts" % net_id)
+
+
+func _alt_release(c: RoundClient) -> void:
+	c.scripted.interact = false
+	c.scripted.interact_alt = false
+	var id := c.net.local_player_id
+	# The server must see the release, or the next press is no rising edge.
+	await _until(func() -> bool: return _c.holds.hold_of(id).is_empty() and not _c.holds._down.get(id, false),
+			"the server sees the release")

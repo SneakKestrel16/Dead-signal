@@ -55,6 +55,8 @@ var candidates: CandidateReplication
 ## Map interactable index (MapQueries.interactable_on_ray) -> HoldService net ids at that object, built
 ## after setup: only doors register at their map index, so the aim ray's index is translated here.
 var _ids_at: Dictionary[int, Array] = {}
+## The reverse: hold net id -> its map interactable index (the door whose own leaf must not block its sight).
+var _index_of: Dictionary[int, int] = {}
 ## Kept here: Borrowed Face's attack source is a method of it, and a Callable does not keep it alive.
 var lunge_view: LungeView
 var survivors: Array[int] = []
@@ -348,7 +350,9 @@ func _rid(id: int) -> Array[RID]:
 
 
 func _hold_sight(actor: int, i: Interactable) -> bool:
-	return queries.clear_line(_eye(actor), i.point, i.net_id, rules, _space(), _rid(actor))
+	# SD-14: a door's Barricade, Remove and Break sit at net ids other than the door's map index; without the
+	# translation the closed leaf they act on blocks their sight.
+	return queries.clear_line(_eye(actor), i.point, _index_of.get(i.net_id, i.net_id), rules, _space(), _rid(actor))
 
 
 ## The map interactable index the server's own view ray picks (AD-217: what a client's interact_target names).
@@ -366,6 +370,7 @@ func _ids_of(idx: int) -> Array:
 ## Inference: every hold sits at (or beside) its map object; ponytail: O(items x objects) once per round.
 func _index_holds() -> void:
 	_ids_at = {}
+	_index_of = {}
 	var targets := map.interactables()
 	var pts: Array[Vector3] = []
 	for t in targets:
@@ -383,6 +388,7 @@ func _index_holds() -> void:
 			if not _ids_at.has(best):
 				_ids_at[best] = []
 			_ids_at[best].append(item.net_id)
+			_index_of[item.net_id] = best
 
 
 ## The rescue hold on the body `handle` names for `actor` (Downing.rescue_net_id), or -1.

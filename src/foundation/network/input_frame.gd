@@ -7,6 +7,9 @@ const FLAG_SPRINT := 1
 const FLAG_CROUCH := 2
 const FLAG_INTERACT := 4
 const FLAG_TARGET_IS_BODY := 8
+## Story survivor-defense/014 (AD-219): the secondary interact; set with `interact`, it picks a door's
+## Barricade, Remove or Break over the door toggle.
+const FLAG_INTERACT_ALT := 16
 
 var seq: int = 0
 var move: Vector2 = Vector2.ZERO
@@ -14,6 +17,8 @@ var sprint: bool = false
 var crouch: bool = false
 var interact: bool = false
 var target_is_body: bool = false
+## The secondary interact is held (`interact` is then held too). Read with `interact`'s rising edge.
+var interact_alt: bool = false
 ## Read only on the frame where `interact` rises (ADR-0008 §3).
 var interact_target: int = 0
 var yaw: float = 0.0
@@ -35,15 +40,17 @@ var offset_tick: int = 0
 var view_epoch: int = 0
 
 
-## Packs the four booleans into the flags byte, whole. Example: sprint+crouch -> 3.
-static func pack_flags(sprint_: bool, crouch_: bool, interact_: bool, target_is_body_: bool) -> int:
+## Packs the five booleans into the flags byte, whole. Example: sprint+crouch -> 3.
+static func pack_flags(sprint_: bool, crouch_: bool, interact_: bool, target_is_body_: bool,
+		interact_alt_: bool = false) -> int:
 	return (FLAG_SPRINT if sprint_ else 0) | (FLAG_CROUCH if crouch_ else 0) \
-		| (FLAG_INTERACT if interact_ else 0) | (FLAG_TARGET_IS_BODY if target_is_body_ else 0)
+		| (FLAG_INTERACT if interact_ else 0) | (FLAG_TARGET_IS_BODY if target_is_body_ else 0) \
+		| (FLAG_INTERACT_ALT if interact_alt_ else 0)
 
 
 ## This frame's flags byte.
 func flags() -> int:
-	return pack_flags(sprint, crouch, interact, target_is_body)
+	return pack_flags(sprint, crouch, interact, target_is_body, interact_alt)
 
 
 ## Builds the packed-array packet for up to the last 3 frames (client side helper and test fixture).

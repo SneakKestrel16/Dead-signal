@@ -185,8 +185,11 @@ func _try(net_id: int, at: Vector3) -> bool:
 ## never gets a hold.
 func _hold(actor: int, net_id: int, at: Vector3, n: int, holds := _holds) -> void:
 	_centres[actor] = at
+	# SD-14: an alt hold (a door's Barricade, Remove, Break) answers interact_alt only.
+	var f := _f(true, net_id)
+	f.interact_alt = holds._items[net_id].alt
 	for i in n:
-		_step({actor: [_f(true, net_id)]})
+		_step({actor: [f]})
 		if actor == SHIFTER:
 			assert_dict(holds.hold_of(SHIFTER)).is_empty()
 	_step({actor: [_f(false)]})

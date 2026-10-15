@@ -382,3 +382,34 @@ func test_violations_record_is_rate_limited_but_counter_keeps_counting() -> void
 		q.push(_packet([]))
 	assert_int(q.dropped_packets).is_equal(InputQueue.MAX_RECORDED_VIOLATIONS + 5)
 	assert_int(q.violations.size()).is_equal(InputQueue.MAX_RECORDED_VIOLATIONS)
+
+
+# SD-14: interact_alt is bit 16 of the same flags byte, decoded by its mask like the others.
+func test_interact_alt_bit_round_trips_and_stays_in_the_flags_byte() -> void:
+	var a := _frame(1)
+	a.interact = true
+	a.interact_alt = true
+	var b := _frame(2)
+	b.interact = true
+	var c := _frame(3)
+	c.sprint = true
+	c.crouch = true
+	c.interact = true
+	c.target_is_body = true
+	c.interact_alt = true
+	var packet := InputFrame.build_packet([a, b, c])
+	assert_array(Array(packet.flags)).is_equal([20, 4, 31])
+	var k := Knobs.load_all()
+	assert_int(var_to_bytes(packet).size()).is_less_equal(k.net.input_packet_cap_bytes)
+	var q := InputQueue.new(_knobs(), true)
+	q.push(packet)
+	assert_bool(q.next(1).interact_alt).is_true()
+	assert_bool(q.next(2).interact_alt).is_false()
+	var rc := q.next(3)
+	assert_bool(rc.interact_alt and rc.interact and rc.sprint and rc.crouch and rc.target_is_body).is_true()
+	# Undefined high bits are ignored by every mask, the new one included.
+	packet.flags = PackedByteArray([0xE0, 0xE0, 0xE0])
+	packet.seq = PackedInt32Array([4, 5, 6])
+	q.push(packet)
+	var rd := q.next(4)
+	assert_bool(rd.interact_alt or rd.interact or rd.sprint).is_false()

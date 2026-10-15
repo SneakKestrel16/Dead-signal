@@ -76,6 +76,8 @@ func _frames(actor: int) -> Array:
 	var f := InputFrame.new()
 	f.interact = _down.has(actor)
 	f.interact_target = _down.get(actor, -1)
+	# SD-14: Barricade, Remove and Break answer interact_alt; these tests name hold net ids directly.
+	f.interact_alt = f.interact and _holds._items[f.interact_target].alt
 	return [f]
 
 

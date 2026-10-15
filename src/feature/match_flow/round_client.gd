@@ -257,6 +257,7 @@ func _frame() -> InputFrame:
 		f.yaw = scripted.yaw
 		f.pitch = scripted.pitch
 		f.interact = scripted.interact
+		f.interact_alt = scripted.interact_alt
 		return f
 	return input.sample(int(estimated_tick())) if input != null else InputFrame.new()
 

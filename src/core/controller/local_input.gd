@@ -92,7 +92,9 @@ func sample(offset_tick: int = 0) -> InputFrame:
 	f.move = Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 	f.sprint = Input.is_action_pressed(&"sprint")
 	f.crouch = Input.is_action_pressed(&"crouch")
-	f.interact = Input.is_action_pressed(&"interact")
+	# SD-14: interact_alt is a second interact key; either one holds interact.
+	f.interact_alt = Input.is_action_pressed(&"interact_alt")
+	f.interact = Input.is_action_pressed(&"interact") or f.interact_alt
 	f.yaw = yaw
 	f.pitch = pitch
 	f.record_id = _record.record_id

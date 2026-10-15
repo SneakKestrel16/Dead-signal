@@ -255,7 +255,7 @@ stories:
     name: "Barricade input distinct from the door toggle"
     file: "production/epics/survivor-defense/story-014-barricade-input.md"
     priority: should-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 0.5
     blocker: ""

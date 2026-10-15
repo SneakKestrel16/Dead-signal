@@ -431,3 +431,57 @@ func test_object_with_only_ineligible_holds_is_rejected() -> void:
 	_press(3, SPOT)
 	assert_dict(_holds.hold_of(3)).is_empty()
 	assert_array(s[0].log + s[1].log).is_empty()
+
+
+# --- SD-14: interact_alt picks a barricadable door's alt holds; plain interact the toggle -------------
+
+const DOOR := 0 ## map index of a barricadable door: toggle (net id 0), then Barricade, Remove, Break
+
+
+## The door's four holds as Barricades and Doors register them: the instant toggle first, open to all.
+func _door() -> Array[Stub]:
+	var toggle := _stub(0.0)
+	var build := _stub(HOLD_S, &"door_0")
+	build.alt = true
+	build.allowed = false # door open, say: Barricade is refused, so Remove is next in line
+	var remove := _stub(HOLD_S, &"door_0")
+	remove.alt = true
+	remove.only = A
+	var brk := _stub(HOLD_S, &"door_0")
+	brk.alt = true
+	brk.only = B
+	_holds.set_ids_at(func(idx: int) -> Array:
+		return [toggle.net_id, build.net_id, remove.net_id, brk.net_id] if idx == DOOR else [])
+	return [toggle, build, remove, brk]
+
+
+func _alt(actor: int, target: int) -> void:
+	var f := _f(true, target)
+	f.interact_alt = true
+	_step({actor: [f]})
+
+
+func test_plain_press_at_a_door_toggles_on_the_start_tick() -> void:
+	var d := _door()
+	_press(A, DOOR)
+	assert_array(d[0].log).is_equal(["start:%d" % A, "complete:%d" % A]) # instant: no added delay
+	assert_dict(_holds.hold_of(A)).is_empty()
+	assert_array(d[2].log).is_empty()
+
+
+func test_alt_press_at_a_door_starts_the_first_eligible_alt_hold_never_the_toggle() -> void:
+	var d := _door()
+	_alt(A, DOOR)
+	assert_int(_holds.hold_of(A).net_id).is_equal(d[2].net_id) # Remove (Barricade refused)
+	_step({A: [_f(false)]}) # release: Break shares the door's one lock
+	_alt(B, DOOR)
+	assert_int(_holds.hold_of(B).net_id).is_equal(d[3].net_id) # Break
+	assert_array(d[0].log).is_empty()
+
+
+func test_alt_press_where_no_alt_hold_is_eligible_starts_nothing() -> void:
+	var d := _door()
+	d[2].allowed = false
+	_alt(A, DOOR)
+	assert_dict(_holds.hold_of(A)).is_empty()
+	assert_array(d[0].log + d[2].log).is_empty()

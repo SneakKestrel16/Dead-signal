@@ -18,6 +18,9 @@ var lock_key: StringName = &""
 ## The shapeshifter's Start becomes a fake hold, unseen by the owner (ADR-0008 §6); false: the owner's
 ## eligible() refuses the shapeshifter as for any other actor it refuses.
 var fakeable: bool
+## Answers the secondary interact (InputFrame.interact_alt) instead of the primary: a barricadable door's
+## Barricade, Remove and Break beside its toggle (story survivor-defense/014, AD-219).
+var alt: bool = false
 
 
 ## Per the owner: shock lock, hidden, Downed, role.

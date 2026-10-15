@@ -93,6 +93,7 @@ func push(packet: Dictionary) -> int:
 		f.crouch = flags[i] & InputFrame.FLAG_CROUCH != 0
 		f.interact = flags[i] & InputFrame.FLAG_INTERACT != 0
 		f.target_is_body = flags[i] & InputFrame.FLAG_TARGET_IS_BODY != 0
+		f.interact_alt = flags[i] & InputFrame.FLAG_INTERACT_ALT != 0
 		f.interact_target = targets[i] if not targets.is_empty() else 0
 		f.view_tick = views[i] if not views.is_empty() else 0.0
 		f.ack_snapshot_tick = acks[i] if not acks.is_empty() else 0

@@ -10,8 +10,8 @@ class_name Barricades extends RefCounted
 ## Story 008: break time accumulates per door across holds (kept on any cancel, a stun included) and
 ## clears on removal or break; a break emits BarricadeBroken and locks the door out of Barricade for
 ## rebarricade_lockout_s, read against the TickRunner's current tick.
-## Not here: the shock lock gate (story 003, through `healthy` and `monster`); which input selects Barricade over the door toggle (the aim callable must resolve to
-## build_id / remove_id; unwired, see the story's deviations).
+## Not here: the shock lock gate (story 003, through `healthy` and `monster`). Barricade, Remove and Break
+## answer interact_alt (Interactable.alt; story 014), so a plain press at the door reaches its toggle.
 ## Usage:
 ##   var bars := Barricades.new(holds, doors, map, healthy_survivor, monster_capsules, monster)
 ##   bars.setup(tick_runner, bus, registry, knobs)   # after Doors.setup (doors take the first net ids)
@@ -103,6 +103,7 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 			h.range_m = rules.door_range_m
 			h.duration_s = knobs.defense.barricade_remove_s if remove else knobs.defense.barricade_duration_s
 			h.lock_key = lock_key(i)
+			h.alt = true
 			(_remove if remove else _build)[i] = _holds.register(h)
 		var brk := BarricadeBreak.new()
 		brk.owner = weakref(self)
@@ -112,6 +113,7 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 		brk.duration_s = knobs.defense.barricade_break_s
 		brk.roots_actor = true
 		brk.lock_key = lock_key(i)
+		brk.alt = true
 		_break[i] = _holds.register(brk)
 	_doors.set_held_shut(is_barricaded)
 	registry.register_view(StateKeys.BARRICADE_STATE, &"SurvivorDefense", BarricadeView.new(self))
