@@ -219,7 +219,7 @@ stories:
     name: "Transformation warp and distortion audio"
     file: "production/epics/borrowed-face/story-010-transform-warp-audio.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
     blocker: ""

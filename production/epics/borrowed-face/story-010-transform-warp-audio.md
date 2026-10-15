@@ -1,7 +1,7 @@
 # Story 010: Transformation warp and distortion audio
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
