@@ -52,7 +52,7 @@ Brings 4–6 players together by direct join (over Tailscale for MVP, ADR-0001) 
 | 009 | [Character preferences and clash resolution (post-M1)](story-009-character-preferences.md) | Logic | Complete | N/A |
 | 010 | [Clash fairness and preference changes while Ready (post-M1)](story-010-clash-fairness-preference-lock.md) | Logic | Complete | N/A |
 | 011 | [Host kick (post-M1)](story-011-host-kick.md) | Logic | Complete | ADR-0001 |
-| 012 | [Lobby queue order and preference display (post-M1)](story-012-queue-order-display.md) | UI | Ready | ADR-0014 (Proposed) |
+| 012 | [Lobby queue order and preference display (post-M1)](story-012-queue-order-display.md) | UI | In Review | ADR-0014 |
 
 Covered elsewhere: AC-LB-02/03/04 join validation (network-authority story 001), AC-LB-28/29 disconnect and host left (network-authority story 003).
 

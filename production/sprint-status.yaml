@@ -246,7 +246,7 @@ stories:
     name: "Lobby queue order and preference display (post-M1)"
     file: "production/epics/lobby-role-assignment/story-012-queue-order-display.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1
     blocker: ""

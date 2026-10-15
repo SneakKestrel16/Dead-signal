@@ -1,7 +1,7 @@
 # Story 012: Lobby queue order and preference display (post-M1)
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: UI
 > **Estimate**: [fill before sprint planning]
