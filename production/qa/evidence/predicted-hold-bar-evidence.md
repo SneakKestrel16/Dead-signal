@@ -25,3 +25,30 @@ and a background to the root, called `advance()` and `on_snapshot()`, and saved 
 ## Sign-off
 
 - [x] Lead sign-off: designer, 2026-10-15 (captures 01 and 02 reviewed). The 240 fps capture for AC1 is still not done: it needs a client round scene.
+
+## 240 fps capture for AC1 (match-flow story 011, 2026-10-15)
+
+Run: `round_host.gd --players=5` and `round_view.tscn --windowed --write-movie <tmp>/f.avi --fixed-fps 240
+--quit-after 2400 -- --count=5 --view=0 --bot=hold --light --latency-ms=150`. Client 0 joins through
+`UdpLink` (tests/helpers/udp_link.gd) at 75 ms each way, so the round trip is 150 ms. The bot walks a
+survivor to the nearest hiding spot, aims at it and holds interact.
+
+The launcher printed:
+
+```text
+PRESS frame 617 target 27
+BAR frame 621: 4 drawn frames after the press
+```
+
+4 frames at 240 fps is 16.7 ms, one 60 Hz physics tick. The limit is 100 ms. Frames:
+`client-round-scene/hold-press-frame617.png` (no bar) and `client-round-scene/hold-bar-frame621.png`
+(bar under the view centre). Two other runs gave 621 -> 625 and 1101 -> 1105.
+
+Caveats:
+
+- Movie mode ran at 32% of real time, but the 150 ms shim delays packets in real time. This makes no
+  difference to the result, because the bar never waits for the network.
+- The server did not accept the Start, so the press was not *valid* in the AC's sense. The client sends
+  no `interact_target` net id (see `client-round-scene-evidence.md`, Known gap), so the bar hides at the
+  ack. The measured delay is the same for an accepted Start: the bar appears on the press tick from the
+  local target query alone.
