@@ -121,8 +121,8 @@ stories:
     name: "Export preset (TD-004, carryover)"
     file: ""
     priority: nice-to-have
-    status: backlog
-    owner: ""
+    status: done
+    owner: "devops-engineer"
     estimate_days: 0.5
-    blocker: "commit decision taken when the story starts (AD-102)"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-14"

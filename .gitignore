@@ -65,6 +65,8 @@ dist/
 !**/.godot/global_script_class_cache.cfg
 *.translation
 export_presets.cfg
+# The project preset is committed (EX-1, AD-113; secrets live in .godot/export_credentials.cfg).
+!/export_presets.cfg
 # Uncomment if using Godot:
 # *.import
 
