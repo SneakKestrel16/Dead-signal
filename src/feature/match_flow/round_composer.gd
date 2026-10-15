@@ -42,6 +42,8 @@ var objectives: SurvivorObjectives
 var ma: MonsterAbilities
 var lifecycle: RoundLifecycle
 var lighting: FacilityLighting
+## Sends lighting records per viewer (facility-map story 010); kept here, sm holds only its Callable.
+var lighting_rep: LightingReplication
 ## Runs HoldService in the HOLDS slot and owns the RoundEnded freeze.
 var controller: ControllerAuthority
 var footsteps: Footsteps
@@ -158,6 +160,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.transforming_of = bf.transforming_of
 	sm.flashlight_of = sd.flashlight_on
 	sm.batch_extras.assign([downing.ring_entries, sd.charge_entries, hs.hiding_entries, bars.barricade_entries])
+	lighting_rep = LightingReplication.new(lighting, map, _position, doors.is_closed, _tick)
+	sm.batch_extras.append(lighting_rep.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
 	for id in roster.player_ids():
@@ -284,6 +288,11 @@ func _live_players() -> Array[int]:
 		if _body_live(id):
 			out.append(id)
 	return out
+
+
+## The running tick (the TickRunner exists only once start_round ran).
+func _tick() -> int:
+	return server.tick_runner.current_tick() if server.tick_runner != null else 0
 
 
 func _position(id: int) -> Vector3:

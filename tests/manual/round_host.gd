@@ -11,6 +11,9 @@ extends SceneTree
 ## Bodies are TestMoveStep stand-ins (the controller epic owns the real step) on the MapGreybox floors
 ## (MF-11: the client scene builds the same floors). Self-clients add the session HiddenSpawner at the
 ## server's fixed path, as every real client does (RoundClient), so candidate spawns resolve.
+## --force=<s>:power,<s>:evac (story facility-map/010 screenshots) emits a forced event on the server bus that
+## many seconds after round start: power = ObjectiveProgressChanged terminal POWERED (Power Restored), evac =
+## RoundPhaseChanged to Evacuation. Forced events skip the objective and timer rules; manual capture only.
 
 const SERVER_VERSION := "0.1.0"
 const EVENTS: Array[StringName] = [&"RoundPhaseChanged", &"SurvivorDowned", &"SurvivorEliminated",
@@ -23,6 +26,7 @@ var _server: RoundServer
 var _c: RoundComposer
 var _joined: Array[int] = []
 var _want := 5
+var _args := {}
 
 
 class Lobby extends RefCounted:
@@ -44,7 +48,7 @@ func _initialize() -> void:
 
 
 func _setup() -> void:
-	var args := {}
+	var args := _args
 	for a in OS.get_cmdline_user_args():
 		var kv := a.trim_prefix("--").split("=")
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
@@ -126,9 +130,28 @@ func _start() -> void:
 	for type in EVENTS:
 		_server.bus.subscribe(type, _on_event)
 	print("ROUND STARTED: monster %d, survivors %s" % [_c.monster, _c.survivors])
+	for f in String(_args.get("force", "")).split(",", false):
+		var at_what := f.split(":")
+		create_timer(float(at_what[0])).timeout.connect(_force.bind(at_what[1]))
 	for r in _client_roots:
 		(r.multiplayer as SceneMultiplayer).send_bytes(RoundLifecycle.map_loaded_packet(), 1,
 				MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+
+
+## Emits one forced lighting trigger (see --force).
+func _force(what: String) -> void:
+	if _server == null or _server.bus == null:
+		return
+	if what == "evac":
+		var e := EvRoundPhaseChanged.new()
+		e.phase = MatchFlow.Phase.EVACUATION
+		_server.bus.emit(e)
+	elif what == "power":
+		var o := EvObjectiveProgressChanged.new()
+		o.objective = SurvivorObjectives.TERMINAL_ID
+		o.state = SurvivorObjectives.TerminalState.POWERED
+		_server.bus.emit(o)
+	print("FORCED %s" % what)
 
 
 func _on_event(e: ServerEvent) -> void:

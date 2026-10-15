@@ -24,6 +24,10 @@ const HIDING := &"Hiding"
 ## Entry type of a barricadable door's state (Barricades.barricade_entries, AD-194): {door, barricaded,
 ## lockout_end} (lockout_end the tick rule 28's lockout ends, -1 when it never broke). Sent to everyone.
 const BARRICADE := &"Barricade"
+## Entry type of one lighting volume's record (LightingReplication.entries, story facility-map/010, ADR-0009
+## §5): {volume, base, overlays, dark_until} (dark_until the tick its Blackout ends, 0 = not dark). Sent to a
+## viewer only for volumes in its visibility set, on change.
+const LIGHTING := &"Lighting"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

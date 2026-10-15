@@ -98,6 +98,11 @@ func is_dark(volume: StringName) -> bool:
 	return _dark_until.get(volume, 0) != 0
 
 
+## The tick the Blackout in `volume` ends, 0 when none (the replication record, story 010).
+func dark_until(volume: StringName) -> int:
+	return _dark_until.get(volume, 0)
+
+
 ## True when `volume` may be blacked out; false for an unknown id.
 func blackout_able(volume: StringName) -> bool:
 	return _able.get(volume, false)

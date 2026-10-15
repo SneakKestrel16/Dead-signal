@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="LightingPresets" format=3]
+
+[ext_resource type="Script" path="res://src/core/facility/lighting_presets.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+zone_colour = Dictionary[StringName, Color]({
+&"A": Color(0.8, 1, 0.9, 1),
+&"B": Color(1, 0.7, 0.35, 1),
+&"C": Color(1, 0.45, 0.4, 1),
+&"link": Color(0.85, 0.85, 0.9, 1)
+})
+overhead_energy = PackedFloat32Array(2.5, 8, 4)
+low_power_zone_scale = Dictionary[StringName, float]({
+&"A": 1.0,
+&"B": 0.5,
+&"C": 0.9,
+&"link": 0.8
+})
+overhead_cell_m = 6.0
+emergency_colour = Color(1, 0.15, 0.1, 1)
+emergency_energy = 0.6
+emergency_range_m = 2.0
+beacon_volumes = PackedStringArray("H-N1", "H-N2", "H-N3", "H-N4", "H-S1", "H-S2", "H-S3", "H-S4", "C2", "C4")
+beacon_colour = Color(1, 0.55, 0.05, 1)
+beacon_energy = 6.0
+beacon_spin_deg_s = 180.0
+beacon_steady_energy = 1.5
+fuse_colour = Color(0.2, 1, 0.3, 1)
+alarm_colour = Color(1, 0.1, 0.1, 1)
+exit_colour = Color(0.2, 1, 0.4, 1)
+overlay_energy = 3.0
+overlay_range_m = 6.0
+alarm_pulse_hz = 1.0
+ambient_colour = Color(0.6, 0.65, 0.75, 1)
+ambient_energy = 0.15
+glow_intensity = 0.8

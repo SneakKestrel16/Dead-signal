@@ -46,6 +46,8 @@ var scares: ScarePresenter
 var disguise: DisguisePresenter
 ## Zone ambience bed crossfade and its debug overlay (story facility-map/012); null when not rendering.
 var ambience: ZoneAmbience
+## Map lighting from the server's records (story facility-map/010, ADR-0009 §6); null when not rendering.
+var lights: LightingPresenter
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -156,6 +158,10 @@ func _on_connected() -> void:
 		add_child(disguise)
 		router.subscribe(&"PlayerShocked", disguise.on_shock)
 		router.subscribe(&"MonsterStunned", disguise.on_shock)
+		lights = LightingPresenter.new(_map, LightingPresets.load_shipped())
+		add_child(lights)
+		camera.environment = lights.presets.environment()
+		router.subscribe(EventBatch.LIGHTING, lights.on_lighting)
 		hud = CanvasLayer.new()
 		add_child(hud)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)

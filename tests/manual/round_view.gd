@@ -30,6 +30,17 @@ const ARRIVE_M := 0.15
 ## Drawn frames between form-change requests while waiting for the observation to complete.
 const REQUEST_EVERY := 15
 
+
+## Lighting (story facility-map/010): the map is lit only by each client's LightingPresenter (no sun); only
+## the shown client's lights are visible. Every client prints each lighting record it applies ("LIGHT").
+## --reduced-flash turns the shown client's reduced flash on. --blackout has the shapeshifter's client request
+## a Blackout of its own volume once spawned. --shot-when=dark,evac,power (any of) saves <state>.png on the first frame
+## the shown client's own volume shows that state. --yaw=<deg> [--pitch=<deg>] fixes the shown client's view.
+## --measure prints the mean frame and GPU render time over MEASURE_FRAMES frames after spawning (run it
+## without --write-movie, which fixes the frame step).
+
+const MEASURE_FRAMES := 300
+
 var _args: Dictionary = {}
 var _knobs: Knobs
 var _map: MapData
@@ -49,6 +60,9 @@ var _stagger_frame := -1
 ## --bot=walk: waypoint index, and seconds since the border was crossed (-1 before).
 var _leg := 0
 var _since_border := -1.0
+var _blackout_sent := false
+var _routed: Dictionary[int, bool] = {}
+var _measure: Array[float] = []
 
 
 func _ready() -> void:
@@ -59,10 +73,6 @@ func _ready() -> void:
 	Engine.physics_ticks_per_second = _knobs.net.sim_tick_hz
 	_map = MapData.load_map()
 	MapGreybox.build(self, _map)
-	var sun := DirectionalLight3D.new()
-	sun.rotation_degrees = Vector3(-60, 30, 0)
-	sun.light_energy = 0.4
-	add_child(sun)
 	var host: String = _args.get("host", "127.0.0.1")
 	var port := int(_args.get("port", "24690"))
 	var latency := int(_args.get("latency-ms", "0"))
@@ -88,9 +98,17 @@ func _process(delta: float) -> void:
 	if _link != null:
 		_link.pump(Time.get_ticks_msec() / 1000.0)
 	_pick_view()
+	_lighting()
 	var c0 := _shown
 	if c0 == null or not c0.is_spawned():
 		return
+	if _args.has("yaw"):
+		if c0.scripted == null:
+			c0.scripted = InputFrame.new()
+		c0.scripted.yaw = deg_to_rad(float(_args["yaw"]))
+		c0.scripted.pitch = deg_to_rad(float(_args.get("pitch", "0")))
+	if _args.has("measure") and _measure.size() < MEASURE_FRAMES * 2:
+		_sample()
 	if _args.has("light") and not _lit:
 		_lit = true
 		c0.toggle_flashlight()
@@ -171,6 +189,62 @@ func _shot(tag: String) -> void:
 	var path := "%s/%s.png" % [_args["shots"], tag]
 	get_viewport().get_texture().get_image().save_png(path)
 	print("SHOT %s of frame %d" % [path, frame])
+
+
+## Lighting flags: only the shown client's lights draw; route records to the log; Blackout and state shots.
+func _lighting() -> void:
+	for i in _clients.size():
+		var c := _clients[i]
+		if c.lights == null:
+			continue
+		c.lights.visible = c == _shown
+		if not _routed.has(i):
+			_routed[i] = true
+			c.router.subscribe(EventBatch.LIGHTING, _on_light.bind(i))
+		if c == _shown and c.lights.reduced_flash != _args.has("reduced-flash"):
+			c.lights.reduced_flash = _args.has("reduced-flash")
+		if _args.has("blackout") and not _blackout_sent and c.is_spawned() and c.is_monster():
+			_blackout_sent = true
+			(c.multiplayer as SceneMultiplayer).send_bytes(MonsterAbilities.request_packet(
+					MonsterAbilities.Ability.BLACKOUT, c.body.global_position), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+			print("BLACKOUT requested by %s at %s" % [c.name, c.body.global_position])
+	if _shown == null or _shown.lights == null or not _shown.is_spawned():
+		return
+	var r := _shown.lights.record_of(MapQueries.new(_map).volume_at(_shown.body.global_position))
+	if r.is_empty():
+		return
+	for want in String(_args.get("shot-when", "")).split(",", false):
+		var hit: bool = (want == "dark" and r.dark_until > 0) or (want == "evac" and r.base == FacilityLighting.Base.EVACUATION) 				or (want == "power" and r.base == FacilityLighting.Base.POWER_RESTORED)
+		if hit and not has_meta(StringName("shot_" + want)):
+			set_meta(StringName("shot_" + want), true)
+			_shot(want)
+
+
+## Router handler on every client: one line per applied lighting record (AC 8 timing across clients).
+func _on_light(tick: int, payload: Dictionary, client: int) -> void:
+	print("LIGHT client %d tick %d at %d ms: %s base %s overlays %s dark_until %s" % [client, tick,
+			Time.get_ticks_msec(), payload.get("volume"), payload.get("base"), payload.get("overlays"),
+			payload.get("dark_until")])
+
+
+## Frame time and GPU render time of the main viewport; prints the means after MEASURE_FRAMES frames.
+## Viewport render-time measuring is training data (RenderingServer, not in docs/engine-reference).
+func _sample() -> void:
+	var rid := get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(rid, true)
+	_measure.append(get_process_delta_time() * 1000.0)
+	_measure.append(RenderingServer.viewport_get_measured_render_time_gpu(rid))
+	if _measure.size() < MEASURE_FRAMES * 2:
+		return
+	var frame := 0.0
+	var gpu := 0.0
+	for i in range(0, _measure.size(), 2):
+		frame += _measure[i]
+		gpu += _measure[i + 1]
+	var n := _measure.size() / 2.0
+	print("MEASURE %d frames in %s (%s): frame %.2f ms, gpu %.2f ms, driver %s" % [n,
+			MapQueries.new(_map).volume_at(_shown.body.global_position), _shown.name, frame / n, gpu / n,
+			RenderingServer.get_current_rendering_driver_name()])
 
 
 func _look(c: RoundClient) -> void:
