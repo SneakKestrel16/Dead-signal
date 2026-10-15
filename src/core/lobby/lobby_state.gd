@@ -20,10 +20,17 @@ class_name LobbyState extends RefCounted
 
 ## The countdown reached 0 and rule 13 still held: these tokens play. RosterHandoff builds the roster.
 signal roster_locked(tokens: PackedStringArray)
+## The host changed proximity voice (rule 16). The lobby replication layer fans it out to every client
+## (AC-LB-26); nothing does yet (story 004 deviation: no lobby replication channel exists).
+signal proximity_voice_changed(on: bool)
 
 const WAITING := &"waiting"
 const COUNTDOWN := &"countdown"
 const IN_MATCH := &"in_match"
+
+## The host's own player's token, set by the composition root; host-only actions (rule 16, rule 20)
+## check it. "" (unset) = no host, every host action is rejected.
+var host_token: String = ""
 
 var _knobs: Knobs
 var _state := WAITING
@@ -33,6 +40,8 @@ var _rng: RandomNumberGenerator
 ## token -> preferred character, for every token ever joined this session. Kept on leave: inference
 ## from TR-lobby-004 (the token keys the preference); rule 17 does not say, a designer ruling would settle it.
 var _pref_by_token: Dictionary[String, StringName] = {}
+## Proximity voice for the session; Off by default (rule 16, a designer ruling, so not a knob).
+var _proximity_voice := false
 
 
 ## `knobs` must be valid (Knobs.errors() empty): reads lobby.min_players, lobby.lobby_countdown_s
@@ -91,6 +100,23 @@ func set_preference(token: String, character: StringName) -> bool:
 	if not _ready_by_token.has(token) or not CharacterDef.IDS.has(character):
 		return false
 	_pref_by_token[token] = character
+	return true
+
+
+## Whether proximity voice is on for every player this session (rule 16).
+func proximity_voice() -> bool:
+	return _proximity_voice
+
+
+## Host request to set proximity voice (rule 16, AC-LB-25, TR-lobby-009). Accepted (true) only from
+## `host_token` in Waiting; anyone else, or the host in Countdown or In Match, gets false and nothing
+## changes. An accepted change to a new value emits proximity_voice_changed; kept across rounds.
+func set_proximity_voice(requester_token: String, on: bool) -> bool:
+	if host_token == "" or requester_token != host_token or _state != WAITING:
+		return false
+	if _proximity_voice != on:
+		_proximity_voice = on
+		proximity_voice_changed.emit(on)
 	return true
 
 
