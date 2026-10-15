@@ -57,3 +57,14 @@ func test_stick_motion_does_not_use_up_the_discard() -> void:
 func test_switch_to_cursor_context_does_not_arm_the_discard() -> void:
 	_stack.push(InputContextStack.Ctx.OVERLAY, null)
 	assert_bool(_stack.take_motion_discard()).is_false()
+
+
+## The verifier saw the engine deliver a zero-relative motion after the capture switch, which spent the
+## discard so the next real motion turned the view a full radian (BUG-0014 reopened, 2026-10-15).
+func test_zero_motion_does_not_use_up_the_discard() -> void:
+	_stack.reapply_mouse_mode()
+	_li.handle(_motion(Vector2.ZERO))
+	_li.handle(_motion(BIG))
+	assert_float(_li.yaw).is_zero()
+	_li.handle(_motion(SMALL))
+	assert_float(_li.yaw).is_not_zero()

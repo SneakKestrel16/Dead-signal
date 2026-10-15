@@ -58,8 +58,11 @@ func _process(delta: float) -> void:
 ## stick_look() turns it by. Public so tests can feed events.
 func handle(event: InputEvent) -> void:
 	var motion := event as InputEventMouseMotion
-	if motion != null and not (contexts != null and contexts.take_motion_discard()):
-		look(motion.screen_relative) # the first motion after a recapture is dropped (ADR-0014 §3, BUG-0014)
+	# the first motion that moves after a recapture is dropped (ADR-0014 §3, BUG-0014); a zero motion the
+	# engine sends on the capture switch must not spend the discard
+	if motion != null and motion.screen_relative != Vector2.ZERO \
+			and not (contexts != null and contexts.take_motion_discard()):
+		look(motion.screen_relative)
 	var joy := event as InputEventJoypadMotion
 	if joy != null and joy.axis == JOY_AXIS_RIGHT_X:
 		_stick.x = joy.axis_value
