@@ -37,6 +37,9 @@ const PING := &"Ping"
 ## Entry type of the sender's own rejected ping request, echoed as {kind, at, target} (rule 2). Sent to the
 ## sender's peer only, in its own batch (PingDelivery), never to a spectator or anyone else.
 const PING_REJECTED := &"PingRejected"
+## Entry type of the facility scare state (FacilityScareState.entries, story scare-events/006): {state, power}.
+## Not a catalog event; sent to every viewer on change and in full on a rejoin.
+const FACILITY_SCARE := &"FacilityScare"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

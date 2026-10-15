@@ -22,7 +22,7 @@ const CATALOG: Array[StringName] = [
 ## Batch entry types that are not catalog events (EventBatch).
 const NON_CATALOG: Array[StringName] = [EventBatch.SOUND, EventBatch.BLEED_RING, EventBatch.CHARGES,
 	EventBatch.HIDING, EventBatch.BARRICADE, EventBatch.CAMERA, EventBatch.LIGHTING,
-	EventBatch.PING, EventBatch.PING_REJECTED]
+	EventBatch.PING, EventBatch.PING_REJECTED, EventBatch.FACILITY_SCARE]
 
 ## Event batches that failed to decode.
 var rejected: int = 0

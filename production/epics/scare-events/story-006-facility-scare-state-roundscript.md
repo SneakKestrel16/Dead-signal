@@ -1,7 +1,7 @@
 # Story 006: Facility scare state machine and RoundScript anchors
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -33,9 +33,9 @@ On `RoundPhaseChanged` and `ObjectiveProgressChanged` the server sets the facili
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] All 5 clients enter Emergency state within one network round trip of `RoundPhaseChanged` to Evacuation.
-- [ ] A RoundScript scare fires only when a player reaches an authored anchor and the gating of story 002 allows it.
-- [ ] A client that reconnects mid-round shows the current facility scare state within one network round trip and replays no missed scare.
+- [x] All 5 clients enter Emergency state within one network round trip of `RoundPhaseChanged` to Evacuation.
+- [x] A RoundScript scare fires only when a player reaches an authored anchor and the gating of story 002 allows it.
+- [x] A client that reconnects mid-round shows the current facility scare state within one network round trip and replays no missed scare.
 
 ---
 
@@ -63,7 +63,7 @@ On `RoundPhaseChanged` and `ObjectiveProgressChanged` the server sets the facili
 **Story Type**: Integration
 **Required evidence**: `tests/integration/scare-events/facility_scare_state_roundscript_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/scare-events/facility_scare_state_roundscript_test.gd` (5 cases, 2 over real ENet)
 
 ---
 
@@ -71,3 +71,20 @@ On `RoundPhaseChanged` and `ObjectiveProgressChanged` the server sets the facili
 
 - Depends on: Stories 001, 002
 - Unlocks: Story 009
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se6. Full suite 1350/1350, no leak lines. Mutations caught: rejoin ignoring `full`, Evacuation mapped to Rising, firing every tick instead of on entry, phase filter removed, parked-body guard removed.
+
+Notes:
+- `FacilityScareState` (SCARE_EVENTS + 1) runs Low, Rising, Emergency, Results (Low straight to Emergency on an early Evacuation), with a Power Restored flag from the terminal; it never writes lighting. Sent as `EventBatch.FACILITY_SCARE` on change and in full on rejoin; nothing added to `catch_up`, so missed scares are never replayed.
+- `RoundScript` (SCARE_EVENTS + 2) fires each RoundScript catalogue entry naming an anchor when a player enters the anchor's volume in a listed phase; gating (story 002) applies inside `fire()`.
+- `FacilityScareDisplay` is the client stub; presentation is story 009.
+
+**Open (In Review): the shipped map has no scare anchors.** `data/maps/research_facility.tres` lacks sd1-sd6 and sg1-sg3, so RoundScript scares never fire in a real round; the test injects them in memory. The agent's edit to the map was refused by the permission check, so it waits for the user. Proposed change (positions inferred from the level doc's Scare anchors table, door positions and volume boxes): 9 `MapMarker` entries with `type = &"scare_anchor"`: sd1 A3 (9.5,0,19), sd2 A4 (17.5,0,25.5), sd3 A6 (5.5,0,4.5), sd4 B1 (31.5,0,27.5), sd5 C2 (45.5,0,27.5), sd6 C5 (44.5,0,13.5), sg1 A3 (9.5,0,24), sg2 A4 (13.5,0,17), sg3 A7 (17.5,0,13.5); plus `&"scare_anchor"` in `MapData.MARKER_TYPES` and the marker counts in `tests/integration/facility-map/map_data_test.gd`. Not interactables, so net ids do not shift.
+
+Deviations (inference):
+- "Reaches an anchor" = enters the anchor's lighting volume; the GDD gives no trigger radius.
+- Every live player receives a RoundScript scare until story 003's audible-range relevance lands.
+- "Within one round trip" is checked as delivery in the same tick's reliable batch.
+- Blackout is not part of the facility state (the map already replicates per-volume lighting).

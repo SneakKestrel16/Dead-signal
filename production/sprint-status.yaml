@@ -138,10 +138,10 @@ stories:
     name: "Facility scare state machine and RoundScript anchors"
     file: "production/epics/scare-events/story-006-facility-scare-state-roundscript.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "user: allow scare anchors in research_facility.tres"
     completed: ""
   - id: "scare-7"
     name: "Presentation-only guarantees: slammed doors and no fake teammates"

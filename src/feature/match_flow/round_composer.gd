@@ -56,6 +56,9 @@ var footsteps: Footsteps
 var offset: ViewOffset
 ## Server Scare Events module (scare-events story 001); owning systems call scares.fire().
 var scares: ScareEvents
+## Facility scare state and RoundScript anchor scares (scare-events story 006).
+var scare_state: FacilityScareState
+var round_script: RoundScript
 ## The ambush test and the Major-scare flinch request (scare-events story 005).
 var ambush: AmbushTest
 var flinch: ScareFlinch
@@ -115,6 +118,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	if catalogue == null:
 		return PackedStringArray(["scare catalogue invalid, round not started"])
 	scares = ScareEvents.new(catalogue)
+	scare_state = FacilityScareState.new()
+	round_script = RoundScript.new(scares, catalogue, scare_state, map, _live_players, _position)
 	ambush = AmbushTest.new(scares)
 	holds = HoldService.new(knobs, _live_players, sm.frames_of, _centre, _hold_sight, _aim, _body_target,
 			_is_monster)
@@ -201,6 +206,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.batch_extras.append(lighting_rep.entries)
 	ping_delivery = PingDelivery.new(pings, monster, _ping_in_play, bf.appearance_of, _tick, _send_own)
 	sm.batch_extras.append(ping_delivery.entries)
+	sm.batch_extras.append(scare_state.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
 	for id in roster.player_ids():
@@ -228,6 +234,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.PINGS_CALLOUTS: pings,
 		TickOrder.SCARE_EVENTS - 1: ambush,
 		TickOrder.SCARE_EVENTS: scares,
+		TickOrder.SCARE_EVENTS + 1: scare_state,
+		TickOrder.SCARE_EVENTS + 2: round_script,
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
 	}
 	var errs := server.start_round(modules, knobs)
