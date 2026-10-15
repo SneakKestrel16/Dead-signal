@@ -63,6 +63,7 @@ func before_test() -> void:
 	_d.set_hidden(_sd.is_hidden)
 	_obj = SurvivorObjectives.new(_holds, _map, _not_hidden, _sd.is_hidden, _centre)
 	_obj.survivor_ids.assign(SURVIVORS)
+	_obj.placement = FirstMarkers.of(_map)
 	_obj.setup(null, EventBus.new(_knobs.core.max_flush_rounds), StateRegistry.new(), _knobs)
 	_hs = HidingSpots.new(_holds, _map, _healthy, _is_monster, _sd.set_hidden, _mods_of, _place)
 	_hs.setup(null, null, StateRegistry.new(), _knobs)

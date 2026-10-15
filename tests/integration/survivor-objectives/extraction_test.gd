@@ -50,6 +50,7 @@ func _build(knobs: Knobs) -> void:
 	_bus = EventBus.new(knobs.core.max_flush_rounds)
 	_bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
 	_bus.subscribe(&"RoundEnded", _on_ended)
+	_obj.placement = FirstMarkers.of(_map)
 	_obj.setup(null, _bus, StateRegistry.new(), knobs)
 	_mf = MatchFlow.new()
 	_mf.survivor_ids.assign([A, B])

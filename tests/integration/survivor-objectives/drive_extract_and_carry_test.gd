@@ -39,6 +39,7 @@ func _build(knobs: Knobs) -> void:
 	_obj = SurvivorObjectives.new(_holds, map, func(actor: int) -> bool: return not _downed.has(actor))
 	_bus = EventBus.new(knobs.core.max_flush_rounds)
 	_bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
+	_obj.placement = FirstMarkers.of(map)
 	_obj.setup(null, _bus, StateRegistry.new(), knobs)
 
 

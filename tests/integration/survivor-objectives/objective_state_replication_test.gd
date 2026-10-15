@@ -146,6 +146,7 @@ func _start() -> void:
 	_obj = SurvivorObjectives.new(_holds, _map, func(actor: int) -> bool: return not _downed.has(actor),
 		Callable(), func(actor: int) -> Vector3: return _centres[actor])
 	_obj.survivor_ids.assign(_survivors)
+	_obj.placement = FirstMarkers.of(_map)
 	assert_array(_server.start_round({TickOrder.SURVIVOR_OBJECTIVES: _obj}, _knobs)).is_empty()
 	_server.bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
 	_sm = ServerMovement.new(_knobs, net, server_root.multiplayer as SceneMultiplayer, TestMoveStep.apply,

@@ -58,6 +58,7 @@ func before_test() -> void:
 	_bus = EventBus.new(_knobs.core.max_flush_rounds)
 	_bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
 	_registry = StateRegistry.new()
+	_obj.placement = FirstMarkers.of(_map)
 	_obj.setup(null, _bus, _registry, _knobs)
 	_hidden = {}
 	## Registered after the objectives, so their net ids (DRIVES..SLOTS) are unchanged.

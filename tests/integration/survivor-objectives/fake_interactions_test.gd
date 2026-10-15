@@ -48,6 +48,7 @@ func before_test() -> void:
 	_obj.emit_sound = _on_sound
 	_bus = EventBus.new(_knobs.core.max_flush_rounds)
 	_bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
+	_obj.placement = FirstMarkers.of(_map)
 	_obj.setup(null, _bus, StateRegistry.new(), _knobs)
 
 

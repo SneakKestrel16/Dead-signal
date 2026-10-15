@@ -20,12 +20,15 @@ class_name SurvivorObjectives extends RefCounted
 ## Story 010 (rules 10, 27; ADR-0004 §5, §9): every event carries the carrier and a dropped item's
 ## position, so each client's ObjectiveDisplay rebuilds the checklist from events alone; catch_up() is
 ## the newest event per point, for ServerMovement.catch_up (reconnecting clients).
+## Story 008 (rules 5-6; ADR-0012 §6): the active points are one rule-6-valid placement from
+## CandidateSelection, drawn at setup with `rng`; candidate_errors() checks the map against the knobs.
 ## Not yet here: the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
 ##   obj.drop(actor, SurvivorObjectives.DRIVE_ID + i)   # the carrier's own drop request
 ##   obj.survivor_ids.assign(survivors)
-##   obj.rng = round_rng; obj.emit_sound = server_movement.emit_sound
+##   obj.rng = round_rng   # seeded from the round seed; draws the active points at setup
+##   obj.emit_sound = server_movement.emit_sound
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
 ##   server_movement.catch_up.append(obj.catch_up)
 
@@ -38,8 +41,7 @@ enum FuseState { UNFOUND, CARRIED, DROPPED, INSTALLED, INSTALLING }
 ## older values keep their numbers. terminal_state() never reads POWERED: it stays LOCKED until ARMED.
 enum TerminalState { LOCKED, ARMED, ACTIVATING, ACTIVATED, POWERED }
 
-## Active points for now: the first authored markers of each type. Placeholder until story 008
-## (random active point selection, ADR-0012, Proposed) replaces it.
+## Active points per round (rules 8, 15): GDD rules, not Tuning Knobs rows.
 const ACTIVE_DRIVES := 2
 const ACTIVE_FUSES := 2
 const ACTIVE_FUSE_BOXES := 2
@@ -60,18 +62,28 @@ const TERMINAL_ID := 30
 const POWERED_KEY := TERMINAL_ID + 1
 ## Keeps a snapped drop inside its volume: a volume's east and south edges belong to the next one.
 const FLOOR_EPS_M := 1e-3
+const NO_PLACEMENT := "no active point placement satisfies rule 6"
 
 ## Player ids of this round's survivors; set before setup. Only they hold the terminal zone: the
 ## shapeshifter never counts (rule 19).
 var survivor_ids: Array[int] = []
-## Places the install alert's circle; seed it for reproducible rounds and tests.
+## Draws the active points at setup, then places the install alert's circle; seed it from the round seed
+## for reproducible rounds and tests. Never the global randi() (ADR-0012).
 var rng := RandomNumberGenerator.new()
+## Active points to use instead of a draw: indices into map.markers (any order; read per type in list
+## order). Empty = draw one CandidateSelection placement with `rng` at setup. Tests and replays only;
+## not rule-6 checked.
+var placement := PackedInt32Array()
 ## `emit_sound(position: Vector3, sound_set: StringName, radius_m: float)`, NA-9's positional sound
 ## send (ServerMovement.emit_sound). Invalid = no install noise is sent.
 var emit_sound: Callable = Callable()
 
 var _holds: HoldService
 var _map: MapData
+## Every rule-6-valid placement, listed once when the map is handed in (ADR-0012 §6).
+var _placements: Array[PackedInt32Array] = []
+## This round's active points (indices into map.markers).
+var _active := PackedInt32Array()
 var _is_healthy: Callable
 var _is_hidden: Callable
 var _position_of: Callable
@@ -108,6 +120,7 @@ func _init(holds: HoldService, map: MapData, is_healthy: Callable = Callable(),
 		is_hidden: Callable = Callable(), position_of: Callable = Callable()) -> void:
 	_holds = holds
 	_map = map
+	_placements = CandidateSelection.valid_placements(map, ACTIVE_DRIVES, ACTIVE_FUSES, ACTIVE_FUSE_BOXES, 1)
 	_is_healthy = is_healthy
 	_is_hidden = is_hidden
 	_position_of = position_of
@@ -137,6 +150,14 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
 	var o := knobs.objectives
+	var errors := _count_errors(_map, o)
+	if _placements.is_empty() and placement.is_empty():
+		errors.append(NO_PLACEMENT)
+	if not errors.is_empty():
+		for e in errors:
+			push_error("SurvivorObjectives: %s" % e)
+		return
+	_active = placement if not placement.is_empty() else CandidateSelection.pick(_placements, rng)
 	for m: MapMarker in _first(&"drive", ACTIVE_DRIVES):
 		_add(DriveConsole.new(), _states.size(), m, o.drive_extract_s)
 		_marker_ids.append(m.id)
@@ -163,11 +184,37 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 		_fuse_pickups.append(_add(FusePickup.new(), _fuse_pickups.size(), m, o.pickup_s, "_dropped"))
 
 
+## This round's active points (indices into map.markers: terminal, fuse boxes, drives, fuses for a draw).
+func active() -> PackedInt32Array:
+	return _active
+
+
+## Load-time check of the map against ObjectivesKnobs (Tuning Knobs candidate counts) and rule 6;
+## [] = valid. The round must be refused otherwise (ADR-0012 §6).
+static func candidate_errors(map: MapData, o: ObjectivesKnobs) -> PackedStringArray:
+	var out := _count_errors(map, o)
+	if CandidateSelection.valid_placements(map, ACTIVE_DRIVES, ACTIVE_FUSES, ACTIVE_FUSE_BOXES, 1).is_empty():
+		out.append(NO_PLACEMENT)
+	return out
+
+
+static func _count_errors(map: MapData, o: ObjectivesKnobs) -> PackedStringArray:
+	var want := {&"drive": o.drive_candidates, &"fuse": o.fuse_candidates, &"fuse_box": o.fuse_box_candidates,
+		&"terminal": o.terminal_candidates}
+	var out := PackedStringArray()
+	for type: StringName in want:
+		var n := map.markers.filter(func(m: MapMarker) -> bool: return m.type == type).size()
+		if n != want[type]:
+			out.append("map has %d %s candidates, objectives knobs say %d" % [n, type, want[type]])
+	return out
+
+
+## This round's active markers of `type`, in placement order.
 func _first(type: StringName, n: int) -> Array[MapMarker]:
 	var out: Array[MapMarker] = []
-	for m: MapMarker in _map.markers:
-		if m.type == type and out.size() < n:
-			out.append(m)
+	for i in _active:
+		if _map.markers[i].type == type and out.size() < n:
+			out.append(_map.markers[i])
 	if out.size() < n:
 		push_error("SurvivorObjectives: map has %d %s markers, needs %d" % [out.size(), type, n])
 	return out
