@@ -204,6 +204,23 @@ func display_name_of(player_id: int) -> String:
 	return _names.get(player_id, "")
 
 
+## Server: registers the host's own player, which has no peer (ADR-0001: the caller adds it). Mints its
+## player ID and token as for a joiner and sets local_player_id and local_token, so the host screen and
+## the lobby address it like any player. Returns the player ID, or -1 when the sanitized name breaks
+## the lobby name length (lobby rule 2).
+func add_host_player(display_name: String) -> int:
+	var n := sanitize_name(display_name)
+	if n.length() < _knobs.lobby.name_min_chars or n.length() > _knobs.lobby.name_max_chars:
+		return -1
+	var player_id := _next_player_id
+	_next_player_id += 1
+	local_token = Crypto.new().generate_random_bytes(16).hex_encode()
+	_tokens[local_token] = player_id
+	_names[player_id] = n
+	local_player_id = player_id
+	return player_id
+
+
 ## Server: disconnects `player_id`'s peer with REASON_KICKED (lobby rule 20; the lobby validated the
 ## kick). The player is unbound at once, so its disconnect raises no player_dropped; the token and
 ## player ID stay, so a later join with that token is the Waiting rejoin path (same ID, queue place).

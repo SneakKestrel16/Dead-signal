@@ -1,5 +1,5 @@
 ## Boot scene: loads the shipped knobs and reports their health on screen and in the log.
-## Placeholder until the main menu exists (lobby-role-assignment story 005); it gives
+## Hosts the lobby screen (lobby-role-assignment story 005) under the status line; it gives
 ## the smoke check a launchable build (AD-67).
 class_name Main extends Control
 
@@ -22,7 +22,7 @@ func _ready() -> void:
 		notice = ""
 
 
-## Returns to this scene (the main menu until lobby-role-assignment story 005) showing `text`.
+## Returns to this scene (the lobby screen's join form; no main menu yet) showing `text`.
 ## Records nothing: a session that ended this way has no result (ADR-0001 §7).
 static func return_with(tree: SceneTree, text: String) -> void:
 	notice = text

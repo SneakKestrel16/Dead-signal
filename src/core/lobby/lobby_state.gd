@@ -136,6 +136,11 @@ func kick(requester_token: String, target_token: String) -> bool:
 	return true
 
 
+## Whether connected `token` is Ready; false for a token not in the lobby. The lobby screen shows it.
+func is_ready(token: String) -> bool:
+	return _ready_by_token.get(token, false)
+
+
 ## Sets a player's Ready flag; un-readying cancels a running countdown (rule 13).
 func set_ready(token: String, is_ready: bool) -> void:
 	if not _ready_by_token.has(token) or _ready_by_token[token] == is_ready:
