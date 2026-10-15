@@ -244,6 +244,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.SCARE_EVENTS: scares,
 		TickOrder.SCARE_EVENTS + 1: scare_state,
 		TickOrder.SCARE_EVENTS + 2: round_script,
+		TickOrder.SCARE_EVENTS + 3: MonitorHallucination.new(scares, catalogue, cams, scare_state.state, _live_players),
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
 	}
 	var errs := server.start_round(modules, knobs)

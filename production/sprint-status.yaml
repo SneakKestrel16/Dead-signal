@@ -300,8 +300,8 @@ stories:
     name: "Server trigger for the impossible surveillance frame"
     file: "production/epics/scare-events/story-010-monitor-hallucination-trigger.md"
     priority: should-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"

@@ -1,7 +1,7 @@
 # Story 010: Server trigger for the impossible surveillance frame
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
@@ -33,9 +33,9 @@ Story 009 built the client half of the `surveillance_image` hallucination (red s
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] When a player starts viewing the C1 monitor in an eligible phase, the server may fire `surveillance_image` to that player only, through `ScareEvents.fire` and its gating (`hallucination_max_per_client`, cooldowns).
-- [ ] No other peer receives any data about it (reuse story 003's per-peer capture).
-- [ ] The frame never shows the monster's real position or real camera content.
+- [x] When a player starts viewing the C1 monitor in an eligible phase, the server may fire `surveillance_image` to that player only, through `ScareEvents.fire` and its gating (`hallucination_max_per_client`, cooldowns).
+- [x] No other peer receives any data about it (reuse story 003's per-peer capture).
+- [x] The frame never shows the monster's real position or real camera content.
 
 ---
 
@@ -63,7 +63,7 @@ Story 009 built the client half of the `surveillance_image` hallucination (red s
 **Story Type**: Integration
 **Required evidence**: `tests/integration/scare-events/monitor_hallucination_trigger_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] tests/integration/scare-events/monitor_hallucination_trigger_test.gd (4 cases); full suite 1403/1403
 
 ---
 
@@ -71,3 +71,7 @@ Story 009 built the client half of the `surveillance_image` hallucination (red s
 
 - Depends on: Stories 003, 009
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged 0c7eb61. MonitorHallucination (TickOrder.SCARE_EVENTS + 3) fires surveillance_image to the viewer only, at the monitor point, on each feed view start in an eligible phase, through ScareEvents.fire gating (hallucination_max_per_client 2, cooldowns, repeat block). Catalogue entry gains phases Rising and Emergency. INFERENCE: GDD names neither phases nor frequency; Rising+Emergency and every view start capped by gating; designer ruling on RoundScript selection settles it. Eligibility reads FacilityScareState.state(). 4 cases (1 real-ENet 5-client with per-peer byte capture); 4 mutations caught. Full suite 1403/1403, no leak lines.

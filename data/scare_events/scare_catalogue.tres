@@ -134,6 +134,7 @@ source = 1
 scope = 1
 intensity = 1
 audible_range_m = 6.0
+phases = PackedInt32Array(1, 2)
 
 [resource]
 script = ExtResource("1")
