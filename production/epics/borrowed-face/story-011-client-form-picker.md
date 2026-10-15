@@ -1,7 +1,7 @@
 # Story 011: Shipped client form picker and transform input
 
 > **Epic**: Borrowed Face
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: 1 day
@@ -76,3 +76,7 @@
 ## Progress Notes (2026-10-15)
 
 Merged 606a777..ec2e346 (conflicts with MA-11 and HUD-4 resolved by the orchestrator keeping both; form_picker moved from R to T because MA-11 bound False Signal to R). FormPicker built for every client via FormPicker.for_client (opens only when HudModel.is_shapeshifter()); hold form_picker pushes a WHEEL context (movement live, look and actions off), mouse or right stick aims via wheel_pick, release sends BorrowedFace.request_packet reliably on channel 1. True form first, then survivors in S1 order; unavailable, Eliminated/Escaped and current form greyed with a text mark and never sent. FIRST MERGE ATTEMPT BACKED OUT: exit leak (376 ObjectDB) in tests/integration/hud-results from a one-shot connection on monster_state_changed that never fires on survivor clients; fixed by building up front and holding the session via WeakRef (gotcha recorded in docs/engine-reference/godot/gotchas.md; mechanism a guess). TR id corrected to TR-borrowedface-004. INFERENCE: refusal inferred when no transformation starts by send + RTT + slack_ticks (no server refusal message, rule 7; a late reliable resend could show a false "Not now"); disconnected survivors not greyed (not in HudModel); hold mode only (no settings store). Evidence via round_host + round_view (same RoundClient); stun and lunge refusals unit-tested only; wheel top segment overlaps the phase line and S1 overlaps the roster (ux pass). 11 unit tests (watched fail first); 3 mutations caught. Full suite 1521/1521, no leak lines.
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.

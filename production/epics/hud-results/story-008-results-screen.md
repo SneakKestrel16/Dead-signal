@@ -1,7 +1,7 @@
 # Story 008: Results screen
 
 > **Epic**: HUD & Results Screen
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1.5 days
@@ -77,3 +77,7 @@
 ## Progress Notes (2026-10-15)
 
 Merged 738b9cf..816e67e. ResultsScreen (CanvasLayer on UiLayers.OVERLAY; static present(payload)); LobbyScreen builds it when MatchDisplay.is_ended() and frees it in _drop_round; Leave session uses P29 confirm. FOUND: in a live lobby round the payload lists Downing, Survivor Defense and Objectives stats in missing (round composition does not register those StatsViews), so downs, rescues, stuns and objectives read "Results unavailable" (AD-229 behaviour; gap filed as match-flow 014). DEVIATIONS: no enter fade or stagger (no reduced-motion setting; everyone gets the cut); countdown on local time (server decides the return); Z4 totals summed from survivor rows (inference, rule 26 settles); "Taken down" wording inferred; no initial focus (first Down/Tab enters the stops); backdrop opaque (0.94 let the frozen HUD show a 0 through). NOT MEASURED: 100 ms and 500 ms timings, 2560x1080 and 1920x1200 margins; 150% is theme size 36 px, not a measured glyph. accessibility_name unverified against docs (runs on 4.7.2). 14 unit tests (watched fail first); 3 mutations caught. Full suite 1488/1488 including lobby_to_round_wiring_test.
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.

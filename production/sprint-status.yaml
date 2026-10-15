@@ -192,101 +192,101 @@ stories:
     name: "Clock, phase, roster, objective checklist and crosshair"
     file: "production/epics/hud-results/story-002-always-on-hud.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-3"
     name: "Interaction prompt, hold ring, reject label and input glyphs"
     file: "production/epics/hud-results/story-003-prompt-hold-ring-reject.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-4"
     name: "Own-state vignettes, own bleed-out and the HUD state table"
     file: "production/epics/hud-results/story-004-own-state-and-hud-states.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-8"
     name: "Results screen"
     file: "production/epics/hud-results/story-008-results-screen.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1.5
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-5"
     name: "Edge cues, flinch-off pulse, taser count and world progress bars"
     file: "production/epics/hud-results/story-005-edge-cues-items-progress.md"
     priority: should-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-6"
     name: "Shapeshifter HUD and survivor-side absence"
     file: "production/epics/hud-results/story-006-shapeshifter-hud.md"
     priority: should-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1.5
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-7"
     name: "Feed cap, opaque backing, marker cap, shapes and wheel stick steering"
     file: "production/epics/hud-results/story-007-feed-and-marker-conformance.md"
     priority: should-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-9"
     name: "Lobby \"Last round\" view"
     file: "production/epics/hud-results/story-009-lobby-last-round.md"
     priority: nice-to-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 0.5
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "hud-10"
     name: "Visual budget and accessibility verification pass"
     file: "production/epics/hud-results/story-010-hud-budget-accessibility-pass.md"
     priority: nice-to-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-11"
     name: "Shipped client input for Lunge, False Signal and Blackout, with placement preview"
     file: "production/epics/monster-abilities/story-011-client-ability-input.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1.5
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "borrowed-face-11"
     name: "Shipped client form picker and transform input"
     file: "production/epics/borrowed-face/story-011-client-form-picker.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-15"
     name: "Shipped client fires the taser on use_item"
     file: "production/epics/survivor-defense/story-015-taser-fire-input.md"
@@ -309,11 +309,11 @@ stories:
     name: "Gamepad bindings for every action"
     file: "production/epics/hud-results/story-012-gamepad-bindings.md"
     priority: nice-to-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 0.5
-    blocker: "designer sign-off"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "match-flow-14"
     name: "Register every round stats view so live Results show real values"
     file: "production/epics/match-flow/story-014-register-round-stats-views.md"

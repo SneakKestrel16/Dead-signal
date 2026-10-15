@@ -1,7 +1,7 @@
 # Story 003: Interaction prompt, hold ring, reject label and input glyphs
 
 > **Epic**: HUD & Results Screen
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -76,3 +76,7 @@ H7-H9: the interaction prompt with verb, object, glyph and Hold or Press, the ho
 ## Progress Notes (2026-10-15)
 
 Merged 6e96cb0+2cf1c1e. InputGlyphs (device class by event type, stick dead zone 0.5, live InputMap; placeholder text glyphs, glyph_text() not the ADR glyph_for Texture2D). InteractionHud owns Z4/Z5: prompt, drawn hold ring, broken ring on cancel, full ring on completion, one label newest-wins; Z4 exclusive; hidden while the stack blocks actions. PredictedHoldBar gains ended(cause). DEVIATIONS: cancel-cause label 1 s per P3 (story said 200 ms; the broken ring lasts 200 ms) needs a ux ruling; server sends no cancel or refusal reason, so labels read "Interrupted" / "Not now" (a reason byte in the own snapshot entry settles it); completion vs cancel inferred from predicted elapsed; prompt verbs per marker type are inference; project.godot binds no gamepad events, so a pad shows "?" in game (device switch unit-tested only); Hold/Toggle, reduced motion and deny sounds not built (no settings store, no audio event); PingCalloutHud "Too fast" label can overlap at +100 px. 10 unit tests; 5 mutations caught. Full suite 1433/1433 (one earlier run failed round_composer_test on a port held by a runaway agent test process; re-run clean after stopping it).
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.

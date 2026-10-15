@@ -1,7 +1,7 @@
 # Story 012: Gamepad bindings for every action
 
 > **Epic**: HUD & Results Screen
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 0.5 day
@@ -80,3 +80,7 @@
 - Full suite on merge: 1550 tests, 0 failures, 0 leak lines.
 
 - 2026-10-15: designer waived the physical-gamepad check for AC2 (wheel steered by the right stick). Injected pad events and the tested steer_wheel path stand as the evidence.
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.

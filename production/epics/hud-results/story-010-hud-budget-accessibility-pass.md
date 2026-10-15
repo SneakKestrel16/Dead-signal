@@ -1,7 +1,7 @@
 # Story 010: Visual budget and accessibility verification pass
 
 > **Epic**: HUD & Results Screen
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -81,3 +81,7 @@ Four `hud.md` acceptance criteria measure the HUD as a whole rather than one ele
 - AC4 PASS: production/qa/evidence/hud-budget-accessibility-evidence.md lists every number with its screenshot.
 - Text size pass/fail uses the font size set in code; measured glyph height recorded alongside. Ruling on which the spec means is open.
 - Full suite on merge: 1551 tests, 0 failures, 0 leak lines.
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.

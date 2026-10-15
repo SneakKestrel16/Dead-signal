@@ -1,7 +1,7 @@
 # Story 005: Edge cues, flinch-off pulse, taser count and world progress bars
 
 > **Epic**: HUD & Results Screen
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -75,3 +75,7 @@ H11, H13 and H14: the taser cartridge count, world progress bars on objects in p
 ## Progress Notes (2026-10-15)
 
 Merged e82059b..2f2ee08 (main merged twice by the agent; EventBatch PROGRESS &"Progress" and MONSTER_HUD &"MonsterHud" are StringNames, no collision; batch_extras count 11). EdgeCues (lunge chevron, transform arc, flinch-off pulse; 150 ms in, 300 ms out), TasterCount from the CHARGES entry, WorldProgress server sender (batch_extras, survivors only, on start/pause/resume; client advances at rate) and WorldProgressBars (percent, "Paused"). DEVIATIONS: new server feed because nothing replicated hold progress or activation; fake holds, hiding holds, backup switch and instant interactions not sent (reading of rule 25); every survivor gets every bar (ponytail note: relevance filter if bars leak); pulse length = scare_max_control_loss_s (no source); pulse skipped while a lunge cue shows; "holding the taser" = has a count; widgets subscribe to the router directly, not HudModel (deviation from ADR-0014 §6); edge-cue toggle hides chevron and arc, not the pulse; greybox text for icon and bar art. EVIDENCE GAPS: world-bar-paused-synthetic.png is client-fed (no bot reaches a live objective hold); top-edge cues overlap the HUD-2 clock (art pass). 12 unit tests; 4 mutations caught. Full suite 1470/1470.
+
+## Closed (2026-10-15)
+
+Closed on its retained screenshots (UI gate). The designer played the shipped build on 2026-10-15 (lobby to round to Results; survivor, shapeshifter and spectating sessions), then approved closing the sprint-9 UI stories in chat (AD-242). Orchestrator reviewed the evidence images. Earlier shots predate BUG-0010/0011 (fixed in b024355); after-fix shots are in production/qa/evidence/hud-budget-accessibility/after/.
