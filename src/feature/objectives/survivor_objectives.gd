@@ -1,6 +1,6 @@
 class_name SurvivorObjectives extends RefCounted
-## Survivor Objectives module, stories 001, 003 and 005 (design/gdd/survivor-objectives.md rules 1-3,
-## 8-10, 14-15, 17-20; ADR-0008). Owns drive and fuse state and carriers (player ids, never nodes). Each active drive
+## Survivor Objectives module, stories 001, 002, 003 and 005 (design/gdd/survivor-objectives.md rules
+## 1-3, 8-15, 17-20; ADR-0008). Owns drive and fuse state and carriers (player ids, never nodes). Each active drive
 ## console, fuse spawn and fuse box is an Interactable on the shared HoldService; its on_complete changes
 ## state and emits ObjectiveProgressChanged. HoldService emits nothing. Clients send no completion
 ## message: the only way to change objective state is the server's own hold timer.
@@ -8,10 +8,13 @@ class_name SurvivorObjectives extends RefCounted
 ## activation countdown runs in server_tick. Match Flow reads ARMED and ACTIVATED from the events alone.
 ## Story 006 (rule 22): on SurvivorEscaped (Match Flow decides the escape) the drives that survivor
 ## carries become Extracted. Match Flow counts the EXTRACTED events toward the win.
-## Not yet here: dropping and pickup of dropped items away from the terminal (story 002), install noise
-## and the monster alert (004), fake holds (007), the registry view of objective state (no StateKeys row).
+## Story 002 (rules 11-13, 15): a carrier's drives and fuses drop at the nearest valid floor point under
+## them on SurvivorDowned, SurvivorEliminated and disconnect (PlayerConnectionChanged), or on purpose
+## (drop()). Each item has one pickup point, moved to wherever it lies; it never despawns.
+## Not yet here: install noise and the monster alert (004), fake holds (007), the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
+##   obj.drop(actor, SurvivorObjectives.DRIVE_ID + i)   # the carrier's own drop request
 ##   obj.survivor_ids.assign(survivors)
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
 
@@ -38,6 +41,8 @@ const DRIVE_ID := 0
 const FUSE_ID := 10
 const FUSE_BOX_ID := 20
 const TERMINAL_ID := 30
+## Keeps a snapped drop inside its volume: a volume's east and south edges belong to the next one.
+const FLOOR_EPS_M := 1e-3
 
 ## Player ids of this round's survivors; set before setup. Only they hold the terminal zone: the
 ## shapeshifter never counts (rule 19).
@@ -63,6 +68,9 @@ var _box_fuses: Array[int] = []
 var _slots: Array[int] = []
 var _terminal: TerminalState = TerminalState.LOCKED
 var _terminal_point: Vector3
+## Drive / fuse index -> the point a Dropped item is picked up at (rules 11, 20). Moved to each drop.
+var _drive_pickups: Array[ObjectivePoint] = []
+var _fuse_pickups: Array[ObjectivePoint] = []
 ## Activating ticks with the zone held (Formulas "Effective activation time"); never reset.
 var _activation_ticks: int = 0
 
@@ -70,7 +78,7 @@ var _activation_ticks: int = 0
 ## `is_healthy(actor: int) -> bool` is the life-state source (Downing's view once it exists); pass an
 ## invalid Callable to treat everyone as Healthy. `is_hidden(actor: int) -> bool` (Survivor Defense;
 ## absent = nobody hidden) and `position_of(actor: int) -> Vector3` (absent = nobody in the terminal
-## zone) feed the activation countdown.
+## zone) feed the activation countdown; position_of also places drops (absent = at the terminal).
 func _init(holds: HoldService, map: MapData, is_healthy: Callable = Callable(),
 		is_hidden: Callable = Callable(), position_of: Callable = Callable()) -> void:
 	_holds = holds
@@ -92,10 +100,15 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_fuse_carriers = []
 	_box_fuses = []
 	_slots = []
+	_drive_pickups = []
+	_fuse_pickups = []
 	_terminal = TerminalState.LOCKED
 	_activation_ticks = 0
 	## Named method, not a lambda: the bus must not keep the module alive (no RefCounted cycle).
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
+	bus.subscribe(&"SurvivorDowned", _on_downed)
+	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
+	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
 	var o := knobs.objectives
 	for m: MapMarker in _first(&"drive", ACTIVE_DRIVES):
 		_add(DriveConsole.new(), _states.size(), m, o.drive_extract_s)
@@ -115,8 +128,11 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 			_add(DockSlot.new(), i, m, o.dock_s, "_slot%d" % i)
 			_slots.append(-1)
 		_add(TerminalPanel.new(), 0, m, o.activation_start_s, "_panel")
-		for i in _states.size(): ## ejected drives lie at the terminal (rule 20)
-			_add(DrivePickup.new(), i, m, o.pickup_s, "_drive%d" % i)
+		for i in _states.size(): ## ejected drives lie at the terminal (rule 20); moved on each drop
+			_drive_pickups.append(_add(DrivePickup.new(), i, m, o.pickup_s, "_drive%d" % i))
+	## Registered last so the earlier net ids keep their numbers; moved to each drop.
+	for m: MapMarker in _first(&"fuse", ACTIVE_FUSES):
+		_fuse_pickups.append(_add(FusePickup.new(), _fuse_pickups.size(), m, o.pickup_s, "_dropped"))
 
 
 func _first(type: StringName, n: int) -> Array[MapMarker]:
@@ -130,7 +146,7 @@ func _first(type: StringName, n: int) -> Array[MapMarker]:
 
 
 ## `lock_tag` splits one marker into separately locked points (each dock slot, each ejected drive).
-func _add(p: ObjectivePoint, index: int, m: MapMarker, duration_s: float, lock_tag := "") -> void:
+func _add(p: ObjectivePoint, index: int, m: MapMarker, duration_s: float, lock_tag := "") -> ObjectivePoint:
 	p.owner = weakref(self)
 	p.index = index
 	p.point = m.position
@@ -138,6 +154,7 @@ func _add(p: ObjectivePoint, index: int, m: MapMarker, duration_s: float, lock_t
 	p.duration_s = duration_s
 	p.lock_key = StringName("%s_%s%s" % [m.type, m.id, lock_tag])
 	_holds.register(p)
+	return p
 
 
 ## Activation countdown (rule 19): counts each Activating tick with the zone held, pauses otherwise,
@@ -200,6 +217,29 @@ func power_restored() -> bool:
 	return _fuse_states.count(FuseState.INSTALLED) >= FUSES_REQUIRED
 
 
+## Where drive (DRIVE_ID + i) or fuse (FUSE_ID + i) `objective` is picked up while Dropped.
+func dropped_at(objective: int) -> Vector3:
+	if objective >= FUSE_ID:
+		return _fuse_pickups[objective - FUSE_ID].point
+	return _drive_pickups[objective - DRIVE_ID].point
+
+
+## Rules 11, 15: `actor` drops the drive (DRIVE_ID + i) or fuse (FUSE_ID + i) they carry, instantly, at
+## their position. False and no change unless they carry it. A hold that needed it ends on its next
+## eligibility check.
+func drop(actor: int, objective: int) -> bool:
+	var i := objective - DRIVE_ID
+	if i >= 0 and i < _states.size() and _states[i] == DriveState.CARRIED and _carriers[i] == actor:
+		_drop_drive(i, _floor_point(_where(actor)))
+		return true
+	i = objective - FUSE_ID
+	if i >= 0 and i < _fuse_states.size() and _fuse_states[i] == FuseState.CARRIED \
+			and _fuse_carriers[i] == actor:
+		_drop_fuse(i, _floor_point(_where(actor)))
+		return true
+	return false
+
+
 func _healthy(actor: int) -> bool:
 	if not _is_healthy.is_valid():
 		return true
@@ -223,16 +263,16 @@ func _complete(index: int, actor: int, from := DriveState.SECURED) -> void:
 	_emit(DRIVE_ID + index, DriveState.CARRIED)
 
 
-## Fuse pickup: Healthy, fuse lying where it spawned or fell, carrier under the one-fuse cap. Drives do
-## not count against it (rule 15).
-func _can_pick_up(index: int, actor: int) -> bool:
-	if _fuse_states[index] not in [FuseState.UNFOUND, FuseState.DROPPED] or not _healthy(actor):
+## Fuse pickup: Healthy, fuse in `from` (UNFOUND at its spawn, or DROPPED where it fell), carrier under
+## the one-fuse cap. Drives do not count against it (rule 15).
+func _can_pick_up(index: int, actor: int, from := FuseState.UNFOUND) -> bool:
+	if _fuse_states[index] != from or not _healthy(actor):
 		return false
 	return _fuse_carriers.count(actor) < MAX_FUSES_CARRIED
 
 
-func _pick_up(index: int, actor: int) -> void:
-	if not _can_pick_up(index, actor):
+func _pick_up(index: int, actor: int, from := FuseState.UNFOUND) -> void:
+	if not _can_pick_up(index, actor, from):
 		return
 	_fuse_states[index] = FuseState.CARRIED
 	_fuse_carriers[index] = actor
@@ -315,6 +355,7 @@ func _activate() -> void:
 		var drive := _slots[slot]
 		_slots[slot] = -1
 		_states[drive] = DriveState.DROPPED
+		_drive_pickups[drive].point = _terminal_point
 		_emit(DRIVE_ID + drive, DriveState.DROPPED)
 	_emit(TERMINAL_ID, TerminalState.ACTIVATED)
 
@@ -327,6 +368,72 @@ func _on_escaped(e: ServerEvent) -> void:
 			_states[drive] = DriveState.EXTRACTED
 			_carriers[drive] = -1
 			_emit(DRIVE_ID + drive, DriveState.EXTRACTED)
+
+
+## Rule 12: a Downed carrier drops everything they carry where they went down.
+func _on_downed(e: ServerEvent) -> void:
+	_drop_all((e as EvSurvivorDowned).survivor)
+
+
+## Rule 13: dropped at the last position; a carrier Downed first has nothing left to drop.
+func _on_eliminated(e: ServerEvent) -> void:
+	_drop_all((e as EvSurvivorEliminated).survivor)
+
+
+## Rule 13, Edge Cases: a disconnect drops at once, before the reconnect grace; a reconnect gives
+## nothing back.
+func _on_connection(e: ServerEvent) -> void:
+	var c := e as EvPlayerConnectionChanged
+	if c.status == EvPlayerConnectionChanged.DISCONNECTED:
+		_drop_all(c.player)
+
+
+func _drop_all(actor: int) -> void:
+	var at := _floor_point(_where(actor))
+	for i in _carriers.size():
+		if _carriers[i] == actor:
+			_drop_drive(i, at)
+	for i in _fuse_carriers.size():
+		if _fuse_carriers[i] == actor:
+			_drop_fuse(i, at)
+
+
+func _drop_drive(i: int, at: Vector3) -> void:
+	_states[i] = DriveState.DROPPED
+	_carriers[i] = -1
+	_drive_pickups[i].point = at
+	_emit(DRIVE_ID + i, DriveState.DROPPED) ## marked for all survivors as "Drive dropped" (rule 12)
+
+
+func _drop_fuse(i: int, at: Vector3) -> void:
+	_fuse_states[i] = FuseState.DROPPED
+	_fuse_carriers[i] = -1
+	_fuse_pickups[i].point = at
+	_emit(FUSE_ID + i, FuseState.DROPPED)
+
+
+func _where(actor: int) -> Vector3:
+	if not _position_of.is_valid():
+		return _terminal_point
+	var p: Vector3 = _position_of.call(actor)
+	return p
+
+
+## Edge Cases "nearest valid floor point": the point in the nearest map volume (horizontal distance) at
+## that volume's floor; no physics. Inference: the map has no walkable-floor data finer than its
+## volumes, so props inside a volume are not avoided; authored floor data in the map file would settle it.
+func _floor_point(p: Vector3) -> Vector3:
+	var best := p
+	var best_d := INF
+	for v: MapVolume in _map.volumes:
+		var b := v.box
+		var q := Vector3(clampf(p.x, b.position.x, b.end.x - FLOOR_EPS_M), b.position.y,
+			clampf(p.z, b.position.z, b.end.z - FLOOR_EPS_M))
+		var d := Vector2(q.x - p.x, q.z - p.z).length()
+		if d < best_d:
+			best = q
+			best_d = d
+	return best
 
 
 ## Every event here is about something carried, installed or always marked, so `discovered` is true.
@@ -352,7 +459,7 @@ class DriveConsole extends ObjectivePoint:
 			m._complete(index, actor)
 
 
-## A fuse lying at its spawn (GDD rule 15, `pickup_s` hold).
+## A fuse lying at its spawn (GDD rule 15, `pickup_s` hold); Unfound only (a dropped one is a FusePickup).
 class FuseSpawn extends ObjectivePoint:
 	func eligible(actor: int) -> bool:
 		var m: SurvivorObjectives = owner.get_ref()
@@ -363,6 +470,19 @@ class FuseSpawn extends ObjectivePoint:
 		var m: SurvivorObjectives = owner.get_ref()
 		if m != null:
 			m._pick_up(index, actor)
+
+
+## A dropped fuse where it fell (GDD rule 15, `pickup_s` hold). Eligible only while Dropped.
+class FusePickup extends ObjectivePoint:
+	func eligible(actor: int) -> bool:
+		var m: SurvivorObjectives = owner.get_ref()
+		return m != null and m._can_pick_up(index, actor, SurvivorObjectives.FuseState.DROPPED)
+
+	## Gives the fuse to `actor`.
+	func on_complete(actor: int) -> void:
+		var m: SurvivorObjectives = owner.get_ref()
+		if m != null:
+			m._pick_up(index, actor, SurvivorObjectives.FuseState.DROPPED)
 
 
 ## An active fuse box (GDD rule 15, `fuse_install_s` hold). One holder at a time: its lock_key.
@@ -404,8 +524,8 @@ class TerminalPanel extends ObjectivePoint:
 			m._start(actor)
 
 
-## A drive ejected at the terminal (GDD rule 20, `pickup_s` hold). Eligible only while Dropped, so a
-## docked drive cannot be removed.
+## A dropped drive (GDD rules 11, 20, `pickup_s` hold): at the terminal after ejection, or where it
+## fell. Eligible only while Dropped, so a docked drive cannot be removed.
 class DrivePickup extends ObjectivePoint:
 	func eligible(actor: int) -> bool:
 		var m: SurvivorObjectives = owner.get_ref()
