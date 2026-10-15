@@ -14,8 +14,16 @@ class_name Downing extends RefCounted
 ##   d.set_positions(func(p: int) -> Vector3: return ...)   # for the camping slow
 ##   d.set_hidden(func(p: int) -> bool: return ...)          # Survivor Defense's hidden state
 ##   server.start_round({TickOrder.DOWNING: d}, knobs)
+## Story 005 adds the movement restrictions: `set_modifiers(server_movement.modifiers_of)` lets
+## Downing write its own `MOD_OWNER` modifier (rule 4.2, rule 7), and `action_locked` publishes the
+## action restriction on the TAKEDOWN_ELIGIBILITY view. Crawl is the Controller's gait, chosen from
+## the life state (first-person-controller.md gait order), not a modifier: a crawl slow on top of
+## the crawl gait would apply crawl_speed_mult twice.
 
 enum LifeState { HEALTHY, SEIZED, DOWNED, ELIMINATED }
+
+## The MovementModifiers owner Downing adds and removes (first-person-controller.md rule 6).
+const MOD_OWNER := &"downing"
 
 var _bus: EventBus
 var _survivors: Array[int] = []
@@ -35,6 +43,8 @@ var _position_of: Callable
 var _is_hidden: Callable
 ## Survivor -> first tick on which grace no longer applies (absent = no grace).
 var _grace_end: Dictionary[int, int] = {}
+## player id -> MovementModifiers (null: no body); invalid means Downing writes no modifiers.
+var _modifiers_of: Callable
 ## player id -> LifeState
 var _life: Dictionary[int, int] = {}
 ## player id -> completed takedowns this round
@@ -76,6 +86,12 @@ class LifeView extends RefCounted:
 		var d := _d.get_ref() as Downing
 		return d.eligible(player) if d != null else false
 
+	## Whether `player` is barred from interacting, barricading, hiding, items, abilities and
+	## transforming (rules 4.2 and 6). Fails closed: true after the module is freed.
+	func action_locked(player: int) -> bool:
+		var d := _d.get_ref() as Downing
+		return d.action_locked(player) if d != null else true
+
 
 ## Getter-only view for StateKeys.COMMITTING_STATE readers. Holds the module weakly.
 class CommitView extends RefCounted:
@@ -113,6 +129,13 @@ func set_positions(source: Callable) -> void:
 ## (rule 3: an absent owner reads as not hidden).
 func set_hidden(source: Callable) -> void:
 	_is_hidden = source
+
+
+## Injects the per-player movement modifier sets: `source.call(player_id) -> MovementModifiers`,
+## null for a player with no body (ServerMovement.modifiers_of in the composer). Unset, Downing
+## writes no modifiers.
+func set_modifiers(source: Callable) -> void:
+	_modifiers_of = source
 
 
 ## Injected by RoundServer. Reads knobs, resets every survivor to Healthy with 0 downs (rule 2),
@@ -160,6 +183,7 @@ func server_tick(tick: int) -> void:
 			_bleed_out(s)
 	if _victim >= 0 and tick >= _commit_end_tick:
 		_complete_commit()
+	_apply_modifiers()
 
 
 ## Formulas "Bleed-out", one step: paused while rescued; `dt * camp_slow_mult` while the nearest
@@ -182,6 +206,7 @@ func set_rescuing(player: int, on: bool) -> void:
 		_rescuing[player] = true
 	else:
 		_rescuing.erase(player)
+	_apply_modifiers()
 
 
 ## Seconds of bleed-out elapsed for `player` (0 when not Downed).
@@ -231,6 +256,35 @@ func committing() -> bool:
 ## The seized survivor, -1 when not Committing.
 func victim() -> int:
 	return _victim
+
+
+## Rules 4.2 and 6: a Seized or Downed survivor, or the monster while Committing, may not interact
+## with objectives, barricade, hide, use items, use abilities or transform. Survivor Defense,
+## Survivor Objectives, Monster Abilities and Borrowed Face gate on it (Downing never calls them).
+## Pings and Call for Help are not gated by it: a Downed survivor keeps them (rule 6).
+func action_locked(player: int) -> bool:
+	var st := life_state(player)
+	return st == LifeState.SEIZED or st == LifeState.DOWNED or (player == _monster and committing())
+
+
+## Writes Downing's one modifier per player from the current state: LOCK for the Seized victim
+## (first-person-controller.md States: Locked), ROOT for the Committing monster (rule 4.2) and for
+## a Downed survivor under a rescue hold (rule 7); none otherwise, so every end of those states
+## removes it. The rescuer's root is the rescue hold's `roots_actor` (ADR-0008), not this modifier.
+## Runs at the end of server_tick and on every state change made outside it.
+func _apply_modifiers() -> void:
+	if not _modifiers_of.is_valid():
+		return
+	for p: int in _survivors + [_monster]:
+		var mods := _modifiers_of.call(p) as MovementModifiers
+		if mods == null:
+			continue
+		if p == _victim:
+			mods.add(MOD_OWNER, MovementModifiers.Kind.LOCK)
+		elif (p == _monster and committing()) or (_rescuing.has(p) and life_state(p) == LifeState.DOWNED):
+			mods.add(MOD_OWNER, MovementModifiers.Kind.ROOT)
+		else:
+			mods.remove(MOD_OWNER)
 
 
 func _on_survivor_hit(e: ServerEvent) -> void:
@@ -314,6 +368,7 @@ func _cancel_commit() -> void:
 	_life[_victim] = LifeState.HEALTHY
 	_grace_end[_victim] = _bus.tick + _release_grace_ticks
 	_victim = -1
+	_apply_modifiers()
 
 
 ## Rule 4.5, Formulas "Takedown outcome".
