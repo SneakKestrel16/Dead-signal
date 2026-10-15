@@ -45,6 +45,12 @@ func view(key: StringName, expected: Script) -> Object:
 	return v
 
 
+## True when a view is registered for `key`. No violation: for readers whose owner may not exist yet
+## (ADR-0011: a missing stats view reads as zero). Example: `registry.has_view(StateKeys.STATS_DEFENSE)`.
+func has_view(key: StringName) -> bool:
+	return _views.has(key)
+
+
 ## Drops every view and owner record. Called at round end by the composition root; breaks the
 ## module -> registry -> view -> module reference cycle. Example: `registry.clear()`.
 func clear() -> void:

@@ -20,6 +20,8 @@ class_name MatchFlow extends RefCounted
 ## forfeits to the survivors, last in rule 16 order, so an earned result in the same tick beats it.
 ## Story 007 (ADR-0004 §9): `catch_up()` is the round state a reconnecting client missed, as the events
 ## that set it; ServerMovement re-projects and sends them to that client once (`ServerMovement.catch_up`).
+## Story 008 (rules 23-26, ADR-0011): publishes its own stats as MatchStatsView (StateKeys.STATS_MATCH); on
+## the outcome tick RoundResults reads every owner's stats view once and RoundEnded carries `to_dict()`.
 
 enum Phase { INFILTRATION, INVESTIGATION, EVACUATION }
 ## `RoundEnded.outcome` values; text in OUTCOME_TEXT (rule 23).
@@ -69,6 +71,9 @@ var _phase_events: Array[ServerEvent] = []
 var _life_event: Dictionary[int, ServerEvent] = {}
 var _conn_event: Dictionary[int, ServerEvent] = {}
 var _ended_event: ServerEvent
+var _registry: StateRegistry
+var _start_tick: int = -1 ## tick at which elapsed was 0 (MatchStatsView)
+var _end_tick: int = -1 ## RoundEnded's tick (MatchStatsView)
 
 
 ## Getter-only view of the clock for StateKeys.ROUND_CLOCK readers. Holds the module weakly, so no
@@ -150,9 +155,13 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_life_event = {}
 	_conn_event = {}
 	_ended_event = null
+	_registry = registry
+	_start_tick = -1
+	_end_tick = -1
 	for id in survivor_ids:
 		_status[id] = Status.HEALTHY
 	registry.register_view(StateKeys.ROUND_CLOCK, &"MatchFlow", ClockView.new(self))
+	registry.register_view(StateKeys.STATS_MATCH, &"MatchFlow", MatchStatsView.new(self))
 	bus.subscribe(&"ObjectiveProgressChanged", _on_objective_progress)
 	# Named methods, not lambdas: the bus must not keep the module alive (no RefCounted cycle).
 	bus.subscribe(&"SurvivorDowned", _on_downed)
@@ -173,8 +182,10 @@ func set_exit(exit: MapQueries, position_of: Callable) -> void:
 ## MATCH_FLOW_BEGIN slot: advances the clock one tick, re-evaluates the phase, then records every
 ## Healthy survivor in the exit volume after activation as Escaped (rule 10). It runs before the
 ## resolve check, so SurvivorEscaped is delivered to it in the same tick.
-func server_tick(_tick: int) -> void:
+func server_tick(tick: int) -> void:
 	_elapsed_ticks += 1
+	if _elapsed_ticks == 1:
+		_start_tick = tick - 1
 	_update_phase()
 	if _ended or not _exit_open or _exit == null or not _position_of.is_valid():
 		return
@@ -309,7 +320,9 @@ func _end(outcome: Outcome, reason: Reason) -> void:
 			_status[id] = Status.DID_NOT_ESCAPE
 	var ev := EvRoundEnded.new()
 	ev.outcome = outcome
-	ev.reason = reason # results payload: story 008
+	ev.reason = reason
+	_end_tick = _start_tick + _elapsed_ticks # RESOLVE runs in the same tick as BEGIN's count
+	ev.results = RoundResults.read(_registry, survivor_ids, shapeshifter_id, outcome, reason, _hz).to_dict()
 	_ended_event = ev
 	_bus.emit(ev)
 
