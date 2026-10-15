@@ -5,6 +5,10 @@ class_name EvSurvivorHit
 extends ServerEvent
 
 var survivor: int
+## The shapeshifter that hit (monster-abilities.md rule 8: monster, survivor, server time, position).
+var monster: int = -1
+## The survivor's feet position the hit test used (rewound to the attacker's view, ADR-0003 §3).
+var position: Vector3 = Vector3.ZERO
 
 
 func type() -> StringName:

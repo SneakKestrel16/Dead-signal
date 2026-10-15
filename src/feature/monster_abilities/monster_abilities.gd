@@ -4,8 +4,9 @@ class_name MonsterAbilities extends RefCounted
 ## design/gdd/monster-abilities.md rules 1-4 and "States and Transitions"; ADR-0002 (client sends a
 ## request and an aim point only, the server validates and owns cooldown and state), ADR-0005 (tick
 ## order slot MONSTER_ABILITIES), ADR-0006 (AbilityKnobs). Story 002 adds the wind-up root and the dash
-## (rules 5-6, ADR-0007) as the "lunge" entry of the monster's MovementModifiers (set_modifiers). The hit
-## test (003), miss slow (004) and the False Signal and Blackout bodies (009-010) are not here yet.
+## (rules 5-6, ADR-0007) as the "lunge" entry of the monster's MovementModifiers (set_modifiers). Story
+## 003 adds the hit test (rules 7-8, ADR-0003 §3-6, set_hit_sources). The miss slow (004) and the False
+## Signal and Blackout bodies (009-010) are not here yet.
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   form() -> int            BorrowedFace.TRUE_FORM or the copied survivor (TransformView.get_form);
@@ -19,6 +20,7 @@ class_name MonsterAbilities extends RefCounted
 ##   ma.set_status_sources(view.get_form, view.get_transforming, locked)
 ##   ma.set_position_source(position_of)   # story 005: AbilityUsed position
 ##   ma.set_modifiers(server_movement.modifiers_of)
+##   ma.set_hit_sources(lc, survivor_ids, downing.eligible, facing_of, sight)   # story 003
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
 ##   smp.peer_packet -> ma.request_ability(net.player_id_of(peer), bytes)
 
@@ -44,6 +46,8 @@ const AIM_KEY := "aim"
 const REQUEST_FIELDS: Array[String] = [ABILITY_KEY, AIM_KEY]
 ## The owner of the Lunge's entry in the monster's MovementModifiers.
 const MOD_OWNER := &"lunge"
+## Float tolerance of the hit test's inclusive radius and cone bounds (geometry, not a tuning value).
+const HIT_EPS := 1e-6
 
 var _monster: int = -1
 var _form: Callable
@@ -70,6 +74,15 @@ var on_lunge_state: Callable
 ## Story 005: position_of(player) -> Vector3, the monster's server position for AbilityUsed; unset = origin.
 var _position_of: Callable
 var _bus: EventBus
+## Story 003 hit sources (set_hit_sources); _lc null means no hit test runs.
+var _lc: LagCompensation
+var _survivors: Array[int] = []
+var _eligible: Callable
+var _facing_of: Callable
+var _sight: Callable
+## lunge_hit_radius_m and lunge_cone_deg (full cone, rad), from AbilityKnobs in setup.
+var _hit_radius: float = 0.0
+var _cone: float = 0.0
 
 
 ## Injects the shapeshifter's player id. Call before RoundServer.start_round.
@@ -80,6 +93,22 @@ func set_monster(monster: int) -> void:
 ## Injects the position source for AbilityUsed (story 005; ServerMovement's body position).
 func set_position_source(position_of: Callable) -> void:
 	_position_of = position_of
+
+
+## Story 003: injects the hit test sources (rule 7, ADR-0003 §3-6). `lc` gives the rewind and the
+## rewound capsules, and the monster's current chest (the attack point: body centre at chest height);
+## `survivors` are the targets; `eligible.call(player) -> bool` is Downing.eligible (Healthy, not hidden,
+## no grace, not Seized; current tick, never rewound; unset = every survivor); `facing_of.call(player)
+## -> Vector3` is the monster's current facing (only its horizontal part is used); `sight.call(from, to)
+## -> bool` is true when nothing blocks (MapQueries.clear_sight with InteractRules.door_closed; current
+## door state; unset = always clear). Unset `lc`: the dash never hits.
+func set_hit_sources(lc: LagCompensation, survivors: Array[int], eligible: Callable, facing_of: Callable,
+		sight: Callable = Callable()) -> void:
+	_lc = lc
+	_survivors = survivors.duplicate()
+	_eligible = eligible
+	_facing_of = facing_of
+	_sight = sight
 
 
 ## The shapeshifter's player id (-1 before set_monster).
@@ -133,6 +162,8 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_lunge_cooldown_ticks = knobs.ticks(knobs.ability.lunge_cooldown_s)
 	_windup_turn = deg_to_rad(knobs.ability.lunge_windup_turn_deg_s)
 	_dash_turn = deg_to_rad(knobs.ability.lunge_dash_turn_deg_s)
+	_hit_radius = knobs.ability.lunge_hit_radius_m
+	_cone = deg_to_rad(knobs.ability.lunge_cone_deg)
 	# Rule 6: lunge_distance_m over exactly the dash's whole ticks, so tick quantisation of lunge_dash_s
 	# changes the speed, never the distance.
 	# A dash of 0 ticks moves nothing.
@@ -148,16 +179,18 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 
 
-## MONSTER_ABILITIES slot: timed Lunge transitions due this tick, then this tick's request. A lunge
-## resolving or a cooldown ending this tick frees the request on the same tick.
+## MONSTER_ABILITIES slot: timed Lunge transitions due this tick, the hit test on every Active tick
+## (the first and the last included), then this tick's request. A lunge resolving or a cooldown ending
+## this tick frees the request on the same tick.
 func server_tick(tick: int) -> void:
 	if _lunge == Lunge.WIND_UP and tick >= _phase_end_tick:
 		_set_lunge(Lunge.ACTIVE, tick)
 		_phase_end_tick = tick + _dash_ticks
-	elif _lunge == Lunge.ACTIVE and (tick >= _phase_end_tick or _dash_blocked()):
-		_resolve(tick) ## dash end with no hit, or stopped by an obstacle (rule 6): a miss
 	elif _lunge == Lunge.COOLDOWN and tick >= _ready_tick[Ability.LUNGE]:
 		_set_lunge(Lunge.READY, tick)
+	# A hit moves the Lunge to Takedown Commit when SurvivorHit is flushed at the end of this tick.
+	if _lunge == Lunge.ACTIVE and not _try_hit(tick) and (tick >= _phase_end_tick or _dash_blocked()):
+		_resolve(tick) ## dash end with no hit, or stopped by an obstacle (rule 6): a miss
 	var req := _pending
 	_pending = {}
 	if req.is_empty() or not can_activate(req[ABILITY_KEY], tick):
@@ -203,6 +236,70 @@ func lunge_state() -> Lunge:
 ## First tick `ability` may be accepted again; 0 = no cooldown has run this round.
 func ready_tick(ability: Ability) -> int:
 	return _ready_tick[ability]
+
+
+## Rules 7-8, pure: the closest target in `targets` (LagCompensation.targets_at capsules plus "id" and
+## "chest") with `eligible.call(id)`, its capsule surface within `radius_m` of `attack`, inside the cone
+## `cone_rad` wide centred on `forward`, and `sight.call(attack, chest)` clear. Bounds are
+## inclusive. Equal distances go to the lower player id. Returns {hit: id or -1, pos: that target's pos}.
+## Inference: the cone is horizontal and measured to the nearest point of the capsule axis (the body
+## centre line), as the Formulas' steering check treats it; a designer ruling on body edge vs centre
+## would settle it.
+## Example: `hit_test(Vector3(0, 1.5, 0), Vector3.FORWARD, 1.2, PI / 3, targets, downing.eligible)`
+static func hit_test(attack: Vector3, forward: Vector3, radius_m: float, cone_rad: float, targets: Array,
+		eligible: Callable, sight: Callable = Callable()) -> Dictionary:
+	var fwd := Vector2(forward.x, forward.z)
+	var best := INF
+	var best_id := -1
+	var best_pos := Vector3.ZERO
+	for t: Dictionary in targets:
+		if eligible.is_valid() and not eligible.call(t.id):
+			continue
+		var r: float = t.radius
+		var pos: Vector3 = t.pos
+		var lo := Vector3(pos.x, pos.y + r, pos.z)
+		var hi := Vector3(pos.x, maxf(pos.y + r, pos.y + t.height - r), pos.z)
+		var near := Geometry3D.get_closest_point_to_segment(attack, lo, hi)
+		var dist := attack.distance_to(near) - r
+		if dist > radius_m + HIT_EPS:
+			continue
+		var to := Vector2(near.x - attack.x, near.z - attack.z)
+		var off := absf(fwd.angle_to(to))
+		if not to.is_zero_approx() and off + off > cone_rad + HIT_EPS: ## off-axis angle within half the cone
+			continue
+		if sight.is_valid() and not sight.call(attack, t.chest):
+			continue
+		if dist < best or (dist == best and t.id < best_id):
+			best = dist
+			best_id = t.id
+			best_pos = pos
+	return {"hit": best_id, "pos": best_pos}
+
+
+## Rule 7 on server tick `tick`: survivor positions rewound to the monster's view (capped at
+## max_rewind_ms, ADR-0003 §3); the attack point, facing, eligibility, doors and the stun are current.
+## A stun since wind-up has already resolved the lunge (_on_monster_stunned); one landing this tick is
+## not flushed yet, so the locked source (Stunned or shock-locked) is checked here too. Emits SurvivorHit
+## once and returns true on a hit. Clamps and out-of-history samples are logged by LagCompensation.
+func _try_hit(tick: int) -> bool:
+	if _lc == null or (_locked.is_valid() and _locked.call(_monster)):
+		return false
+	var me_id: Array[int] = [_monster]
+	var me := _lc.targets_at(tick, 0.0, me_id)
+	if me.is_empty():
+		return false
+	var attack: Vector3 = me[0].chest
+	var forward: Vector3 = _facing_of.call(_monster) if _facing_of.is_valid() else Vector3.FORWARD
+	var targets := _lc.targets_at(tick, _lc.rewind_ticks(_monster, tick), _survivors)
+	var r := hit_test(attack, forward, _hit_radius, _cone, targets, _eligible, _sight)
+	if r.hit == -1:
+		return false
+	var e := EvSurvivorHit.new()
+	e.monster = _monster
+	e.survivor = r.hit
+	e.position = r.pos
+	_bus.emit(e)
+	return true
 
 
 ## Resolved, then immediately Cooldown; the cooldown runs from resolution (rule 9). Story 004 adds the
