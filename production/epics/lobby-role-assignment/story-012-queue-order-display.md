@@ -62,7 +62,7 @@ Post-M1 phase. Every client shows the server's queue order and who is next to be
 
 **Story Type**: UI
 **Required evidence**:
-- UI: retained screenshot or capture in `production/qa/evidence/` + sign-off in `production/qa/evidence/queue-order-display-evidence.md`
+- UI: retained screenshot or capture in `production/qa/evidence/` + sign-off in `production/qa/evidence/lobby-queue-order-evidence.md`
 
 **Status**: [ ] Not yet created
 
