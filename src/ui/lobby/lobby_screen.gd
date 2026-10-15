@@ -10,18 +10,52 @@ class_name LobbyScreen extends Control
 ## NetAuthority child, the LobbyState, the ConnectionRouter, the RosterHandoff (whose RotationQueue the
 ## lobby shows) and the lobby tick clock.
 ## Deviations (story 005): no InputContextStack yet (ADR-0014 §1; the lobby is the MENU base, whose
-## cursor is visible, the engine default); the round start after the countdown is not wired, the screen
-## shows "Starting". The next shapeshifter is marked in text, no colour: no art-direction spec yet.
+## cursor is visible, the engine default). The next shapeshifter is marked in text, no colour: no
+## art-direction spec yet.
+## Round wiring (match-flow story 013, ADR-0001 §1): the screen is its session's multiplayer root. The host
+## adds the server role beside its local player as a RoundHost node, which composes the round on the roster
+## lock; the host's local player plays through a seat: a RoundClient under its own multiplayer root that
+## joins the host's port over loopback with the host's token, admitted while a round runs (the server reads
+## its input through the same queue as everyone's). A joined client keeps a RoundClient ready from the
+## room on (its HiddenSpawner must exist before the round is composed) and plays the round over the lobby's
+## own session (RoundClient.adopt; no second ENet session) once the lobby packet says In Match; when the
+## lobby packet says Waiting again it drops the round scene and shows the room. During a round the screen
+## shows only a greybox line from MatchDisplay (phase and time, then the outcome during Results); the
+## Results screen is hud-results story 009. A host that leaves sends every client back to the boot scene
+## with "Host left" (leave_to, Main.return_with; ADR-0001 §7).
 ## Command-line flags after `--` drive it for evidence captures: --lobby-host, --lobby-join=ADDR,
-## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle) and
-## --lobby-cancel-round (stand-in for Match Flow until the round start is wired: a locked round is ended
-## as Cancelled at once, so the lobby returns to Waiting with the queue drawn and not advanced, rule 9).
+## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle).
+## --lobby-shots=DIR (story match-flow/013 evidence) saves lobby.png once the room lists min_players,
+## round.png SHOT_AFTER_S after the own body spawned, results.png SHOT_AFTER_S into Results and back.png
+## once the room shows again after the round, then quits.
 ## Usage: add_child(LobbyScreen.new())
 
 const _ROW_COLUMNS := 4
+## --lobby-shots: seconds after a step begins before its screenshot (the view settles).
+const SHOT_AFTER_S := 1.5
+
+## Set before add_child to use other knobs than the shipped ones (tests); null = Knobs.load_all().
+var knobs: Knobs
+## Whether the round scene draws (camera, input, HUD). Tests run several screens headless with false.
+var render_round := true
+## Callable(tree: SceneTree, text: String) run when the host leaves (default Main.return_with).
+var leave_to: Callable = Main.return_with
+## The server role (host only; null on a client).
+var round_host: RoundHost
+## The round scene of this player: a client's adopted RoundClient (from the room on), or the host's seat
+## RoundClient while a round runs.
+var round_client: RoundClient
 
 var _knobs: Knobs
 var _net: NetAuthority
+var _version := ""
+var _seat: Node ## host: the seat RoundClient's multiplayer root
+var _display: MatchDisplay
+var _in_round := false
+var _round_line: Label
+var _rooted := false ## this screen's path carries its session's SceneMultiplayer
+var _shots: Dictionary[String, float] = {} ## --lobby-shots: shot name -> seconds its condition has held
+var _played := false ## --lobby-shots: a round was entered
 var _lobby: LobbyState ## host only
 var _router: ConnectionRouter ## host only
 var _handoff: RosterHandoff ## host only
@@ -46,7 +80,7 @@ var _queue: Label
 
 
 func _ready() -> void:
-	_knobs = Knobs.load_all()
+	_knobs = knobs if knobs != null else Knobs.load_all()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -56,6 +90,9 @@ func _ready() -> void:
 	center.add_child(box)
 	_build_form(box)
 	_build_room(box)
+	_round_line = Label.new()
+	_round_line.hide()
+	box.add_child(_round_line)
 	_show_form("")
 	_autorun(OS.get_cmdline_user_args())
 
@@ -164,10 +201,12 @@ func _show_room() -> void:
 
 
 func _new_net() -> NetAuthority:
+	get_tree().set_multiplayer(SceneMultiplayer.new(), get_path()) # the session root (RoundHost paths)
+	_rooted = true
 	_net = NetAuthority.new()
 	_net.fail_hard = false
-	_net.setup(_knobs, _knobs.join_version(str(ProjectSettings.get_setting("application/config/version", "0.0.0"))),
-			_lobby)
+	_version = _knobs.join_version(str(ProjectSettings.get_setting("application/config/version", "0.0.0")))
+	_net.setup(_knobs, _version, _lobby)
 	add_child(_net)
 	return _net
 
@@ -191,8 +230,11 @@ func _on_host() -> void:
 	else:
 		rng.randomize()
 	_handoff = RosterHandoff.new(_lobby, RosterHandoff.info_from(_net), _knobs, rng, str(rng.randi()))
-	if _opts.has("lobby-cancel-round"):
-		_handoff.handed_off.connect(_on_handed_off_cancel)
+	round_host = RoundHost.new(_knobs, _net, _router, _handoff, _lobby)
+	add_child(round_host)
+	round_host.round_started.connect(_on_round_started)
+	round_host.round_over.connect(_on_round_over)
+	_net.known_token_in_grace = _admit
 	_elapsed_s = 0.0
 	_last_sent = PackedByteArray()
 	multiplayer.peer_packet.connect(_on_server_packet)
@@ -203,7 +245,7 @@ func _on_join() -> void:
 	_lobby = null
 	_new_net()
 	_net.join_rejected.connect(_on_rejected)
-	_net.host_left.connect(_on_lost.bind(tr("Host left")))
+	_net.host_left.connect(_on_host_left)
 	_net.kicked.connect(_on_kicked)
 	if _net.join(_address.text, int(_port.value), _name.text) != OK:
 		_close(tr("Could not join"))
@@ -220,6 +262,10 @@ func _close(message: String) -> void:
 	for c in [_on_server_packet, _on_client_packet]:
 		if multiplayer.peer_packet.is_connected(c):
 			multiplayer.peer_packet.disconnect(c)
+	_drop_round()
+	if round_host != null:
+		round_host.queue_free()
+	round_host = null
 	if _net != null:
 		_net.close()
 		_net.queue_free()
@@ -241,8 +287,137 @@ func _on_kicked(reason: StringName) -> void:
 	_close.call_deferred(reject_text(reason, {}))
 
 
-func _on_lost(message: String) -> void:
-	_close.call_deferred(message)
+## ADR-0001 §7: back to the boot scene with "Host left"; no result is recorded.
+func _on_host_left() -> void:
+	_close.call_deferred("")
+	leave_to.call_deferred(get_tree(), tr("Host left"))
+
+
+## NetAuthority.known_token_in_grace on the host: a player in reconnect grace, or the host's own seat
+## while a round runs (its token has no peer in the lobby, ADR-0001 §1).
+func _admit(token: String) -> bool:
+	return _router.in_grace(token) or (round_host.is_running() and token == _lobby.host_token)
+
+
+# --- round wiring (match-flow story 013) --------------------------------------------
+
+## Host: the round is composed; the local player's seat joins it over loopback.
+func _on_round_started() -> void:
+	# Beside the screen, not under it: a multiplayer root cannot sit under another (4.7.2 refuses it).
+	_seat = Node.new()
+	_seat.name = String(name) + "Seat"
+	get_parent().add_child(_seat)
+	round_client = _new_round_client(_seat)
+	round_client.version = _version
+	round_client.join("127.0.0.1", int(_port.value), _net.display_name_of(_net.local_player_id), _lobby.host_token,
+			_seat)
+	_enter_round()
+
+
+## Host: the round is torn down. The seat lets go while the lobby is still In Match: the kick unbinds its
+## peer at once (no drop is raised, so the host stays in the lobby), then the lobby returns to Waiting.
+func _on_round_over(ended: bool) -> void:
+	_net.kick(_net.local_player_id)
+	_drop_round()
+	round_host.finish(ended)
+	_show_room()
+
+
+## A RoundClient named RoundHost.NODE_NAME under `parent`, with its round map, not yet playing.
+func _new_round_client(parent: Node) -> RoundClient:
+	var map := MapData.load_map()
+	var c := RoundClient.new(_knobs, TestMoveStep.apply, TestMoveStep.make_body, map, render_round)
+	c.name = RoundHost.NODE_NAME
+	parent.add_child(c)
+	var floors := Node3D.new()
+	floors.name = &"Map"
+	c.add_child(floors)
+	MapGreybox.build(floors, map)
+	return c
+
+
+## Client: the round scene (and its HiddenSpawner) waits from the room on.
+func _arm_client() -> void:
+	if round_client == null:
+		round_client = _new_round_client(self)
+		round_client.prepare()
+
+
+func _enter_round() -> void:
+	_in_round = true
+	_display = MatchDisplay.new(_knobs, round_client.multiplayer as SceneMultiplayer)
+	_room.hide()
+	_round_line.show()
+
+
+## Frees the round scene (host seat or client) and the display. Safe outside a round.
+func _drop_round() -> void:
+	_in_round = false
+	if _display != null:
+		_display.close()
+	_display = null
+	if round_client != null:
+		round_client.close()
+		round_client.name = &"Ended" # frees the name for the next round's RoundClient at once
+		round_client.queue_free()
+	round_client = null
+	if _seat != null:
+		get_tree().set_multiplayer(null, _seat.get_path())
+		_seat.queue_free()
+	_seat = null
+	_round_line.hide()
+
+
+func _exit_tree() -> void:
+	_drop_round()
+	if _net != null:
+		_net.close()
+	if _rooted:
+		get_tree().set_multiplayer(null, get_path())
+		_rooted = false
+
+
+func _process(delta: float) -> void:
+	if _opts.has("lobby-shots"):
+		_capture(delta)
+	if _display == null:
+		return
+	_display.advance(delta)
+	_round_line.text = round_line(_display)
+
+
+## --lobby-shots: each step's screenshot once its condition held SHOT_AFTER_S.
+func _capture(delta: float) -> void:
+	_played = _played or _in_round
+	var in_room := _room.visible and not _state.is_empty()
+	_shot("lobby", delta, in_room and not _played and _state.players.size() >= _knobs.lobby.min_players)
+	_shot("round", delta, _in_round and round_client != null and round_client.is_spawned())
+	_shot("results", delta, _in_round and _display != null and _display.is_ended())
+	if _shot("back", delta, in_room and _played):
+		get_tree().quit()
+
+
+func _shot(tag: String, delta: float, holds: bool) -> bool:
+	if not holds or _shots.get(tag, 0.0) < 0.0:
+		return false
+	_shots[tag] = _shots.get(tag, 0.0) + delta
+	if _shots[tag] < SHOT_AFTER_S:
+		return false
+	_shots[tag] = -1.0
+	var path := "%s/%s.png" % [_opts["lobby-shots"], tag]
+	print("SHOT %s %s" % [path, error_string(get_viewport().get_texture().get_image().save_png(path))])
+	return true
+
+
+## The greybox round line (until hud-results 009): the phase clock, then the outcome during Results.
+static func round_line(d: MatchDisplay) -> String:
+	if d.is_ended():
+		return TranslationServer.translate("Round over: %s (%s). Back to the lobby after Results.") % [
+			TranslationServer.translate(MatchFlow.OUTCOME_TEXT[d.outcome()]),
+			TranslationServer.translate(MatchFlow.REASON_TEXT[d.reason()])]
+	if d.phase() == -1:
+		return TranslationServer.translate("Loading the round...")
+	return TranslationServer.translate("Round: %d s left") % ceili(d.time_remaining_s())
 
 
 ## The lobby clock in server ticks (ConnectionRouter's clock too).
@@ -274,8 +449,14 @@ func _on_client_packet(peer_id: int, bytes: PackedByteArray) -> void:
 	var s := LobbySync.decode(bytes)
 	if s.is_empty():
 		return
-	if _room.visible == false:
+	if s.state == "in_match" and not _in_round and round_client != null:
+		round_client.adopt(_net)
+		_enter_round()
+	elif s.state != "in_match" and _in_round:
+		_drop_round()
+	if not _in_round and _room.visible == false:
 		_show_room()
+	_arm_client()
 	_render(s)
 
 
@@ -390,10 +571,6 @@ func _on_pref_selected(index: int) -> void:
 	else:
 		multiplayer.send_bytes(LobbySync.preference_packet(cid), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE,
 				NetChannels.EVENT)
-
-
-func _on_handed_off_cancel(_roster: Roster) -> void:
-	_handoff.end_round.call_deferred(false)
 
 
 func _on_voice_toggled(on: bool) -> void:

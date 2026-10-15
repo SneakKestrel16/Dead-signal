@@ -56,7 +56,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 010 | [Round composer (server composition root)](story-010-round-composer.md) | Integration | Complete | ADR-0005 |
 | 011 | [Client round scene](story-011-client-round-scene.md) | Integration | In Review | ADR-0002 |
 | 012 | [Display state catch-up on rejoin](story-012-display-catch-up-on-rejoin.md) | Integration | Complete | ADR-0004 |
-| 013 | [Lobby countdown starts the composed round; round end returns to the lobby](story-013-lobby-to-round-wiring.md) | Integration | Ready | ADR-0001 |
+| 013 | [Lobby countdown starts the composed round; round end returns to the lobby](story-013-lobby-to-round-wiring.md) | Integration | Complete | ADR-0001 |
 
 ## Definition of Done
 

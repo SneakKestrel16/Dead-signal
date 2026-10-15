@@ -76,6 +76,8 @@ var interaction: InteractionHud
 var flinch_enabled := true
 ## When set, used instead of LocalInput each tick (scripted runs and tests); yaw/pitch come from it.
 var scripted: InputFrame
+## Full join version string; "" = knobs.join_version(VERSION_BUILD). A shipped session sets the lobby's.
+var version := ""
 ## handle -> remote body Node3D (child "Mesh" MeshInstance3D, child "Cone" SpotLight3D).
 var remotes: Dictionary[int, Node3D] = {}
 
@@ -95,6 +97,7 @@ var _present: Dictionary[int, bool] = {}
 var _last_tick := -1
 var _now_ms := 0.0
 var _loaded_sent := false
+var _owns_net := false
 var _lost := false
 
 
@@ -111,18 +114,35 @@ func _init(knobs_: Knobs, step: Callable, make_body: Callable, map: MapData, ren
 		_colours[c.appearance_id] = c.colour
 
 
-## Joins the host. Call once this node is in the tree.
-func join(host: String, port: int, display_name: String) -> Error:
-	get_tree().set_multiplayer(SceneMultiplayer.new(), get_path())
+## Joins the host. Call once this node is in the tree. `token` rejoins as that player; `root` is the
+## multiplayer root (default this node), so the session HiddenSpawner's path matches the server's.
+func join(host: String, port: int, display_name: String, token: String = "", root: Node = null) -> Error:
+	get_tree().set_multiplayer(SceneMultiplayer.new(), (root if root != null else self).get_path())
 	net = NetAuthority.new()
-	net.setup(knobs, knobs.join_version(VERSION_BUILD), _NoLobby.new())
+	net.setup(knobs, version if version != "" else knobs.join_version(VERSION_BUILD), _NoLobby.new())
 	add_child(net)
-	hidden = HiddenSpawner.new()
-	add_child(hidden)
+	_owns_net = true
+	prepare()
 	net.join_rejected.connect(_on_rejected)
 	multiplayer.connected_to_server.connect(_on_connected)
 	multiplayer.server_disconnected.connect(_on_lost)
-	return net.join(host, port, display_name)
+	return net.join(host, port, display_name, token)
+
+
+## Adds the session HiddenSpawner (once). A client that adopts a session calls it before the round is
+## composed, so the server's hidden entities find their path (match-flow story 013).
+func prepare() -> void:
+	if hidden == null:
+		hidden = HiddenSpawner.new()
+		add_child(hidden)
+
+
+## Plays the round over an already joined session (the lobby's; ADR-0001: no second ENet session). This
+## node's multiplayer must be that session's; close() leaves the session open.
+func adopt(session: NetAuthority) -> void:
+	net = session
+	prepare()
+	_on_connected()
 
 
 ## Stops listening and leaves the session. Safe to call twice.
@@ -135,7 +155,7 @@ func close() -> void:
 		match_display.close()
 	if router != null:
 		router.close()
-	if net != null:
+	if net != null and _owns_net:
 		net.close()
 
 

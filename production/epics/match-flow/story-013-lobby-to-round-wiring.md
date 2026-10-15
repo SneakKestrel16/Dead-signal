@@ -1,7 +1,7 @@
 # Story 013: Lobby countdown starts the composed round; round end returns to the lobby
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -34,10 +34,10 @@ The lobby screen (lobby-role-assignment 005) stops at "Starting": its own header
 
 *From GDD `design/gdd/match-flow.md`, scoped to this story:*
 
-- [ ] When the lobby countdown completes on the host, the host composes the round with `RoundComposer` over the locked roster, and every lobby client loads the client round scene and reports its map loaded, over real ENet with at least 3 clients.
-- [ ] When the round reaches Results and `results_duration_s` elapses, every client returns to the lobby with the same session (no re-join), Ready cleared, and the rotation queue advanced as the lobby rules say.
-- [ ] A host quit during the round returns every client to the boot scene with "Host left" (`Main.return_with`), and a cancelled round (load timeout) returns everyone to the lobby with the queue not advanced.
-- [ ] The shipped build can be played end to end: two windowed instances on one PC, one hosting and one joining, reach a round and come back to the lobby (retained screenshot of each step in `production/qa/evidence/lobby-to-round-wiring/`).
+- [x] When the lobby countdown completes on the host, the host composes the round with `RoundComposer` over the locked roster, and every lobby client loads the client round scene and reports its map loaded, over real ENet with at least 3 clients.
+- [x] When the round reaches Results and `results_duration_s` elapses, every client returns to the lobby with the same session (no re-join), Ready cleared, and the rotation queue advanced as the lobby rules say.
+- [x] A host quit during the round returns every client to the boot scene with "Host left" (`Main.return_with`), and a cancelled round (load timeout) returns everyone to the lobby with the queue not advanced.
+- [x] The shipped build can be played end to end: two windowed instances on one PC, one hosting and one joining, reach a round and come back to the lobby (retained screenshot of each step in `production/qa/evidence/lobby-to-round-wiring/`).
 
 ---
 
@@ -68,7 +68,7 @@ The lobby screen (lobby-role-assignment 005) stops at "Starting": its own header
 **Story Type**: Integration
 **Required evidence**: `tests/integration/match-flow/lobby_to_round_wiring_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] tests/integration/match-flow/lobby_to_round_wiring_test.gd (4); production/qa/evidence/lobby-to-round-wiring/ (8 png)
 
 ---
 
@@ -76,3 +76,7 @@ The lobby screen (lobby-role-assignment 005) stops at "Starting": its own header
 
 - Depends on: Stories 010, 011; lobby-role-assignment 005
 - Unlocks: hud-results 009, 010
+
+## Progress Notes (2026-10-15)
+
+Merged b911999+ecf416a. RoundHost (node "Round", no local player; dedicated-build ready) composes the round on roster lock in its own hidden physics world, hands disconnects to the round, signals round_over; finish() returns the lobby to Waiting and drops gone players (reading of lobby rule 18). RoundClient adopt(net) plays over the lobby connection; LobbyScreen starts the round view on In Match and returns to the room on Waiting; host quit leaves with "Host left". DEVIATIONS: the host player joins through a local "seat" client on 127.0.0.1 with its token (the one second ENet session; the lobby session cannot carry the host own player), kicked at round end; shipped code uses TestMoveStep until the real movement step ships; results line is MatchDisplay text until HUD-8. Previous composer kept alive until the next round (a mid-tick Cancel crashed otherwise). 4 integration tests (real ENet, host + 3 clients); 3 mutations caught. Full suite 1437/1437. AC-4: two windows + two headless joiners, shipped knobs, round to its 540 s deadline and back; host/ and client/ lobby, round, results, back png. Orchestrator note: the boot status label stays on top during the round (visible in client/round.png).

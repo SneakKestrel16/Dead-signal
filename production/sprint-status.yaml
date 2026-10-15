@@ -174,11 +174,11 @@ stories:
     name: "Lobby countdown starts the composed round; round end returns to the lobby"
     file: "production/epics/match-flow/story-013-lobby-to-round-wiring.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "hud-1"
     name: "HudModel, UiLayers and the full InputContextStack"
     file: "production/epics/hud-results/story-001-hud-model-and-ui-layers.md"
