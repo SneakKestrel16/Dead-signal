@@ -13,6 +13,8 @@ const FACILITY_MAP := 450
 const FACILITY_LIGHTING := 460
 const DOWNING := 500
 const HOLDS := 550
+## Footsteps (controller story 014): after every speed owner, so it reads this tick's moved bodies.
+const FOOTSTEPS := 560
 const SURVIVOR_OBJECTIVES := 600
 const PINGS_CALLOUTS := 700
 const SCARE_EVENTS := 800

@@ -16,6 +16,7 @@ footstep_radius_sprint_m = 20.0
 footstep_radius_walk_m = 6.0
 footstep_radius_crouch_m = 2.0
 footstep_radius_crawl_m = 2.0
+footstep_spacing_m = 0.9
 accel_time_s = 0.05
 interact_ray_max_m = 3.0
 step_height_m = 0.35

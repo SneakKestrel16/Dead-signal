@@ -21,6 +21,10 @@ const SPRINT_CAP_EPS := 1e-4
 @export_range(4.0, 8.0) var footstep_radius_walk_m: float = NAN
 @export_range(1.0, 3.0) var footstep_radius_crouch_m: float = NAN
 @export_range(1.0, 3.0) var footstep_radius_crawl_m: float = NAN
+## Distance covered per footstep event (story controller-interaction/014, Footsteps). Inference: no GDD or
+## ADR gives a cadence; 0.9 m is about one step at a brisk walk (4.4 steps/s at walk, 5.6 at sprint). An
+## audio playtest settles it. Bounded: below 0.5 m the reliable event channel carries too many steps.
+@export_range(0.5, 2.0) var footstep_spacing_m: float = NAN
 @export_range(0.0, 0.09) var accel_time_s: float = NAN
 @export_range(2.7, 3.5) var interact_ray_max_m: float = NAN
 @export_range(0.2, 0.45) var step_height_m: float = NAN
