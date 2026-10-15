@@ -2,9 +2,8 @@
 # (design/gdd/borrowed-face.md Acceptance Criteria on immune hits, Edge Cases "Immune taser hit during
 # transformation ...", "Transformation into a disguise completes while Immune ..."; survivor-defense.md
 # rules 9, 10, 14, 16; ADR-0005 tick order: Survivor Defense (slot 200) steps before Borrowed Face).
-# Survivor Defense is not built yet: StubDefense below models its rules 9, 10, 14 and 16 from the GDD
-# text (lock for stun_duration_s, no refresh, immunity for stun_immunity_s after the lock, ended by a
-# FormChanged into a disguise). Re-run against the real module when that epic lands.
+# Hits land through the real SurvivorDefense.shock from a Hitter in the MATCH_FLOW_BEGIN slot (survivor-defense
+# story 012 retired the stand-in that modelled its rules 9, 10, 14 and 16).
 extends GdUnitTestSuite
 
 const MONSTER := 1
@@ -14,58 +13,27 @@ const SURVIVORS: Array[int] = [2, 3]
 const EYE := Vector3(0.0, 1.6, 0.0)
 
 
-## Survivor Defense stand-in: a taser hit on MONSTER on each tick in `hit_ticks`.
-class StubDefense extends RefCounted:
+## Lands a hit through SurvivorDefense.shock on MONSTER on each tick in `hit_ticks`, before its slot.
+class Hitter extends RefCounted:
 	var hit_ticks: Array[int] = []
-	## Every hit's outcome: [tick, stunned].
+	## Every hit's outcome: [tick, stunned] (SurvivorDefense.shock's result).
 	var hits: Array = []
-	var lock_end_tick := 0
-	var immune_end_tick := 0
-	var _form := BorrowedFace.TRUE_FORM
-	var _bus: EventBus
-	var _lock_ticks := 0
-	var _immunity_ticks := 0
-	var _tick := 0
+	var shock: Callable
 
-	func setup(_tr: TickRunner, bus: EventBus, _reg: StateRegistry, k: Knobs) -> void:
-		_bus = bus
-		_lock_ticks = k.ticks(k.defense.stun_duration_s)
-		_immunity_ticks = k.ticks(k.defense.stun_immunity_s)
-		bus.subscribe(&"FormChanged", on_form_changed)
-
-	## Rule 14 lock: Stunned until lock_end_tick.
-	func locked(_p: int) -> bool:
-		return _tick < lock_end_tick
-
-	## Rule 16: immunity ends when a change into a disguise completes.
-	func on_form_changed(e: ServerEvent) -> void:
-		_form = (e as EvFormChanged).form
-		if _form != BorrowedFace.TRUE_FORM:
-			immune_end_tick = mini(immune_end_tick, e.tick)
+	func setup(_tr: TickRunner, _bus: EventBus, _reg: StateRegistry, _k: Knobs) -> void:
+		pass
 
 	func server_tick(tick: int) -> void:
-		_tick = tick
-		if not hit_ticks.has(tick):
-			return
-		# Rule 9 stuns only an unstunned, non-immune monster; rule 14 no refresh; rule 10 immune hit.
-		var stun := tick >= immune_end_tick
-		hits.append([tick, stun])
-		if _form != BorrowedFace.TRUE_FORM: # rule 1: a disguised hit, stunned or immune, shows as a shock
-			var shock := EvPlayerShocked.new()
-			shock.player = MONSTER
-			_bus.emit(shock)
-		if stun:
-			lock_end_tick = tick + _lock_ticks
-			immune_end_tick = lock_end_tick + _immunity_ticks
-			var e := EvMonsterStunned.new()
-			e.monster = MONSTER
-			e.true_form = _form == BorrowedFace.TRUE_FORM
-			_bus.emit(e)
+		if hit_ticks.has(tick):
+			hits.append([tick, shock.call(MONSTER, tick)])
 
 
 var _server: RoundServer
 var _bf: BorrowedFace
-var _defense: StubDefense
+var _defense: Hitter
+var _def: SurvivorDefense
+## End of the latest stun's post-lock window (hit + stun_duration_s + stun_immunity_s, rule 14).
+var _immune_end := 0
 var _knobs: Knobs
 var _transform_ticks: int
 var _cooldown_ticks: int
@@ -86,10 +54,14 @@ func before_test() -> void:
 	add_child(_server)
 	_bf = BorrowedFace.new()
 	_bf.set_roster(SURVIVORS, MONSTER)
-	_defense = StubDefense.new()
-	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _defense.locked)
+	_def = SurvivorDefense.new()
+	_def.set_roster(SURVIVORS, MONSTER)
+	_def.set_form_source(_bf.form)
+	_defense = Hitter.new()
+	_defense.shock = _def.shock
+	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _def.locked)
 	_bf.set_status_source(_status_of)
-	assert_array(_server.start_round({TickOrder.SURVIVOR_DEFENSE: _defense,
+	assert_array(_server.start_round({TickOrder.MATCH_FLOW_BEGIN: _defense, TickOrder.SURVIVOR_DEFENSE: _def,
 		TickOrder.BORROWED_FACE: _bf}, _knobs)).is_empty()
 	for t: StringName in _events:
 		_server.bus.subscribe(t, _on_event)
@@ -144,9 +116,10 @@ func _stun_and_wait_out_lock() -> void:
 	_defense.hit_ticks.append(_tick() + 1)
 	_step(1)
 	assert_bool(_defense.hits.back()[1]).is_true()
+	_immune_end = _tick() + _lock_ticks + _immunity_ticks
 	_step(_lock_ticks)
-	assert_bool(_defense.locked(MONSTER)).is_false()
-	assert_bool(_tick() < _defense.immune_end_tick).is_true()
+	assert_bool(_def.locked(MONSTER)).is_false()
+	assert_bool(_tick() < _immune_end).is_true()
 
 
 ## Accepts a change into `form`, an immune hit halfway, and checks it completes on time untouched.
@@ -159,7 +132,7 @@ func _assert_immune_hit_does_not_interrupt(form: int, previous: int) -> void:
 	_step(hit - _tick())
 	assert_bool(_defense.hits.back()[1]).is_false() # immune
 	assert_int(_events[&"MonsterStunned"].size()).is_equal(stunned_before)
-	assert_bool(_defense.locked(MONSTER)).is_false() # no root, slow or lock
+	assert_bool(_def.locked(MONSTER)).is_false() # no root, slow or lock
 	assert_bool(_bf.transforming()).is_true()
 	assert_int(_bf.form()).is_equal(previous)
 	_step(accepted + _transform_ticks - _tick())
@@ -181,11 +154,14 @@ func test_immune_hit_does_not_interrupt_transformation_out_of_disguise() -> void
 	assert_int(_events[&"PlayerShocked"].size()).is_equal(shocks + 1) # full shock on the borrowed body
 
 
-## AC 1, out of true form: no shock event (the "resisted" spark is presentation), completes on time.
+## AC 1, out of true form: the resisted hit is a PlayerShocked on the true-form body, no stun; completes on time.
 func test_immune_hit_does_not_interrupt_transformation_out_of_true_form() -> void:
 	_stun_and_wait_out_lock()
 	_assert_immune_hit_does_not_interrupt(S1, BorrowedFace.TRUE_FORM)
-	assert_array(_events[&"PlayerShocked"]).is_empty()
+	## the real module (survivor-defense story 005) sends the resisted hit as PlayerShocked on the true-form
+	## body; clients tell it from a stun by the missing MonsterStunned and show the spark
+	assert_int(_events[&"PlayerShocked"].size()).is_equal(1)
+	assert_int((_events[&"PlayerShocked"][0][0] as EvPlayerShocked).player).is_equal(MONSTER)
 
 
 ## AC 2: an immune hit on a disguise changes nothing, and a request in the following stun_duration_s
@@ -216,7 +192,7 @@ func test_request_mid_stun_duration_after_immune_hit_is_accepted() -> void:
 ## locks (rule 14) and shows as a shock, so a request during the lock is rejected.
 func test_disguise_completed_while_immune_is_stunned_by_next_hit() -> void:
 	_stun_and_wait_out_lock()
-	var window_end := _defense.immune_end_tick
+	var window_end := _immune_end
 	assert_bool(_request(S1)).is_true()
 	_step(_transform_ticks)
 	assert_int(_bf.form()).is_equal(S1)
@@ -229,6 +205,6 @@ func test_disguise_completed_while_immune_is_stunned_by_next_hit() -> void:
 	var e := _events[&"MonsterStunned"].back()[0] as EvMonsterStunned
 	assert_bool(e.true_form).is_false()
 	assert_int(_events[&"PlayerShocked"].back()[1]).is_equal(done + 1)
-	assert_bool(_defense.locked(MONSTER)).is_true()
+	assert_bool(_def.locked(MONSTER)).is_true()
 	_step(_cooldown_ticks)
 	assert_bool(_request(S2)).is_true() # lock and cooldown over: the stun cost only the lock

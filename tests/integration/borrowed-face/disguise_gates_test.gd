@@ -5,9 +5,8 @@
 # the same path (no form is consulted anywhere on these gates).
 # Objectives: real SurvivorObjectives on the real map (every point fakeable: a fake hold, no state change).
 # Rescue: real Downing on a RoundServer (RescueHold not fakeable: Downing.can_rescue refuses the role).
-# Hiding, barricade, search: Survivor Defense has not landed, so these are fixture interactables using
-# the GDD's eligibility rule (Survivor Defense rules 19, 22, 25-27: hide and barricade are Healthy-survivor
-# actions, search is a monster action in any form). Re-run against the real ones when that epic lands.
+# Hiding, barricade, search: the real HidingSpots, Doors and Barricades on the real map, on the same HoldService
+# (Survivor Defense rules 19, 22, 25-27; survivor-defense story 012 retired the fixture interactables).
 extends GdUnitTestSuite
 
 const A := 1
@@ -17,33 +16,12 @@ const FUSES := SurvivorObjectives.ACTIVE_DRIVES
 const BOXES := FUSES + SurvivorObjectives.ACTIVE_FUSES
 const SLOTS := BOXES + SurvivorObjectives.ACTIVE_FUSE_BOXES
 const FAR := Vector3(-100.0, 0.0, -100.0)
-## Fixture hold length: any non-zero duration; the gate refuses on the Start tick.
-const FIXTURE_HOLD_S := 1.0
 
 ## Rescue part (rescue_hold_test.gd roster).
 const MONSTER := 1
 const S1 := 2 ## the Downed survivor
 const R := 3 ## a survivor rescuer (the control)
 const SURVIVORS: Array[int] = [2, 3, 4, 5]
-
-
-## A Survivor Defense stand-in: one hiding spot, barricade or search point. `allowed` is the owner's
-## eligibility rule; `completions` is the spot or door state the hold would change.
-class Fixture extends Interactable:
-	var allowed: Callable
-	var completions: int = 0
-
-	func eligible(actor: int) -> bool:
-		return allowed.call(actor)
-
-	func start_progress_s() -> float:
-		return 0.0
-
-	func on_complete(_actor: int) -> void:
-		completions += 1
-
-	func on_cancel(_actor: int, _progress_s: float, _reason: StringName) -> void:
-		pass
 
 
 var _knobs: Knobs
@@ -57,6 +35,13 @@ var _centres: Dictionary = {}
 var _tick := 0
 var _server: RoundServer
 var _d: Downing
+var _registry: StateRegistry
+var _hs: HidingSpots
+var _bars: Barricades
+var _doors: Doors
+var _door_holds: HoldService
+## SurvivorDefense.set_hidden as HidingSpots drives it: actor -> hidden.
+var _hidden: Dictionary[int, bool] = {}
 
 
 func before_test() -> void:
@@ -72,10 +57,23 @@ func before_test() -> void:
 	_obj.survivor_ids.assign([A])
 	_bus = EventBus.new(_knobs.core.max_flush_rounds)
 	_bus.subscribe(&"ObjectiveProgressChanged", _on_progress)
-	_obj.setup(null, _bus, StateRegistry.new(), _knobs)
+	_registry = StateRegistry.new()
+	_obj.setup(null, _bus, _registry, _knobs)
+	_hidden = {}
+	## Registered after the objectives, so their net ids (DRIVES..SLOTS) are unchanged.
+	## Doors take net ids 0.. (a door's net id is its map index), so doors and barricades get their own
+	## HoldService with the same role gate; the objectives above keep theirs.
+	_door_holds = HoldService.new(_knobs, _ids, _frames, _centre, _sight, _claimed, Callable(), _is_shifter)
+	_doors = Doors.new(_door_holds, _map, _no_capsules)
+	_doors.setup(null, null, _registry, _knobs)
+	_bars = Barricades.new(_door_holds, _doors, _map, _survivor_only, _no_capsules, _monster_only)
+	_bars.setup(null, _bus, _registry, _knobs)
+	_hs = HidingSpots.new(_holds, _map, _survivor_only, _monster_only, _set_hidden)
+	_hs.setup(null, _bus, _registry, _knobs)
 
 
 func after_test() -> void:
+	_registry.clear()
 	if _server != null:
 		_server.end_round()
 
@@ -104,12 +102,20 @@ func _is_monster(actor: int) -> bool:
 	return actor == MONSTER
 
 
-## Healthy-survivor actions (hide, barricade, remove barricade).
+func _no_capsules() -> Array[Vector4]:
+	return []
+
+
+func _set_hidden(actor: int, on: bool) -> void:
+	_hidden[actor] = on
+
+
+## Healthy-survivor actions (hide, barricade, remove barricade): HidingSpots' and Barricades' `healthy`.
 func _survivor_only(actor: int) -> bool:
 	return actor != SHIFTER
 
 
-## A monster action in any form (search).
+## A monster action in any form (search, break): their `is_monster` / `monster`.
 func _monster_only(actor: int) -> bool:
 	return actor == SHIFTER
 
@@ -138,6 +144,8 @@ func _step(frames: Dictionary = {}) -> void:
 	for actor: int in frames:
 		_feed[actor] = frames[actor]
 	_holds.server_tick(_tick)
+	if _door_holds != null:
+		_door_holds.server_tick(_tick)
 	_obj.server_tick(_tick)
 	_bus.flush()
 	_tick += 1
@@ -172,14 +180,26 @@ func _try(net_id: int, at: Vector3) -> bool:
 	return faked
 
 
-func _fixture(rule: Callable) -> Fixture:
-	var x := Fixture.new()
-	x.allowed = rule
-	x.point = Vector3.ZERO
-	x.range_m = 2.0
-	x.duration_s = FIXTURE_HOLD_S
-	_holds.register(x)
-	return x
+## `actor` stands on `at` and holds `net_id` on `holds` for `n` ticks, then releases. The shapeshifter
+## never gets a hold.
+func _hold(actor: int, net_id: int, at: Vector3, n: int, holds := _holds) -> void:
+	_centres[actor] = at
+	for i in n:
+		_step({actor: [_f(true, net_id)]})
+		if actor == SHIFTER:
+			assert_dict(holds.hold_of(SHIFTER)).is_empty()
+	_step({actor: [_f(false)]})
+	_centres[actor] = FAR
+
+
+## The first barricadable door's net id and its interaction point.
+func _door() -> Array:
+	var targets := _map.interactables()
+	for i in targets.size():
+		var p := targets[i] as MapPassage
+		if p != null and p.kind == MapPassage.BARRICADABLE:
+			return [i, p.position + Vector3.UP * MapQueries.InteractRules.from_knobs(_knobs).point_height_m]
+	return [-1, FAR]
 
 
 # AC-1: pickup and install requests change no objective state, so no client sees a change -----------
@@ -202,31 +222,43 @@ func test_pickups_and_installs_change_no_objective_state() -> void:
 # AC-3: hide, barricade and remove-barricade are refused; search plays for the monster ---------------
 
 func test_hide_barricade_and_unbarricade_are_refused_with_state_unchanged() -> void:
-	_centres[A] = FAR
-	for x: Fixture in [_fixture(_survivor_only), _fixture(_survivor_only), _fixture(_survivor_only)]:
-		_centres[SHIFTER] = Vector3.ZERO
-		for i in _knobs.ticks(FIXTURE_HOLD_S) + 5:
-			_step({SHIFTER: [_f(true, x.net_id)]})
-			assert_dict(_holds.hold_of(SHIFTER)).is_empty()
-		_step({SHIFTER: [_f(false)]})
-		assert_int(x.completions).is_equal(0)
-		## the control: a survivor on the same spot completes it
-		_centres[A] = Vector3.ZERO
-		for i in _knobs.ticks(FIXTURE_HOLD_S) + 2:
-			_step({A: [_f(true, x.net_id)]})
-		_step({A: [_f(false)]})
-		_centres[A] = FAR
-		assert_int(x.completions).is_equal(1)
+	var hide_n := _knobs.ticks(_knobs.defense.hide_transition_s) + 2
+	var build_n := _knobs.ticks(_knobs.defense.barricade_duration_s) + 2
+	var remove_n := _knobs.ticks(_knobs.defense.barricade_remove_s) + 2
+	var door: int = _door()[0]
+	var at_door: Vector3 = _door()[1]
+	assert_int(door).is_not_equal(-1)
+	## hide: refused; the control, a survivor, enters and then leaves
+	_hold(SHIFTER, _hs.hide_id(0), _hs.point(0), hide_n)
+	assert_int(_hs.occupant(0)).is_equal(-1)
+	assert_bool(_hidden.has(SHIFTER)).is_false()
+	_hold(A, _hs.hide_id(0), _hs.point(0), hide_n)
+	assert_int(_hs.occupant(0)).is_equal(A)
+	_hold(A, _hs.hide_id(0), _hs.point(0), hide_n)
+	assert_int(_hs.occupant(0)).is_equal(-1)
+	## barricade (on a closed door, rule 25): refused; the control builds it
+	assert_bool(_doors.toggle(door)).is_true()
+	_hold(SHIFTER, _bars.build_id(door), at_door, build_n, _door_holds)
+	assert_bool(_bars.is_barricaded(door)).is_false()
+	_hold(A, _bars.build_id(door), at_door, build_n, _door_holds)
+	assert_bool(_bars.is_barricaded(door)).is_true()
+	## remove barricade: refused; the control removes it
+	_hold(SHIFTER, _bars.remove_id(door), at_door, remove_n, _door_holds)
+	assert_bool(_bars.is_barricaded(door)).is_true()
+	_hold(A, _bars.remove_id(door), at_door, remove_n, _door_holds)
+	assert_bool(_bars.is_barricaded(door)).is_false()
 
 
 func test_search_is_a_real_monster_hold_in_any_form() -> void:
-	var search := _fixture(_monster_only)
-	_centres[SHIFTER] = Vector3.ZERO
-	_step({SHIFTER: [_f(true, search.net_id)]})
+	_hold(A, _hs.hide_id(0), _hs.point(0), _knobs.ticks(_knobs.defense.hide_transition_s) + 2)
+	assert_int(_hs.occupant(0)).is_equal(A)
+	_centres[SHIFTER] = _hs.point(0)
+	_step({SHIFTER: [_f(true, _hs.search_id(0))]})
 	assert_bool(_holds.hold_of(SHIFTER).fake).is_false()
-	for i in _knobs.ticks(FIXTURE_HOLD_S) + 2:
-		_step({SHIFTER: [_f(true, search.net_id)]})
-	assert_int(search.completions).is_equal(1)
+	for i in _knobs.ticks(_knobs.defense.search_duration_s) + 2:
+		_step({SHIFTER: [_f(true, _hs.search_id(0))]})
+	assert_int(_hs.occupant(0)).is_equal(-1) ## the search ejected the hidden survivor
+	assert_bool(_hidden[A]).is_false()
 
 
 # AC-2: a rescue request on a Downed survivor is refused and the bleed-out timer runs as if nobody held -

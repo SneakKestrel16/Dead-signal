@@ -1,7 +1,8 @@
 # Story borrowed-face/003: transform state machine, cooldown and FormChanged
 # (design/gdd/borrowed-face.md rules 7-10, 14-15, Formulas "Form-change timing", Edge Cases "Stun
 # lands on the tick ...", "Round ends mid-transformation", "Reveal scare suppressed ..."; ADR-0005).
-# Survivor Defense is a stub module in its own slot (200) that emits MonsterStunned on chosen ticks;
+# Hits land through the real SurvivorDefense.shock from a Hitter in the MATCH_FLOW_BEGIN slot; Survivor
+# Defense (slot 200) locks the monster and emits MonsterStunned (survivor-defense story 012 retired the stub).
 # Scare Events is a FormChanged subscriber on the bus. Sight and status sources are stubs.
 extends GdUnitTestSuite
 
@@ -12,31 +13,30 @@ const SURVIVORS: Array[int] = [2, 3]
 const EYE := Vector3(0.0, 1.6, 0.0)
 
 
-## Survivor Defense stand-in: emits MonsterStunned for MONSTER on each tick in `stun_ticks`.
-class StubDefense extends RefCounted:
-	var stun_ticks: Array[int] = []
-	var _bus: EventBus
+## Lands a hit through SurvivorDefense.shock on MONSTER on each tick in `hit_ticks`, before its slot.
+class Hitter extends RefCounted:
+	var hit_ticks: Array[int] = []
+	## Every hit's outcome: [tick, stunned] (SurvivorDefense.shock's result).
+	var hits: Array = []
+	var shock: Callable
 
-	func setup(_tr: TickRunner, bus: EventBus, _reg: StateRegistry, _k: Knobs) -> void:
-		_bus = bus
+	func setup(_tr: TickRunner, _bus: EventBus, _reg: StateRegistry, _k: Knobs) -> void:
+		pass
 
 	func server_tick(tick: int) -> void:
-		if stun_ticks.has(tick):
-			var e := EvMonsterStunned.new()
-			e.monster = MONSTER
-			e.true_form = true
-			_bus.emit(e)
+		if hit_ticks.has(tick):
+			hits.append([tick, shock.call(MONSTER, tick)])
 
 
 var _server: RoundServer
 var _bf: BorrowedFace
-var _defense: StubDefense
+var _defense: Hitter
+var _def: SurvivorDefense
 var _knobs: Knobs
 var _transform_ticks: int
 var _cooldown_ticks: int
 var _observe_ticks: int
-## Stub of the Stunned / shock lock state BorrowedFace reads through `locked`.
-var _locked_now := false
+var _lock_ticks: int
 ## Every FormChanged the stub Scare Events subscriber received: [event, tick it was handled on].
 var _changes: Array = []
 
@@ -44,7 +44,6 @@ var _changes: Array = []
 func before_test() -> void:
 	_knobs = Knobs.load_all()
 	_server = null
-	_locked_now = false
 	_changes = []
 
 
@@ -52,15 +51,20 @@ func _start(knobs: Knobs = _knobs) -> void:
 	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
 	_cooldown_ticks = knobs.ticks(knobs.borrowed_face.form_change_cooldown_s)
 	_observe_ticks = knobs.ticks(knobs.borrowed_face.observe_time_s)
+	_lock_ticks = knobs.ticks(knobs.defense.stun_duration_s)
 	if _server == null:
 		_server = auto_free(RoundServer.new())
 		add_child(_server)
 	_bf = BorrowedFace.new()
 	_bf.set_roster(SURVIVORS, MONSTER)
-	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _locked)
+	_def = SurvivorDefense.new()
+	_def.set_roster(SURVIVORS, MONSTER)
+	_def.set_form_source(_bf.form)
+	_defense = Hitter.new()
+	_defense.shock = _def.shock
+	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _def.locked)
 	_bf.set_status_source(_status_of)
-	_defense = StubDefense.new()
-	assert_array(_server.start_round({TickOrder.SURVIVOR_DEFENSE: _defense,
+	assert_array(_server.start_round({TickOrder.MATCH_FLOW_BEGIN: _defense, TickOrder.SURVIVOR_DEFENSE: _def,
 		TickOrder.BORROWED_FACE: _bf}, knobs)).is_empty()
 	_server.bus.subscribe(&"FormChanged", _on_form_changed)
 	_step(_observe_ticks)
@@ -82,10 +86,6 @@ func _points_of(_p: int) -> PackedVector3Array:
 
 func _sight(_eye: Vector3, _point: Vector3) -> bool:
 	return true
-
-
-func _locked(_p: int) -> bool:
-	return _locked_now
 
 
 func _status_of(_p: int) -> int:
@@ -157,7 +157,7 @@ func test_stun_during_transformation_keeps_form_and_starts_cooldown() -> void:
 	_step(_cooldown_ticks - 1)
 	assert_bool(_request(BorrowedFace.TRUE_FORM)).is_true()
 	var stun := _tick() + _transform_ticks / 2
-	_defense.stun_ticks = [stun]
+	_defense.hit_ticks = [stun]
 	_step(stun - _tick())
 	assert_bool(_bf.transforming()).is_false()
 	assert_int(_bf.form()).is_equal(S1)
@@ -175,7 +175,7 @@ func test_stun_during_transformation_keeps_form_and_starts_cooldown() -> void:
 func test_stun_on_completion_tick_wins() -> void:
 	_start()
 	assert_bool(_request(S1)).is_true()
-	_defense.stun_ticks = [_tick() + _transform_ticks]
+	_defense.hit_ticks = [_tick() + _transform_ticks]
 	_step(_transform_ticks)
 	assert_int(_bf.form()).is_equal(BorrowedFace.TRUE_FORM)
 	assert_bool(_bf.transforming()).is_false()
@@ -186,17 +186,19 @@ func test_stun_on_completion_tick_wins() -> void:
 ## AC 2 and rule 7: no transformation starts while Stunned, and the rejection costs no cooldown.
 func test_no_transformation_starts_while_stunned() -> void:
 	_start()
-	_locked_now = true
+	_defense.hit_ticks = [_tick() + 1]
+	_step(1)
+	assert_bool(_def.locked(MONSTER)).is_true()
 	assert_bool(_request(S1)).is_false()
-	_locked_now = false
+	_step(_lock_ticks)
 	assert_bool(_request(S1)).is_true()
 
 
 ## A stun outside a transformation starts no cooldown (rule 10 names only an interrupt).
 func test_stun_while_not_transforming_costs_nothing() -> void:
 	_start()
-	_defense.stun_ticks = [_tick() + 1]
-	_step(1)
+	_defense.hit_ticks = [_tick() + 1]
+	_step(1 + _lock_ticks) # the shock lock (rule 14) bars requests; no cooldown follows it
 	assert_bool(_request(S1)).is_true()
 
 
