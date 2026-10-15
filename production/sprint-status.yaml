@@ -156,10 +156,10 @@ stories:
     name: "Scare audio: positional origin, stingers, ducking and volume scales"
     file: "production/epics/scare-events/story-008-scare-audio.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "scare-9"
     name: "Scare visuals and flash accessibility"

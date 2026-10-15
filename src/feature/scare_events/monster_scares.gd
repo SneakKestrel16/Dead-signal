@@ -5,7 +5,8 @@ class_name MonsterScares extends RefCounted
 ## blackout at its target point. False Signal has no catalogue entry and fires nothing (rule 4a). Changes no
 ## state of its own beyond ScareEvents' gating records; never writes lighting (ADR-0009 §7).
 ## Usage (composer modules dict):
-##   TickOrder.SCARE_EVENTS - 2: MonsterScares.new(scares, catalogue, map, monster, _live_players, _position)
+##   TickOrder.SCARE_EVENTS - 2: MonsterScares.new(scares, catalogue, map, monster, _live_players, _position,
+##       ScareRelevance.new(_eye, _clear_sight))
 
 const BURST := &"door_burst"
 const REVEAL := &"transformation_reveal"
@@ -17,17 +18,20 @@ var _map: MapData
 var _monster: int
 var _live: Callable
 var _position: Callable
+var _relevance: ScareRelevance
 
 
-## `live_players() -> Array[int]` players with a body in the world; `position_of(player) -> Vector3` feet.
+## `live_players() -> Array[int]` players with a body in the world; `position_of(player) -> Vector3` feet;
+## `relevance` picks the rule 19 recipients (story 003's shared helper).
 func _init(scares: ScareEvents, catalogue: ScareCatalogue, map: MapData, monster: int, live_players: Callable,
-		position_of: Callable) -> void:
+		position_of: Callable, relevance: ScareRelevance) -> void:
 	_scares = scares
 	_catalogue = catalogue
 	_map = map
 	_monster = monster
 	_live = live_players
 	_position = position_of
+	_relevance = relevance
 
 
 ## RoundServer entry.
@@ -42,17 +46,16 @@ func server_tick(_tick: int) -> void:
 	pass
 
 
-## Rule 19 recipients: every live player within the entry's audible_range_m of `origin`, the acting monster
-## excluded. Inference: the actor is not "relevant" to a scare dressing up its own action (a Major would also
-## flinch the monster toward its own door); the GDD does not say, a designer ruling settles it.
-## ponytail: distance only; swap for scare-events story 003's shared relevance helper (adds line of sight).
+## Rule 19 recipients: every live player ScareRelevance finds relevant to `origin` (within the entry's
+## audible_range_m or with line of sight), the acting monster excluded. Inference: the actor is not "relevant"
+## to a scare dressing up its own action (a Major would also flinch the monster toward its own door); the GDD
+## does not say, a designer ruling settles it.
 func recipients(scare_id: StringName, origin: Vector3) -> Array[int]:
-	var range_m := _catalogue.entry(scare_id).audible_range_m
-	var out: Array[int] = []
+	var others: Array[int] = []
 	for id: int in _live.call():
-		if id != _monster and (_position.call(id) as Vector3).distance_to(origin) <= range_m:
-			out.append(id)
-	return out
+		if id != _monster:
+			others.append(id)
+	return _relevance.recipients(_catalogue.entry(scare_id), origin, others)
 
 
 func _fire(scare_id: StringName, origin: Vector3) -> void:

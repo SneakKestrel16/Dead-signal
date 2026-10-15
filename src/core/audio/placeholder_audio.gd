@@ -13,25 +13,35 @@ const LOG_CAP := 32
 const BEEP_S := 0.12
 const BEEP_HZ := 660.0
 const MIX_HZ := 22050
+## ADR-0013 §1: every sound this sink plays is a gameplay cue (footsteps, lunge, stun, distortion), which
+## scare ducking never writes (story scare-events/008).
+const BUS := &"GameplayCues"
 
 ## [sound, at] of the latest plays, at most LOG_CAP (checks and the evidence run's log).
 var played: Array = []
 ## Sound entries with a bad payload.
 var rejected: int = 0
 
-var _beep := AudioStreamWAV.new()
+var _beep: AudioStreamWAV
 
 
 func _init() -> void:
-	var n := int(BEEP_S * MIX_HZ)
+	_beep = tone(BEEP_HZ, BEEP_S, 12000.0 / 32767.0)
+
+
+## A PLACEHOLDER 16-bit mono sine of `hz` lasting `seconds` at peak `amplitude` (0-1), fading out linearly.
+static func tone(hz: float, seconds: float, amplitude: float) -> AudioStreamWAV:
+	var n := int(seconds * MIX_HZ)
 	var data := PackedByteArray()
 	data.resize(n * 2)
 	for i in n:
 		var fade := 1.0 - float(i) / n
-		data.encode_s16(i * 2, int(sin(TAU * BEEP_HZ * i / MIX_HZ) * fade * 12000.0))
-	_beep.format = AudioStreamWAV.FORMAT_16_BITS
-	_beep.mix_rate = MIX_HZ
-	_beep.data = data
+		data.encode_s16(i * 2, int(sin(TAU * hz * i / MIX_HZ) * fade * amplitude * 32767.0))
+	var w := AudioStreamWAV.new()
+	w.format = AudioStreamWAV.FORMAT_16_BITS
+	w.mix_rate = MIX_HZ
+	w.data = data
+	return w
 
 
 ## ClientEventRouter handler for EventBatch.SOUND entries ({pos, set}).
@@ -51,6 +61,7 @@ func play_at(sound: StringName, at: Vector3) -> void:
 		played.pop_front()
 	var p := AudioStreamPlayer3D.new()
 	p.stream = _beep
+	p.bus = BUS
 	p.pitch_scale = 0.75 + float(absi(hash(sound)) % 50) / 100.0
 	p.position = at
 	add_child(p)

@@ -1,6 +1,6 @@
 # Story scare-events/004 (TR-scare-001, TR-scare-010; design/gdd/scare-events.md rules 2, 4, 4a, 5; ADR-0005).
 # A composed round: BarricadeBroken fires door_burst, FormChanged into true form fires transformation_reveal,
-# a Blackout AbilityUsed fires blackout, each to the live players within the entry's audible range (the
+# a Blackout AbilityUsed fires blackout, each to the live players ScareRelevance picks (in range or in sight; the
 # acting monster excluded); over real ENet the in-range clients receive ScareTriggered and the others do not.
 # 20 False Signals of every type emit no ScareTriggered; no scare changes health, down state, objective
 # progress, cooldowns or position. Pending: the fake-vs-real callout packet capture (Pings & Callouts PC-6/007).
@@ -13,6 +13,8 @@ const SESSION := "s-se4"
 const BASE := Vector3(300.0, 0.0, 300.0)
 ## Beyond every Monster-source audible range from anything near BASE.
 const FAR := Vector3(0.0, 0.0, 100.0)
+## Half-size of the sight-blocking booth _hide puts around an out-of-range player's eye, m.
+const BOOTH_M := 1.0
 const FALSE_SIGNALS := 20
 
 static var _next_port := 28170
@@ -179,7 +181,7 @@ func _compose() -> void:
 		_step(1)
 	assert_int(_c.lifecycle.state()).is_equal(RoundLifecycle.State.RUNNING)
 	for id in roster.player_ids():
-		_place(id, BASE + FAR * float(id + 1))
+		_hide(id, BASE + FAR * float(id + 1))
 
 
 func _on_scare(e: ServerEvent) -> void:
@@ -255,6 +257,25 @@ func _false_signal(type: int) -> EvAbilityUsed:
 	return e
 
 
+## Places `id` frozen at `at` inside a closed sight-blocking booth (PhysicsLayers.SIGHT), so the composed
+## ScareRelevance (story 003, behind MonsterScares) cannot add it by line of sight: the composed round has no
+## map collision, so without it every player sees every origin.
+func _hide(id: int, at: Vector3) -> void:
+	_place(id, at)
+	var booth := StaticBody3D.new()
+	booth.collision_layer = PhysicsLayers.SIGHT
+	booth.collision_mask = 0
+	for side: Vector3 in [Vector3.RIGHT, Vector3.LEFT, Vector3.UP, Vector3.DOWN, Vector3.FORWARD, Vector3.BACK]:
+		var wall := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = (Vector3.ONE - side.abs()) * 2.0 * BOOTH_M + side.abs() * 0.2
+		wall.shape = box
+		wall.position = side * BOOTH_M
+		booth.add_child(wall)
+	_roots[0].add_child(booth)
+	booth.global_position = at + Vector3.UP * _knobs.controller.eye_height_m
+
+
 ## Range of entry `id` from the shipped catalogue.
 func _range(id: StringName) -> float:
 	return ScareCatalogue.load_shipped().entry(id).audible_range_m
@@ -292,22 +313,27 @@ func test_barricade_break_reveal_and_blackout_fire_to_players_in_range() -> void
 	var at := (_c.map.interactables()[door] as MapPassage).position
 	_place(_c.monster, at + Vector3(1.0, 0.0, 0.0))
 	_place(s[0], at + Vector3(_range(MonsterScares.BURST) - 1.0, 0.0, 0.0))
-	_place(s[1], at + Vector3(_range(MonsterScares.BURST) + 1.0, 0.0, 0.0))
+	_hide(s[1], at + Vector3(_range(MonsterScares.BURST) + 1.0, 0.0, 0.0))
+	await get_tree().physics_frame # the booths enter the physics space
 	_emit.queue.append(_broken(door))
 	_step(1)
 	assert_array(_got_scare(MonsterScares.BURST)).is_equal([s[0]])
 	_place(_c.monster, BASE)
 	_place(s[2], BASE + Vector3(0.0, 0.0, _range(MonsterScares.REVEAL) - 1.0))
-	_place(s[3], BASE + Vector3(0.0, 0.0, -_range(MonsterScares.REVEAL) - 1.0))
+	_hide(s[3], BASE + Vector3(0.0, 0.0, -_range(MonsterScares.REVEAL) - 1.0))
+	_hide(s[0], _c.bodies[s[0]].global_position) # in the door's range, but sight would reach BASE
 	_emit.queue.append(_form(BorrowedFace.TRUE_FORM, s[0])) # disguising: no scare
 	_emit.queue.append(_form(s[0], s[1])) # face to face: no scare
 	_step(1)
+	await get_tree().physics_frame # the booths enter the physics space
 	_emit.queue.append(_form(s[1], BorrowedFace.TRUE_FORM))
 	_step(1)
 	assert_array(_got_scare(MonsterScares.REVEAL)).is_equal([s[2]])
 	var dark := BASE + Vector3(0.0, 0.0, 40.0)
 	_place(s[0], dark + Vector3(_range(MonsterScares.BLACKOUT) - 1.0, 0.0, 0.0))
-	_place(s[1], dark + Vector3(-_range(MonsterScares.BLACKOUT) - 1.0, 0.0, 0.0))
+	_hide(s[1], dark + Vector3(-_range(MonsterScares.BLACKOUT) - 1.0, 0.0, 0.0))
+	_hide(s[2], _c.bodies[s[2]].global_position) # in the reveal's range, but sight would reach dark
+	await get_tree().physics_frame # the booths enter the physics space
 	_emit.queue.append(_blackout(dark))
 	_step(1)
 	assert_array(_got_scare(MonsterScares.BLACKOUT)).is_equal([s[0]])
@@ -333,7 +359,10 @@ func test_clients_get_burst_in_range_and_never_a_scare_from_false_signal() -> vo
 	var door := _barricadable()
 	var at := (_c.map.interactables()[door] as MapPassage).position
 	_place(s[0], at + Vector3(2.0, 0.0, 0.0))
-	_place(s[1], at + Vector3(_range(MonsterScares.BURST) + 5.0, 0.0, 0.0))
+	_hide(s[1], at + Vector3(_range(MonsterScares.BURST) + 5.0, 0.0, 0.0))
+	for id in s.slice(2):
+		_hide(id, BASE + FAR * float(id + 1))
+	await get_tree().physics_frame # the booths enter the physics space
 	_emit.queue.append(_broken(door))
 	_step(1)
 	var client_of := {}

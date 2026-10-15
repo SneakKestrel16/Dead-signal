@@ -47,6 +47,8 @@ var callouts: CalloutReceiver
 ## The facility scare state the server sent (scare-events story 006); presentation is story 009.
 var facility_scare: FacilityScareDisplay
 var scares: ScarePresenter
+## Scare audio (scare-events story 008); null until joined, and on a non-rendering client.
+var scare_audio: ScareAudio
 ## Shock and stun stagger and vocal cue on remote bodies (borrowed-face story 009); null when not rendering.
 var disguise: DisguisePresenter
 ## Per-form shock presentation (arc, spark, own jitter, jolt, edge) and the placeholder audio sink
@@ -167,11 +169,19 @@ func _on_connected() -> void:
 		input = LocalInput.new()
 		add_child(input)
 		router.subscribe(&"ViewOffsetChanged", input.on_view_offset)
-		# No ScareCatalog in code yet (Scare Events epic): an empty catalog plays nothing. No accessibility
-		# settings store yet either: flash_scale and camera_fx.enabled keep their defaults (full, on).
-		scares = ScarePresenter.new(FlashLimiter.new(knobs.facility.max_flashes_per_s), camera_fx, {})
+		# No accessibility settings store yet: flash_scale, camera_fx.enabled and the scare audio volume
+		# scales keep their defaults (full, on).
+		var scare_catalogue := ScareCatalogue.load_shipped()
+		scares = ScarePresenter.new(FlashLimiter.new(knobs.facility.max_flashes_per_s), camera_fx,
+				scare_catalogue.presenter_catalog())
 		add_child(scares)
 		router.subscribe(&"ScareTriggered", scares.on_scare)
+		scare_audio = ScareAudio.new(scare_catalogue, knobs)
+		add_child(scare_audio)
+		for t: StringName in [&"PlayerShocked", &"MonsterStunned"]:
+			router.subscribe(t, scare_audio.on_stun)
+		router.subscribe(&"ScareTriggered", scare_audio.on_scare)
+		router.subscribe(EventBatch.SOUND, scare_audio.on_sound)
 		disguise = DisguisePresenter.new(remotes, puppets.state_of, knobs)
 		add_child(disguise)
 		# Survivor-defense story 011: ShockPresenter routes the shock events per form (it calls the

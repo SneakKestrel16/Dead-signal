@@ -35,6 +35,11 @@ extends Node3D
 ## (--stun=survivor aims at the last survivor in the line, clear of the shapeshifter.) --twice fires again RESIST_AFTER_S after the first stagger (inside the immunity: the true form's spark);
 ## --monster-light turns the shapeshifter's flashlight on once disguised (its cosmetic cone). Shots: arc.png,
 ## spark.png and edge.png on the first drawn frame each shows; ShockPresenter cues are printed too.
+## Scare-events story 008: --scare-audio (with --bot=stage) has the shapeshifter request a Blackout at its own
+## spot once the line stands (a Major blackout scare to the shown survivor beside it); the shown client's
+## ScareTriggered and ScareAudio levels are printed, scare.png / duck.png saved, and for SCARE_AUDIO_FRAMES drawn
+## frames each bus's peak (AudioServer.get_bus_peak_volume_left_db; training data, not in docs/engine-reference)
+## is printed, then the per-bus maxima. Add --stun to overlap a PlayerShocked / MonsterStunned duck.
 ## Borrowed-face story 010: during --bot=stage the shown client's TransformPresenter distortions are printed
 ## with their bearing from its camera and the true bearing of the shapeshifter's own body, and warp-early.png
 ## warp-late.png are saved WARP_EARLY / WARP_LATE drawn frames after a drawn body first shows Transforming
@@ -109,6 +114,9 @@ var _coil_seen := -1
 var _warp_frame := -1
 var _monster_client: RoundClient
 var _strobe_last := 0.0
+## --scare-audio: frame the shown client got its scare (-1 before), and the max bus peak per bus since.
+var _scare_frame := -1
+var _peaks: Dictionary[StringName, float] = {}
 
 
 func _ready() -> void:
@@ -375,6 +383,8 @@ func _stage(c0: RoundClient) -> void:
 	c0.scripted.pitch = -0.15
 	if not arrived and not _fired: # a stunned body may leave its slot; keep watching it
 		return
+	if _args.has("scare-audio"):
+		_scare_audio(c0, m)
 	var frame := Engine.get_frames_drawn()
 	if _args.has("disguise") and _disguised_frame < 0:
 		var want: int = target.predictor.last_own.get("appearance", -1)
@@ -695,3 +705,39 @@ func _scare_shots() -> void:
 		for c in _clients:
 			print("HALLUCINATING %s %s" % [c.name, (c.get_node(^"ScareVisuals") as ScareVisuals).hallucinating()])
 		_shot("hallucination")
+const SCARE_AUDIO_FRAMES := 240
+const PEAK_BUSES: Array[StringName] = [&"Master", &"Ambience", &"GameplayCues", &"Scare", &"ScareDuck", &"Stinger",
+	&"ScareSFX"]
+
+
+func _scare_audio(c0: RoundClient, m: RoundClient) -> void:
+	if not has_meta(&"scare_sent"):
+		set_meta(&"scare_sent", true)
+		c0.router.subscribe(&"ScareTriggered", _on_scare_audio)
+		(m.multiplayer as SceneMultiplayer).send_bytes(MonsterAbilities.request_packet(
+				MonsterAbilities.Ability.BLACKOUT, m.body.global_position), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		print("SCARE-AUDIO blackout requested at %s, frame %d" % [m.body.global_position, Engine.get_frames_drawn()])
+	var frame := Engine.get_frames_drawn()
+	if _scare_frame < 0 or frame > _scare_frame + SCARE_AUDIO_FRAMES:
+		return
+	var row := PackedStringArray()
+	for bus in PEAK_BUSES:
+		var db := AudioServer.get_bus_peak_volume_left_db(AudioServer.get_bus_index(bus), 0)
+		_peaks[bus] = maxf(_peaks.get(bus, -INF), db)
+		row.append("%s %.1f" % [bus, db])
+	print("PEAK +%d duck %.2f stingers %d diegetic %d | %s" % [frame - _scare_frame, c0.scare_audio.duck_level_db(),
+			c0.scare_audio.stingers().size(), c0.scare_audio.diegetic().size(), ", ".join(row)])
+	if frame == _scare_frame + 3:
+		_shot("scare")
+	if frame == _scare_frame + SCARE_AUDIO_FRAMES:
+		print("PEAK MAX over %d frames: %s" % [SCARE_AUDIO_FRAMES, _peaks])
+
+
+func _on_scare_audio(_tick: int, payload: Dictionary) -> void:
+	if _scare_frame < 0:
+		_scare_frame = Engine.get_frames_drawn()
+	var cam := _shown.camera.global_transform
+	var at: Vector3 = payload.get("origin", Vector3.ZERO)
+	print("SCARE %s intensity %s at %s frame %d: bearing %.1f deg, distance %.2f m" % [payload.get("scare"),
+			payload.get("intensity"), at, Engine.get_frames_drawn(), TransformPresenter.bearing_deg(cam, at),
+			cam.origin.distance_to(at)])
