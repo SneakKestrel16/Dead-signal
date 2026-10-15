@@ -46,6 +46,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** revoke the old peer's visibility before `disconnect_peer()`, as `NetAuthority._on_peer_connected` does. In tests, also free nodes holding a `MultiplayerSynchronizer` before unsetting their `SceneMultiplayer`; freeing them afterwards logs `on_replication_stop` and `on_reset` errors.
 - **Source:** network-authority story 002, 2026-10-14, `tokens_reconnect_test.gd::test_visibility_follows_the_player_to_the_new_peer`.
 
+### `StringName` `<` does not sort by text
+
+- **Symptom:** sorting map markers by `id` (`&"S1"` .. `&"S5"`) with `a.id < b.id` gave an order that was not alphabetical; survivors spawned at S2..S5.
+- **Cause:** the comparison of two `StringName` values orders by internal pointer, not by characters. Inference from the observed order: not checked against engine source.
+- **Fix:** compare `String(a.id) < String(b.id)`.
+- **Source:** match-flow story 004, 2026-10-14 (`src/feature/match_flow/round_lifecycle.gd`); the spawn test failed with the `StringName` compare and passed with the `String` one.
+
 ## UI and input
 
 ### A centred `Control` eats captured-mouse look

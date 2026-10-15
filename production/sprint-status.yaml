@@ -51,11 +51,11 @@ stories:
     name: "Loading barrier, spawn, round end and return to lobby"
     file: "production/epics/match-flow/story-004-round-lifecycle.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "survivor-objectives-1"
     name: "Drive extract and carry"

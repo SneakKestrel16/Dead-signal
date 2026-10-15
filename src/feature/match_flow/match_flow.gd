@@ -129,6 +129,14 @@ func server_tick(_tick: int) -> void:
 	_update_phase()
 
 
+## Rule 3: the round enters Infiltration at `elapsed_s = 0` and broadcasts RoundPhaseChanged once.
+## RoundLifecycle calls it when the loading barrier opens; clock-only rounds never call it.
+func begin() -> void:
+	var ev := EvRoundPhaseChanged.new()
+	ev.phase = _phase
+	_bus.emit(ev)
+
+
 ## The module to register at TickOrder.MATCH_FLOW_RESOLVE.
 func resolve_step() -> ResolveStep:
 	return ResolveStep.new(self)
