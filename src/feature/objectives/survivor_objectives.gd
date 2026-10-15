@@ -22,6 +22,11 @@ class_name SurvivorObjectives extends RefCounted
 ## the newest event per point, for ServerMovement.catch_up (reconnecting clients).
 ## Story 008 (rules 5-6; ADR-0012 §6): the active points are one rule-6-valid placement from
 ## CandidateSelection, drawn at setup with `rng`; candidate_errors() checks the map against the knobs.
+## Story 009 (rule 7; ADR-0012 §2-5): each tick a drive room or fuse spawn no survivor has seen yet is
+## discovered by the first eligible survivor that SightTest.sees it within `discover_range_m` and
+## `discover_fov_deg`, from the server eye and consumed-input yaw; `discover` (CandidateReplication.discover)
+## then grants it to every survivor peer and an ObjectiveProgressChanged with `discovered` goes out.
+## Fuse boxes and the terminal are always known, so never tested. No client message decides discovery.
 ## Not yet here: the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
@@ -29,6 +34,7 @@ class_name SurvivorObjectives extends RefCounted
 ##   obj.survivor_ids.assign(survivors)
 ##   obj.rng = round_rng   # seeded from the round seed; draws the active points at setup
 ##   obj.emit_sound = server_movement.emit_sound
+##   obj.set_discovery(eye_of, view.yaw_of, sight, replication.discover, match_flow.status_of)
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
 ##   server_movement.catch_up.append(obj.catch_up)
 
@@ -78,6 +84,10 @@ var placement := PackedInt32Array()
 ## send (ServerMovement.emit_sound). Invalid = no install noise is sent.
 var emit_sound: Callable = Callable()
 
+## MatchFlow.Status values that may discover (ADR-0012 §3): Healthy covers Wounded and Seized; Downed
+## counts. Escaped, Eliminated, Disconnected and Did Not Escape never discover.
+const DISCOVERING_STATUSES: Array[MatchFlow.Status] = [MatchFlow.Status.HEALTHY, MatchFlow.Status.DOWNED]
+
 var _holds: HoldService
 var _map: MapData
 ## Every rule-6-valid placement, listed once when the map is handed in (ADR-0012 §6).
@@ -110,6 +120,14 @@ var _fuse_pickups: Array[ObjectivePoint] = []
 var _activation_ticks: int = 0
 ## Objective id -> its newest event (POWERED under POWERED_KEY); install alerts are never kept.
 var _last: Dictionary[int, EvObjectiveProgressChanged] = {}
+## Story 009 collaborators (set_discovery); unset = nothing is discovered.
+var _eye_of: Callable
+var _yaw_of: Callable
+var _sight: Callable
+var _discover: Callable
+var _status_of: Callable
+## Marker index -> objective id (DRIVE_ID + i / FUSE_ID + i) of each active point not yet discovered.
+var _undiscovered: Dictionary[int, int] = {}
 
 
 ## `is_healthy(actor: int) -> bool` is the life-state source (Downing's view once it exists); pass an
@@ -124,6 +142,22 @@ func _init(holds: HoldService, map: MapData, is_healthy: Callable = Callable(),
 	_is_healthy = is_healthy
 	_is_hidden = is_hidden
 	_position_of = position_of
+
+
+## Injects the discovery collaborators (story 009), before setup:
+##   eye_of(player) -> Vector3          the survivor's server body eye position
+##   yaw_of(player) -> float            ViewState.yaw_of: consumed input frame yaw (0 faces -Z)
+##   sight(eye, point) -> bool          MapQueries.clear_sight on the server (SIGHT rays, analytic doors)
+##   discover(marker_index) -> bool     CandidateReplication.discover: grants the point to every survivor
+##   status_of(player) -> int           MatchFlow.status_of; unset = every survivor may discover
+## Hidden survivors (is_hidden) never discover; the shapeshifter is never in survivor_ids.
+func set_discovery(eye_of: Callable, yaw_of: Callable, sight: Callable, discover: Callable,
+		status_of: Callable = Callable()) -> void:
+	_eye_of = eye_of
+	_yaw_of = yaw_of
+	_sight = sight
+	_discover = discover
+	_status_of = status_of
 
 
 ## RoundServer entry: builds the active points and registers their interactables (drives, fuses, boxes,
@@ -144,6 +178,7 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_terminal = TerminalState.LOCKED
 	_activation_ticks = 0
 	_last = {}
+	_undiscovered = {}
 	## Named method, not a lambda: the bus must not keep the module alive (no RefCounted cycle).
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 	bus.subscribe(&"SurvivorDowned", _on_downed)
@@ -159,11 +194,13 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 		return
 	_active = placement if not placement.is_empty() else CandidateSelection.pick(_placements, rng)
 	for m: MapMarker in _first(&"drive", ACTIVE_DRIVES):
+		_undiscovered[_map.markers.find(m)] = DRIVE_ID + _states.size()
 		_add(DriveConsole.new(), _states.size(), m, o.drive_extract_s)
 		_marker_ids.append(m.id)
 		_states.append(DriveState.SECURED)
 		_carriers.append(-1)
 	for m: MapMarker in _first(&"fuse", ACTIVE_FUSES):
+		_undiscovered[_map.markers.find(m)] = FUSE_ID + _fuse_states.size()
 		_add(FuseSpawn.new(), _fuse_states.size(), m, o.pickup_s)
 		_fuse_states.append(FuseState.UNFOUND)
 		_fuse_carriers.append(-1)
@@ -239,11 +276,50 @@ func _add(p: ObjectivePoint, index: int, m: MapMarker, duration_s: float, lock_t
 ## Activation countdown (rule 19): counts each Activating tick with the zone held, pauses otherwise,
 ## and activates once the count reaches `evac_activation_s`. Holds are timed in the Holds step.
 func server_tick(_tick: int) -> void:
+	_discover_points()
 	if _terminal != TerminalState.ACTIVATING or not _zone_held():
 		return
 	_activation_ticks += 1
 	if _activation_ticks >= _knobs.ticks(_knobs.objectives.evac_activation_s):
 		_activate()
+
+
+## Rule 7, ADR-0012 §4: per undiscovered point, the first eligible survivor that sees it discovers it for
+## the round. The sample point is the marker raised to the capsule centre, as for interaction. Inference:
+## ADR-0012 §2 wants 1-3 authored sample points per room in Facility Map data, which the map file does
+## not carry yet; authored sample points there would settle it.
+func _discover_points() -> void:
+	if _undiscovered.is_empty() or not (_eye_of.is_valid() and _yaw_of.is_valid() and _sight.is_valid() 			and _discover.is_valid()):
+		return
+	var o := _knobs.objectives
+	var lift := Vector3.UP * _knobs.controller.capsule_height_m / 2.0
+	for i: int in _undiscovered.keys():
+		var targets := PackedVector3Array([_map.markers[i].position + lift])
+		for id in survivor_ids:
+			if _can_discover(id) and SightTest.sees(_eye_of.call(id), _yaw_of.call(id), targets,
+					o.discover_range_m, o.discover_fov_deg, _sight):
+				_reveal(i)
+				break
+
+
+func _can_discover(id: int) -> bool:
+	if _is_hidden.is_valid() and _is_hidden.call(id):
+		return false
+	return not _status_of.is_valid() or _status_of.call(id) in DISCOVERING_STATUSES
+
+
+## Grants marker `i` to the survivors and announces it in its current state. A drive or fuse already
+## carried, dropped or installed was announced (discovered) when that happened, so only a Secured drive
+## or Unfound fuse sends the event here.
+func _reveal(i: int) -> void:
+	var objective: int = _undiscovered[i]
+	_undiscovered.erase(i)
+	_discover.call(i)
+	if objective >= FUSE_ID:
+		if _fuse_states[objective - FUSE_ID] == FuseState.UNFOUND:
+			_emit(objective, FuseState.UNFOUND)
+	elif _states[objective - DRIVE_ID] == DriveState.SECURED:
+		_emit(objective, DriveState.SECURED)
 
 
 ## The round's objective state as the events that set it, newest per point (ADR-0004 §9): a reconnecting
