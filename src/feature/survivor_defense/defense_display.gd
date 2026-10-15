@@ -4,8 +4,8 @@ class_name DefenseDisplay extends RefCounted
 ## it was told of. Client only, and decides nothing: it applies EventBatch.CHARGES / HIDING / BARRICADE
 ## entries and the projected PlayerShocked / MonsterStunned, routed by ClientEventRouter (which drops
 ## anything not from the server peer). Not a StateRegistry view: it holds received state and mutates.
-## A client that reconnects mid-round shows its own charges, hiding spot and doors only from their next
-## change (ServerMovement.catch_up has no batch_extras path yet, as with LifeDisplay's ring).
+## A client that reconnects mid-round gets every provider's full state for it in its first batch
+## (ServerMovement.batch_extras `full`, story match-flow/012).
 ## Usage (client):
 ##   var defense := DefenseDisplay.new(router)
 ##   hud.cartridges(defense.charges()); hud.hidden(defense.hiding_spot() != -1)

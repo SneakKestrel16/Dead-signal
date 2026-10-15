@@ -250,8 +250,18 @@ static func bleed_step(elapsed: float, dt: float, rescuing: bool, nearest_player
 ## the client runs the ring at `rate` between changes. A rate carries no identity: any non-Downed
 ## player in the radius gives the same camp_slow_mult (GDD re-review R1). Survivors only; nothing for
 ## the shapeshifter, any other id, or before roles are dealt (fails closed like SurvivorDowned).
-func ring_entries(viewer: int) -> Array:
-	return _ring_out if _monster >= 0 and viewer != _monster and _survivors.has(viewer) else []
+## `full` (a rejoin, story match-flow/012): every running ring as it stands, to the same viewers.
+func ring_entries(viewer: int, full: bool = false) -> Array:
+	if _monster < 0 or viewer == _monster or not _survivors.has(viewer):
+		return []
+	if not full:
+		return _ring_out
+	var out: Array = []
+	for s: int in _bleed:
+		if _ring_rate.has(s):
+			out.append([EventBatch.BLEED_RING,
+				{"survivor": s, "remaining_s": (_bleed_ticks - _bleed[s]) / _hz, "rate": _ring_rate[s]}])
+	return out
 
 
 ## Pauses (`on` true) or resumes the bleed-out timer of Downed `player` during a rescue hold.

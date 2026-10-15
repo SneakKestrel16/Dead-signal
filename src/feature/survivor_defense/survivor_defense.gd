@@ -293,10 +293,12 @@ func charges(player: int) -> int:
 ## cartridges as [EventBatch.CHARGES, {charges}] in the batch after they change, the round's first count
 ## included. Diffed once per tick, so every viewer of a tick sees the same changes (a spectator gets the
 ## watched survivor's). Nothing for the monster or any id not in the roster.
-## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
-func charge_entries(viewer: int) -> Array:
+## `full` (a rejoin, story match-flow/012): `viewer`'s current count, leaving the diff untouched.
+func charge_entries(viewer: int, full: bool = false) -> Array:
 	if _runner == null:
 		return []
+	if full:
+		return [[EventBatch.CHARGES, {"charges": _charges[viewer]}]] if _charges.has(viewer) else []
 	if _out_tick != _runner.current_tick():
 		_out_tick = _runner.current_tick()
 		_charges_out = {}

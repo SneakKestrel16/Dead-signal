@@ -166,10 +166,15 @@ func lockout_end(net_id: int) -> int:
 ## ServerMovement.batch_extras provider (story 012, AD-194: a barricade is a world object, so everyone):
 ## [EventBatch.BARRICADE, {door, barricaded, lockout_end}] for every door whose state changed (built,
 ## removed, broken) since the last batch. Diffed once per tick; the same entries for every viewer.
-## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
-func barricade_entries(_viewer: int) -> Array:
+## `full` (a rejoin, story match-flow/012): every door's current state, leaving the diff untouched.
+func barricade_entries(_viewer: int, full: bool = false) -> Array:
 	if _runner == null:
 		return []
+	if full:
+		var all: Array = []
+		for d: int in _build:
+			all.append([EventBatch.BARRICADE, {"door": d, "barricaded": is_barricaded(d), "lockout_end": lockout_end(d)}])
+		return all
 	if _out_tick != _runner.current_tick():
 		_out_tick = _runner.current_tick()
 		_out = []

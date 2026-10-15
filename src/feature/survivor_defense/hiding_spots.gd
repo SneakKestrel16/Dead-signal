@@ -126,10 +126,15 @@ func occupant(spot: int) -> int:
 ## ServerMovement.batch_extras provider (story 012, AD-194: occupancy to the occupant only, so no other
 ## viewer, survivor or monster, learns who hides where): [EventBatch.HIDING, {spot}] for `viewer` in the
 ## batch after it entered (spot) or left or was ejected (-1). Diffed once per tick for every viewer.
-## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
-func hiding_entries(viewer: int) -> Array:
+## `full` (a rejoin, story match-flow/012): `viewer`'s current spot, -1 when not hidden; nothing for
+## the monster, which never hides (rule 19), so it learns nothing of occupancy.
+func hiding_entries(viewer: int, full: bool = false) -> Array:
 	if _runner == null:
 		return []
+	if full:
+		if _is_monster.call(viewer):
+			return []
+		return [[EventBatch.HIDING, {"spot": _occupant.find_key(viewer) if _occupant.values().has(viewer) else -1}]]
 	if _out_tick != _runner.current_tick():
 		_out_tick = _runner.current_tick()
 		var now: Dictionary[int, int] = {}

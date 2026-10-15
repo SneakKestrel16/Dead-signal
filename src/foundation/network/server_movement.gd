@@ -72,9 +72,11 @@ var history: RewindHistory
 var catch_up: Array[Callable] = []
 ## Players rejoined since their last stream: they get the catch-up once.
 var _needs_catch_up: Dictionary[int, bool] = {}
-## Non-catalog batch entries: `provider.call(as_player) -> Array` of [type, payload], already projected
-## for that player (a spectator gets the watched survivor's), appended to every stream's event batch
-## this tick. Downing.ring_entries is one (story downing-and-rescue/007).
+## Non-catalog batch entries: `provider.call(as_player, full) -> Array` of [type, payload], already
+## projected for that player (a spectator gets the watched survivor's), appended to every stream's event
+## batch this tick. `full` is false for this tick's changes and true on a viewer's first stream after a
+## rejoin, which gets the provider's whole current state for it under the same visibility rule (story
+## match-flow/012, ADR-0004 §9). Downing.ring_entries is one (story downing-and-rescue/007).
 var batch_extras: Array[Callable] = []
 
 
@@ -331,7 +333,8 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 	var msgs := scope.handles.take(viewer)
 	if not msgs.is_empty():
 		_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
-	if _needs_catch_up.erase(viewer):
+	var full := _needs_catch_up.erase(viewer)
+	if full:
 		for provider in catch_up:
 			for e: ServerEvent in provider.call():
 				var one: Array[ServerEvent] = [e]
@@ -340,7 +343,7 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 					_smp.send_bytes(old, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
 	var extra: Array = []
 	for provider in batch_extras:
-		extra.append_array(provider.call(as_player))
+		extra.append_array(provider.call(as_player, full))
 	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster, extra)
 	if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
 		_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
