@@ -1,7 +1,7 @@
 # Story 005: Ambush lunge scare and flinch suppression near a lunge
 
 > **Epic**: Scare Events
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -33,9 +33,9 @@ At lunge wind-up (`AbilityUsed`) the server runs the ambush test per survivor wi
 
 *From GDD `design/gdd/scare-events.md`, scoped to this story:*
 
-- [ ] A lunge wind-up started in a blacked-out volume, or by a monster that a survivor within `lunge_cue_radius_m` has not seen for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume by a monster seen within `ambush_unseen_s` sends none.
-- [ ] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush scare or any other Major scare.
-- [ ] A Major scare to a toggled-on player writes the flinch through `ViewOffset`; maximum measured input loss is at most 0.3 s, and movement and stun input work during a flinch.
+- [x] A lunge wind-up started in a blacked-out volume, or by a monster that a survivor within `lunge_cue_radius_m` has not seen for `ambush_unseen_s`, sends the ambush lunge scare to that survivor; a wind-up in a lit volume by a monster seen within `ambush_unseen_s` sends none.
+- [x] No flinch plays on a survivor within `lunge_cue_radius_m` of a monster in lunge wind-up or Active, from the ambush scare or any other Major scare.
+- [x] A Major scare to a toggled-on player writes the flinch through `ViewOffset`; maximum measured input loss is at most 0.3 s, and movement and stun input work during a flinch.
 
 ---
 
@@ -63,7 +63,7 @@ At lunge wind-up (`AbilityUsed`) the server runs the ambush test per survivor wi
 **Story Type**: Integration
 **Required evidence**: `tests/integration/scare-events/ambush_lunge_flinch_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/scare-events/ambush_lunge_flinch_test.gd` (4 cases, AC3 over real ENet)
 
 ---
 
@@ -71,3 +71,17 @@ At lunge wind-up (`AbilityUsed`) the server runs the ambush test per survivor wi
 
 - Depends on: Stories 001, 002
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-se5. Full suite 1328 tests: 1327 passed. `proximity_voice_replication_test.gd` failed during the run while parallel agents ran real-ENet suites, and passed 2/2 re-run alone (a port clash, as in sprint 7; no bound widened). Mutations caught: blackout ignored, `ambush_unseen_s` threshold removed, flinch gated on wind-up only, Minor scares allowed to flinch.
+
+Notes:
+- `AmbushTest` runs at `TickOrder.SCARE_EVENTS - 1`, recording each survivor's last sight of the monster chest; `ScareFlinch` turns each delivered Major `ScareTriggered` into a `FlinchRequested`. `ViewOffset` stays the only offset writer. `_in_wind_up` in the composer now covers Lunge Active too (rule 14).
+- After SE-2 gating merged, the flinch test steps past `major_scare_cooldown_s` before its last burst, because the earlier Majors start the cooldown (rule 9).
+
+Deviations (inference):
+- `SightTest` runs with fov INF: at 360 a monster exactly behind was dropped (`angle_to` rounds above PI).
+- A survivor who has never seen the monster this round counts as unseen. A designer call on early-round lunges settles it.
+- The cue radius is measured chest to chest (same as feet at equal capsule height).
+- AC3 input loss is counted in server ticks to the offset target against `scare_max_control_loss_s`.

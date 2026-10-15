@@ -54,6 +54,9 @@ var footsteps: Footsteps
 var offset: ViewOffset
 ## Server Scare Events module (scare-events story 001); owning systems call scares.fire().
 var scares: ScareEvents
+## The ambush test and the Major-scare flinch request (scare-events story 005).
+var ambush: AmbushTest
+var flinch: ScareFlinch
 var candidates: CandidateReplication
 ## Map interactable index (MapQueries.interactable_on_ray) -> HoldService net ids at that object, built
 ## after setup: only doors register at their map index, so the aim ray's index is translated here.
@@ -110,6 +113,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	if catalogue == null:
 		return PackedStringArray(["scare catalogue invalid, round not started"])
 	scares = ScareEvents.new(catalogue)
+	ambush = AmbushTest.new(scares)
 	holds = HoldService.new(knobs, _live_players, sm.frames_of, _centre, _hold_sight, _aim, _body_target,
 			_is_monster)
 	doors = Doors.new(holds, map, _capsules, _not_locked)
@@ -147,6 +151,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	ma.set_modifiers(_modifiers)
 	ma.set_blackout_sources(queries.volume_at, _monster_sees)
 	ma.set_sound_sink(sm.emit_sound) # MA-7: lunge cue, scrape and hit sounds
+	ambush.set_sources(monster, survivors, _body_points, _clear_sight, queries.volume_at)
 	bars = Barricades.new(holds, doors, map, _survivor_free, _monster_capsules, _monster_free)
 	hs = HidingSpots.new(holds, map, _survivor_free, _is_monster, _set_hidden, _modifiers, _place)
 	objectives = SurvivorObjectives.new(holds, map, _objective_healthy, sd.is_hidden, _position)
@@ -217,6 +222,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.FOOTSTEPS: footsteps,
 		TickOrder.SURVIVOR_OBJECTIVES: objectives,
 		TickOrder.PINGS_CALLOUTS: pings,
+		TickOrder.SCARE_EVENTS - 1: ambush,
 		TickOrder.SCARE_EVENTS: scares,
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
 	}
@@ -224,6 +230,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	if not errs.is_empty():
 		return errs
 	offset.setup(server.tick_runner, server.bus, server.registry, knobs)
+	flinch = ScareFlinch.new(view, offset, _body_points)
+	flinch.setup(server.bus)
 	server.registry.register_view(StateKeys.CAMERA_FLINCH_TOGGLE, &"NetworkAuthority", PlayerSettingsView.new(net))
 	for id in roster.player_ids():
 		offset.set_flinch_enabled(id, net.flinch_enabled_of(id))
@@ -480,9 +488,10 @@ func _monster_sees(id: int, aim: Vector3) -> bool:
 	return queries.clear_sight(_eye(id), aim, doors.is_closed, _space(), _rid(id))
 
 
-## ViewOffset's wind-up gate: the monster is in Lunge wind-up and `id` is within lunge_cue_radius_m of it.
+## ViewOffset's wind-up gate (scare-events.md rule 14): the monster's Lunge is in wind-up or Active and `id` is
+## within lunge_cue_radius_m of it.
 func _in_wind_up(id: int) -> bool:
-	return ma != null and ma.lunge_state() == MonsterAbilities.Lunge.WIND_UP 			and _position(id).distance_to(_position(monster)) <= knobs.ability.lunge_cue_radius_m
+	return ma != null and ma.lunge_state() in [MonsterAbilities.Lunge.WIND_UP, MonsterAbilities.Lunge.ACTIVE] 			and _position(id).distance_to(_position(monster)) <= knobs.ability.lunge_cue_radius_m
 
 
 ## HidingSpots' set_hidden: SurvivorDefense's flag, and a ViewOffset re-baseline on entering (ADR-0015).
