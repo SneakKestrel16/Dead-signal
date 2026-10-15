@@ -81,11 +81,11 @@ stories:
     name: "Docking and the evacuation terminal"
     file: "production/epics/survivor-objectives/story-005-docking-and-terminal.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "match-flow-3"
     name: "Escape, evidence extraction and outcome lock"
@@ -131,11 +131,11 @@ stories:
     name: "Bleed-out timer and anti-camping slow"
     file: "production/epics/downing-and-rescue/story-003-bleed-out.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "match-flow-9"
     name: "Clients display server phase and outcome only"

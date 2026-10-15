@@ -68,9 +68,9 @@ func test_life_states_reach_everyone_but_bleed_out_never_reaches_the_shapeshifte
 	gone.survivor = S2
 	var events: Array[ServerEvent] = [downed, rescued, gone]
 	assert_array(_got(S1, events)).is_equal([[&"SurvivorDowned", {"survivor": S2, "bleed_out_s": 42.5}],
-		[&"SurvivorRescued", {"survivor": S2}], [&"SurvivorEliminated", {"survivor": S2}]])
+		[&"SurvivorRescued", {"survivor": S2}], [&"SurvivorEliminated", {"survivor": S2, "reason": 0}]])
 	assert_array(_got(M, events)).is_equal([[&"SurvivorDowned", {"survivor": S2}],
-		[&"SurvivorRescued", {"survivor": S2}], [&"SurvivorEliminated", {"survivor": S2}]])
+		[&"SurvivorRescued", {"survivor": S2}], [&"SurvivorEliminated", {"survivor": S2, "reason": 0}]])
 
 
 ## Code review 2026-10-14: before roles are dealt (monster -1) every viewer counted as a survivor and

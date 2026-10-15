@@ -15,6 +15,7 @@ interact_range_m = 2.0
 alert_area_radius_m = 10.0
 alert_duration_s = 5.0
 install_noise_radius_m = 25.0
+terminal_zone_radius_m = 4.0
 discover_range_m = 8.0
 discover_fov_deg = 90.0
 drive_candidates = 6

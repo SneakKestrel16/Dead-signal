@@ -1,12 +1,12 @@
 # Story 003: Bleed-out timer and anti-camping slow
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ A Downed survivor bleeds out unless rescued; the timer pauses during a rescue an
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A Downed survivor left alone is Eliminated after `bleedout_s` (60 s ±1 tick) with reason "Bled out"; holding a rescue pauses the timer and releasing resumes it from the same value (rule 6, Formulas "Bleed-out").
-- [ ] With at least one survivor Healthy and any other non-Downed player (survivor or shapeshifter, any form) 9 m away, the timer advances at 0.25 s per second; at 11 m at 1 s per second from the same value; Eliminated, Escaped and disconnected players never slow it.
-- [ ] With every living survivor Downed and the shapeshifter 5 m from one of them, that survivor's timer keeps advancing at full rate and each is Eliminated on their own timer (rule 10).
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] A Downed survivor left alone is Eliminated after `bleedout_s` (60 s ±1 tick) with reason "Bled out"; holding a rescue pauses the timer and releasing resumes it from the same value (rule 6, Formulas "Bleed-out").
+- [x] With at least one survivor Healthy and any other non-Downed player (survivor or shapeshifter, any form) 9 m away, the timer advances at 0.25 s per second; at 11 m at 1 s per second from the same value; Eliminated, Escaped and disconnected players never slow it.
+- [x] With every living survivor Downed and the shapeshifter 5 m from one of them, that survivor's timer keeps advancing at full rate and each is Eliminated on their own timer (rule 10).
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -84,9 +84,9 @@ A Downed survivor bleeds out unless rescued; the timer pauses during a rescue an
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/downing-and-rescue/bleed-out_test.gd` — must exist and pass
+- Logic: `tests/unit/downing-and-rescue/bleed_out_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/downing-and-rescue/bleed_out_test.gd` (13 tests)
 
 ---
 
@@ -94,3 +94,20 @@ A Downed survivor bleeds out unless rescued; the timer pauses during a rescue an
 
 - Depends on: Story 001
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-131):
+- Implemented by gameplay-programmer in a git worktree, in parallel with SO-5; reviewed and merged by the orchestrator.
+- The bleed-out timer counts ticks and advances in `server_tick` before the commit completes, so a survivor Downed this tick starts bleeding on the next and is Eliminated exactly `bleedout_s` after the down. The per-tick step is the static `Downing.bleed_step(...)`.
+- Positions come from an injected `set_positions(Callable)`: no `PLAYER_POSITIONS_LIFE_STATES` view is registered yet. Unset, nobody counts as near (full rate). Production wiring is the round composition root's.
+- Rescue pause is `set_rescuing(player, on)`, for story 004 to drive (it must clear it on rescue complete or cancel).
+- Escaped and disconnected players are tracked from SurvivorEscaped and PlayerConnectionChanged; RECONNECTED counts again.
+- `EvSurvivorEliminated` gains `reason` (TAKEN_DOWN 0, BLED_OUT 1, `REASON_TEXT`), projected to every peer; `event_projection_test` updated. "Bled out" is the GDD's text; "Taken down" is inference (the GDD names none): designer settles it.
+- Timers do not freeze at round end (nor does the commit timer); bleed-out is not yet published for the HUD ring. Both later stories.
+**Test Evidence**: `tests/unit/downing-and-rescue/bleed_out_test.gd`, 13 tests. Mutations caught: radius `<=` to `<` (exactly 10 m case), the presence exclusion dropped (reconnect test), expiry one tick late.
+**Code Review**: Complete (orchestrator review)

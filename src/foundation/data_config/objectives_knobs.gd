@@ -15,6 +15,10 @@ class_name ObjectivesKnobs extends Resource
 @export_range(5.0, 20.0) var alert_area_radius_m: float = NAN
 @export_range(3.0, 10.0) var alert_duration_s: float = NAN
 @export_range(15.0, 40.0) var install_noise_radius_m: float = NAN
+## Terminal zone radius (rule 19 "authored terminal zone"). Inference: the map authors no terminal zone
+## yet, so the zone is this horizontal radius around the active terminal marker; value and range are
+## not from the GDD. A Facility Map terminal-zone volume would settle it.
+@export_range(2.0, 10.0) var terminal_zone_radius_m: float = NAN
 @export_range(4.0, 15.0) var discover_range_m: float = NAN
 @export_range(60.0, 120.0) var discover_fov_deg: float = NAN
 @export_range(4, 8) var drive_candidates: int = KnobUnset.INT

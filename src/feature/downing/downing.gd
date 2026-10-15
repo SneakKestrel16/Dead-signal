@@ -1,7 +1,8 @@
 class_name Downing extends RefCounted
 ## Downing, Rescue & Elimination: life state, down count and the takedown commit (Feature layer).
 ## Implements design/gdd/downing-and-rescue.md rules 2-5, Formulas "Takedown outcome" and the
-## commit rows of Edge Cases; story downing-and-rescue/001; ADR-0005.
+## commit rows of Edge Cases; story downing-and-rescue/001; ADR-0005. Story 003 adds the bleed-out
+## timer (rule 6, rule 10, Formulas "Bleed-out"), counted in ticks and advanced in server_tick.
 ## Server only. The commit counts ticks of `net.sim_tick_hz`, never wall time. Order within a tick:
 ## MonsterStunned (Survivor Defense slot, 200) and SurvivorHit (Monster Abilities slot, 400) are
 ## handled in their slots' flushes, before server_tick runs in the DOWNING slot (500), so a stun
@@ -9,6 +10,7 @@ class_name Downing extends RefCounted
 ## Usage:
 ##   var d := Downing.new()
 ##   d.set_roster([2, 3, 4, 5], 1)   # survivor ids, monster id: BEFORE start_round
+##   d.set_positions(func(p: int) -> Vector3: return ...)   # for the camping slow
 ##   server.start_round({TickOrder.DOWNING: d}, knobs)
 ## Story 002 adds grace by extending `eligible(player)`.
 
@@ -20,6 +22,12 @@ var _monster: int = -1
 var _commit_ticks: int = 0
 var _downs_to_eliminate: int = 0
 var _bleedout_s: float = 0.0
+var _hz: int = 0
+var _bleed_ticks: int = 0
+var _camp_slow_radius_m: float = 0.0
+var _camp_slow_mult: float = 0.0
+## player id -> Vector3; invalid means no positions, so nothing slows bleed-out.
+var _position_of: Callable
 ## player id -> LifeState
 var _life: Dictionary[int, int] = {}
 ## player id -> completed takedowns this round
@@ -28,6 +36,13 @@ var _downs_taken: Dictionary[int, int] = {}
 var _victim: int = -1
 ## Tick on which the running commit completes.
 var _commit_end_tick: int = 0
+## Downed survivor -> bleed_elapsed in ticks (float: slowed ticks add camp_slow_mult).
+var _bleed: Dictionary[int, float] = {}
+## Downed survivors whose rescue hold is active (story 004 drives it through set_rescuing).
+var _rescuing: Dictionary[int, bool] = {}
+## Players with no body in the world: escaped, or disconnected until they reconnect.
+var _escaped: Dictionary[int, bool] = {}
+var _disconnected: Dictionary[int, bool] = {}
 
 
 ## Getter-only view for StateKeys.TAKEDOWN_ELIGIBILITY readers: life state, down count and
@@ -80,13 +95,29 @@ func set_roster(survivors: Array[int], monster: int) -> void:
 	_monster = monster
 
 
+## Injects the position source for the camping slow: `source.call(player_id) -> Vector3`. Until
+## Network Authority publishes StateKeys.PLAYER_POSITIONS_LIFE_STATES this is the only feed; unset,
+## no player counts as near and bleed-out runs at full rate.
+func set_positions(source: Callable) -> void:
+	_position_of = source
+
+
 ## Injected by RoundServer. Reads knobs, resets every survivor to Healthy with 0 downs (rule 2),
-## publishes the views and subscribes to SurvivorHit, MonsterStunned and PlayerConnectionChanged.
+## publishes the views and subscribes to SurvivorHit, MonsterStunned, PlayerConnectionChanged and
+## SurvivorEscaped.
 func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
 	_commit_ticks = knobs.ticks(knobs.downing.takedown_commit_s)
 	_downs_to_eliminate = knobs.downing.downs_to_eliminate
 	_bleedout_s = knobs.downing.bleedout_s
+	_hz = knobs.net.sim_tick_hz
+	_bleed_ticks = knobs.ticks(knobs.downing.bleedout_s)
+	_camp_slow_radius_m = knobs.downing.camp_slow_radius_m
+	_camp_slow_mult = knobs.downing.camp_slow_mult
+	_bleed = {}
+	_rescuing = {}
+	_escaped = {}
+	_disconnected = {}
 	_life = {}
 	_downs_taken = {}
 	for s in _survivors:
@@ -98,12 +129,48 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	bus.subscribe(&"SurvivorHit", _on_survivor_hit)
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
+	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 
 
-## DOWNING slot: completes the running commit on its end tick (rule 4.5).
+## DOWNING slot: advances every bleed-out timer one tick, eliminating on expiry (rule 6), then
+## completes the running commit on its end tick (rule 4.5). Bleed runs first, so a survivor Downed
+## this tick starts bleeding on the next and is Eliminated exactly `bleedout_s` after the down.
 func server_tick(tick: int) -> void:
+	var healthy := _healthy_survivors()
+	for s: int in _bleed.keys():
+		_bleed[s] = bleed_step(_bleed[s], 1.0, _rescuing.has(s), _nearest_distance_m(s), healthy,
+			_camp_slow_radius_m, _camp_slow_mult)
+		if _bleed[s] >= _bleed_ticks:
+			_bleed_out(s)
 	if _victim >= 0 and tick >= _commit_end_tick:
 		_complete_commit()
+
+
+## Formulas "Bleed-out", one step: paused while rescued; `dt * camp_slow_mult` while the nearest
+## other counted player is within `camp_slow_radius_m` and a survivor is Healthy; else `dt`.
+## `elapsed` and `dt` share a unit (Downing uses ticks). Example:
+## `Downing.bleed_step(10.0, 1.0, false, 9.0, 1, 10.0, 0.25)` -> 10.25.
+static func bleed_step(elapsed: float, dt: float, rescuing: bool, nearest_player_distance_m: float,
+		healthy_survivors: int, camp_slow_radius_m: float, camp_slow_mult: float) -> float:
+	if rescuing:
+		return elapsed
+	if nearest_player_distance_m <= camp_slow_radius_m and healthy_survivors >= 1:
+		return elapsed + dt * camp_slow_mult
+	return elapsed + dt
+
+
+## Pauses (`on` true) or resumes the bleed-out timer of Downed `player` during a rescue hold.
+## Story 004's rescue hold drives this; nothing else should.
+func set_rescuing(player: int, on: bool) -> void:
+	if on:
+		_rescuing[player] = true
+	else:
+		_rescuing.erase(player)
+
+
+## Seconds of bleed-out elapsed for `player` (0 when not Downed).
+func bleed_elapsed_s(player: int) -> float:
+	return _bleed.get(player, 0.0) / _hz
 
 
 ## LifeState of `player` (Healthy for an id not in the roster).
@@ -149,9 +216,60 @@ func _on_monster_stunned(e: ServerEvent) -> void:
 
 func _on_connection_changed(e: ServerEvent) -> void:
 	var c := e as EvPlayerConnectionChanged
+	# No body in the world while disconnected: stops counting for the camping slow (Edge Cases).
+	if c.status == EvPlayerConnectionChanged.RECONNECTED:
+		_disconnected.erase(c.player)
+	else:
+		_disconnected[c.player] = true
 	# Only the monster's disconnect cancels; a Seized victim's commit runs on (Edge Cases).
 	if c.player == _monster and c.status == EvPlayerConnectionChanged.DISCONNECTED:
 		_cancel_commit()
+
+
+func _on_escaped(e: ServerEvent) -> void:
+	_escaped[(e as EvSurvivorEscaped).survivor] = true
+
+
+## Formulas "Bleed-out" healthy_survivors: Healthy, not escaped, connected.
+func _healthy_survivors() -> int:
+	var n := 0
+	for s in _survivors:
+		if _life[s] == LifeState.HEALTHY and _present(s):
+			n += 1
+	return n
+
+
+func _present(player: int) -> bool:
+	return not _escaped.has(player) and not _disconnected.has(player)
+
+
+## Formulas "Bleed-out" nearest_player_distance_m: from Downed `s` to the nearest other player in
+## the world who is not Downed (survivor in any non-Downed living state, or the monster in any form).
+## INF when there is none or no position source.
+func _nearest_distance_m(s: int) -> float:
+	var best := INF
+	if not _position_of.is_valid():
+		return best
+	var at: Vector3 = _position_of.call(s)
+	for p in _survivors + [_monster]:
+		if p == s or not _present(p):
+			continue
+		var st := life_state(p)
+		if st == LifeState.DOWNED or st == LifeState.ELIMINATED:
+			continue
+		best = minf(best, at.distance_to(_position_of.call(p)))
+	return best
+
+
+## Rule 6: bleed-out expired; Eliminated with reason "Bled out".
+func _bleed_out(s: int) -> void:
+	_bleed.erase(s)
+	_rescuing.erase(s)
+	_life[s] = LifeState.ELIMINATED
+	var el := EvSurvivorEliminated.new()
+	el.survivor = s
+	el.reason = EvSurvivorEliminated.BLED_OUT
+	_bus.emit(el)
 
 
 ## Rule 4.4: the victim returns to Healthy with downs_taken unchanged. Story 002 starts
@@ -175,6 +293,7 @@ func _complete_commit() -> void:
 		_bus.emit(el)
 	else:
 		_life[s] = LifeState.DOWNED
+		_bleed[s] = 0.0
 		var dn := EvSurvivorDowned.new()
 		dn.survivor = s
 		dn.bleed_out_s = _bleedout_s

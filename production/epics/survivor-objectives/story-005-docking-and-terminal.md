@@ -1,12 +1,12 @@
 # Story 005: Docking and the evacuation terminal
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Drives are docked at the terminal; with two drives docked and two fuses installe
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A carrier docks a drive with a `dock_s` hold; a docked drive cannot be removed before activation; the terminal is Armed exactly when 2 drives are docked and 2 fuses installed, and accepts activation only then (rules 14, 18).
-- [ ] After an `activation_start_s` hold, the countdown takes 15 s with a Healthy survivor in the terminal zone and pauses with progress kept when the zone holds no Healthy, non-hidden survivor; a hidden survivor or the shapeshifter alone does not run it (rule 19, Formulas "Effective activation time").
-- [ ] At 0 the terminal is Activated: the exit opens and both docked drives eject at the terminal as Dropped items that any Healthy survivor can pick up (rule 20).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] A carrier docks a drive with a `dock_s` hold; a docked drive cannot be removed before activation; the terminal is Armed exactly when 2 drives are docked and 2 fuses installed, and accepts activation only then (rules 14, 18).
+- [x] After an `activation_start_s` hold, the countdown takes 15 s with a Healthy survivor in the terminal zone and pauses with progress kept when the zone holds no Healthy, non-hidden survivor; a hidden survivor or the shapeshifter alone does not run it (rule 19, Formulas "Effective activation time").
+- [x] At 0 the terminal is Activated: the exit opens and both docked drives eject at the terminal as Dropped items that any Healthy survivor can pick up (rule 20).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -82,9 +82,9 @@ Drives are docked at the terminal; with two drives docked and two fuses installe
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/survivor-objectives/docking-and-terminal_test.gd` — must exist and pass
+- Logic: `tests/integration/survivor-objectives/docking_and_terminal_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/docking_and_terminal_test.gd` (16 tests)
 
 ---
 
@@ -92,3 +92,21 @@ Drives are docked at the terminal; with two drives docked and two fuses installe
 
 - Depends on: Stories 001, 003
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (automated)
+**Deviations** (AD-132):
+- Implemented by gameplay-programmer in a git worktree, in parallel with DR-3; reviewed and merged by the orchestrator.
+- New points `DockSlot`, `TerminalPanel` and `DrivePickup`, each extending the top-level `ObjectivePoint` with a WeakRef to the module; each slot and pickup has its own lock key.
+- ARMED is emitted once on `TERMINAL_ID` when 2 drives are docked and power is restored (checked after every dock and install), so Match Flow's existing check moves to Evacuation (tested). No registry view: Match Flow needs only the events.
+- The countdown counts held ticks against `knobs.ticks(evac_activation_s)` in `server_tick`; it pauses without reset when the zone holds no Healthy, non-hidden survivor. `is_hidden` and `position_of` are injected callables (absent: nobody hidden, nobody in the zone).
+- Terminal zone is inference: the map authors none, so it is a horizontal radius around the terminal marker, new knob `terminal_zone_radius_m` (4.0, range 2-10, comment says so). A Facility Map terminal-zone volume would settle it; the GDD Tuning Knobs table needs the row (designer). `SHIPPED_DIGEST` re-pinned for the new knob.
+- At 0 the terminal is ACTIVATED (`exit_open()`); both drives become DROPPED at the terminal and can be picked up there by a Healthy survivor. The exit volume is story 006; drops elsewhere are story 002.
+- Survivor roster comes in through `survivor_ids`, set before setup.
+- Test file is `tests/integration/survivor-objectives/docking_and_terminal_test.gd` (integration: it drives HoldService and Match Flow), not the story's `tests/unit/...` hyphenated path.
+**Test Evidence**: `tests/integration/survivor-objectives/docking_and_terminal_test.gd`, 16 tests. Mutations caught: hidden survivors counted, arming without both slots full, activation not ejecting the drives.
+**Code Review**: Complete (orchestrator review)

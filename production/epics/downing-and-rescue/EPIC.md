@@ -44,7 +44,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 |---|-------|------|--------|-----|
 | 001 | [Life state and takedown commit](story-001-takedown-commit.md) | Logic | Complete | ADR-0005 |
 | 002 | [Grace windows and takedown eligibility](story-002-grace-and-eligibility.md) | Logic | Ready | ADR-0005 |
-| 003 | [Bleed-out timer and anti-camping slow](story-003-bleed-out.md) | Logic | Ready | ADR-0005 |
+| 003 | [Bleed-out timer and anti-camping slow](story-003-bleed-out.md) | Logic | Complete | ADR-0005 |
 | 004 | [Rescue hold with persisting progress](story-004-rescue-hold.md) | Integration | Ready | ADR-0008 |
 | 005 | [Downed crawl and action restrictions](story-005-downed-movement-restrictions.md) | Integration | Ready | ADR-0007 |
 | 006 | [Disconnects during a commit or while Downed](story-006-disconnects.md) | Integration | Ready | ADR-0001 |
