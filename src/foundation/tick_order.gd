@@ -8,6 +8,9 @@ const SURVIVOR_DEFENSE := 200
 const BORROWED_FACE := 300
 const MONSTER_ABILITIES := 400
 const FACILITY_MAP := 450
+## ADR-0009 §3 (amends ADR-0005 §4): FacilityLighting, after MonsterAbilities and before Downing. Its own
+## slot because Doors already holds FACILITY_MAP (one module per slot).
+const FACILITY_LIGHTING := 460
 const DOWNING := 500
 const HOLDS := 550
 const SURVIVOR_OBJECTIVES := 600
