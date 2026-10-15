@@ -10,6 +10,9 @@ class_name HandleTable extends RefCounted
 
 const INTRODUCE := 1
 const RETIRE := 2
+## Discard every handle (handle 0): a spectator switch (ADR-0004 §8). Sorted first by take(), so it
+## reaches the client, in order on the reliable channel, before the switch's INTRODUCEs.
+const RESET := 3
 ## First byte of a handle message. A snapshot starts with SnapshotCodec.VERSION, so a client tells
 ## the two apart from that byte alone (peer_packet does not report the channel).
 const TAG := 0xF1
@@ -81,6 +84,12 @@ func reset_viewer(viewer: int) -> void:
 	_outbox.erase(viewer)
 
 
+## Queues a RESET for the viewer (after reset_viewer): its client discards its puppet map in stream
+## order, so an INTRODUCE sent before the switch cannot outlive it.
+func queue_reset(viewer: int) -> void:
+	_queue(viewer, RESET, 0)
+
+
 ## Removes and returns the viewer's queued (kind, handle) pairs, ordered by handle: the order bodies
 ## were queued in would let a client link a re-introduced body to its old place (code review
 ## 2026-10-14). A handle is never issued twice to a viewer, so the order cannot reverse a pair.
@@ -123,7 +132,8 @@ static func is_message(bytes: PackedByteArray) -> bool:
 	return bytes.size() > 0 and bytes[0] == TAG
 
 
-## (kind, handle) pairs, or an empty array when the length, count, a kind or a 0 handle is bad.
+## (kind, handle) pairs, or an empty array when the length, count, a kind or a handle is bad (0 only
+## with RESET).
 static func decode(bytes: PackedByteArray) -> PackedInt64Array:
 	var out := PackedInt64Array()
 	if bytes.size() < HEADER_BYTES or bytes[0] != TAG:
@@ -134,7 +144,7 @@ static func decode(bytes: PackedByteArray) -> PackedInt64Array:
 	for i in count:
 		var kind := bytes.decode_u8(HEADER_BYTES + i * MSG_BYTES)
 		var h := bytes.decode_u32(HEADER_BYTES + i * MSG_BYTES + 1)
-		if (kind != INTRODUCE and kind != RETIRE) or h == 0:
+		if not kind in [INTRODUCE, RETIRE, RESET] or (h == 0) != (kind == RESET):
 			return PackedInt64Array()
 		out.append(kind)
 		out.append(h)

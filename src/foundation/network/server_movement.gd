@@ -49,6 +49,8 @@ var scope: ReplicationScope
 var monster: int = -1
 ## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
 var _sounds: Array[EventBatch.Sound] = []
+## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
+var _watching: Dictionary[int, int] = {}
 
 
 class PlayerState extends RefCounted:
@@ -131,7 +133,30 @@ func add_player(player_id: int, body: CharacterBody3D, host_mode: bool = false) 
 ## Forgets a player (the body is the caller's to free).
 func remove_player(player_id: int) -> void:
 	_players.erase(player_id)
+	_watching.erase(player_id)
 	scope.remove_player(player_id)
+
+
+## `spectator` (an Eliminated or Escaped player, already removed as a body) now receives the stream
+## projected for `survivor` (ADR-0004 §8): its snapshot mirrors the survivor's, own entry included,
+## under the spectator's own handles. A switch drops every handle: the client discards its puppet map
+## (a RESET message, in order before the new INTRODUCEs) and the next send re-introduces every relevant
+## body with a full snapshot. If the watched survivor leaves, the spectator gets nothing until the caller
+## watches another (a rejoining survivor resumes the same stream: server and client maps still agree).
+func watch(spectator: int, survivor: int) -> void:
+	if spectator == survivor or _players.has(spectator):
+		push_error("ServerMovement.watch: player %d still has a body or watches itself" % spectator)
+		return
+	if _watching.get(spectator, -1) == survivor:
+		return
+	_watching[spectator] = survivor
+	scope.reset_viewer(spectator)
+	scope.handles.queue_reset(spectator)
+
+
+## The survivor `spectator` watches, or -1.
+func watched_by(spectator: int) -> int:
+	return _watching.get(spectator, -1)
 
 
 ## The host's own player submits one frame through the same queue as remote players.
@@ -251,21 +276,38 @@ func _snapshot_phase(tick: int) -> void:
 	var sounds := _sounds
 	_sounds = []
 	for pid: int in _players:
-		var peer := _net.peer_id_of(pid)
-		if peer == -1:
+		_send_stream(tick, pid, pid, positions, positions, events, sounds, scope.handles)
+	for spectator: int in _watching:
+		var watched := _watching[spectator]
+		if not _players.has(watched):
 			continue
-		var seen := scope.bodies_for(tick, pid, positions)
-		var msgs := scope.handles.take(pid)
-		if not msgs.is_empty():
-			_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
-		var batch := EventBatch.build(tick, pid, events, sounds, positions[pid], scope.handles, monster)
-		if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
-			_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
-		var bodies: Array[Dictionary] = [_entry(pid, pid, true)]
-		for other: int in seen: ## handle order (ReplicationScope.bodies_for)
-			bodies.append(_entry(other, seen[other], false))
-		_smp.send_bytes(SnapshotCodec.encode(tick, bodies), peer,
-			MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.STATE)
+		# Relevance from the watched survivor's eye, the spectator as viewer; the survivor is the own entry.
+		var eyes := positions.duplicate()
+		eyes.erase(watched)
+		eyes[spectator] = positions[watched]
+		_send_stream(tick, spectator, watched, eyes, positions, events, sounds,
+			HandleMirror.new(scope.handles, spectator))
+
+
+## Sends `viewer`'s peer this tick's handle messages, event batch and snapshot, projected for `as_player`
+## (the viewer itself, or the survivor a spectator watches). `eyes` places the viewer for relevance.
+func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, positions: Dictionary,
+		events: Array[ServerEvent], sounds: Array[EventBatch.Sound], handles: HandleTable) -> void:
+	var peer := _net.peer_id_of(viewer)
+	if peer == -1:
+		return
+	var seen := scope.bodies_for(tick, viewer, eyes)
+	var msgs := scope.handles.take(viewer)
+	if not msgs.is_empty():
+		_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster)
+	if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
+		_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+	var bodies: Array[Dictionary] = [_entry(as_player, as_player, true)]
+	for other: int in seen: ## handle order (ReplicationScope.bodies_for)
+		bodies.append(_entry(other, seen[other], false))
+	_smp.send_bytes(SnapshotCodec.encode(tick, bodies), peer,
+		MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.STATE)
 
 
 ## `id` is the viewer's handle for the body; the own entry carries the viewer's own player ID.

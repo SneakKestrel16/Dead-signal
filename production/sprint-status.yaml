@@ -81,11 +81,11 @@ stories:
     name: "Hidden entities and spectators"
     file: "production/epics/network-authority/story-010-hidden-entities-spectators.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "controller-interaction-4"
     name: "Steps, slopes and stand-up"

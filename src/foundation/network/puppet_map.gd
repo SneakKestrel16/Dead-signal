@@ -43,6 +43,8 @@ func receive(bytes: PackedByteArray) -> void:
 		for i in range(0, msgs.size(), 2):
 			if msgs[i] == HandleTable.INTRODUCE:
 				_bodies[msgs[i + 1]] = {}
+			elif msgs[i] == HandleTable.RESET:
+				_bodies.clear()
 			else:
 				_bodies.erase(msgs[i + 1])
 		return

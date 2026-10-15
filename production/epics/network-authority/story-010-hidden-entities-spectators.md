@@ -1,12 +1,12 @@
 # Story 010: Hidden entities, RPC paths, spectators and reconnect re-issue
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,9 +36,9 @@ Things only some players may know about (undiscovered objectives, hallucinations
 
 *From ADR-0004 §7–9 and Validation Criteria, scoped to this story:*
 
-- [ ] A hidden spawn granted to one client never reaches another (no node, no `spawned` signal).
-- [ ] No node path sent to any client contains a player ID, peer ID, handle, role or character name.
-- [ ] After a spectator switch and after a reconnect, the client's handle set is entirely new and its state matches the server's projection.
+- [x] A hidden spawn granted to one client never reaches another (no node, no `spawned` signal).
+- [x] No node path sent to any client contains a player ID, peer ID, handle, role or character name.
+- [x] After a spectator switch and after a reconnect, the client's handle set is entirely new and its state matches the server's projection.
 
 ---
 
@@ -80,7 +80,7 @@ Things only some players may know about (undiscovered objectives, hallucinations
 **Required evidence**:
 - Integration: `tests/integration/network/hidden_entities_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (7 tests, 3 consecutive runs)
 
 ---
 
@@ -88,3 +88,19 @@ Things only some players may know about (undiscovered objectives, hallucinations
 
 - Depends on: Stories 002, 008
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (automated, real ENet on 127.0.0.1)
+**Deviations** (AD-110):
+- `HiddenSpawner` (fixed node `Hidden` on the round root) names entities `E<n>` with a random, never-repeated u32, not a shared counter: a counter told each grantee how many hidden entities were spawned for others. Grants go through `NetAuthority.set_player_visibility`, so a reconnect carries them.
+- Spectators: `ServerMovement.watch(spectator, survivor)` mirrors the survivor's stream (own entry, relevance from its eye, its event projection) under the spectator's own handles (`HandleMirror`). A new handle message `RESET` (kind 3, handle 0) clears the client's puppet map in stream order on a switch; without it an INTRODUCE sent just before the switch outlived it.
+- A spectator mirrors the watched survivor's own-only events (FlinchRequested, ViewOffsetChanged, own PlayerShocked): it sees what that survivor sees.
+- The AC2 capture covers the survivor's and the monster's clients: other players' peer IDs and other viewers' handles are scanned as their binary u32 forms, plus other display names and role words. Player IDs (small ints) are not byte-scannable; node names are checked instead. Character IDs (`C1`..`C5`, 2 bytes) are too short to scan without chance matches and are not sent by anything in this story.
+- Reconnect re-issue for a player with a body is covered by `tokens_reconnect_test.gd` (story 002); this story adds it for a spectator.
+- Deferred: spectator UI and switch requests (HUD epic); a watched survivor leaving (the caller re-targets; the stream pauses); identity-free spawn data is the caller's contract (objectives, scare events).
+**Test Evidence**: Integration: `tests/integration/network/hidden_entities_test.gd`; 14 mutations each caught. Full suite 445/445.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester; S2 findings fixed: vacuous ASCII needle scan, monster client uncaptured, unwatch without RESET removed; S3 counter leak and watch guard fixed)
