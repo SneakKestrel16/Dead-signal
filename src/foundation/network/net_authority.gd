@@ -8,8 +8,9 @@ class_name NetAuthority extends Node
 ## One round trip per join. A rejected peer is disconnected after reject_close_delay_s (a reason
 ## sent immediately before disconnect_peer is lost, ADR-0001 verification 6).
 ## Reconnect (ADR-0001 §5): a join carrying a known token rebinds that player ID to the new peer when
-## the player is still bound (its old peer has not timed out) or known_token_in_grace says so; any
-## other token is a new join. A still-connected old peer is evicted with disconnect_peer and raises
+## the player is still bound (its old peer has not timed out) or known_token_in_grace says so. In
+## Waiting a known token whose player left the lobby joins again under its own token and player ID
+## (lobby rule 10, story lobby-role-assignment/008: it keeps its queue place); any other token is a new join. A still-connected old peer is evicted with disconnect_peer and raises
 ## no player_dropped. Per-peer visibility granted with set_player_visibility() follows the player to
 ## the new peer. Snapshots need nothing here: ServerMovement looks the peer up every tick and every
 ## snapshot is full (there are no deltas yet).
@@ -264,10 +265,10 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		return
 	var verdict := _validate(data)
 	if verdict.ok:
-		var rebind := verdict.has("player_id")
+		var rebind: bool = verdict.get("rebind", false)
 		var player_id: int = verdict.get("player_id", _next_player_id)
 		var token: String = verdict.get("token", "")
-		if not rebind:
+		if not verdict.has("player_id"):
 			_next_player_id += 1
 			token = Crypto.new().generate_random_bytes(16).hex_encode()
 			_tokens[token] = player_id
@@ -284,8 +285,8 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		_smp.disconnect_peer(id)
 
 
-## Runs the checks in the ADR order. Returns {ok: true, name} (plus player_id and token for a rebind)
-## or the reject reply.
+## Runs the checks in the ADR order. Returns {ok: true, name} (plus player_id and token for a known
+## token, and rebind: true when it rebinds a bound or in-grace player) or the reject reply.
 func _validate(data: PackedByteArray) -> Dictionary:
 	if data.size() > _knobs.net.auth_payload_cap_bytes:
 		return _reject(REASON_BAD_PAYLOAD)
@@ -301,17 +302,22 @@ func _validate(data: PackedByteArray) -> Dictionary:
 	var n := sanitize_name(d.display_name)
 	if n.length() < _knobs.lobby.name_min_chars or n.length() > _knobs.lobby.name_max_chars:
 		return _reject(REASON_BAD_NAME)
-	var rebind_id: int = _tokens.get(d.token, -1)
-	if rebind_id != -1 and (peer_id_of(rebind_id) != -1 or _in_grace(d.token)):
+	var known_id: int = _tokens.get(d.token, -1)
+	if known_id != -1:
 		for p: Dictionary in _pending.values():
-			if p.player_id == rebind_id:
+			if p.player_id == known_id:
 				return _reject(REASON_TOKEN_IN_USE)
-		return {"ok": true, "player_id": rebind_id, "token": d.token, "name": n}
+		if peer_id_of(known_id) != -1 or _in_grace(d.token):
+			return {"ok": true, "player_id": known_id, "token": d.token, "name": n, "rebind": true}
 	if _lobby.state() != &"waiting":
 		return _reject(REASON_ROUND_IN_PROGRESS)
 	var new_joins := _pending.values().filter(func(p: Dictionary) -> bool: return not p.rebind).size()
 	if _lobby.player_count() + new_joins >= _knobs.lobby.max_players:
 		return _reject(REASON_LOBBY_FULL)
+	if known_id != -1:
+		# A lobby leaver returning in Waiting: a join like any other, but the session still holds its
+		# token (TR-lobby-004), so it keeps its player ID and rotation-queue place (lobby rule 10).
+		return {"ok": true, "player_id": known_id, "token": d.token, "name": n}
 	return {"ok": true, "name": n}
 
 

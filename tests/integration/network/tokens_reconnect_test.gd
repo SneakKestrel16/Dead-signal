@@ -400,13 +400,27 @@ func test_rebind_whose_old_peer_dropped_before_connect_needs_grace() -> void:
 	assert_int(_server.peer_id_of(pid)).is_equal(-1)
 
 
-func test_known_token_in_waiting_after_drop_is_a_new_join() -> void:
+## Lobby rule 10 / AC-LB-18 (story lobby-role-assignment/008): the lobby removed the leaver (rule 18),
+## but the session still holds the token, so the rejoin is a join under the same token and player ID
+## and the rotation queue keeps the player's place.
+func test_known_token_in_waiting_after_drop_rejoins_with_same_token_and_id() -> void:
 	var a := await _joined_client("Ann")
 	var pid: int = a.net.local_player_id
 	a.net.close()
 	await _until(func() -> bool: return _dropped == [pid], "player_dropped")
 	var a2 := _client("Ann", a.net.local_token)
 	assert_str(String(await _outcome(a2))).is_equal("ok")
-	assert_int(a2.net.local_player_id).is_not_equal(pid) ## the lobby removed the leaver (rule 18)
-	assert_str(a2.net.local_token).is_not_equal(a.net.local_token)
+	assert_int(a2.net.local_player_id).is_equal(pid)
+	assert_str(a2.net.local_token).is_equal(a.net.local_token)
+	await _until(func() -> bool: return _joined == [pid, pid], "player_joined again")
 	assert_array(_rejoined).is_empty()
+
+
+func test_known_token_in_waiting_after_drop_counts_toward_the_cap() -> void:
+	var a := await _joined_client("Ann")
+	var pid: int = a.net.local_player_id
+	a.net.close()
+	await _until(func() -> bool: return _dropped == [pid], "player_dropped")
+	for i in _knobs.lobby.max_players:
+		_lobby.queue.append(100 + i) ## the lobby filled while Ann was away
+	assert_str(String(await _outcome(_client("Ann", a.net.local_token)))).is_equal("lobby_full")
