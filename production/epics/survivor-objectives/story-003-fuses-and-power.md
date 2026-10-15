@@ -1,12 +1,12 @@
 # Story 003: Fuses, fuse boxes and power restored
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ Survivors pick up fuses and install them at the active fuse boxes; two installed
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] Picking up a fuse is a `pickup_s` hold; a survivor carries at most one fuse, and may carry a fuse and a drive together (rule 15).
-- [ ] Installing at an empty active fuse box is a `fuse_install_s` hold; a box that already has a fuse refuses the install and the second fuse stays carried (rule 15).
-- [ ] Two installed fuses broadcast `ObjectiveProgressChanged` (power restored); installed fuses are permanent (rules 16, 17).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] Picking up a fuse is a `pickup_s` hold; a survivor carries at most one fuse, and may carry a fuse and a drive together (rule 15).
+- [x] Installing at an empty active fuse box is a `fuse_install_s` hold; a box that already has a fuse refuses the install and the second fuse stays carried (rule 15).
+- [x] Two installed fuses broadcast `ObjectiveProgressChanged` (power restored); installed fuses are permanent (rules 16, 17).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -82,9 +82,9 @@ Survivors pick up fuses and install them at the active fuse boxes; two installed
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/survivor-objectives/fuses-and-power_test.gd` OR playtest doc
+- Integration: `tests/integration/survivor-objectives/fuses_and_power_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/fuses_and_power_test.gd` (15 tests)
 
 ---
 
@@ -92,3 +92,20 @@ Survivors pick up fuses and install them at the active fuse boxes; two installed
 
 - Depends on: Story 001
 - Unlocks: Stories 004, 005
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-129):
+- Implemented by gameplay-programmer in a git worktree, in parallel with DR-1 and MF-2; reviewed and merged by the orchestrator.
+- Active fuses and boxes are the first two authored `fuse` and `fuse_box` markers: placeholder until story 008 (ADR-0012, Proposed).
+- `FUSES_REQUIRED` (2) and `MAX_FUSES_CARRIED` (1) are constants, not knobs: GDD rule 15 sets them and the GDD's Tuning Knobs table has no row for them. Durations and ranges come from `ObjectivesKnobs`.
+- Power restored is `ObjectiveProgressChanged` with `objective = TERMINAL_ID`, `state = TerminalState.POWERED` (added last, so ARMED keeps its value for Match Flow). Each install also emits one fuse event and one box event.
+- Merge fix (orchestrator): the agent's shared base was an inner class `Point` that the three point classes extended. In Godot 4.7.2 this leaked the whole script graph at exit (every suite loading the script printed "ObjectDB instances were leaked"). Found by bisecting after the merged full run; the base is now the top-level `ObjectivePoint` (`src/feature/objectives/objective_point.gd`). Recorded in `docs/engine-reference/godot/gotchas.md`.
+- Dropped fuses can be picked up, but nothing sets DROPPED yet (story 002).
+- Test file `fuses_and_power_test.gd` (snake case), not the story's hyphenated name.
+**Test Evidence**: `tests/integration/survivor-objectives/fuses_and_power_test.gd`, 15 tests. Mutations caught: carry cap and empty-box check removed, power at 1 fuse, strong back-reference (cycle test), empty `lock_key`.
+**Code Review**: Complete (orchestrator review; the exit-time script leak found and fixed at merge)

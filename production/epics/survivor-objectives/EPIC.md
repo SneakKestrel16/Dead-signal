@@ -47,7 +47,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 |---|-------|------|--------|-----|
 | 001 | [Drive extract and carry](story-001-drive-extract-and-carry.md) | Integration | Complete | ADR-0008 |
 | 002 | [Item drops and pickups](story-002-drops-and-pickups.md) | Integration | Ready | ADR-0005 |
-| 003 | [Fuses, fuse boxes and power restored](story-003-fuses-and-power.md) | Integration | Ready | ADR-0008 |
+| 003 | [Fuses, fuse boxes and power restored](story-003-fuses-and-power.md) | Integration | Complete | ADR-0008 |
 | 004 | [Install alert to the shapeshifter](story-004-install-alert.md) | Logic | Ready | ADR-0004 |
 | 005 | [Docking and the evacuation terminal](story-005-docking-and-terminal.md) | Logic | Ready | ADR-0005 |
 | 006 | [Drive extraction at the exit](story-006-extraction.md) | Integration | Ready | ADR-0005 |

@@ -1,12 +1,12 @@
 # Story 002: Win evaluation order and immediate endings
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ The win check in its fixed priority order, run on relevant events and once at th
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] When all survivors are eliminated (including by bleed-out), the round ends at that moment with "All survivors eliminated"; with only Downed survivors inside and the drives not out, it does not end until the last bleeds out (rules 12, 13, 18).
-- [ ] If nobody is left inside (all Escaped or Eliminated) and a drive was not Extracted, the round ends at once with "Evidence lost"; a survivor in reconnect grace counts as inside (rule 13).
-- [ ] With nothing done, the deadline at 9:00 ends the round "Shapeshifter Wins — Evacuation deadline expired"; a 15 s activation started at 8:50 does not finish and the monster wins at 9:00 (rules 8, 9).
-- [ ] Within one tick the order is evidence escaped, all eliminated, evidence lost, deadline, forfeit: the second drive Extracted in the same tick as the last elimination, or as the deadline, is a survivor win (rule 16).
+- [x] When all survivors are eliminated (including by bleed-out), the round ends at that moment with "All survivors eliminated"; with only Downed survivors inside and the drives not out, it does not end until the last bleeds out (rules 12, 13, 18).
+- [x] If nobody is left inside (all Escaped or Eliminated) and a drive was not Extracted, the round ends at once with "Evidence lost"; a survivor in reconnect grace counts as inside (rule 13).
+- [x] With nothing done, the deadline at 9:00 ends the round "Shapeshifter Wins — Evacuation deadline expired"; a 15 s activation started at 8:50 does not finish and the monster wins at 9:00 (rules 8, 9).
+- [x] Within one tick the order is evidence escaped, all eliminated, evidence lost, deadline, forfeit: the second drive Extracted in the same tick as the last elimination, or as the deadline, is a survivor win (rule 16).
 
 ---
 
@@ -90,9 +90,9 @@ The win check in its fixed priority order, run on relevant events and once at th
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/match-flow/win-evaluation_test.gd` — must exist and pass
+- Logic: `tests/unit/match-flow/win_evaluation_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/match-flow/win_evaluation_test.gd` (25 tests)
 
 ---
 
@@ -100,3 +100,21 @@ The win check in its fixed priority order, run on relevant events and once at th
 
 - Depends on: Story 001
 - Unlocks: Stories 003, 004, 006, 008
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-128):
+- Implemented by gameplay-programmer in a git worktree, in parallel with DR-1 and SO-3; reviewed and merged by the orchestrator.
+- `EvRoundEnded.outcome` and `reason` carry the new `MatchFlow.Outcome` and `MatchFlow.Reason` enums; the rule 23 wording is in `OUTCOME_TEXT` and `REASON_TEXT`.
+- The win check runs on every MATCH_FLOW_RESOLVE tick in rule 16 order, first match wins; no dirty flag (same once-per-tick result, less state). `_ended` latches: one RoundEnded per round.
+- Both drives Extracted ends the round at once; the post-escape window and outcome lock are story 003.
+- Forfeit is a `_forfeit_due()` hook returning false until story 006.
+- The roster comes in through `MatchFlow.survivor_ids`, set before start_round. An empty roster skips the all-eliminated and evidence-lost checks.
+- A survivor in reconnect grace counts as inside in their last state; only `GRACE_EXPIRED` takes them out (rules 13, 19).
+- Test file `win_evaluation_test.gd` (snake case), not the story's hyphenated name.
+**Test Evidence**: `tests/unit/match-flow/win_evaluation_test.gd`, 25 tests. Mutations caught: check order swapped, plain disconnect treated as out (4 grace tests), `_ended` lock removed.
+**Code Review**: Complete (orchestrator review; drive-id range check on EXTRACTED confirmed against SO-3's fuse and box ids)

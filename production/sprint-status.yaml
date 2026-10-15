@@ -41,11 +41,11 @@ stories:
     name: "Win evaluation order and immediate endings"
     file: "production/epics/match-flow/story-002-win-evaluation.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "match-flow-4"
     name: "Loading barrier, spawn, round end and return to lobby"
@@ -71,11 +71,11 @@ stories:
     name: "Fuses, fuse boxes and power restored"
     file: "production/epics/survivor-objectives/story-003-fuses-and-power.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "survivor-objectives-5"
     name: "Docking and the evacuation terminal"
@@ -111,11 +111,11 @@ stories:
     name: "Life state and takedown commit"
     file: "production/epics/downing-and-rescue/story-001-takedown-commit.md"
     priority: should-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "survivor-objectives-2"
     name: "Item drops and pickups"

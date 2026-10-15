@@ -106,3 +106,10 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** the tree keeps a custom multiplayer registered for its path after the node is freed. A lambda connected to the API's own signal that captures the API is a reference cycle.
 - **Fix:** before freeing the node, close and clear `multiplayer_peer`, clear `auth_callback`, disconnect the lambdas, then call `get_tree().set_multiplayer(null, node.get_path())`.
 - **Source:** network-authority story 001, 2026-10-13. Verified on 4.7.2: the warning disappeared after the teardown change (123/123 pass).
+
+### An inner class extending a sibling inner class leaks the script graph
+
+- **Symptom:** every test file that loads the script (directly or through another class) passes with 0 orphans, but the engine prints "N ObjectDB instances were leaked at exit" and "N resources still in use at exit". The count is the same whichever test file runs. `--verbose` lists `GDScriptNativeClass` instances and every loaded `.gd` file, the gdUnit4 scripts included; no game object.
+- **Cause:** `class DriveConsole extends Point:` where `Point` is another inner class of the same script. Removing `@abstract` from `Point` did not help; having the inner classes extend the top-level `Interactable` directly did. Inference on the mechanism (a script reference cycle at unload): not checked against engine source.
+- **Fix:** put the shared base in its own top-level `class_name` script (`src/feature/objectives/objective_point.gd`) and let the inner classes extend that.
+- **Source:** survivor-objectives story 003, 2026-10-14. Verified on 4.7.2 by bisecting the merged file: the warnings appear with the inner base and disappear with the top-level one (33/33 pass).

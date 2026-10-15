@@ -1,12 +1,12 @@
 # Story 001: Life state and takedown commit
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,10 +34,10 @@ A new `Downing` module holds each survivor's life state and `downs_taken`; a val
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A Healthy survivor whose takedown commit completes becomes Downed; a survivor with `downs_taken` 1 whose commit completes becomes Eliminated without entering Downed; `SurvivorDowned` / `SurvivorEliminated` are emitted (rules 4, 5, Formulas "Takedown outcome").
-- [ ] A `MonsterStunned` received during Committing cancels the commit and `downs_taken` is unchanged; a stun and commit completion on the same tick resolve as the stun (rule 4, edge cases).
-- [ ] A `SurvivorHit` on a Downed survivor or a survivor in grace changes nothing; the monster disconnecting mid-commit cancels it (rule 3, edge cases).
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] A Healthy survivor whose takedown commit completes becomes Downed; a survivor with `downs_taken` 1 whose commit completes becomes Eliminated without entering Downed; `SurvivorDowned` / `SurvivorEliminated` are emitted (rules 4, 5, Formulas "Takedown outcome").
+- [x] A `MonsterStunned` received during Committing cancels the commit and `downs_taken` is unchanged; a stun and commit completion on the same tick resolve as the stun (rule 4, edge cases).
+- [x] A `SurvivorHit` on a Downed survivor or a survivor in grace changes nothing; the monster disconnecting mid-commit cancels it (rule 3, edge cases).
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -84,9 +84,9 @@ A new `Downing` module holds each survivor's life state and `downs_taken`; a val
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/downing-and-rescue/takedown-commit_test.gd` — must exist and pass
+- Logic: `tests/unit/downing-and-rescue/takedown_commit_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/downing-and-rescue/takedown_commit_test.gd` (17 tests)
 
 ---
 
@@ -94,3 +94,20 @@ A new `Downing` module holds each survivor's life state and `downs_taken`; a val
 
 - Depends on: None (event catalog, RoundServer and DowningKnobs exist)
 - Unlocks: Stories 002–007
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-127):
+- Implemented by gameplay-programmer in a git worktree, in parallel with MF-2 and SO-3; reviewed and merged by the orchestrator.
+- New Feature-layer folder `src/feature/downing/`. `Downing.set_roster(survivors, monster)` is called before `RoundServer.start_round`; `setup()` resets every survivor to Healthy with 0 downs.
+- No new state key: the module publishes the existing `StateKeys.TAKEDOWN_ELIGIBILITY` (`Downing.LifeView`: life state, downs taken, eligible) and `StateKeys.COMMITTING_STATE` (`Downing.CommitView`). Both views hold the module through a `WeakRef` and fail closed once it is freed.
+- The commit completes on hit tick + `knobs.ticks(takedown_commit_s)`, in the DOWNING slot (500). MonsterStunned arrives in the Survivor Defense flush (200), so a stun on the completion tick cancels first (Edge Cases: stun wins).
+- Grace (story 002) extends `eligible(player)`; the release hook is `_cancel_commit()`.
+- Only the monster's disconnect cancels a commit; a Seized victim's disconnect lets the commit run on.
+- Test file `takedown_commit_test.gd` (snake case), not the story's hyphenated name.
+**Test Evidence**: `tests/unit/downing-and-rescue/takedown_commit_test.gd`, 17 tests. Five mutations watched failing (agent run).
+**Code Review**: Complete (orchestrator review: weak views, slot order, event fields checked)
