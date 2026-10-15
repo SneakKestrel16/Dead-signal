@@ -33,7 +33,7 @@ The hold bar must appear the moment the player presses interact, even at high la
 *From `first-person-controller.md` Acceptance Criteria (Feel) and ADR-0008 §8, scoped to this story:*
 
 - [ ] Under 150 ms simulated latency, the predicted hold bar appears ≤ 100 ms after a valid Start press, measured by frame count on a 240 fps capture.
-- [ ] A rejected Start cancels the bar when the acknowledging snapshot arrives, with no flash of progress beyond the predicted amount.
+- [x] A rejected Start cancels the bar when the acknowledging snapshot arrives, with no flash of progress beyond the predicted amount.
 
 ---
 
@@ -63,7 +63,7 @@ The hold bar must appear the moment the player presses interact, even at high la
 **Required evidence**:
 - Visual/Feel: retained screenshot or capture in `production/qa/evidence/` + sign-off in `production/qa/evidence/predicted-hold-bar-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `production/qa/evidence/predicted-hold-bar-evidence.md`, lead sign-off 2026-10-15
 
 ---
 
@@ -79,4 +79,4 @@ The hold bar must appear the moment the player presses interact, even at high la
 **Implemented**: 2026-10-14 (worktree agent, squash-merged as 500fab4)
 **Criteria**: AC2 passing (automated + capture 02); AC1 automated proxy passing (bar drawn on the press tick, at most one 16.7 ms tick), the 240 fps capture measurement not done
 **Test Evidence**: `tests/unit/first-person-controller/predicted_hold_bar_test.gd` (10 tests); captures and write-up in `production/qa/evidence/predicted-hold-bar-evidence.md`
-**Open**: lead sign-off (Visual/Feel gate, BLOCKING) and the AC1 240 fps capture, which needs a two-client build with a client scene that wires the bar. Story stays In Review until both are done.
+**Open**: the AC1 240 fps capture, which needs a two-client build with a client scene that wires the bar. Lead sign-off done 2026-10-15 (designer). Story stays In Review until the capture is done.

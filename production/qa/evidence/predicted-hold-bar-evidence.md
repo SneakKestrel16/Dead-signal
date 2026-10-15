@@ -24,4 +24,4 @@ and a background to the root, called `advance()` and `on_snapshot()`, and saved 
 
 ## Sign-off
 
-- [ ] Lead sign-off: pending
+- [x] Lead sign-off: designer, 2026-10-15 (captures 01 and 02 reviewed). The 240 fps capture for AC1 is still not done: it needs a client round scene.
