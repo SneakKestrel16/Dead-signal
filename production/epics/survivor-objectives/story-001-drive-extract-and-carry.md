@@ -1,12 +1,12 @@
 # Story 001: Drive extract and carry
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,11 +34,11 @@ The module's first slice: a new `SurvivorObjectives` module that owns drive stat
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A survivor holding interact at a drive console for 5 s (`drive_extract_s`) receives the drive (Secured → Carried) and `ObjectiveProgressChanged` is emitted; releasing at 4 s gives nothing and resets the bar (rules 3, 8).
-- [ ] Only a Healthy survivor can start or continue the hold; start range is `interact_range_m`, keep range adds `hold_range_tolerance_m` (rule 2, Controller rules 13–16).
-- [ ] A survivor can carry two drives; with a data override of `max_drives_carried` = 1, a survivor carrying a drive cannot pick up the second (rule 9).
-- [ ] A client message claiming the extract completed early causes no state change (rule 1).
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] A survivor holding interact at a drive console for 5 s (`drive_extract_s`) receives the drive (Secured → Carried) and `ObjectiveProgressChanged` is emitted; releasing at 4 s gives nothing and resets the bar (rules 3, 8).
+- [x] Only a Healthy survivor can start or continue the hold; start range is `interact_range_m`, keep range adds `hold_range_tolerance_m` (rule 2, Controller rules 13–16).
+- [x] A survivor can carry two drives; with a data override of `max_drives_carried` = 1, a survivor carrying a drive cannot pick up the second (rule 9).
+- [x] A client message claiming the extract completed early causes no state change (rule 1).
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -90,9 +90,9 @@ The module's first slice: a new `SurvivorObjectives` module that owns drive stat
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/survivor-objectives/drive-extract-and-carry_test.gd` OR playtest doc
+- Integration: `tests/integration/survivor-objectives/drive_extract_and_carry_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (18 tests)
 
 ---
 
@@ -100,3 +100,22 @@ The module's first slice: a new `SurvivorObjectives` module that owns drive stat
 
 - Depends on: None (HoldService, Interactable, ObjectivesKnobs and the map markers exist)
 - Unlocks: Stories 002, 003, 005, 007, 010
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 5/5 passing (automated)
+**Deviations** (AD-124):
+- Implemented by gameplay-programmer in a git worktree, in parallel with MF-1 and BUG-0002; reviewed by godot-gdscript-specialist; fixes applied by the orchestrator.
+- New Feature-layer folder `src/feature/objectives/`. `SurvivorObjectives.new(holds, map, is_healthy)`: the life-state source is an injected callable until Downing publishes a registry view (treated as Healthy when absent).
+- Active drives are the first two authored drive markers: placeholder until story 008 (ADR-0012, Proposed).
+- Drive state is not yet published in the `StateRegistry` (no `StateKeys` row); the module exposes `state_of`, `carrier_of`, `carried_by`, `drive_count`. Story 005 adds the registry view Match Flow needs.
+- `ObjectiveProgressChanged.objective` id ranges: drives `DRIVE_ID` (0) + index, fuses 10+, fuse boxes 20+, terminal 30 (`SurvivorObjectives` constants), so one int names one point across kinds.
+- A carried drive's event sets `discovered = true`, so survivor clients receive it (rule 10); real discovery is story 009.
+- AC4: there is no client "complete" message to forge. The tests prove that a claim the server's ray does not confirm, a press on another target mid-hold, and a rival's press change no state.
+- Review fixes: the consoles hold the module through a `WeakRef` (a strong back-reference was a RefCounted cycle through `HoldService` that leaked every round); `setup()` resets its arrays and reports a map with fewer than 2 drive markers; the Healthy callable result is typed.
+- The test file is `drive_extract_and_carry_test.gd` (snake case, as the other suites), not the story's hyphenated name.
+**Test Evidence**: `tests/integration/survivor-objectives/drive_extract_and_carry_test.gd`, 18 tests. Mutations caught: strong back-reference (cycle test), `discovered` unset (projection test), id base removed (3 tests); the cap check broken (cap test, agent). Equivalent: removing the `setup()` reset (the `ACTIVE_DRIVES` guard already stops duplicates).
+**Code Review**: Complete (godot-gdscript-specialist; S2 cycle and S2 projection fixed; S3 id collision fixed; S3 setup reset fixed; test gaps for lock release and a carried drive added)
