@@ -2,13 +2,13 @@
 # Cases "Stunned while transforming out of a disguise", Acceptance Criteria on stuns; TR-borrowedface-002,
 # -009; ADR-0004 §5 projection table, ADR-0005 tick order: Survivor Defense (slot 200) before Borrowed Face).
 # The real BorrowedFace runs in a RoundServer; every event the bus delivers on the hit tick goes through
-# EventBatch.build/decode per viewer, the bytes a client receives (NA-9). Survivor Defense is not built
-# yet: StubDefense models its rules 1 and 9 from the GDD text (a hit on a disguise emits PlayerShocked
-# plus a MonsterStunned flagged not true_form; a true-form hit emits MonsterStunned only), reading the
-# form shown from BorrowedFace.form. Re-run against the real module when that epic lands.
+# EventBatch.build/decode per viewer, the bytes a client receives (NA-9). The real SurvivorDefense picks
+# the events (survivor-defense story 005, rules 1 and 9): hits land through SurvivorDefense.shock from a
+# Hitter in the MATCH_FLOW_BEGIN slot, the form shown read from BorrowedFace.form.
 # The monster pain cry and stagger are client presentation of MonsterStunned (survivor-defense.md
 # Visual/Audio table), so "no pain cry" is asserted as "no MonsterStunned entry" (Story 009 plays them).
-# The byte identity of PlayerShocked across a disguise and a survivor is network-authority story 009's.
+# The byte identity of PlayerShocked across a disguise and a survivor is checked in
+# tests/integration/survivor-defense/identity_hiding_events_test.gd.
 extends GdUnitTestSuite
 
 const MONSTER := 1
@@ -22,51 +22,24 @@ const LOOKS: Dictionary[int, int] = {1: 1, 2: 2, 3: 3, 4: 4}
 const SEED := 8
 
 
-## Survivor Defense stand-in: a taser hit on `victim` on each tick in `hit_ticks`, always landing.
-class StubDefense extends RefCounted:
+## Lands a hit through SurvivorDefense.shock on `victim` on each tick in `hit_ticks`, before its slot.
+class Hitter extends RefCounted:
 	var hit_ticks: Array[int] = []
 	var victim := MONSTER
-	var _form_of: Callable
-	var _bus: EventBus
-	var _lock_ticks := 0
-	var _lock_end_tick := 0
-	var _tick := 0
+	var shock: Callable
 
-	func _init(form_of: Callable) -> void:
-		_form_of = form_of
-
-	func setup(_tr: TickRunner, bus: EventBus, _reg: StateRegistry, k: Knobs) -> void:
-		_bus = bus
-		_lock_ticks = k.ticks(k.defense.stun_duration_s)
-
-	## Rule 14 lock: Stunned until the lock ends.
-	func locked(_p: int) -> bool:
-		return _tick < _lock_end_tick
+	func setup(_tr: TickRunner, _bus: EventBus, _reg: StateRegistry, _k: Knobs) -> void:
+		pass
 
 	func server_tick(tick: int) -> void:
-		_tick = tick
-		if not hit_ticks.has(tick):
-			return
-		if victim != MONSTER: # a survivor hit: shocked, never a monster event
-			var s := EvPlayerShocked.new()
-			s.player = victim
-			_bus.emit(s)
-			return
-		var disguised: bool = _form_of.call() != BorrowedFace.TRUE_FORM
-		if disguised: # rule 1: a disguise shows the survivor shock
-			var shock := EvPlayerShocked.new()
-			shock.player = MONSTER
-			_bus.emit(shock)
-		_lock_end_tick = tick + _lock_ticks
-		var e := EvMonsterStunned.new()
-		e.monster = MONSTER
-		e.true_form = not disguised
-		_bus.emit(e)
+		if hit_ticks.has(tick):
+			shock.call(victim, tick)
 
 
 var _server: RoundServer
 var _bf: BorrowedFace
-var _defense: StubDefense
+var _defense: Hitter
+var _def: SurvivorDefense
 var _knobs: Knobs
 var _handles: HandleTable
 var _transform_ticks: int
@@ -89,11 +62,15 @@ func before_test() -> void:
 	add_child(_server)
 	_bf = BorrowedFace.new()
 	_bf.set_roster(SURVIVORS, MONSTER)
-	_defense = StubDefense.new(_bf.form)
-	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _defense.locked)
+	_def = SurvivorDefense.new()
+	_def.set_roster(SURVIVORS, MONSTER)
+	_def.set_form_source(_bf.form)
+	_defense = Hitter.new()
+	_defense.shock = _def.shock
+	_bf.set_sight_sources(_eye_of, _yaw_of, _points_of, _sight, _def.locked)
 	_bf.set_status_source(_status_of)
 	_bf.set_appearance_source(_look_of)
-	assert_array(_server.start_round({TickOrder.SURVIVOR_DEFENSE: _defense,
+	assert_array(_server.start_round({TickOrder.MATCH_FLOW_BEGIN: _defense, TickOrder.SURVIVOR_DEFENSE: _def,
 		TickOrder.BORROWED_FACE: _bf}, _knobs)).is_empty()
 	for t: StringName in [&"FormChanged", &"MonsterStunned", &"PlayerShocked"]:
 		_server.bus.subscribe(t, _on_event)
@@ -104,6 +81,7 @@ func before_test() -> void:
 func after_test() -> void:
 	_server.end_round()
 	_defense = null
+	_def = null
 	_bf = null
 
 

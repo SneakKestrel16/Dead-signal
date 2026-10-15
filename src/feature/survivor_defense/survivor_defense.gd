@@ -297,21 +297,35 @@ func locked(player: int) -> bool:
 ## cancels its hold. Locks and roots it, returning true, only when no lock is running and its post-lock
 ## window is over; otherwise adds nothing (no refresh) and returns false, which story 005 reads to pick
 ## the presentation. Story 004: a lock on the monster is its stun and emits MonsterStunned (rule 9).
+## Story 005 (rules 1, 10, 11; ADR-0004 §5): every hit but a true-form stun also emits PlayerShocked, the
+## one event a survivor client gets for a survivor, a stunned or an immune disguise alike. The form is the
+## body shown on the hit tick (BorrowedFace.form keeps the old form while Transforming, so out of a disguise
+## counts as disguised). A resisted true-form hit is PlayerShocked on the true-form body: clients tell it
+## from a stun by the event type and show the "resisted" spark (inference: the catalog has no resisted
+## event; a designer ruling on a dedicated event would settle it).
 func shock(player: int, tick: int) -> bool:
 	if _holds != null:
 		_holds.cancel(player, CANCEL_SHOCKED)
-	if tick < _free_tick.get(player, tick):
-		return false
-	_lock_start[player] = tick
-	_free_tick[player] = tick + _duration_ticks + _immunity_ticks
-	_apply_lock_modifier(player, tick)
-	if player == _monster and _bus != null:
+	var stunned: bool = tick >= _free_tick.get(player, tick)
+	if stunned:
+		_lock_start[player] = tick
+		_free_tick[player] = tick + _duration_ticks + _immunity_ticks
+		_apply_lock_modifier(player, tick)
+	if _bus == null:
+		return stunned
+	var true_form: bool = player == _monster and (not _form_of.is_valid() or _form_of.call() == BorrowedFace.TRUE_FORM)
+	if not (stunned and true_form):
+		var s := EvPlayerShocked.new()
+		s.tick = tick
+		s.player = player
+		_bus.emit(s)
+	if stunned and player == _monster:
 		var e := EvMonsterStunned.new()
 		e.tick = tick
 		e.monster = player
-		e.true_form = not _form_of.is_valid() or _form_of.call() == BorrowedFace.TRUE_FORM
+		e.true_form = true_form
 		_bus.emit(e)
-	return true
+	return stunned
 
 
 ## Story 004, rule 16: an accepted Lunge wind-up ends the monster's immunity (a rejected one emits nothing).
