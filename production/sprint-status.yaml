@@ -57,11 +57,11 @@ stories:
     name: "Marker lifecycle: static position, lifetime and max active"
     file: "production/epics/pings-and-callouts/story-005-marker-lifecycle.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "pings-6"
     name: "Callout recipients, range and monster audio-only"
     file: "production/epics/pings-and-callouts/story-006-callout-recipients-delivery.md"

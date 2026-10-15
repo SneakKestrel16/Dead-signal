@@ -1,7 +1,7 @@
 # Story 005: Marker lifecycle: static position, lifetime and max active
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
@@ -33,10 +33,10 @@ Markers are static: a player warning ping stays where the target stood at ping t
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A survivor's player warning ping appears at the target's position at ping time and does not move for its lifetime, even if the target moves or transforms.
-- [ ] With `ping_max_active` = 2, other clients display only the newest 2 markers of one sender.
-- [ ] A marker expires `ping_lifetime_s` after acceptance; a sender's disconnect leaves its markers to expire normally.
-- [ ] Two bodies sharing a name that both ping show two markers under that name; nothing merges them.
+- [x] A survivor's player warning ping appears at the target's position at ping time and does not move for its lifetime, even if the target moves or transforms.
+- [x] With `ping_max_active` = 2, other clients display only the newest 2 markers of one sender.
+- [x] A marker expires `ping_lifetime_s` after acceptance; a sender's disconnect leaves its markers to expire normally.
+- [x] Two bodies sharing a name that both ping show two markers under that name; nothing merges them.
 
 ---
 
@@ -64,7 +64,7 @@ Markers are static: a player warning ping stays where the target stood at ping t
 **Story Type**: Logic
 **Required evidence**: `tests/unit/pings-and-callouts/marker_lifecycle_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/pings-and-callouts/marker_lifecycle_test.gd` (7 cases)
 
 ---
 
@@ -72,3 +72,15 @@ Markers are static: a player warning ping stays where the target stood at ping t
 
 - Depends on: Story 004
 - Unlocks: Story 008
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-pc5. Full suite 1357/1357, no leak lines. Mutations caught: one marker over the cap, expiry off by one tick, sender left out of the handle key.
+
+Notes:
+- `PingMarkers` (client, `ping_markers.gd`) keys markers by a server `handle`, keeps the newest `ping_max_active` per handle, freezes point and identity at send, and expires at batch tick + `ping_lifetime_s`. Story 008 constructs it and calls `active(now_tick)`.
+- `from` (displayed appearance id) cannot tell a disguised monster from the survivor it wears, so `PingDelivery` adds a random `handle` per (sender, displayed id) for the round. It carries no player id and no order.
+
+Deviations (inference):
+- Handle per (sender, displayed id), not per sender: one handle per player would link the monster's pings across disguises. Cost: a monster changing disguise can show up to `ping_max_active` markers per disguise while older ones live. The GDD does not cover it.
+- No tick added to the payload: the batch header's server tick is used (accepting and delivery tick are the same).

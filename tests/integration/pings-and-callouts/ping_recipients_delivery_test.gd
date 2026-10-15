@@ -11,7 +11,7 @@ const DELIVERY_MS := 250
 ## How long a client that must receive nothing is watched after the others got it: 30 ticks at 60 Hz.
 const QUIET_TICKS := 30
 ## The payload keys every client gets (the sender's copy adds `own`): nothing names an occupant.
-const PAYLOAD_KEYS := ["kind", "point", "item", "type", "identity", "from"]
+const PAYLOAD_KEYS := ["kind", "point", "item", "type", "identity", "from", "handle"]
 
 static var _next_port := 28880
 
