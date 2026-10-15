@@ -17,6 +17,9 @@ class_name BorrowedFace extends RefCounted
 ##                                              StateKeys.SHOCK_STUN_LOCK; unset = never locked
 ##   status_of(player) -> int                   MatchFlow.Status (MatchFlow.status_of); unset = no
 ##                                              survivor is a valid target
+##   attacking(player) -> bool                  in Lunge wind-up, active or takedown commit (rule 7,
+##                                              rule 11; story 005). Stub until Monster Abilities and
+##                                              Downing are wired; unset = never attacking
 ## Usage:
 ##   var bf := BorrowedFace.new()
 ##   bf.set_roster([2, 3, 4, 5], 1)   # BEFORE start_round
@@ -47,6 +50,7 @@ var _body_points_of: Callable
 var _sight: Callable
 var _locked: Callable
 var _status_of: Callable
+var _attacking: Callable
 var _hz: int = 0
 var _observe_ticks: int = 0
 var _range_m: float = 0.0
@@ -89,6 +93,11 @@ func set_status_source(status_of: Callable) -> void:
 	_status_of = status_of
 
 
+## Injects the attack source (see the class comment): a transformation never cancels an attack (rule 11).
+func set_attack_source(attacking: Callable) -> void:
+	_attacking = attacking
+
+
 ## The bytes the shapeshifter's client sends to request a change into `form` (a survivor id or TRUE_FORM).
 static func request_packet(form: int) -> PackedByteArray:
 	return var_to_bytes({REQUEST_KEY: form})
@@ -117,8 +126,9 @@ func request_form_change(player: int, bytes: PackedByteArray) -> void:
 ## Injected by RoundServer. Reads knobs, resets every survivor's observation to 0 (rule 1) and puts
 ## the shapeshifter in true form, not transforming, no cooldown (rule 5), discarding anything left
 ## from a round that ended mid-transformation. Subscribes to MonsterStunned (rule 10).
-func setup(_tick_runner: TickRunner, bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
+	registry.register_view(StateKeys.TRANSFORMING, &"BorrowedFace", TransformView.new(self))
 	_hz = knobs.net.sim_tick_hz
 	_observe_ticks = knobs.ticks(knobs.borrowed_face.observe_time_s)
 	_range_m = knobs.borrowed_face.observe_range_m
@@ -185,6 +195,8 @@ func _can_change_into(form: int) -> bool:
 		return false
 	if _locked.is_valid() and _locked.call(_monster):
 		return false
+	if _attacking.is_valid() and _attacking.call(_monster):
+		return false ## rule 11: never cancels an attack; no cooldown cost (rule 7)
 	if form == TRUE_FORM:
 		return true
 	if not (_survivors.has(form) and observed(form) and _status_of.is_valid()):

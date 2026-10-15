@@ -19,6 +19,8 @@ class_name HoldService extends RefCounted
 ##                                               with ViewState.server_dir), -1 if none; a net-id Start must match it
 ##   body_target(actor, handle) -> int           net id on the body the actor's handle names, or -1
 ##   is_shapeshifter(actor) -> bool              the actor's role; unset = nobody (no fake holds)
+##   barred(actor) -> bool                       set_barred: the actor may not interact at all, fakes
+##                                               included (borrowed-face.md rule 8: Transforming); unset = never
 ## Usage:
 ##   var holds := HoldService.new(knobs, players, frames, centre_of, sight, aim)
 ##   holds.register(slot); holds.server_tick(tick)   # from the Holds step
@@ -33,6 +35,7 @@ var _sight: Callable
 var _aim: Callable
 var _body_target: Callable
 var _is_shapeshifter: Callable
+var _barred: Callable
 var _items: Array[Interactable] = []
 ## actor -> {"item": Interactable, "elapsed": int, "fake": bool}
 var _holds: Dictionary[int, Dictionary] = {}
@@ -52,6 +55,12 @@ func _init(knobs: Knobs, players: Callable, frames: Callable, centre_of: Callabl
 	_aim = aim
 	_body_target = body_target
 	_is_shapeshifter = is_shapeshifter
+
+
+## Injects `barred(actor) -> bool` (see the class comment): a barred actor's Start is rejected and its
+## running hold, real or fake, cancels with &"ineligible" on the next Holds step.
+func set_barred(barred: Callable) -> void:
+	_barred = barred
 
 
 ## Registers `i` under the next net id (map interactables first, in map order) and returns it.
@@ -143,6 +152,8 @@ static func rotated(ids: Array, tick: int) -> Array[int]:
 
 
 func _try_start(actor: int, f: InputFrame) -> void:
+	if _is_barred(actor):
+		return
 	var item := _resolve(actor, f)
 	if item == null:
 		return
@@ -192,7 +203,7 @@ func _continue(actor: int) -> void:
 	if not _holds.has(actor):
 		return
 	var item: Interactable = _holds[actor].item
-	if not _holds[actor].fake and not item.eligible(actor): ## a fake never asks the owner
+	if _is_barred(actor) or not _holds[actor].fake and not item.eligible(actor): ## a fake never asks the owner
 		cancel(actor, &"ineligible")
 		return
 	var centre: Vector3 = _centre_of.call(actor)
@@ -201,6 +212,10 @@ func _continue(actor: int) -> void:
 		return
 	if not _sight.call(actor, item):
 		cancel(actor, &"sight")
+
+
+func _is_barred(actor: int) -> bool:
+	return _barred.is_valid() and _barred.call(actor)
 
 
 func _advance(actor: int) -> void:
