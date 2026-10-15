@@ -91,7 +91,7 @@ stories:
     name: "Escape, evidence extraction and outcome lock"
     file: "production/epics/match-flow/story-003-escape-and-outcome-lock.md"
     priority: should-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
@@ -101,7 +101,7 @@ stories:
     name: "Drive extraction at the exit"
     file: "production/epics/survivor-objectives/story-006-extraction.md"
     priority: should-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 0.5
     blocker: ""
