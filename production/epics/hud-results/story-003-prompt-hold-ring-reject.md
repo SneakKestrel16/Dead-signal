@@ -34,7 +34,7 @@ H7-H9: the interaction prompt with verb, object, glyph and Hold or Press, the ho
 *From GDD `design/ux/hud.md`, scoped to this story:*
 
 - [ ] A valid target shows the prompt with verb, object, the glyph for the last-used device and Hold or Press; switching from keyboard to gamepad changes the glyph without restart.
-- [ ] Holding shows the ring driven by the predicted hold and corrected by the server echo; a cancel shows its cause for 200 ms.
+- [ ] Holding shows the ring driven by the predicted hold and corrected by the server echo; a cancel shows its cause for 1 s, and the broken ring plays for 200 ms (hud.md H8 and Z5 table, interaction-patterns P3; corrected 2026-10-15, AD-239).
 - [ ] A refused action shows its reason label for 1.5 s; only one of prompt, ring, bleed-out or transforming bar shows in Z4 at once.
 - [ ] Retained screenshots of prompt, ring and refusal.
 
