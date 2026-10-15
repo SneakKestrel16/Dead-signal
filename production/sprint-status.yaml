@@ -17,16 +17,6 @@ generated: "2026-10-14"
 updated: "2026-10-14"
 
 stories:
-  - id: "na-verify"
-    name: "Verify NA-1 on a real network (carryover)"
-    file: ""
-    priority: must-have
-    status: backlog
-    owner: ""
-    estimate_days: 0.5
-    blocker: "designer session with a second PC"
-    completed: ""
-
   - id: "sprint1-review"
     name: "Retroactive Sprint 1 code review"
     file: ""

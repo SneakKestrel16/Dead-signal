@@ -14,7 +14,7 @@ Workflow tier: standard for every system (no overrides), so each GDD is mined fo
 | Story | Type | Automated Test Required | Manual Verification Required |
 |-------|------|------------------------|------------------------------|
 | SR-1 Sprint 1 retroactive review | Review task | Regression test per fixed finding, in the touched suite | Review record in `production/qa/` |
-| NA-V Verify NA-1 on a real network | Integration (manual) | None | Designer walks `production/qa/test-cases/na-v-real-network-cases.md` on two PCs |
+| NA-V Verify NA-1 on a real network | — | — | Waived by the designer 2026-10-14 (AD-103) |
 | CI-3 Speed modifiers | Logic | `tests/unit/first-person-controller/speed_modifiers_test.gd` | None |
 | CI-8 Hold start and complete | Integration | `tests/integration/first-person-controller/hold_service_start_test.gd` | None |
 | NA-9 Event projection and sounds | Integration | `tests/integration/network/event_projection_test.gd` | None |
@@ -140,13 +140,8 @@ Workflow tier: standard for every system (no overrides), so each GDD is mined fo
 
 ## Manual QA Checklist
 
-### NA-V Verify NA-1 on a real network — Integration (manual)
-**Verification method**: Two-PC session with the NH-1 harness
-**Who must sign off**: designer
-**Evidence to capture**: results filled into `production/qa/test-cases/na-v-real-network-cases.md`
-
-- [ ] Every NAV case except NAV-08 walked and recorded (NAV-08 waits on EX-1).
-- [ ] NA-6 two-PC AC, DC-5 cross-machine digest and NA-3 real-network timing recorded.
+### NA-V Verify NA-1 on a real network
+Waived by the designer 2026-10-14 (AD-103). The cases stay in `production/qa/test-cases/na-v-real-network-cases.md` for a later run.
 
 ### SR-1 Retroactive Sprint 1 code review
 **Verification method**: /code-review over every Sprint 1 source file (godot-gdscript-specialist + qa-tester), each finding verified against code
