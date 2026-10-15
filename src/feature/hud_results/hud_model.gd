@@ -69,6 +69,7 @@ var _rescue_s := 0.0
 var _hidden := false
 var _shock_end := -1 ## server tick the own shock window ends
 var _bleed: Dictionary = {} ## own ring {at: tick, left: s, rate}; empty = none
+var _charges := -1 ## taser cartridges from EventBatch.CHARGES; -1 = none sent (H11)
 
 ## This client's player id; set by the client root (OwnStateHud). -1: no own state is read.
 var own_id := -1
@@ -97,6 +98,7 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 		router.subscribe(EventBatch.HIDING, on_hiding)
 		router.subscribe(EventBatch.BLEED_RING, on_bleed_ring)
 		router.subscribe(&"PlayerShocked", on_shocked)
+		router.subscribe(EventBatch.CHARGES, on_charges)
 
 
 ## Current Phase (MatchFlow.Phase), -1 before the round begins (MatchDisplay).
@@ -433,6 +435,20 @@ func on_bleed_ring(tick: int, p: Dictionary) -> void:
 	if p.get("survivor") != own_id or not (left is float and rate is float and is_finite(left) and is_finite(rate)):
 		return
 	_bleed = {"at": tick, "left": maxf(left, 0.0), "rate": maxf(rate, 0.0)}
+	own_state_changed.emit()
+
+
+## Taser cartridges from the server (H11), -1 before any count; while spectating, the watched survivor's.
+func charges() -> int:
+	return _charges
+
+
+## Handler for EventBatch.CHARGES {charges}.
+func on_charges(_tick: int, p: Dictionary) -> void:
+	var c: Variant = p.get("charges")
+	if not c is int:
+		return
+	_charges = c
 	own_state_changed.emit()
 
 

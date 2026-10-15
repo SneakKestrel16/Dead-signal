@@ -144,10 +144,18 @@ func _on_offset_changed(_e: ServerEvent) -> void:
 
 # --- H11 taser count ---
 
-func test_taser_count_follows_the_charges_entry_in_the_same_batch() -> void:
+func _taser() -> Array:
 	var router := ClientEventRouter.new()
-	var taser: TaserCount = auto_free(TaserCount.new())
-	router.subscribe(EventBatch.CHARGES, taser.on_charges)
+	var model := HudModel.new(MatchDisplay.new(_knobs), _knobs, router)
+	model.own_id = SURVIVOR
+	var taser: TaserCount = auto_free(TaserCount.new(model))
+	return [router, model, taser]
+
+
+func test_taser_count_follows_the_charges_entry_in_the_same_batch() -> void:
+	var r := _taser()
+	var router: ClientEventRouter = r[0]
+	var taser: TaserCount = r[2]
 	assert_bool(taser.visible).is_false()
 	router.on_packet(SERVER_PEER, EventBatch.build(5, 0, [], [], Vector3.ZERO, null, -1,
 			[[EventBatch.CHARGES, {"charges": 3}]]))
@@ -158,8 +166,21 @@ func test_taser_count_follows_the_charges_entry_in_the_same_batch() -> void:
 			[[EventBatch.CHARGES, {"charges": 2}]]))
 	assert_int(taser.count).is_equal(2)
 	assert_str(taser.text).contains("2")
-	taser.on_charges(7, {"charges": "x"})
+	(r[1] as HudModel).on_charges(7, {"charges": "x"})
 	assert_int(taser.count).is_equal(2)
+
+
+## BUG-0006: a spectator gets the watched survivor's CHARGES entry; hud.md HUD States shows no kit then.
+func test_taser_count_hides_while_spectating() -> void:
+	var r := _taser()
+	var model: HudModel = r[1]
+	var taser: TaserCount = r[2]
+	model.on_charges(5, {"charges": 2})
+	assert_bool(taser.visible).is_true()
+	model.on_own_body({"id": MONSTER}) # the own entry is another player's: watching them
+	assert_bool(taser.visible).is_false()
+	model.on_charges(6, {"charges": 1})
+	assert_bool(taser.visible).is_false()
 
 
 # --- H13 world progress: server provider ---

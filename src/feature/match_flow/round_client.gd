@@ -78,6 +78,8 @@ var match_display: MatchDisplay
 var interaction: InteractionHud
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
 var flinch_enabled := true
+## Camera on the watched survivor while spectating (BUG-0005); null when not rendering.
+var spectator_cam: SpectatorCamera
 ## When set, used instead of LocalInput each tick (scripted runs and tests); yaw/pitch come from it.
 var scripted: InputFrame
 ## Full join version string; "" = knobs.join_version(VERSION_BUILD). A shipped session sets the lobby's.
@@ -178,6 +180,7 @@ func _on_connected() -> void:
 	var visual := Node3D.new()
 	body.add_child(visual)
 	predictor = OwnerPredictor.new(knobs, body, visual, _step, smp)
+	predictor.own_id = net.local_player_id # BUG-0005: no prediction or input while spectating
 	puppets = PuppetMap.new(smp)
 	smp.peer_packet.connect(_on_packet) # after PuppetMap: handle introductions land first
 	router = ClientEventRouter.new(smp)
@@ -266,9 +269,8 @@ func _on_connected() -> void:
 		hud.add_child(edge_cues)
 		router.subscribe(EventBatch.SOUND, edge_cues.on_sound)
 		router.subscribe(&"ScareTriggered", edge_cues.on_scare)
-		var taser := TaserCount.new()
-		hud.add_child(taser)
-		router.subscribe(EventBatch.CHARGES, taser.on_charges)
+		hud.add_child(TaserCount.new(hud_model))
+		spectator_cam = SpectatorCamera.new(net.local_player_id)
 		var bars := WorldProgressBars.new(knobs, estimated_tick)
 		add_child(bars)
 		router.subscribe(EventBatch.PROGRESS, bars.on_progress)
@@ -368,6 +370,10 @@ func _physics_process(_delta: float) -> void:
 		toggle_flashlight()
 	if input != null and scripted == null and Input.is_action_just_pressed(&"use_item"):
 		fire_taser()
+	if predictor.spectating():
+		predictor.predict(InputFrame.new()) # applies snapshots and keeps the tick estimate; sends nothing
+		light.take_server(predictor.last_own.get("flashlight", false)) # the watched survivor's light
+		return
 	var f := _frame()
 	# AD-217: interact_target is the map index the server's ray must also pick. Stamped before predict(),
 	# which sends the frame, so from the pre-move position; the server's Holds step aims after the move.
@@ -394,6 +400,9 @@ func _process(delta: float) -> void:
 		else:
 			var est := estimated_tick(Engine.get_physics_interpolation_fraction())
 			head.rotation = Vector3(input.view_pitch(est), input.view_yaw(est), 0.0)
+	if spectator_cam != null:
+		spectator_cam.place(head, knobs.controller.eye_height_m, _now_ms - knobs.net.interp_delay_ms,
+				knobs.net.max_extrapolation_ms)
 	if _own_cone != null:
 		_own_cone.visible = light.is_on()
 	_draw_remotes()
@@ -462,6 +471,7 @@ func receive(bytes: PackedByteArray) -> void:
 	for b: Dictionary in snap.bodies:
 		if b.get("own", false) and hud_model != null:
 			hud_model.on_own_body(b)
+			spectator_cam.on_own(b, _now_ms)
 		if b.get("own", false) or not puppets.has(b.id):
 			continue
 		_present[b.id] = true

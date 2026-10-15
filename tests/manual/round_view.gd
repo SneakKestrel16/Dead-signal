@@ -1155,7 +1155,10 @@ func _own_bot(c0: RoundClient) -> void:
 					o.scripted = InputFrame.new()
 				var away := o.body.global_position - c0.body.global_position
 				o.scripted.yaw = atan2(-away.x, -away.z)
-				o.scripted.move = Vector2(0, 1) if f < _own_frame + 600 else Vector2.ZERO
+				# Stop just past the camp-slow radius: walking on for 10 s left the greybox floors and the watched
+				# survivor fell out of the map (BUG-0005 capture, entry y -17400).
+				var far := away.length() > _knobs.downing.camp_slow_radius_m + 2.0
+				o.scripted.move = Vector2.ZERO if far or f >= _own_frame + 600 else Vector2(0, 1)
 			if f == _own_frame + 30:
 				_shot("downed")
 				print("HUD downed: word '%s' bleed '%s' z4 '%s' crosshair %s" % [own.word(), own.bleed_text(),
@@ -1166,19 +1169,16 @@ func _own_bot(c0: RoundClient) -> void:
 				_own_step = 4
 				_own_frame = f
 		4:
-			# RoundClient has no spectator camera yet: OwnerPredictor keeps replaying the spectator's never-acked
-			# inputs on top of the watched survivor's entry, so the body falls away below the map. For the shot
-			# the head is put on the entry's eye, facing its yaw (manual capture only; the client bug is reported).
-			if c0.predictor.last_own.has("pos"):
-				c0.head.global_position = c0.predictor.last_own["pos"] + Vector3.UP * _knobs.controller.eye_height_m
-				c0.scripted.yaw = c0.predictor.last_own["yaw"]
-				c0.scripted.pitch = -0.1
+			# The client's own SpectatorCamera places the view (BUG-0005); the bot only watches.
 			if m.watched() >= 0 and not has_meta(&"spect_at"):
 				set_meta(&"spect_at", f)
 			if has_meta(&"spect_at") and f == get_meta(&"spect_at") + 30:
 				_shot("spectating")
 				print("HUD spectating: '%s' watched %d can_act %s z4 '%s'" % [own.spectating_text(), m.watched(),
 						c0.ping_hud.can_act(), c0.interaction.shown()])
+				print("SPECTATOR camera %s body %s entry %s unacked %d taser %s" % [c0.camera.global_position,
+						c0.body.global_position, c0.predictor.last_own.get("pos"), c0.predictor.unacked_count(),
+						c0.hud.get_children().filter(func(n: Node) -> bool: return n is TaserCount)[0].visible])
 			if has_meta(&"spect_at") and f == get_meta(&"spect_at") + 40:
 				get_tree().quit()
 ## --bot=picker state.

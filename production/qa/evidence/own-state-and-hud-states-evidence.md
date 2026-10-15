@@ -24,17 +24,14 @@ bleed-out, and after the 60 s bleed-out the server makes it a spectator. The hos
 | `own-state-and-hud-states/hidden.png` | Hidden (`--bot=ownstate` step 0) | Crosshair hidden, prompt "Hold E  Leave" only, no vignette, roster/clock/checklist stay. ("Released" under it is HUD-3's cause label for the hide hold the bot let go.) | `state hidden prompt 'Hold E  Leave' crosshair false` |
 | `own-state-and-hud-states/seized.png` | Seized (step 2) | Tight dark edges and the word "Seized"; no prompt or ring; crosshair stays (state table: Seized hides prompt and ring only). The red shape is the shapeshifter's body in the face. | `word 'Seized' vignette 0.79 z4 ''` |
 | `own-state-and-hud-states/downed.png` | Downed (step 3) | Wide grey edges, "Downed", own bleed-out "60 s" in the prompt's place, crosshair hidden, roster "✚ Downed" and checklist stay | `word 'Downed' bleed '60 s' z4 '' crosshair false` |
-| `own-state-and-hud-states/spectating.png` | Spectating (step 4) | "Spectating: View2" under the clock; roster "○ Eliminated", clock, objectives; no prompt, ring or crosshair; `can_act` false (no ping, no wheel) | `'Spectating: View2' watched 2 can_act false z4 ''` |
+| `own-state-and-hud-states/spectating.png` | Spectating (step 4) | Recaptured 2026-10-15 after the BUG-0005/0006 fix (port 30892): the watched survivor's 3D view from its eye, its neighbour's body in front; "Spectating: View1" under the clock; roster "○ Eliminated", clock, objectives; no prompt, ring, crosshair or kit (H11 hidden); `can_act` false | `'Spectating: View1' watched 1 can_act false z4 ''`; `SPECTATOR camera (5.19, 1.60, 31.71) body (5.19, 0.00, 31.71) entry (5.19, 0.00, 31.71) unacked 0 taser false` |
 
 ## Known defects seen in the capture
 
-- **The spectator's 3D view is black.** RoundClient has no spectator camera: OwnerPredictor replays the
-  spectator's never-acknowledged inputs on top of the watched survivor's own entry, so the body falls away
-  below the map (measured: y about -18000 m after 10 s). The bot tried to pin the head on the entry for the
-  shot without success. The HUD under test draws correctly over it. A client spectator view is needed
-  (hud.md "spectator spec: open gap").
-- **Kit (H11) still shows while spectating** ("Taser × 2"): the spectator's stream carries the watched
-  survivor's CHARGES. The state table says no kit; TaserCount does not read HudModel yet.
+- Fixed: the black spectator view (BUG-0005) and the kit while spectating (BUG-0006); `spectating.png` was
+  replaced by the recapture. Part of the original black view was the harness: the walk-away step walked the
+  other survivors off the greybox floors for 10 s, so the watched survivor's server body fell (entry y -17400).
+  `--bot=ownstate` now stops them just past `camp_slow_radius_m`.
 - Vignette look is a PLACEHOLDER (edge bands, not P11's desaturating shader); the art pass replaces it.
 
 ## Not shown

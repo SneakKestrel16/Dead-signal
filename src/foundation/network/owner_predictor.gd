@@ -12,6 +12,9 @@ class_name OwnerPredictor extends RefCounted
 ## error is hidden by an offset on `visual` (physics interpolation OFF) that decays over
 ## correction_smooth_s, otherwise (or when the server's restore counter changed) the body snaps and
 ## reset_physics_interpolation() is called. A snapshot not newer than the last applied one is ignored.
+## Spectating (BUG-0005; ADR-0004 §8): when the own entry's id is not `own_id`, the server sends the watched
+## survivor's stream, so the entry is that survivor's body. The body is placed there as sent: no replay, no
+## step, no input sent, unacknowledged frames dropped (the server holds no body for a spectator).
 ## Usage:
 ##   var p := OwnerPredictor.new(knobs, body, visual, TestMoveStep.apply, smp)
 ##   p.predict(frame)   # each physics tick: applies a buffered snapshot, steps, sends the last 3 frames
@@ -39,6 +42,8 @@ var snap_magnitudes: Array[float] = []
 ## The modifiers used for prediction; refreshed from each own snapshot entry.
 var modifiers := MovementModifiers.new()
 var estimator: TickEstimator
+## This client's player id (RoundClient sets it); -1 = unknown, never spectating.
+var own_id: int = -1
 
 var _body: CharacterBody3D
 var _visual: Node3D
@@ -86,9 +91,11 @@ func close() -> void:
 ## body and sends the last 3 unacknowledged frames (unreliable, input channel).
 func predict(frame: InputFrame) -> void:
 	apply_pending()
+	_local_tick += 1
+	if spectating():
+		return
 	frame.seq = _next_seq
 	_next_seq += 1
-	_local_tick += 1
 	_step.call(_body, frame, modifiers)
 	_unacked.append(frame)
 	if _unacked.size() > MAX_UNACKED:
@@ -99,6 +106,11 @@ func predict(frame: InputFrame) -> void:
 			last.append(f)
 		_smp.send_bytes(var_to_bytes(InputFrame.build_packet(last)), SERVER_PEER,
 			MultiplayerPeer.TRANSFER_MODE_UNRELIABLE, NetChannels.INPUT)
+
+
+## True while the newest own entry is another player's (the watched survivor's stream; see class doc).
+func spectating() -> bool:
+	return own_id >= 0 and last_own.get("id", own_id) != own_id
 
 
 ## Decays the smoothing offset; call every rendered frame.
@@ -158,6 +170,13 @@ func apply_snapshot(snap: Dictionary) -> void:
 	last_own = own
 	states_received += 1
 	estimator.observe(snap.tick, float(_local_tick))
+	if spectating():
+		_unacked.clear()
+		_offset = Vector3.ZERO
+		_show_offset()
+		_body.global_position = own.pos
+		_body.velocity = Vector3.ZERO
+		return
 	var predicted := _body.global_position
 	while not _unacked.is_empty() and _unacked[0].seq <= own.seq:
 		_unacked.pop_front()
