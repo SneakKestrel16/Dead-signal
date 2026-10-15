@@ -1,6 +1,6 @@
 ## Emitter: Match Flow & Win Conditions
 ## A Healthy survivor entered the exit after evacuation activated.
-## Field types are inferred from the systems-index.md Meaning column; per-peer projection arrives with ADR-0004.
+## Field types are inferred from the systems-index.md Meaning column.
 class_name EvSurvivorEscaped
 extends ServerEvent
 
@@ -11,5 +11,6 @@ func type() -> StringName:
 	return &"SurvivorEscaped"
 
 
-func project(_peer: int, _handles: HandleTable) -> Dictionary:
+## Full to every peer (ADR-0004 §5 table: public fact).
+func project(_peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
 	return {"survivor": survivor}

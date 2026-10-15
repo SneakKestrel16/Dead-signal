@@ -84,7 +84,7 @@ A body entry in a snapshot carries:
 - **Timing.** Relevance is computed in the TickRunner send phase.
 - **Hidden survivors.** They are never relevant to the monster's client. Their relevance to other survivors follows Survivor Defense's occupancy rules.
 
-**5. Event projection.** Each event's emitter supplies `project(event, peer) -> Dictionary`, where `{}` means the peer receives nothing (signature amended by ADR-0005; was `Dictionary or null`). Network batches the tick's projected events into one reliable message per peer, on the event channel. Client-facing payloads refer to bodies by that peer's handle and to players by player ID only for public facts: names, roster, survivors' life states, escapes, connections, results.
+**5. Event projection.** Each event's emitter supplies `project(event, peer) -> Dictionary`, where `{}` means the peer receives nothing (signature amended by ADR-0005; was `Dictionary or null`; now `project(peer, handles, monster)`, ADR-0005 §1 as amended 2026-10-14). Implemented by `EventBatch` (tag `0xF2`), sent after the tick's handle messages on the same reliable channel. Network batches the tick's projected events into one reliable message per peer, on the event channel. Client-facing payloads refer to bodies by that peer's handle and to players by player ID only for public facts: names, roster, survivors' life states, escapes, connections, results.
 
 | Event | Survivor clients (and their spectators) | Shapeshifter client |
 |---|---|---|

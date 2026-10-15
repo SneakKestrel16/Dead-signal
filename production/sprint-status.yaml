@@ -51,11 +51,11 @@ stories:
     name: "Event projection and sounds"
     file: "production/epics/network-authority/story-009-event-projection-sounds.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "lobby-role-assignment-2"
     name: "Roster lock and hand-off"

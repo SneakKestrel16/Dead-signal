@@ -44,6 +44,11 @@ var _runner: TickRunner
 ## sets its relevance.volume_at and visible_volumes from the Facility Map; until then only the near
 ## rule applies. Tests may replace it with one built on a seeded RNG.
 var scope: ReplicationScope
+## The shapeshifter's player ID (public: lobby-role-assignment.md rule 11), for event projection;
+## -1 before roles are dealt. Set by Match Flow at roster lock.
+var monster: int = -1
+## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
+var _sounds: Array[EventBatch.Sound] = []
 
 
 class PlayerState extends RefCounted:
@@ -175,6 +180,17 @@ func frames_of(player_id: int) -> Array[InputFrame]:
 	return out
 
 
+## Queues a positional sound for this tick (ADR-0004 §6): it reaches every other player within
+## `radius_m` (a knob the caller reads, e.g. controller.footstep_radius_walk_m) as position and set only.
+func emit_sound(position: Vector3, sound_set: StringName, radius_m: float, source: int = -1) -> void:
+	var s := EventBatch.Sound.new()
+	s.position = position
+	s.sound_set = sound_set
+	s.radius_m = radius_m
+	s.source = source
+	_sounds.append(s)
+
+
 ## The player's InputQueue (for tests and the telemetry that reads its counters).
 func queue_of(player_id: int) -> InputQueue:
 	return _players[player_id].queue
@@ -229,6 +245,11 @@ func _snapshot_phase(tick: int) -> void:
 	var positions := {}
 	for pid: int in _players:
 		positions[pid] = _players[pid].body.global_position
+	var events: Array[ServerEvent] = []
+	if _runner.bus != null:
+		events = _runner.bus.take_tick_events()
+	var sounds := _sounds
+	_sounds = []
 	for pid: int in _players:
 		var peer := _net.peer_id_of(pid)
 		if peer == -1:
@@ -237,6 +258,9 @@ func _snapshot_phase(tick: int) -> void:
 		var msgs := scope.handles.take(pid)
 		if not msgs.is_empty():
 			_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+		var batch := EventBatch.build(tick, pid, events, sounds, positions[pid], scope.handles, monster)
+		if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
+			_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
 		var bodies: Array[Dictionary] = [_entry(pid, pid, true)]
 		for other: int in seen: ## handle order (ReplicationScope.bodies_for)
 			bodies.append(_entry(other, seen[other], false))

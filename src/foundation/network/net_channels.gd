@@ -3,7 +3,7 @@ class_name NetChannels extends RefCounted
 ## are unreliable on separate channels so neither waits behind a lost reliable packet.
 ## SceneMultiplayer.peer_packet does not report the channel, so each side only decodes the one kind
 ## it can receive: the server input packets (var_to_bytes), a client snapshots (SnapshotCodec) and
-## handle messages (HandleTable), told apart by their first byte.
+## handle messages (HandleTable) and event batches (EventBatch), told apart by their first byte.
 
 const INPUT := 1
 const STATE := 2

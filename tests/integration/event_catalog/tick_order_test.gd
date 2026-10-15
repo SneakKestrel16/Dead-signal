@@ -52,11 +52,11 @@ class StubModule extends RefCounted:
 	func server_tick(_tick: int) -> void:
 		log.append("tick:%s delivered:%d" % [name, bus.take_tick_events().size()])
 		var e := EvPlayerShocked.new()
-		e.tick = index
+		e.player = index ## marker: the bus stamps tick itself while a TickRunner drives it
 		bus.emit(e)
 
 	func on_shock(e: ServerEvent) -> void:
-		log.append("handled:%s" % NAMES[e.tick])
+		log.append("handled:%s" % NAMES[(e as EvPlayerShocked).player])
 
 
 func before_test() -> void:

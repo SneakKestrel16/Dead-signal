@@ -1,12 +1,12 @@
 # Story 009: Event projection batches and positional sounds
 
 > **Epic**: Network Authority & Replication
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Foundation
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 Unblocked 2026-10-13: ADR-0001..0008 Accepted. 
 
@@ -36,9 +36,9 @@ Each tick's delivered events are projected per peer and sent as one reliable bat
 
 *From ADR-0004 §5–6, scoped to this story:*
 
-- [ ] For each row of the ADR-0004 projection table, a survivor client and the shapeshifter client receive exactly the projected payload (`SurvivorHit`, `AbilityUsed` never reach survivors; bleed-out state never reaches the shapeshifter).
-- [ ] `PlayerShocked` is byte-identical for every case to a survivor client.
-- [ ] A footstep 1 m outside its radius reaches no peer; inside it carries position and sound set and no handle.
+- [x] For each row of the ADR-0004 projection table, a survivor client and the shapeshifter client receive exactly the projected payload (`SurvivorHit`, `AbilityUsed` never reach survivors; bleed-out state never reaches the shapeshifter).
+- [x] `PlayerShocked` is byte-identical for every case to a survivor client.
+- [x] A footstep 1 m outside its radius reaches no peer; inside it carries position and sound set and no handle.
 
 ---
 
@@ -81,7 +81,7 @@ Each tick's delivered events are projected per peer and sent as one reliable bat
 **Required evidence**:
 - Integration: `tests/integration/network/event_projection_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created, 20 tests passing; NA-8 capture test extended (suite 408/408)
 
 ---
 
@@ -89,3 +89,31 @@ Each tick's delivered events are projected per peer and sent as one reliable bat
 
 - Depends on: Story 008; event-catalog Stories 001, 002
 - Unlocks: event-catalog Story 005
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing.
+- `tests/integration/network/event_projection_test.gd`: 20 tests.
+- The NA-8 real-ENet survivor capture now emits monster events and sounds every tick, and decodes every event batch. It checks that no payload carries the monster's player ID, and that PlayerShocked and MonsterStunned do arrive.
+- 19 mutations, each caught by a named test (run with gdUnit `-c`).
+
+**Deviations and inferences** (AD-107):
+- `ServerEvent.project(peer, handles, monster)`: the third argument is the shapeshifter's player ID, which is public. The ADR-0005 §1 and ADR-0004 §5 text is amended.
+- SurvivorHit and AbilityUsed reach no client, the shapeshifter included. The table's shapeshifter column lists only FormChanged.
+- BarricadeBroken is not sent as an event. The door state rides the PVS door, and the bang rides a positional sound.
+- The shocked player gets `{own: true}`. Everyone else gets `{body: handle}`, the same shape whoever was shocked.
+- `SurvivorDowned.bleed_out_s` is a new field (an inference: the table says "bleed-out state"). Nobody gets it before roles are dealt.
+- `ObjectiveProgressChanged.discovered` defaults to false, so the point stays hidden if an owner forgets to set it.
+- SurvivorRescued drops `rescuer`, because the table row allows only the survivor and life state.
+- A sound skips its emitter, which plays its own steps locally. A sound exactly at its radius is heard.
+- `EventBus.emit` stamps `tick` and `server_time` while a TickRunner drives the bus, unless the emitter set a tick (SR-1 deferred item).
+
+**Deferred**:
+- Spectators getting their watched survivor's batch: NA-10.
+- The Borrowed Face footstep set: the caller passes the set, and the owner epic picks the target's set.
+- Events that fire while a viewer is disconnected are lost. The rejoin resync of phase, roster and life states needs a story.
+- Batches and snapshots on different channels are not ordered against each other. Client routing (event-catalog story 005) must tolerate a payload that names a handle with no puppet yet.
+- `prediction_reconcile_test` (5 clients) failed once in a full run under load and passed alone and in the next two full runs.

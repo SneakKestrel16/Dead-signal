@@ -103,7 +103,7 @@ func test_each_header_names_the_tables_emitter() -> void:
 
 func test_project_returns_dictionary_for_every_subclass() -> void:
 	for s in _scripts():
-		var result: Variant = s.new().project(1, HandleTable.new())
+		var result: Variant = s.new().project(1, HandleTable.new(), -1)
 		assert_bool(result is Dictionary).override_failure_message(s.resource_path).is_true()
 
 
@@ -146,14 +146,14 @@ class_name ServerEvent")).is_true()
 func test_scare_triggered_reaches_only_its_recipient() -> void:
 	var e := EvScareTriggered.new()
 	e.recipient = 3
-	assert_dict(e.project(3, HandleTable.new())).is_not_empty()
-	assert_dict(e.project(4, HandleTable.new())).is_empty()
+	assert_dict(e.project(3, HandleTable.new(), -1)).is_not_empty()
+	assert_dict(e.project(4, HandleTable.new(), -1)).is_empty()
 
 
 func test_round_ended_projection_does_not_share_results() -> void:
 	var e := EvRoundEnded.new()
 	e.results = {"a": 1}
-	var d: Dictionary = e.project(1, HandleTable.new())
+	var d: Dictionary = e.project(1, HandleTable.new(), -1)
 	d.results["a"] = 2
 	assert_int(e.results["a"]).is_equal(1)
 
@@ -164,4 +164,4 @@ func test_round_ended_projection_does_not_share_results() -> void:
 func test_secret_and_owner_only_events_reach_no_peer_yet() -> void:
 	for e: ServerEvent in [EvAbilityUsed.new(), EvSurvivorHit.new(), EvFlinchRequested.new(), EvViewOffsetChanged.new()]:
 		for peer in [1, 2, 3]:
-			assert_dict(e.project(peer, HandleTable.new())).override_failure_message(str(e.type())).is_empty()
+			assert_dict(e.project(peer, HandleTable.new(), 3)).override_failure_message(str(e.type())).is_empty()

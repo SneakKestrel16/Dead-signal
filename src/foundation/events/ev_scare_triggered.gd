@@ -1,6 +1,6 @@
 ## Emitter: Scare Events
 ## A scare; carries scope (shared or single-client).
-## Field types are inferred from the systems-index.md Meaning column; per-peer projection arrives with ADR-0004.
+## Field types are inferred from the systems-index.md Meaning column.
 class_name EvScareTriggered
 extends ServerEvent
 
@@ -12,8 +12,8 @@ func type() -> StringName:
 	return &"ScareTriggered"
 
 
-## Recipient clients only (systems-index); shared-scope fan-out arrives with ADR-0004.
-func project(peer: int, _handles: HandleTable) -> Dictionary:
+## A shared scare emits one event per recipient. Recipients only; `source` and player identity stripped (ADR-0004 §5).
+func project(peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
 	if peer != recipient:
 		return {}
-	return {"scope": scope, "recipient": recipient}
+	return {"scope": scope}

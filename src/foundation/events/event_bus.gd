@@ -23,6 +23,9 @@ var _queue: Array[ServerEvent] = []
 ## type -> Array of Callable, in subscribe order (Array[Callable] as a value type does not parse).
 var _handlers: Dictionary[StringName, Array] = {}
 var _collected: Array[ServerEvent] = []
+## The running tick and its server time, set by TickRunner at the start of each step; emit() stamps them.
+var tick: int = 0
+var server_time: float = 0.0
 var _cleared := false ## set by clear(); flush() stops delivering when a handler clears mid-batch
 
 
@@ -31,8 +34,14 @@ func _init(rounds: int) -> void:
 	max_flush_rounds = rounds
 
 
-## Queues `e` for the next flush(). Example: `bus.emit(EvSurvivorHit.new())`.
+## Queues `e` for the next flush(), stamped with the tick of emission and its server time (ADR-0005
+## §1) once a TickRunner drives the bus (tick > 0), unless the emitter set a tick itself. An event
+## emitted outside a step (an RPC handler) carries the last step's tick and is batched on the next.
+## Example: `bus.emit(EvSurvivorHit.new())`.
 func emit(e: ServerEvent) -> void:
+	if tick > 0 and e.tick == 0:
+		e.tick = tick
+		e.server_time = server_time
 	_queue.append(e)
 
 

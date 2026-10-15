@@ -1,6 +1,6 @@
 ## Emitter: Borrowed Face
 ## Shapeshifter form changed.
-## Field types are inferred from the systems-index.md Meaning column; per-peer projection arrives with ADR-0004.
+## Field types are inferred from the systems-index.md Meaning column.
 class_name EvFormChanged
 extends ServerEvent
 
@@ -12,7 +12,8 @@ func type() -> StringName:
 	return &"FormChanged"
 
 
-## Fails closed: survivor clients never receive it, and roles are not known here yet,
-## so no peer gets it until the network-authority projection (ADR-0004) lands.
-func project(_peer: int, _handles: HandleTable) -> Dictionary:
-	return {}
+## The shapeshifter's own form only; never to survivors (ADR-0004 §5, Borrowed Face).
+func project(peer: int, _handles: HandleTable, monster: int) -> Dictionary:
+	if peer != monster or player != monster:
+		return {}
+	return {"form": form}

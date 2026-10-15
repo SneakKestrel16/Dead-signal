@@ -70,6 +70,9 @@ func register_feature(module: Object, phase_order: int) -> void:
 ## Runs one whole tick: tick += 1, tick_started, then phases 1-6. Tests call this directly.
 func step() -> void:
 	_tick += 1
+	if bus != null:
+		bus.tick = _tick
+		bus.server_time = server_time()
 	tick_started.emit(_tick)
 	_run(input_stage)
 	_run(movement_stage)

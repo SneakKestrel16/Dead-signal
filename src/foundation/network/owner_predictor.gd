@@ -215,5 +215,6 @@ func _restore_contacts(pos: Vector3) -> void:
 
 
 func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:
-	if peer_id == SERVER_PEER and not HandleTable.is_message(bytes): ## handle messages are PuppetMap's
+	if peer_id == SERVER_PEER and not HandleTable.is_message(bytes) and not EventBatch.is_message(bytes):
+		## handle messages are PuppetMap's; event batches are client event routing's
 		receive(bytes)

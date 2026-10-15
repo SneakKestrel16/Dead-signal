@@ -34,6 +34,8 @@ func close() -> void:
 
 ## Applies a handle message or a snapshot from the server.
 func receive(bytes: PackedByteArray) -> void:
+	if EventBatch.is_message(bytes):
+		return ## event batches belong to client event routing (event-catalog story 005)
 	if HandleTable.is_message(bytes):
 		var msgs := HandleTable.decode(bytes)
 		if msgs.is_empty():

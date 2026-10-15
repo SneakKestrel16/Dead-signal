@@ -290,6 +290,7 @@ func test_survivor_capture_carries_no_monster_player_id() -> void:
 	_runner = TickRunner.new()
 	_runner.fail_hard = false
 	_runner.boot(_knobs)
+	_runner.bus = EventBus.new(_knobs.core.max_flush_rounds)
 	_sm = ServerMovement.new(_knobs, server, server_root.multiplayer as SceneMultiplayer, TestMoveStep.apply, TestMoveStep.WORLD)
 	_sm.attach(_runner)
 	_sm.scope = _scope()
@@ -309,6 +310,7 @@ func test_survivor_capture_carries_no_monster_player_id() -> void:
 	await _until(func() -> bool: return bodies.size() == 2 and clients[0].local_player_id != -1 and clients[1].local_player_id != -1, "both joined")
 	var survivor := clients[0].local_player_id
 	var monster := clients[1].local_player_id
+	_sm.monster = monster
 	var capture: Array[PackedByteArray] = []
 	var survivor_api := clients[0].multiplayer as SceneMultiplayer
 	survivor_api.peer_packet.connect(func(_peer: int, bytes: PackedByteArray) -> void: capture.append(bytes))
@@ -320,6 +322,7 @@ func test_survivor_capture_carries_no_monster_player_id() -> void:
 				_sm.scope.form_changed(monster)
 			else:
 				body.global_position = leg[0]
+			_emit_monster_events(monster, survivor, body.global_position)
 			_runner.step()
 			_poll()
 			await get_tree().process_frame
@@ -329,8 +332,19 @@ func test_survivor_capture_carries_no_monster_player_id() -> void:
 	var introduced := {}
 	var snapshot_ids := {}
 	var snapshots := 0
+	var batches := 0
+	var seen_types := {}
 	var max_bytes := 0
 	for bytes in capture:
+		if EventBatch.is_message(bytes): # NA-9: every event batch is decoded too
+			var batch := EventBatch.decode(bytes)
+			assert_dict(batch).is_not_empty()
+			batches += 1
+			for entry: Array in batch.entries:
+				seen_types[entry[0]] = true
+				assert_bool(entry[0] in [&"PlayerShocked", &"MonsterStunned", EventBatch.SOUND]) 					.override_failure_message("survivor got %s" % entry[0]).is_true()
+				assert_bool(_carries_int(entry[1], monster)).override_failure_message(str(entry)).is_false()
+			continue
 		if HandleTable.is_message(bytes):
 			var msgs := HandleTable.decode(bytes)
 			assert_int(msgs.size()).is_greater(0)
@@ -353,9 +367,43 @@ func test_survivor_capture_carries_no_monster_player_id() -> void:
 	for id: int in snapshot_ids:
 		assert_bool(introduced.has(id)).override_failure_message("snapshot id %d never introduced" % id).is_true()
 	assert_int(snapshots).is_greater(60)
+	assert_int(batches).is_greater(0)
+	# Projected events really arrive through ServerMovement, not only the footstep.
+	assert_bool(seen_types.has(&"PlayerShocked")).is_true()
+	assert_bool(seen_types.has(&"MonsterStunned")).is_true()
 	assert_int(introduced.size()).is_greater_equal(2) ## re-entry after 1 s out came back as a stranger
 	assert_bool(introduced.has(monster)).is_false()
 	prints("NA-8 largest survivor snapshot:", max_bytes, "B (guardrail about 200 B per peer)")
+
+
+## Each tick of the capture, the monster is shocked, stunned while disguised, changes form, uses an
+## ability and hits the survivor, and makes a sound at its position (NA-9).
+func _emit_monster_events(monster: int, survivor: int, at: Vector3) -> void:
+	var shocked := EvPlayerShocked.new()
+	shocked.player = monster
+	var stunned := EvMonsterStunned.new()
+	stunned.monster = monster
+	stunned.true_form = true # by handle while relevant; a disguised stun would reach no survivor
+	var form := EvFormChanged.new()
+	form.player = monster
+	var hit := EvSurvivorHit.new()
+	hit.survivor = survivor
+	for e: ServerEvent in [shocked, stunned, form, EvAbilityUsed.new(), hit]:
+		_runner.bus.emit(e)
+	_sm.emit_sound(at, &"steps_c2", _knobs.controller.footstep_radius_sprint_m, monster)
+
+
+## True when `v` (a payload, nested) holds the int `id` anywhere.
+func _carries_int(v: Variant, id: int) -> bool:
+	if v is Dictionary:
+		for k: Variant in v:
+			if _carries_int(k, id) or _carries_int(v[k], id):
+				return true
+	elif v is Array:
+		for x: Variant in v:
+			if _carries_int(x, id):
+				return true
+	return typeof(v) == TYPE_INT and v == id
 
 
 # --- Code review 2026-10-14: rules the first pass left untested ----------------

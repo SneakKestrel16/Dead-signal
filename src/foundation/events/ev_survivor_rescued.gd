@@ -1,6 +1,6 @@
 ## Emitter: Downing, Rescue & Elimination
 ## Rescue completed.
-## Field types are inferred from the systems-index.md Meaning column; per-peer projection arrives with ADR-0004.
+## Field types are inferred from the systems-index.md Meaning column.
 class_name EvSurvivorRescued
 extends ServerEvent
 
@@ -12,5 +12,6 @@ func type() -> StringName:
 	return &"SurvivorRescued"
 
 
-func project(_peer: int, _handles: HandleTable) -> Dictionary:
-	return {"survivor": survivor, "rescuer": rescuer}
+## Full to every peer (ADR-0004 §5 table: public fact).
+func project(_peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
+	return {"survivor": survivor} ## the table row allows the survivor and life state only, not the rescuer

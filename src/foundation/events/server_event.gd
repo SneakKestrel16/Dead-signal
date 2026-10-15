@@ -1,6 +1,6 @@
 ## Base of every catalog event (ADR-0005). Server-side only; clients never emit events.
 ## Never construct by class name (parse error); build a concrete Ev<EventName> instead.
-## Example: var e := EvPlayerShocked.new(); e.tick = 12; e.project(peer, handles)
+## Example: var e := EvPlayerShocked.new(); e.tick = 12; e.project(peer, handles, monster)
 @abstract
 class_name ServerEvent
 extends RefCounted
@@ -15,5 +15,8 @@ var server_time: float = 0.0
 @abstract func type() -> StringName
 
 
-## Payload the given peer may see, or {} when that peer receives nothing.
-@abstract func project(peer: int, handles: HandleTable) -> Dictionary
+## Payload viewer `peer` (a player ID) may see, or {} when it receives nothing. Bodies are named by
+## that viewer's `handles`, never by player ID; `monster` is the shapeshifter's player ID (roles are
+## public, lobby-role-assignment.md rule 11), so the ADR-0004 §5 table can project by role.
+## Signature amended by NA-9 (AD-107): ADR-0005 had project(peer, handles).
+@abstract func project(peer: int, handles: HandleTable, monster: int) -> Dictionary
