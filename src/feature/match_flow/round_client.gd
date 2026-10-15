@@ -29,6 +29,8 @@ var hidden: HiddenSpawner
 var predictor: OwnerPredictor
 var puppets: PuppetMap
 var light := FlashlightPredictor.new()
+## Own cartridges and shocks from the server (survivor-defense story 015 reads charges for use_item).
+var defense: DefenseDisplay
 var bar: PredictedHoldBar
 var input: LocalInput
 var body: CharacterBody3D
@@ -182,6 +184,7 @@ func _on_connected() -> void:
 	pings = PingReceiver.new(router, smp)
 	callouts = CalloutReceiver.new(router, smp)
 	facility_scare = FacilityScareDisplay.new(router)
+	defense = DefenseDisplay.new(router)
 	if _render:
 		head = Node3D.new()
 		head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
@@ -319,6 +322,23 @@ func toggle_flashlight() -> void:
 	(multiplayer as SceneMultiplayer).send_bytes(light.toggle(), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 
 
+## Sends one taser fire intent when may_fire allows it (survivor-defense story 015); the server decides
+## cartridges, reuse delay and hits. Returns whether it sent.
+func fire_taser() -> bool:
+	if not may_fire(ping_hud.contexts if ping_hud != null else null, defense.charges()):
+		return false
+	(multiplayer as SceneMultiplayer).send_bytes(SurvivorDefense.fire_packet(), 1,
+			MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+	return true
+
+
+## use_item gate: a cartridge in the last server count (-1, no taser, for the shapeshifter; 0 is the GDD's
+## "input ignored" edge case) and an actions-allowing context on top (ADR-0014 §1: not the wheel, an overlay
+## or a menu). Null `contexts` (a client without UI) is ungated.
+static func may_fire(contexts: InputContextStack, charges: int) -> bool:
+	return charges > 0 and (contexts == null or contexts.allows_actions())
+
+
 func _frame() -> InputFrame:
 	if scripted != null:
 		var f := InputFrame.new()
@@ -342,6 +362,8 @@ func _physics_process(_delta: float) -> void:
 				MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 	if input != null and scripted == null and Input.is_action_just_pressed(&"flashlight"):
 		toggle_flashlight()
+	if input != null and scripted == null and Input.is_action_just_pressed(&"use_item"):
+		fire_taser()
 	var f := _frame()
 	# AD-217: interact_target is the map index the server's ray must also pick. Stamped before predict(),
 	# which sends the frame, so from the pre-move position; the server's Holds step aims after the move.

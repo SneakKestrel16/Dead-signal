@@ -291,11 +291,11 @@ stories:
     name: "Shipped client fires the taser on use_item"
     file: "production/epics/survivor-defense/story-015-taser-fire-input.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "hud-11"
     name: "Server feeds the HUD still lacks: round roster names and hold refusal reasons"
     file: "production/epics/hud-results/story-011-hud-server-feeds.md"

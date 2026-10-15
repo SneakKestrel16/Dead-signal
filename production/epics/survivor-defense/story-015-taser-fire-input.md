@@ -1,7 +1,7 @@
 # Story 015: Shipped client fires the taser on use_item
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
@@ -33,15 +33,19 @@ The `use_item` action is bound in `project.godot` but nothing reads it, and `Sur
 
 *From GDD `design/gdd/survivor-defense.md`, scoped to this story:*
 
-- [ ] A survivor holding the taser presses use_item and the server receives one fire request per press; cartridges and stun follow the server rules (real ENet, at least 2 clients).
-- [ ] With the callout wheel or an overlay open, use_item sends nothing.
-- [ ] A survivor without the taser sends nothing.
+- [x] A survivor holding the taser presses use_item and the server receives one fire request per press; cartridges and stun follow the server rules (real ENet, at least 2 clients).
+- [x] With the callout wheel or an overlay open, use_item sends nothing.
+- [x] A survivor without the taser sends nothing.
 
 ---
 
 ## Implementation Notes
 
 - Check the TR id against docs/architecture/tr-registry.yaml and correct it in this story if it differs.
+  Checked 2026-10-15: TR-defense-001 (client intent only, server owns charges) matches; unchanged.
+- Implemented: `RoundClient.fire_taser()` / `may_fire()`; charges come from a `DefenseDisplay` on the
+  client's router. "Without the taser" is read as no cartridge count (-1, the shapeshifter) or 0 (the
+  GDD's "input ignored" edge case): inference, a designer call would settle whether 0 should still send.
 
 ---
 
@@ -62,7 +66,8 @@ The `use_item` action is bound in `project.godot` but nothing reads it, and `Sur
 **Story Type**: Integration
 **Required evidence**: `tests/integration/survivor-defense/taser_fire_input_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/taser_fire_input_test.gd` (real ENet, 5 clients);
+wheel/overlay gate in `tests/unit/survivor-defense/taser_fire_gate_test.gd`
 
 ---
 
@@ -70,3 +75,7 @@ The `use_item` action is bound in `project.godot` but nothing reads it, and `Sur
 
 - Depends on: match-flow 013
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged 6a68101..69eba8d. RoundClient reads use_item next to the flashlight check and sends SurvivorDefense.fire_packet() reliably when may_fire(contexts, charges) holds (charges > 0 and contexts.allows_actions(); null contexts on UI-less clients not gated). DefenseDisplay built on the router for every client. INFERENCE: "without the taser" read as count -1 (shapeshifter) or 0, per the GDD edge case "Taser used with 0 cartridges: input ignored"; a designer call on whether a press at 0 still sends settles it. Wheel/overlay gating proven by unit test (UI-less test clients have no stack). Flashlight press still not context-gated (pre-existing). TaserCount (HUD-5) and DefenseDisplay both track CHARGES. Tests: integration taser_fire_input_test (real ENet, 5 clients) + unit taser_fire_gate_test; 3 mutations caught. Full suite 1474/1474.
