@@ -96,6 +96,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_results_ticks = knobs.ticks(knobs.match_flow.results_duration_s)
 	_mf.survivor_ids.assign(_roster.player_ids().filter(
 		func(id: int) -> bool: return _roster.entry(id).role == Roster.SURVIVOR))
+	for id in _roster.player_ids():
+		if _roster.entry(id).role == Roster.SHAPESHIFTER:
+			_mf.shapeshifter_id = id
 	_mf.setup(tick_runner, bus, registry, knobs)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
 

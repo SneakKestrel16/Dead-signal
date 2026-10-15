@@ -16,6 +16,8 @@ class_name MatchFlow extends RefCounted
 ## at the event's tick (the drop's detection tick); RECONNECTED stops it; `reconnect_grace_s` later the
 ## RESOLVE slot emits GRACE_EXPIRED and runs the win check on that tick. Every disconnect and reconnect is
 ## logged through the bus's delivered-event list (`EventBus.take_tick_events`), the only log path so far.
+## Story 006 (rule 20): set `shapeshifter_id` before start_round; when its grace expires the win check
+## forfeits to the survivors, last in rule 16 order, so an earned result in the same tick beats it.
 
 enum Phase { INFILTRATION, INVESTIGATION, EVACUATION }
 ## `RoundEnded.outcome` values; text in OUTCOME_TEXT (rule 23).
@@ -34,6 +36,8 @@ const REASON_TEXT: Array[String] = ["Evidence escaped", "All survivors eliminate
 ## Player IDs of this round's survivors; set before start_round (read in setup). Empty disables the
 ## all-eliminated and evidence-lost checks (no roster, e.g. clock-only tests).
 var survivor_ids: Array[int] = []
+## Player ID of this round's shapeshifter; set before start_round. -1: nobody can forfeit.
+var shapeshifter_id: int = -1
 
 
 var _bus: EventBus
@@ -56,6 +60,7 @@ var _position_of: Callable
 ## player id -> tick its drop was detected, while in reconnect grace (any role: story 006 reads it too).
 var _grace_start: Dictionary[int, int] = {}
 var _grace_ticks: int = 0
+var _forfeited: bool = false ## the shapeshifter's grace expired (rule 20)
 
 
 ## Getter-only view of the clock for StateKeys.ROUND_CLOCK readers. Holds the module weakly, so no
@@ -132,6 +137,7 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_status = {}
 	_grace_start = {}
 	_grace_ticks = knobs.ticks(knobs.match_flow.reconnect_grace_s)
+	_forfeited = false
 	for id in survivor_ids:
 		_status[id] = Status.HEALTHY
 	registry.register_view(StateKeys.ROUND_CLOCK, &"MatchFlow", ClockView.new(self))
@@ -249,16 +255,17 @@ func _expire_grace(tick: int) -> void:
 			continue
 		_grace_start.erase(id)
 		_mark_disconnected(id)
+		if id == shapeshifter_id:
+			_forfeited = true
 		var e := EvPlayerConnectionChanged.new()
 		e.player = id
 		e.status = EvPlayerConnectionChanged.GRACE_EXPIRED
 		_bus.emit(e)
 
 
-## Forfeit hook (rule 20): true once the shapeshifter's reconnect grace expired. Story 006 supplies
-## the input; until then nothing forfeits.
+## Forfeit hook (rule 20): true once the shapeshifter's reconnect grace expired (story 006).
 func _forfeit_due() -> bool:
-	return false
+	return _forfeited
 
 
 ## Survivors still inside become DID_NOT_ESCAPE (rules 15, 24).
