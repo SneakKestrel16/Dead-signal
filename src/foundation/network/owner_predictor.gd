@@ -30,6 +30,8 @@ var corrections: int = 0
 var snaps: int = 0
 var stale_ignored: int = 0
 var bad_snapshots: int = 0
+## Own entry of the last applied snapshot ({} before one); PredictedHoldBar.on_snapshot reads its hold.
+var last_own: Dictionary = {}
 ## Magnitude in metres of every correction beyond the deadzone / of every snap (the first
 ## MAX_RECORDED_MAGNITUDES of each).
 var correction_magnitudes: Array[float] = []
@@ -153,6 +155,7 @@ func apply_snapshot(snap: Dictionary) -> void:
 	if own.is_empty():
 		return
 	_last_tick = snap.tick
+	last_own = own
 	states_received += 1
 	estimator.observe(snap.tick, float(_local_tick))
 	var predicted := _body.global_position

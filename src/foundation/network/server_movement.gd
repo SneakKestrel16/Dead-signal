@@ -47,6 +47,9 @@ var scope: ReplicationScope
 ## The shapeshifter's player ID (public: lobby-role-assignment.md rule 11), for event projection;
 ## -1 before roles are dealt. Set by Match Flow at roster lock.
 var monster: int = -1
+## The owner's hold for its own snapshot entry (ADR-0008 §8): HoldService.hold_of, (actor) -> Dictionary,
+## {} when idle. Set by the composition root; unset means every entry says no hold.
+var hold_of: Callable
 ## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
 var _sounds: Array[EventBatch.Sound] = []
 ## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
@@ -326,6 +329,9 @@ func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 		e["on_floor"] = p.body.is_on_floor()
 		e["scale"] = p.modifiers.effective_scale()
 		e["restores"] = p.restores
+		var hold: Dictionary = hold_of.call(player_id) if hold_of.is_valid() else {}
+		e["hold_net_id"] = hold.get("net_id", -1)
+		e["hold_elapsed_ticks"] = hold.get("elapsed_ticks", 0)
 	return e
 
 

@@ -1,7 +1,7 @@
 # Story network-authority/006: snapshot binary format.
 extends GdUnitTestSuite
 
-const SIX_BODY_BYTES := 159 ## 6 + 6 * 22 + 21 (u32 handles, story 008); ADR verification 6 measured 144 B with u16 ids
+const SIX_BODY_BYTES := 165 ## 6 + 6 * 22 + 27 (u32 handles, story 008; hold pair, controller-interaction 016); ADR verification 6 measured 144 B with u16 ids
 const SINGLE_DATAGRAM_BYTES := 1000
 
 
@@ -38,6 +38,8 @@ func test_round_trip_keeps_every_field() -> void:
 	assert_bool(own.on_floor).is_true()
 	assert_int(own.restores).is_equal(255)
 	assert_float(own.scale).is_equal(0.5)
+	assert_int(own.hold_net_id).is_equal(-1) ## encode default: no hold
+	assert_int(own.hold_elapsed_ticks).is_equal(0)
 
 
 func test_six_bodies_fit_one_datagram_near_adr_measure() -> void:
@@ -91,3 +93,15 @@ func test_wrong_version_unknown_flags_and_two_own_entries_are_rejected() -> void
 	two_own[1]["scale"] = 1.0
 	two_own[1]["restores"] = 0
 	assert_dict(SnapshotCodec.decode(SnapshotCodec.encode(1, two_own))).is_empty()
+
+
+# Controller-interaction 016 (ADR-0008 §8): the owner's entry carries its hold for the predicted bar.
+func test_own_entry_carries_the_hold_and_rejects_a_bad_net_id() -> void:
+	var bodies := _bodies(2)
+	bodies[0]["hold_net_id"] = 300
+	bodies[0]["hold_elapsed_ticks"] = 4321
+	var own: Dictionary = SnapshotCodec.decode(SnapshotCodec.encode(1, bodies)).bodies[0]
+	assert_int(own.hold_net_id).is_equal(300)
+	assert_int(own.hold_elapsed_ticks).is_equal(4321)
+	bodies[0]["hold_net_id"] = -2
+	assert_dict(SnapshotCodec.decode(SnapshotCodec.encode(1, bodies))).is_empty()

@@ -3,19 +3,20 @@ class_name SnapshotCodec extends RefCounted
 ## Layout, little endian: header = version u8, server_tick u32, count u8 (6 B). Per body (22 B):
 ## id u32, flags u8 (F_*), gait u8, position 3 x f32, yaw f32. `id` is the receiver's per-peer handle
 ## for the body (ADR-0004 §3), or the receiver's own player ID on its F_OWN entry. A body with F_OWN
-## adds 21 B: last consumed seq s32, velocity 3 x f32, effective modifier scale f32, restore counter u8
-## (the receiving player's own entry only). 6 bodies with one own entry = 6 + 6*22 + 21 = 159 B (ADR
-## verification 6 measured 144 B with u16 ids; ADR-0004 guardrail about 200 B per peer).
+## adds 27 B: last consumed seq s32, velocity 3 x f32, effective modifier scale f32, restore counter u8,
+## hold net id s32 (-1 = no hold), hold elapsed ticks u16 (ADR-0008 §8; the receiving player's own entry
+## only). 6 bodies with one own entry = 6 + 6*22 + 27 = 165 B (ADR verification 6 measured 144 B with u16
+## ids; ADR-0004 guardrail about 200 B per peer).
 ## Body Dictionary: {id, pos: Vector3, yaw, gait} plus, when own: {own: true, seq, vel: Vector3,
-## on_floor, scale, restores}. `restores` counts the server's inside-geometry restores of that player
+## on_floor, scale, restores, hold_net_id, hold_elapsed_ticks}; the hold pair defaults to -1 and 0 on encode. `restores` counts the server's inside-geometry restores of that player
 ## (mod 256). Every own entry carries it, so a lost datagram cannot lose a restore (ADR-0002 rule 9).
 ## Which bodies a snapshot carries is replication scope (ReplicationScope, story 008).
 ## Usage: `var snap := SnapshotCodec.decode(SnapshotCodec.encode(tick, bodies))`; {} means rejected.
 
-const VERSION := 3
+const VERSION := 4
 const HEADER_BYTES := 6
 const ENTRY_BYTES := 22
-const OWN_EXTRA_BYTES := 21
+const OWN_EXTRA_BYTES := 27
 ## Upper bound on bodies in one snapshot (protocol limit, well above lobby size).
 const MAX_BODIES := 32
 const F_OWN := 1
@@ -48,6 +49,8 @@ static func encode(tick: int, bodies: Array[Dictionary]) -> PackedByteArray:
 			_put_vec(out, o + 4, b.vel)
 			out.encode_float(o + 16, b.scale)
 			out.encode_u8(o + 20, b.restores)
+			out.encode_s32(o + 21, b.get("hold_net_id", -1))
+			out.encode_u16(o + 25, clampi(b.get("hold_elapsed_ticks", 0), 0, 0xFFFF))
 			o += OWN_EXTRA_BYTES
 	return out
 
@@ -84,7 +87,9 @@ static func decode(bytes: PackedByteArray) -> Dictionary:
 			b["vel"] = _get_vec(bytes, o + 4)
 			b["scale"] = bytes.decode_float(o + 16)
 			b["restores"] = bytes.decode_u8(o + 20)
-			if not (_finite(b.vel) and is_finite(b.scale)):
+			b["hold_net_id"] = bytes.decode_s32(o + 21)
+			b["hold_elapsed_ticks"] = bytes.decode_u16(o + 25)
+			if not (_finite(b.vel) and is_finite(b.scale)) or b.hold_net_id < -1:
 				return {}
 			o += OWN_EXTRA_BYTES
 		elif flags != 0:
