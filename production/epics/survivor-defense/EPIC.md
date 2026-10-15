@@ -56,7 +56,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 001 | [Defense module, charges and intent validation](story-001-defense-module-charges-intents.md) | Logic | Complete | ADR-0002 |
 | 002 | [Taser trace along the view ray with rewind](story-002-taser-trace.md) | Logic | Complete | ADR-0003 |
 | 003 | [One shock lock, no refresh, post-lock window](story-003-shock-lock-post-lock-window.md) | Logic | Complete | ADR-0007 |
-| 004 | [Monster stun, immunity and cancels](story-004-monster-stun-immunity-cancels.md) | Logic | Ready | ADR-0005 |
+| 004 | [Monster stun, immunity and cancels](story-004-monster-stun-immunity-cancels.md) | Logic | Complete | ADR-0005 |
 | 005 | [Identity-hiding stun and shock events](story-005-identity-hiding-events.md) | Integration | Ready | ADR-0004 |
 | 006 | [Hiding spots: enter, exit, occupancy, search](story-006-hiding-spots.md) | Integration | Ready | ADR-0008 |
 | 007 | [Barricade build and remove, closed doors block the dash](story-007-barricade-build-remove-door-block.md) | Integration | Complete | ADR-0008 |

@@ -1,7 +1,7 @@
 # Story 004: Monster stun, immunity and cancels
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,11 +34,11 @@ The monster's Normal, Stunned, Immune machine. A valid hit stuns for `stun_durat
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] A taser first-hit on the true-form monster within 5 m applies a 2.0 s stun and emits `MonsterStunned`; out of range, missed or blocked by a survivor it does not (acceptance 1).
-- [ ] A stun during lunge wind-up produces no `SurvivorHit`; during a takedown commit it frees the victim; during a transformation it cancels it; a stun beats a completion on the same tick (rule 15).
-- [ ] A second true-form hit inside `stun_immunity_s` is resisted and applies nothing; two survivors firing on the same tick stun once and spend two charges (rule 10, edge case).
-- [ ] A stun at 0 s, lunge wind-up at 2 s into immunity ends immunity, and a stun on that wind-up applies; a completed change into a disguise also ends immunity (rule 16).
-- [ ] A search or break in progress is interrupted and barricade damage already dealt is kept (rule 15).
+- [x] A taser first-hit on the true-form monster within 5 m applies a 2.0 s stun and emits `MonsterStunned`; out of range, missed or blocked by a survivor it does not (acceptance 1).
+- [x] A stun during lunge wind-up produces no `SurvivorHit`; during a takedown commit it frees the victim; during a transformation it cancels it; a stun beats a completion on the same tick (rule 15).
+- [x] A second true-form hit inside `stun_immunity_s` is resisted and applies nothing; two survivors firing on the same tick stun once and spend two charges (rule 10, edge case).
+- [x] A stun at 0 s, lunge wind-up at 2 s into immunity ends immunity, and a stun on that wind-up applies; a completed change into a disguise also ends immunity (rule 16).
+- [x] A search or break in progress is interrupted and barricade damage already dealt is kept (rule 15).
 
 ---
 
@@ -103,7 +103,7 @@ The monster's Normal, Stunned, Immune machine. A valid hit stuns for `stun_durat
 **Story Type**: Logic
 **Required evidence**: Logic: `tests/unit/survivor-defense/monster_stun_test.gd`. Re-run: `tests/unit/borrowed-face/transform_state_machine_test.gd`, `tests/unit/borrowed-face/transform_immunity_test.gd`, and the Downing commit-cancel tests under `tests/unit/downing-and-rescue/`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-defense/monster_stun_test.gd` (16 tests)
 
 ---
 
@@ -111,3 +111,19 @@ The monster's Normal, Stunned, Immune machine. A valid hit stuns for `stun_durat
 
 - Depends on: Stories 002, 003
 - Unlocks: Stories 005, 008, 012
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-187):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 992/992 after the wave merge, no leak warnings.
+- MonsterStunned is emitted in every form (GDD rules 1 and 9, the event's true_form field); survivors never receive the disguised one because project() filters it. Needed so a stun during a change back to true form cancels it.
+- Break tested with a stand-in item (story 008 adds Break); 'damage kept' checked as progress > 0 passed to the item on cancel.
+- Lunge wind-up detected from AbilityUsed (only accepted wind-ups emit it), not LungeView.
+- SurvivorHit emitted directly in tests until MA-6 and SD-12. Composer must call set_form_source(bf.form).
+- Uncaught mutation: dropping the 'never shorten a running stun' check; unreachable through real modules (a locked monster can neither lunge nor transform), check kept.
+**Test Evidence**: 16 tests with real Borrowed Face, Monster Abilities and Downing. Mutations caught: no MonsterStunned emit, immunity never ends early, disguise completion not ending immunity.
+**Code Review**: Complete (orchestrator review at merge)
