@@ -63,7 +63,7 @@ Roles are public in the lobby, but in a round nothing on a body says who it is o
 **Required evidence**:
 - Visual/Feel: retained screenshot or capture in `production/qa/evidence/` + sign-off in `production/qa/evidence/no-role-indicators-evidence.md`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created: `production/qa/evidence/no-role-indicators-evidence.md` (sign-off pending)
 
 ---
 
