@@ -10,6 +10,8 @@ class_name MatchFlow extends RefCounted
 ## RoundEnded. Set `survivor_ids` before start_round; in production from the locked Roster:
 ##   mf.survivor_ids.assign(roster.player_ids().filter(
 ##       func(id: int) -> bool: return roster.entry(id).role == Roster.SURVIVOR))
+## Story 003 (rules 10, 14, 15): the BEGIN slot detects escapes (`set_exit`); both drives Extracted
+## locks a survivor win, and the round ends at the first of all-out, deadline or the post-escape window.
 
 enum Phase { INFILTRATION, INVESTIGATION, EVACUATION }
 ## `RoundEnded.outcome` values; text in OUTCOME_TEXT (rule 23).
@@ -18,7 +20,8 @@ enum Outcome { SURVIVORS_WIN, SHAPESHIFTER_WINS }
 enum Reason { EVIDENCE_ESCAPED, ALL_ELIMINATED, EVIDENCE_LOST, DEADLINE, FORFEIT }
 ## Per-survivor status for win evaluation, from events only. HEALTHY and DOWNED count as inside, also
 ## while in reconnect grace (rule 13); DISCONNECTED is grace expired and counts as eliminated (rule 19).
-enum Status { HEALTHY, DOWNED, ESCAPED, ELIMINATED, DISCONNECTED }
+## DID_NOT_ESCAPE: still inside when the round ended (rules 15, 24).
+enum Status { HEALTHY, DOWNED, ESCAPED, ELIMINATED, DISCONNECTED, DID_NOT_ESCAPE }
 
 const OUTCOME_TEXT: Array[String] = ["Survivors Win", "Shapeshifter Wins"]
 const REASON_TEXT: Array[String] = ["Evidence escaped", "All survivors eliminated", "Evidence lost",
@@ -40,6 +43,12 @@ var _terminal_armed: bool = false
 var _status: Dictionary[int, Status] = {}
 var _extracted: Dictionary[int, bool] = {} ## drive objective ids reported EXTRACTED
 var _ended: bool = false
+var _exit_open: bool = false
+## Elapsed ticks at which the post-escape window closes; -1 until the outcome locks (rule 14).
+var _lock_end_ticks: int = -1
+var _window_ticks: int = 0
+var _exit: MapQueries
+var _position_of: Callable
 
 
 ## Getter-only view of the clock for StateKeys.ROUND_CLOCK readers. Holds the module weakly, so no
@@ -109,6 +118,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_phase = Phase.INFILTRATION
 	_terminal_armed = false
 	_ended = false
+	_exit_open = false
+	_lock_end_ticks = -1
+	_window_ticks = knobs.ticks(knobs.match_flow.post_escape_window_s)
 	_extracted = {}
 	_status = {}
 	for id in survivor_ids:
@@ -123,10 +135,28 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
 
 
-## MATCH_FLOW_BEGIN slot: advances the clock one tick and re-evaluates the phase.
+## Injects escape detection (rule 10): `exit` supplies the exit volume, `position_of.call(id) ->
+## Vector3` the survivor positions (until Network Authority publishes
+## StateKeys.PLAYER_POSITIONS_LIFE_STATES). Unset: nobody escapes by position. Call before setup.
+func set_exit(exit: MapQueries, position_of: Callable) -> void:
+	_exit = exit
+	_position_of = position_of
+
+
+## MATCH_FLOW_BEGIN slot: advances the clock one tick, re-evaluates the phase, then records every
+## Healthy survivor in the exit volume after activation as Escaped (rule 10). It runs before the
+## resolve check, so SurvivorEscaped is delivered to it in the same tick.
 func server_tick(_tick: int) -> void:
 	_elapsed_ticks += 1
 	_update_phase()
+	if _ended or not _exit_open or _exit == null or not _position_of.is_valid():
+		return
+	for id in survivor_ids:
+		if _status.get(id, Status.ELIMINATED) == Status.HEALTHY and _exit.in_exit(_position_of.call(id)):
+			_status[id] = Status.ESCAPED # at once: no second emit before the event is delivered
+			var ev := EvSurvivorEscaped.new()
+			ev.survivor = id
+			_bus.emit(ev)
 
 
 ## Rule 3: the round enters Infiltration at `elapsed_s = 0` and broadcasts RoundPhaseChanged once.
@@ -162,17 +192,24 @@ func is_ended() -> bool:
 	return _ended
 
 
+## True once both drives are Extracted: the outcome is a survivor win whatever follows (rule 14).
+func is_locked() -> bool:
+	return _lock_end_ticks >= 0
+
+
 ## Last known status of survivor `id`; ELIMINATED for an id not on the roster.
 func status_of(id: int) -> Status:
 	return _status.get(id, Status.ELIMINATED)
 
 
 ## MATCH_FLOW_RESOLVE slot, after every gameplay event of the tick was delivered: the rule 16 win
-## check, first match wins, once per tick. Evidence escaped ends the round at once here; the
-## post-escape window (rule 15) is story 003.
+## check, first match wins, once per tick. Evidence escaped locks the outcome; after the lock only
+## rule 15 runs: the round ends when nobody is inside, at the deadline or when the window closes.
 func _on_resolve(_tick: int) -> void:
 	if _ended:
 		return
+	if not is_locked() and _extracted.size() >= SurvivorObjectives.ACTIVE_DRIVES:
+		_lock_end_ticks = _elapsed_ticks + _window_ticks
 	var inside := 0
 	var out := 0 # Eliminated or Disconnected
 	for s: Status in _status.values():
@@ -180,8 +217,9 @@ func _on_resolve(_tick: int) -> void:
 			inside += 1
 		elif s != Status.ESCAPED:
 			out += 1
-	if _extracted.size() >= SurvivorObjectives.ACTIVE_DRIVES:
-		_end(Outcome.SURVIVORS_WIN, Reason.EVIDENCE_ESCAPED)
+	if is_locked():
+		if inside == 0 or time_remaining_s() <= 0.0 or _elapsed_ticks >= _lock_end_ticks:
+			_end(Outcome.SURVIVORS_WIN, Reason.EVIDENCE_ESCAPED)
 	elif not _status.is_empty() and out == _status.size():
 		_end(Outcome.SHAPESHIFTER_WINS, Reason.ALL_ELIMINATED)
 	elif not _status.is_empty() and inside == 0:
@@ -198,8 +236,12 @@ func _forfeit_due() -> bool:
 	return false
 
 
+## Survivors still inside become DID_NOT_ESCAPE (rules 15, 24).
 func _end(outcome: Outcome, reason: Reason) -> void:
 	_ended = true
+	for id: int in _status:
+		if _status[id] == Status.HEALTHY or _status[id] == Status.DOWNED:
+			_status[id] = Status.DID_NOT_ESCAPE
 	var ev := EvRoundEnded.new()
 	ev.outcome = outcome
 	ev.reason = reason # results payload: story 008
@@ -241,6 +283,8 @@ func _on_objective_progress(e: ServerEvent) -> void:
 	if p.objective >= SurvivorObjectives.DRIVE_ID and p.objective < SurvivorObjectives.FUSE_ID \
 			and p.state == SurvivorObjectives.DriveState.EXTRACTED:
 		_extracted[p.objective] = true
+	if p.objective == SurvivorObjectives.TERMINAL_ID and p.state == SurvivorObjectives.TerminalState.ACTIVATED:
+		_exit_open = true
 	# The terminal's own id: a drive's CARRIED (also state 1) must not arm it.
 	if p.objective == SurvivorObjectives.TERMINAL_ID and p.state == SurvivorObjectives.TerminalState.ARMED:
 		_terminal_armed = true # latched: nothing disarms (rule 6, phase never moves backwards)

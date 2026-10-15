@@ -1,12 +1,12 @@
 # Story 003: Escape, evidence extraction and outcome lock
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,9 +34,9 @@ A Healthy survivor entering the open exit escapes; the survivors win only when b
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A Healthy survivor entering the exit volume after evacuation is activated is recorded Escaped and `SurvivorEscaped` is emitted; a Downed survivor in the exit volume is not (rule 10, edge case "Downed survivor crawls into the exit").
-- [ ] A survivor escaping without drives is recorded Escaped and the round continues; survivors win only when Survivor Objectives reports both drives Extracted — one drive out is not a win (rule 11).
-- [ ] After both drives are Extracted at 8:00, eliminating every survivor still inside does not change the outcome, and the round ends no later than 8:45 (`post_escape_window_s`), the deadline, or when every survivor is Escaped or Eliminated, whichever comes first; those still inside are "Did not escape" (rules 14, 15, Formulas "Post-escape end time").
+- [x] A Healthy survivor entering the exit volume after evacuation is activated is recorded Escaped and `SurvivorEscaped` is emitted; a Downed survivor in the exit volume is not (rule 10, edge case "Downed survivor crawls into the exit").
+- [x] A survivor escaping without drives is recorded Escaped and the round continues; survivors win only when Survivor Objectives reports both drives Extracted — one drive out is not a win (rule 11).
+- [x] After both drives are Extracted at 8:00, eliminating every survivor still inside does not change the outcome, and the round ends no later than 8:45 (`post_escape_window_s`), the deadline, or when every survivor is Escaped or Eliminated, whichever comes first; those still inside are "Did not escape" (rules 14, 15, Formulas "Post-escape end time").
 
 ---
 
@@ -83,9 +83,9 @@ A Healthy survivor entering the open exit escapes; the survivors win only when b
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/match-flow/escape-and-outcome-lock_test.gd` — must exist and pass
+- Logic: `tests/unit/match-flow/escape_and_outcome_lock_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/match-flow/escape_and_outcome_lock_test.gd` (12 tests)
 
 ---
 
@@ -93,3 +93,20 @@ A Healthy survivor entering the open exit escapes; the survivors win only when b
 
 - Depends on: Story 002
 - Unlocks: Story 008
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: all passing (automated)
+**Deviations** (AD-133):
+- Implemented by gameplay-programmer in a git worktree, in parallel with SO-6; reviewed and merged by the orchestrator.
+- Escape detection runs in Match Flow's BEGIN slot (rule 10): a Healthy survivor whose position is in the exit after the terminal reported ACTIVATED is Escaped and `SurvivorEscaped` is emitted, so the resolve check sees it the same tick. Positions come from an injected `set_exit(MapQueries, position_of)`: no position view is published yet; the round composition root must call it, and until then nobody escapes by position.
+- No authored exit volume: `MapQueries.in_exit(point)` treats a point as in the exit when it is outside every map volume and within half exit E's opening width of its centre. Inference, marked in code; an authored exit box in the map file settles it.
+- Both drives Extracted locks a survivor win (`is_locked()`); the round then ends at the first of nobody inside, the deadline, or `post_escape_window_s` after the lock (rule 15). Two MF-2 tests changed on purpose (commented): the round no longer ends on the extraction tick, and a forfeit after the lock waits for the window.
+- `Status.DID_NOT_ESCAPE` (added last) is applied to everyone still inside at every round end, monster wins included (rule 24 read as outcome-independent).
+- SO-6 also built escape detection in parallel; the orchestrator kept Match Flow's (GDD and event file name it the emitter) and SO-6 was trimmed to extraction on `SurvivorEscaped`.
+- Test file `escape_and_outcome_lock_test.gd` (snake case).
+**Test Evidence**: `tests/unit/match-flow/escape_and_outcome_lock_test.gd`, 12 tests. Mutations caught: Downed survivors allowed to escape, window closing one tick late, the nobody-inside end removed.
+**Code Review**: Complete (orchestrator review)

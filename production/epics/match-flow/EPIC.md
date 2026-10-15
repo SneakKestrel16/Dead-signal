@@ -46,7 +46,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 |---|-------|------|--------|-----|
 | 001 | [Round clock and phase state machine](story-001-round-clock-phases.md) | Logic | Complete | ADR-0005 |
 | 002 | [Win evaluation order and immediate endings](story-002-win-evaluation.md) | Logic | Complete | ADR-0005 |
-| 003 | [Escape, evidence extraction and outcome lock](story-003-escape-and-outcome-lock.md) | Logic | Ready | ADR-0005 |
+| 003 | [Escape, evidence extraction and outcome lock](story-003-escape-and-outcome-lock.md) | Logic | Complete | ADR-0005 |
 | 004 | [Loading barrier, spawn, round end and return to lobby](story-004-round-lifecycle.md) | Integration | Complete | ADR-0005 |
 | 005 | [Survivor disconnect, grace and reconnect](story-005-survivor-disconnect-grace.md) | Integration | Ready | ADR-0001 |
 | 006 | [Shapeshifter disconnect and forfeit](story-006-shapeshifter-disconnect-forfeit.md) | Integration | Ready | ADR-0001 |

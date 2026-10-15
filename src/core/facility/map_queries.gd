@@ -1,7 +1,7 @@
 class_name MapQueries extends RefCounted
 ## Lookups over MapData (ADR-0007 §9-10). Analytic: reads the map data, never Area3D. The one physics
 ## query is interactable_on_ray's wall-and-glass ray (ADR-0007 §10); doors are tested analytically.
-## Later stories add in_zone and capsule_overlaps_swing.
+## Later stories add in_zone and capsule_overlaps_swing. Match-flow story 003 added in_exit.
 ## Usage: `var q := MapQueries.new(map); var v := q.volume_at(position)`
 
 ## Door leaf thickness for the analytic door test (the greybox leaf, tools/level/greybox_from_map.gd).
@@ -140,3 +140,17 @@ func volume_at(point: Vector3) -> StringName:
 		if v.contains(point):
 			return v.id
 	return &""
+
+
+## True when `point` (x, z only) is in the exit volume: past the wall (outside every map volume) and
+## within half the exit passage's width_m of its opening centre (match-flow.md rule 10, ADR-0007 §9).
+## Inference: the map authors no exit box, only exit E's opening; an authored exit volume in the map
+## file (Facility Map) would settle the shape. False when the map has no exit passage.
+func in_exit(point: Vector3) -> bool:
+	if volume_at(point) != &"":
+		return false
+	for p in _map.passages:
+		if p.kind == MapPassage.EXIT \
+				and Vector2(point.x - p.position.x, point.z - p.position.z).length() <= p.width_m / 2.0:
+			return true
+	return false

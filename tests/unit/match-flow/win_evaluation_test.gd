@@ -302,7 +302,9 @@ func test_evidence_escaped_beats_a_same_tick_forfeit() -> void:
 	_tick([_extract(0)])
 	mf.forfeit = true
 	var t := _tick([_extract(1)])
-	_assert_survivors(MatchFlow.Reason.EVIDENCE_ESCAPED, t)
+	assert_array(_ended).is_empty() # story 003: the lock opens the post-escape window; forfeit cannot end it
+	_step_to(float(t) / HZ + 45.0) # post_escape_window_s
+	_assert_survivors(MatchFlow.Reason.EVIDENCE_ESCAPED, t + 45 * HZ)
 
 
 # --- outcome lock -------------------------------------------------------------------------------
@@ -310,8 +312,8 @@ func test_evidence_escaped_beats_a_same_tick_forfeit() -> void:
 func test_outcome_is_emitted_once_and_never_flips() -> void:
 	_start()
 	_tick([_extract(0)])
-	var t := _tick([_extract(1)])
-	_tick([_elim(11), _elim(12), _elim(13), _elim(14)])
+	_tick([_extract(1)]) # story 003: locks; the round ends once nobody is inside
+	var t := _tick([_elim(11), _elim(12), _elim(13), _elim(14)])
 	_step_to(DEADLINE_S + 1.0)
 	_assert_survivors(MatchFlow.Reason.EVIDENCE_ESCAPED, t)
 	assert_bool(_mf.is_ended()).is_true()
