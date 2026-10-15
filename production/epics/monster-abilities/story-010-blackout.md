@@ -1,7 +1,7 @@
 # Story 010: Blackout (Vertical Slice)
 
 > **Epic**: Monster Abilities
-> **Status**: Blocked — BLOCKED: ADR-0009 is Proposed — accept it with `/architecture-decision accept ADR-0009` once decided
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 2 days

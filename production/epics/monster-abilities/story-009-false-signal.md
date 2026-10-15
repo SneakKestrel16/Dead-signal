@@ -1,7 +1,7 @@
 # Story 009: False Signal (Vertical Slice)
 
 > **Epic**: Monster Abilities
-> **Status**: Blocked — BLOCKED: ADR-0013 is Proposed — accept it with `/architecture-decision accept ADR-0013` once decided
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 2 days

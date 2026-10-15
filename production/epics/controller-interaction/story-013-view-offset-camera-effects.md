@@ -1,14 +1,13 @@
 # Story 013: Flinch view offset and client-only camera effects
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0015 is Proposed — accept it with `/architecture-decision accept ADR-0015` once decided.
 
 ## Context
 

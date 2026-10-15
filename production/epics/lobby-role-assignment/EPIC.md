@@ -45,14 +45,14 @@ Brings 4–6 players together by direct join (over Tailscale for MVP, ADR-0001) 
 | 002 | [Roster lock, Match Flow hand-off and return to Waiting](story-002-roster-lock-handoff.md) | Integration | Ready | ADR-0005, ADR-0002 |
 | 003 | [Character data and M1 character assignment](story-003-character-data-m1-assignment.md) | Logic | Ready | ADR-0006 |
 | 004 | [Host session setting: proximity voice](story-004-proximity-voice-setting.md) | Integration | Complete | ADR-0001 |
-| 005 | [Lobby screen: player list, Ready and countdown](story-005-lobby-screen.md) | UI | Blocked | ADR-0014 (Proposed), ADR-0001 |
+| 005 | [Lobby screen: player list, Ready and countdown](story-005-lobby-screen.md) | UI | Ready | ADR-0014 (Proposed), ADR-0001 |
 | 006 | [No name tags or role indicators on bodies](story-006-no-role-indicators.md) | Visual/Feel | Ready | ADR-0004 |
 | 007 | [Shapeshifter rotation queue (post-M1)](story-007-rotation-queue.md) | Logic | Ready | N/A |
 | 008 | [Queue positions for absent, reconnecting and new players (post-M1)](story-008-queue-absent-reconnect.md) | Logic | Complete | ADR-0001 |
 | 009 | [Character preferences and clash resolution (post-M1)](story-009-character-preferences.md) | Logic | Complete | N/A |
 | 010 | [Clash fairness and preference changes while Ready (post-M1)](story-010-clash-fairness-preference-lock.md) | Logic | Complete | N/A |
 | 011 | [Host kick (post-M1)](story-011-host-kick.md) | Logic | Complete | ADR-0001 |
-| 012 | [Lobby queue order and preference display (post-M1)](story-012-queue-order-display.md) | UI | Blocked | ADR-0014 (Proposed) |
+| 012 | [Lobby queue order and preference display (post-M1)](story-012-queue-order-display.md) | UI | Ready | ADR-0014 (Proposed) |
 
 Covered elsewhere: AC-LB-02/03/04 join validation (network-authority story 001), AC-LB-28/29 disconnect and host left (network-authority story 003).
 

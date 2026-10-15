@@ -1,14 +1,13 @@
 # Story 011: Shock presentation per form and cosmetic flashlight copy
 
 > **Epic**: Survivor Defense
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: 2026-10-15
 
-> **BLOCKED**: ADR-0010 and ADR-0013 are Proposed — accept with `/architecture-decision accept ADR-NNNN` once decided
 
 ## Context
 

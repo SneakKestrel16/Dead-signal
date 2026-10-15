@@ -1,14 +1,13 @@
 # Story 012: Lobby queue order and preference display (post-M1)
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: UI
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0014 is Proposed — accept it with `/architecture-decision accept ADR-0014` once decided.
 
 ## Context
 

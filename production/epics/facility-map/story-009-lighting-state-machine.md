@@ -1,14 +1,13 @@
 # Story 009: Per-volume lighting state machine and precedence
 
 > **Epic**: Facility Map
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0009 is Proposed — accept it with `/architecture-decision accept ADR-0009` once decided.
 
 ## Context
 

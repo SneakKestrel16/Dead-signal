@@ -1,14 +1,13 @@
 # Story 010: Hiding noise and the long-hide cue
 
 > **Epic**: Survivor Defense
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 days
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: 2026-10-15
 
-> **BLOCKED**: ADR-0013 is Proposed — accept with `/architecture-decision accept ADR-NNNN` once decided
 
 ## Context
 

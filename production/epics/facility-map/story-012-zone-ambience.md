@@ -1,14 +1,13 @@
 # Story 012: Zone ambience and B3 footstep masking
 
 > **Epic**: Facility Map
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0013 is Proposed — accept it with `/architecture-decision accept ADR-0013` once decided.
 
 ## Context
 

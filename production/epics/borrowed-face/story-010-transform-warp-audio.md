@@ -1,14 +1,13 @@
 # Story 010: Transformation warp and distortion audio
 
 > **Epic**: Borrowed Face
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0010 and ADR-0013 are Proposed — accept them with `/architecture-decision accept ADR-0010` and `/architecture-decision accept ADR-0013` once decided.
 
 ## Context
 

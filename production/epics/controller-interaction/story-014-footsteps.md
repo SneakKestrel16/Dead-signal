@@ -1,14 +1,13 @@
 # Story 014: Footstep events from gait and disguise
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0013 and ADR-0010 are Proposed — accept them with `/architecture-decision accept ADR-0013` and `/architecture-decision accept ADR-0010` once decided.
 
 ## Context
 

@@ -1,14 +1,13 @@
 # Story 009: Disguise and true-form rendering
 
 > **Epic**: Borrowed Face
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0010 is Proposed — accept it with `/architecture-decision accept ADR-0010` once decided.
 
 ## Context
 

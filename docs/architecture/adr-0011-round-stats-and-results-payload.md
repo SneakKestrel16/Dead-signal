@@ -1,7 +1,9 @@
 # ADR-0011: Round Stats and the Results Payload
 
 ## Status
-Proposed
+Accepted
+
+Accepted 2026-10-15 by the user ("accept all seven"). Any Verification Required items below are still open: they are follow-up work, not a condition on this status.
 
 ## Date
 2026-10-12

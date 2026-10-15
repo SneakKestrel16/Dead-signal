@@ -1,7 +1,7 @@
 # Story 008: Ability stats for results
 
 > **Epic**: Monster Abilities
-> **Status**: Blocked — BLOCKED: ADR-0011 is Proposed — accept it with `/architecture-decision accept ADR-0011` once decided
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day

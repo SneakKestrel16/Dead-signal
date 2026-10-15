@@ -1,7 +1,7 @@
 # Story 007: Lunge cue, coil pose and hit feedback
 
 > **Epic**: Monster Abilities
-> **Status**: Blocked — BLOCKED: ADR-0013 is Proposed — accept it with `/architecture-decision accept ADR-0013` once decided
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Visual/Feel
 > **Estimate**: 1-2 days

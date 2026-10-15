@@ -1,14 +1,13 @@
 # Story 008: Active point selection
 
 > **Epic**: Survivor Objectives
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-> **BLOCKED**: ADR-0012 is Proposed — accept it with `/architecture-decision accept ADR-0012` once decided.
 
 ## Context
 

@@ -1,14 +1,13 @@
 # Story 008: Results payload
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-> **BLOCKED**: ADR-0011 is Proposed — accept it with `/architecture-decision accept ADR-0011` once decided.
 
 ## Context
 

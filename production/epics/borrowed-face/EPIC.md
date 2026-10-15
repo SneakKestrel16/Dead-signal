@@ -52,8 +52,8 @@ TR-borrowedface-005, -006 and -011 rest partly on ADR-0010 (Proposed); stories f
 | 006 | [Disguise gates on objectives, rescue and defense interactions](story-006-interaction-gates.md) | Integration | Complete | ADR-0008 |
 | 007 | [Form replication and reconnect](story-007-form-replication-reconnect.md) | Integration | Complete | ADR-0004, ADR-0005 |
 | 008 | [Stun events projected by the form shown](story-008-stun-projection-by-form.md) | Integration | Complete | ADR-0004, ADR-0005 |
-| 009 | [Disguise and true-form rendering](story-009-disguise-rendering.md) | Visual/Feel | Blocked | ADR-0010 (Proposed), ADR-0004 |
-| 010 | [Transformation warp and distortion audio](story-010-transform-warp-audio.md) | Visual/Feel | Blocked | ADR-0010 (Proposed), ADR-0013 (Proposed), ADR-0004 |
+| 009 | [Disguise and true-form rendering](story-009-disguise-rendering.md) | Visual/Feel | Ready | ADR-0010 (Proposed), ADR-0004 |
+| 010 | [Transformation warp and distortion audio](story-010-transform-warp-audio.md) | Visual/Feel | Ready | ADR-0010 (Proposed), ADR-0013 (Proposed), ADR-0004 |
 
 Stun, taser, lunge, objective and defense owners are Feature epics; stories 004–006 and 008 test against stubs and re-run when those land.
 

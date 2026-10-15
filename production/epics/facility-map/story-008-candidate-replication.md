@@ -1,14 +1,13 @@
 # Story 008: Candidate replication and discovery agreement
 
 > **Epic**: Facility Map
-> **Status**: Blocked
+> **Status**: Ready
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: [set by /dev-story when implementation begins]
 
-BLOCKED: ADR-0012 is Proposed — accept it with `/architecture-decision accept ADR-0012` once decided.
 
 ## Context
 

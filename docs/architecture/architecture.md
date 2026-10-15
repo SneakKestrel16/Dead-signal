@@ -6,7 +6,7 @@
 - Last Updated: 2026-10-12
 - Engine: Godot 4.7.2 (GDScript)
 - GDDs Covered: `lobby-role-assignment`, `first-person-controller`, `match-flow`, `survivor-objectives`, `downing-and-rescue`, `survivor-defense`, `borrowed-face`, `monster-abilities`, `pings-and-callouts`, `scare-events`, plus the Facility Map in `design/levels/research-facility.md`. Not covered (no GDD yet): HUD & Results Screen, Accessibility Options, Match Telemetry.
-- ADRs Referenced: ADR-0001 to ADR-0015, all Proposed (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
+- ADRs Referenced: ADR-0001 to ADR-0015, all Accepted (0009-0015 on 2026-10-15) (see [ADR Audit](#adr-audit)). Where this document and an ADR differ, the ADR wins.
 - Evidence beyond the GDDs: `prototypes/networking-spike/README.md` (single-machine results, 2026-10-12).
 - TD-ARCHITECTURE: 2026-10-12 — skipped — Lean mode
 - LP-FEASIBILITY: 2026-10-12 — skipped — Lean mode
@@ -393,13 +393,13 @@ At `workflow: standard` only critical ADRs are required. The "before coding" lis
 
 ### Should have before the relevant system is built
 
-- **Written: [ADR-0010](adr-0010-borrowed-face-rendering.md) (Proposed).** Borrowed Face rendering and appearance swap — rend-003 — MEDIUM
-- **Written: [ADR-0009](adr-0009-lighting-states-and-blackout.md) (Proposed).** Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
-- **Written: [ADR-0013](adr-0013-spatial-audio-pipeline.md) (Proposed).** Spatial audio and cue pipeline (buses, ducking, occlusion) — audio-001, audio-002, audio-004 — HIGH
-- **Written: [ADR-0012](adr-0012-objective-discovery.md) (Proposed).** Objective discovery and seeded candidate selection (§6, TR-objectives-002) — core-006 — Low
-- **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Proposed).** Round stats and results payload — Low
-- **Written: [ADR-0015](adr-0015-scare-presentation-and-view-offset.md) (Proposed).** Scare presentation and view offset (flinch record, epoch re-baseline, client effects, flash limiter) — net-008, input-002 — Low
-- **Written: [ADR-0014](adr-0014-ui-and-input-focus.md) (Proposed).** UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
+- **Written: [ADR-0010](adr-0010-borrowed-face-rendering.md) (Accepted).** Borrowed Face rendering and appearance swap — rend-003 — MEDIUM
+- **Written: [ADR-0009](adr-0009-lighting-states-and-blackout.md) (Accepted).** Lighting states and Blackout (volumes, reset, reduced-flash, camera feeds) — rend-001, rend-002, map-003, map-004 — HIGH, and `Light3D` is not in the engine reference
+- **Written: [ADR-0013](adr-0013-spatial-audio-pipeline.md) (Accepted).** Spatial audio and cue pipeline (buses, ducking, occlusion) — audio-001, audio-002, audio-004 — HIGH
+- **Written: [ADR-0012](adr-0012-objective-discovery.md) (Accepted).** Objective discovery and seeded candidate selection (§6, TR-objectives-002) — core-006 — Low
+- **Written: [ADR-0011](adr-0011-round-stats-and-results-payload.md) (Accepted).** Round stats and results payload — Low
+- **Written: [ADR-0015](adr-0015-scare-presentation-and-view-offset.md) (Accepted).** Scare presentation and view offset (flinch record, epoch re-baseline, client effects, flash limiter) — net-008, input-002 — Low
+- **Written: [ADR-0014](adr-0014-ui-and-input-focus.md) (Accepted).** UI and input-focus framework (lobby, HUD, hold bar, dual focus, AccessKit) — ui-001, ui-002 — HIGH
 - Server-sim testability (injectable clock and RNG, headless server), which the unit-test acceptance criteria in the GDDs assume — Low
 
 ### Can defer
@@ -425,7 +425,7 @@ Each blocks the ADR named in brackets.
 
 Resolved since version 1:
 - **Real networks** (2026-10-13): a WAN run with 6 clients on a phone hotspot matched the simulated rows; players connect over Tailscale (designer decision), so NAT reachability is settled for MVP; drift and Wi-Fi tests were skipped. ADR-0001 to ADR-0008 Accepted.
-- **Borrowed Face rendering**: separate true-form model, appearance-child swap (ADR-0010, Proposed).
+- **Borrowed Face rendering**: separate true-form model, appearance-child swap (ADR-0010, Accepted).
 - **Rewind budget**: 50 ms interpolation and a 180 ms cap bounded by measured RTT (ADR-0003); the pursuit simulation passed at a 0.43 s strafe start with a 27 ms margin (ADR-0003 Verification (4), 2026-10-12).
 - **Hosting model**: listen server for MVP with a separable server role; dedicated hosting stays possible but is not built (ADR-0001).
 - **Monster identity leak**: per-peer handles re-issued on re-entry and per-event projection (ADR-0004).
