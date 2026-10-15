@@ -66,7 +66,7 @@ func test_every_door_has_a_swing_box_around_it_and_openings_have_none() -> void:
 func test_markers_match_the_level_doc_counts_and_rooms() -> void:
 	var map := MapData.load_map()
 	assert_dict(_count(map.markers, &"type")).is_equal({&"survivor_spawn": 5, &"monster_spawn": 3, &"hiding": 6,
-		&"switch": 14, &"camera": 4, &"monitor": 1, &"drive": 6, &"fuse": 7, &"fuse_box": 3, &"terminal": 3})
+		&"switch": 14, &"camera": 4, &"monitor": 1, &"drive": 6, &"fuse": 7, &"fuse_box": 3, &"terminal": 3, &"scare_anchor": 9})
 	## Spawn Points, Authored Candidate Points, hiding and surveillance tables; one switch per room.
 	var expected := {
 		&"S1": &"A1", &"S2": &"A1", &"S3": &"A1", &"S4": &"A1", &"S5": &"A1",
@@ -76,6 +76,8 @@ func test_markers_match_the_level_doc_counts_and_rooms() -> void:
 		&"P1": &"B2", &"P2": &"B1", &"P3": &"B3", &"T1": &"C4", &"T2": &"C2", &"T3": &"C3",
 		&"h1": &"A6", &"h2": &"A3", &"h3": &"A4", &"h4": &"A5", &"h5": &"B3", &"h6": &"C5",
 		&"c1": &"B1", &"c2": &"H-S", &"c3": &"C4", &"c4": &"A2", &"monitors": &"C1",
+		&"sd1": &"A3", &"sd2": &"A4", &"sd3": &"A6", &"sd4": &"B1", &"sd5": &"C2", &"sd6": &"C5",
+		&"sg1": &"A3", &"sg2": &"A4", &"sg3": &"A7",
 	}
 	var switch_rooms := []
 	for m in map.markers:
@@ -117,7 +119,7 @@ func test_interactables_get_the_same_net_ids_on_host_and_client() -> void:
 	assert_str(host[24].id).is_equal(&"h1") ## then markers in file order: the first hiding spot
 	assert_str(host[-1].id).is_equal(&"T3")
 	assert_bool(host.any(func(i: Resource) -> bool: return i is MapMarker and i.type in [&"survivor_spawn",
-		&"monster_spawn", &"camera"])).is_false()
+		&"monster_spawn", &"camera", &"scare_anchor"])).is_false()
 	assert_bool(host.any(func(i: Resource) -> bool: return i is MapPassage and not i.is_door())).is_false()
 
 

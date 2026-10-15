@@ -118,7 +118,17 @@ func _all_joined() -> bool:
 
 
 func _on_client_scare(_tick: int, p: Dictionary, client: int) -> void:
-	_got[client].append(p["scare"])
+	if not _at_anchor(p["origin"]):
+		_got[client].append(p["scare"])
+
+
+## True at a shipped scare anchor: RoundScript (story 006) fires there when a body spawns or is placed into its
+## volume, which this suite's monster-source checks ignore.
+static func _at_anchor(origin: Vector3) -> bool:
+	for m in MapData.load_map().markers:
+		if m.type == RoundScript.ANCHOR_TYPE and m.position == origin:
+			return true
+	return false
 
 
 ## Hosts on a fresh port and joins `clients` real ENet clients, each with a ClientEventRouter.
@@ -186,7 +196,8 @@ func _compose() -> void:
 
 func _on_scare(e: ServerEvent) -> void:
 	var s := e as EvScareTriggered
-	_scares.append([s.scare_id, s.recipient])
+	if not _at_anchor(s.origin):
+		_scares.append([s.scare_id, s.recipient])
 
 
 func _on_used(_e: ServerEvent) -> void:

@@ -11,7 +11,7 @@ class_name MapData extends Resource
 const MAP_PATH := "res://data/maps/research_facility.tres"
 ## Every marker type the level doc places. A map missing one fails errors().
 const MARKER_TYPES: Array[StringName] = [&"survivor_spawn", &"monster_spawn", &"hiding", &"switch", &"camera",
-	&"monitor", &"drive", &"fuse", &"fuse_box", &"terminal"]
+	&"monitor", &"drive", &"fuse", &"fuse_box", &"terminal", &"scare_anchor"]
 ## Marker types a player interacts with (ADR-0008 §2); spawns and cameras are not.
 const INTERACTABLE_TYPES: Array[StringName] = [&"hiding", &"switch", &"monitor", &"drive", &"fuse", &"fuse_box",
 	&"terminal"]

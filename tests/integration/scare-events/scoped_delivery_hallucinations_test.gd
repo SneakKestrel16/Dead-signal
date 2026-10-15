@@ -281,13 +281,7 @@ func _players() -> Array:
 
 ## A RoundScript anchor scare goes to the relevant live players only.
 func test_roundscript_sends_anchor_scares_to_relevant_players_only() -> void:
-	var map := MapData.load_map()
-	var m := MapMarker.new()
-	m.id = &"sd1"
-	m.type = RoundScript.ANCHOR_TYPE
-	m.volume = &"A3"
-	m.position = Vector3(9.5, 0, 19)
-	map.markers.append(m)
+	var map := MapData.load_map() ## ships sd1 at (9.5, 0, 19) and sg1 at (9.5, 0, 24) in A3
 	var scares := SpyScares.new(ScareCatalogue.load_shipped())
 	var rs := RoundScript.new(scares, ScareCatalogue.load_shipped(), FacilityScareState.new(), map, _players,
 			_point, ScareRelevance.new(_point, _clear_never))
@@ -295,9 +289,10 @@ func test_roundscript_sends_anchor_scares_to_relevant_players_only() -> void:
 	rs.server_tick(1)
 	_points[1] = Vector3(5, 0, 20) ## enters A3
 	rs.server_tick(2)
-	assert_int(scares.calls.size()).is_equal(1)
-	assert_str(scares.calls[0][0]).is_equal(&"slammed_door")
-	assert_array(scares.calls[0][2]).contains_exactly([1])
+	assert_array(scares.calls.map(func(c: Array) -> StringName: return c[0])).contains_exactly_in_any_order(
+			[&"slammed_door", &"glass_break"]) ## sd1 and sg1
+	for c: Array in scares.calls:
+		assert_array(c[2]).contains_exactly([1])
 
 
 ## Rule 21 where it is data: a Monster-source hallucination would place the monster's own action, its real

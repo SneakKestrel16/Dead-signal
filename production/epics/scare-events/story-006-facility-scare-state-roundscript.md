@@ -1,7 +1,7 @@
 # Story 006: Facility scare state machine and RoundScript anchors
 
 > **Epic**: Scare Events
-> **Status**: In Review
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -81,10 +81,16 @@ Notes:
 - `RoundScript` (SCARE_EVENTS + 2) fires each RoundScript catalogue entry naming an anchor when a player enters the anchor's volume in a listed phase; gating (story 002) applies inside `fire()`.
 - `FacilityScareDisplay` is the client stub; presentation is story 009.
 
-**Open (In Review): the shipped map has no scare anchors.** `data/maps/research_facility.tres` lacks sd1-sd6 and sg1-sg3, so RoundScript scares never fire in a real round; the test injects them in memory. The agent's edit to the map was refused by the permission check, so it waits for the user. Proposed change (positions inferred from the level doc's Scare anchors table, door positions and volume boxes): 9 `MapMarker` entries with `type = &"scare_anchor"`: sd1 A3 (9.5,0,19), sd2 A4 (17.5,0,25.5), sd3 A6 (5.5,0,4.5), sd4 B1 (31.5,0,27.5), sd5 C2 (45.5,0,27.5), sd6 C5 (44.5,0,13.5), sg1 A3 (9.5,0,24), sg2 A4 (13.5,0,17), sg3 A7 (17.5,0,13.5); plus `&"scare_anchor"` in `MapData.MARKER_TYPES` and the marker counts in `tests/integration/facility-map/map_data_test.gd`. Not interactables, so net ids do not shift.
+**Resolved 2026-10-15 (was Open): the shipped map carries the scare anchors.** Designer approved the edit ("okay 8"): `data/maps/research_facility.tres` now has 9 `MapMarker` entries `type = &"scare_anchor"` (sd1 A3 (9.5,0,19), sd2 A4 (17.5,0,25.5), sd3 A6 (5.5,0,4.5), sd4 B1 (31.5,0,27.5), sd5 C2 (45.5,0,27.5), sd6 C5 (44.5,0,13.5), sg1 A3 (9.5,0,24), sg2 A4 (13.5,0,17), sg3 A7 (17.5,0,13.5)); `&"scare_anchor"` is in `MapData.MARKER_TYPES`; `map_data_test` counts and rooms updated. Positions are inference from the level doc's Scare anchors table, door positions and volume boxes (comment in the map file). Net ids unchanged: the 64 interactables compared before and after are identical. The scare-events tests no longer inject anchors; `monster_source_scares_test` ignores scares at anchor origins (spawns now enter anchor rooms).
+
+Shipped-map evidence (2026-10-15): `round_host.gd -- --port=30990 --players=5 --self-clients --force=8:anchor`, no injection, logged `tick 481 ScareTriggered slammed_door source 2 origin (9.5, 0.0, 19.0) to 0` (and to 2, 3, 4): a RoundScript scare at sd1. Suites scare-events + facility-map (unit and integration) + event_catalog: 227/227, no leak lines. No Visual sign-off is required (Integration story); Status stays In Review only until `/story-done` closes it.
 
 Deviations (inference):
 - "Reaches an anchor" = enters the anchor's lighting volume; the GDD gives no trigger radius.
 - Every live player receives a RoundScript scare until story 003's audible-range relevance lands.
 - "Within one round trip" is checked as delivery in the same tick's reliable batch.
 - Blackout is not part of the facility state (the map already replicates per-volume lighting).
+
+## Closed (2026-10-15)
+
+The designer approved the map edit (AD-241). The shipped map now holds the 9 scare anchors, and the 64 interactable net ids are unchanged. A standalone round on the shipped map fired `tick 481 ScareTriggered slammed_door source 2 origin (9.5, 0.0, 19.0)` with nothing injected. Full suite on merge: 1572 tests, 0 failures, 0 leak lines. Anchor positions are inference from the level doc.

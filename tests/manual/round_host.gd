@@ -16,7 +16,9 @@ extends SceneTree
 ## --force=<s>:power,<s>:evac (story facility-map/010 screenshots) emits a forced event on the server bus that
 ## many seconds after round start: power = ObjectiveProgressChanged terminal POWERED (Power Restored), evac =
 ## RoundPhaseChanged to Evacuation, blackout = AbilityUsed Blackout in B1 (story facility-map/011), hallucinate =
-## the single-client surveillance_image scare to the first survivor at the C1 monitor (story scare-events/009). Forced events skip the objective and timer rules; manual capture only.
+## the single-client surveillance_image scare to the first survivor at the C1 monitor (story scare-events/009), anchor =
+## moves the first survivor into A3 (scare anchors sd1, sg1; story scare-events/006), so RoundScript fires there.
+## Forced events skip the objective and timer rules; manual capture only.
 
 const SERVER_VERSION := "0.1.0"
 const EVENTS: Array[StringName] = [&"RoundPhaseChanged", &"SurvivorDowned", &"SurvivorEliminated",
@@ -138,6 +140,7 @@ func _start() -> void:
 		return
 	for type in EVENTS:
 		_server.bus.subscribe(type, _on_event)
+	_server.bus.subscribe(&"ScareTriggered", _on_scare)
 	if _place == "monitor":
 		_c.lifecycle.spawn = _placed_spawn
 	print("ROUND STARTED: monster %d, survivors %s" % [_c.monster, _c.survivors])
@@ -180,11 +183,18 @@ func _force(what: String) -> void:
 	elif what == "hallucinate": # story scare-events/009: the catalogue's single-client hallucination
 		var who: int = _c.survivors[0]
 		_c.scares.fire(ScareVisuals.HALLUCINATION, Vector3(51.0, 0.0, 7.0), [who], ScareEntry.Source.SURVIVOR, who)
+	elif what == "anchor": # story scare-events/006: walk into A3, between scare anchors sd1 and sg1
+		_c.bodies[_c.survivors[0]].global_position = Vector3(9.5, 0.0, 21.5)
 	print("FORCED %s" % what)
 
 
 func _on_event(e: ServerEvent) -> void:
 	print("tick %d %s" % [e.tick, e.type()])
+
+
+func _on_scare(e: ServerEvent) -> void:
+	var s := e as EvScareTriggered
+	print("tick %d ScareTriggered %s source %d origin %s to %d" % [s.tick, s.scare_id, s.source, s.origin, s.recipient])
 
 
 func _on_over(ended: bool) -> void:

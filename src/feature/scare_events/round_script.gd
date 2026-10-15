@@ -13,8 +13,7 @@ class_name RoundScript extends RefCounted
 ##   var rs := RoundScript.new(scares, catalogue, fss, map, live_players, position_of, relevance)
 ##   server.start_round({TickOrder.SCARE_EVENTS + 2: rs, ...}, knobs)
 
-## MapMarker.type of a scare anchor. Inference: the shipped map file does not carry the 9 anchors yet;
-## the Facility Map owner adds them (and this type to MapData.MARKER_TYPES).
+## MapMarker.type of a scare anchor (MapData.MARKER_TYPES; the 9 anchors are in the shipped map file).
 const ANCHOR_TYPE := &"scare_anchor"
 ## How far below a volume's floor a body still counts as in it, m (LightingReplication.BELOW_FLOOR_M):
 ## parked bodies wait 1000 m below the map and volume_at reads x and z only.

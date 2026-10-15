@@ -30,11 +30,11 @@ stories:
     name: "Facility scare state machine and RoundScript anchors"
     file: "production/epics/scare-events/story-006-facility-scare-state-roundscript.md"
     priority: must-have
-    status: review
+    status: done
     owner: ""
     estimate_days: 1.5
-    blocker: "user: allow scare anchors in research_facility.tres"
-    completed: ""
+    blocker: ""
+    completed: "2026-10-15"
   - id: "scare-8"
     name: "Scare audio: positional origin, stingers, ducking and volume scales"
     file: "production/epics/scare-events/story-008-scare-audio.md"

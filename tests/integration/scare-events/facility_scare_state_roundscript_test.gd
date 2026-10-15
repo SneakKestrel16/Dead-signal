@@ -269,24 +269,6 @@ func _on_fired(e: ServerEvent) -> void:
 	_fired.append(e as EvScareTriggered)
 
 
-## The shipped map plus the level doc's 9 scare anchors (research-facility.md Scare anchors), placed just
-## inside a room beside their door or glass wall. Inference: the map file does not carry them yet.
-static func _map_with_anchors() -> MapData:
-	var map := MapData.load_map()
-	var anchors := {&"sd1": [&"A3", Vector3(9.5, 0, 19)], &"sd2": [&"A4", Vector3(17.5, 0, 25.5)],
-		&"sd3": [&"A6", Vector3(5.5, 0, 4.5)], &"sd4": [&"B1", Vector3(31.5, 0, 27.5)],
-		&"sd5": [&"C2", Vector3(45.5, 0, 27.5)], &"sd6": [&"C5", Vector3(44.5, 0, 13.5)],
-		&"sg1": [&"A3", Vector3(9.5, 0, 24)], &"sg2": [&"A4", Vector3(13.5, 0, 17)], &"sg3": [&"A7", Vector3(17.5, 0, 13.5)]}
-	for id: StringName in anchors:
-		var m := MapMarker.new()
-		m.id = id
-		m.type = RoundScript.ANCHOR_TYPE
-		m.volume = anchors[id][0]
-		m.position = anchors[id][1]
-		map.markers.append(m)
-	return map
-
-
 ## Records RoundScript's fire() requests before gating (story 002), so entry, phase and anchor logic is
 ## checked on its own; the gated path is checked end to end below.
 class SpyScares extends ScareEvents:
@@ -298,7 +280,7 @@ class SpyScares extends ScareEvents:
 
 
 func _round_script_rig(scares: ScareEvents, fss: FacilityScareState) -> void:
-	var rs := RoundScript.new(scares, ScareCatalogue.load_shipped(), fss, _map_with_anchors(), _players, _position,
+	var rs := RoundScript.new(scares, ScareCatalogue.load_shipped(), fss, MapData.load_map(), _players, _position,
 			ScareRelevance.new(_position, _clear))
 	_emit = EmitStep.new()
 	_server = auto_free(RoundServer.new())

@@ -125,24 +125,6 @@ func _rig(clients: int) -> void:
 	assert_bool(_all_joined()).override_failure_message("clients never joined").is_true()
 
 
-## The shipped map plus the level doc's 9 scare anchors (research-facility.md Scare anchors), as story 006's
-## test places them. Inference: the map file does not carry them yet.
-static func _map_with_anchors() -> MapData:
-	var map := MapData.load_map()
-	var anchors := {&"sd1": [&"A3", Vector3(9.5, 0, 19)], &"sd2": [&"A4", Vector3(17.5, 0, 25.5)],
-		&"sd3": [&"A6", Vector3(5.5, 0, 4.5)], &"sd4": [&"B1", Vector3(31.5, 0, 27.5)],
-		&"sd5": [&"C2", Vector3(45.5, 0, 27.5)], &"sd6": [&"C5", Vector3(44.5, 0, 13.5)],
-		&"sg1": [&"A3", Vector3(9.5, 0, 24)], &"sg2": [&"A4", Vector3(13.5, 0, 17)], &"sg3": [&"A7", Vector3(17.5, 0, 13.5)]}
-	for id: StringName in anchors:
-		var m := MapMarker.new()
-		m.id = id
-		m.type = RoundScript.ANCHOR_TYPE
-		m.volume = anchors[id][0]
-		m.position = anchors[id][1]
-		map.markers.append(m)
-	return map
-
-
 ## A composed, Running round (joined clients, or 5 made-up ids and no network), every player parked and frozen.
 func _compose() -> void:
 	if _roots.is_empty():
@@ -158,7 +140,7 @@ func _compose() -> void:
 	rng.seed = 7
 	var roster := Roster.lock(tokens, _info, SESSION, 1, _knobs, RotationQueue.new(), rng)
 	var server_root := _roots[0]
-	_c = RoundComposer.new(_knobs, roster, _map_with_anchors(), _net, server_root.multiplayer as SceneMultiplayer,
+	_c = RoundComposer.new(_knobs, roster, MapData.load_map(), _net, server_root.multiplayer as SceneMultiplayer,
 			server_root as Node3D, TestMoveStep.apply, TestMoveStep.WORLD, TestMoveStep.make_body, _no_look)
 	_server = auto_free(RoundServer.new())
 	add_child(_server)
