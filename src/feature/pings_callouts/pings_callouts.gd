@@ -4,10 +4,13 @@ class_name PingsCallouts extends RefCounted
 ## A client sends a ping request (ping_packet); request_ping queues the first `ping_bucket_size` per player
 ## per tick; the PINGS_CALLOUTS slot validates each in arrival order: range and line of sight from the sender's
 ## eye, a valid target, then the per-player token bucket (a rejected ping spends nothing). Accepted pings are
-## the tick's `accepted()` records; recipients (004), marker lifetime (005) and sender-state gating (002) read
-## or extend them. Callouts (003) will add their own packet key beside PING_KEY. Server only.
+## the tick's `accepted()` records; recipients (004) and marker lifetime (005) read or extend them. Callouts
+## (003) will add their own packet key beside PING_KEY. Server only.
+## Story 002 (rules 14, 21-23; States and Transitions): can_send(player, kind, line) is the one sender-state
+## gate for pings and callouts alike, reading life state, form, transforming and the shock lock.
 ## Usage:
 ##   pc.set_sources(eye_of, position_of, line_clear, identity_of, is_hidden, in_play)
+##   pc.set_sender_sources(monster, match_flow.status_of, downing.life_state, bf.form, bf.transforming, sd.locked)
 ##   pc.set_map(map, point_height_m)
 ##   pc.request_ping(player, PingsCallouts.ping_packet(PingsCallouts.LOCATION, point))
 
@@ -17,6 +20,16 @@ const LOCATION := 1
 const ITEM := 2
 const WARNING_POINT := 3
 const WARNING_PLAYER := 4
+## Send kind for a callout in can_send (not a ping kind: decode_ping never yields it).
+const CALLOUT := 5
+## Authored callout lines (rule 9). Inference: these ids are placeholders until story 003 authors the set;
+## the GDD names lines by their text only.
+const NEED_RESCUE := &"need_rescue"
+const DANGER := &"danger"
+const CALLOUT_LINES: Array[StringName] = [&"drive_here", &"fuse_here", NEED_RESCUE, &"im_with_you",
+	&"follow_me", &"wait", DANGER, &"that_wasnt_me"]
+## The callouts a Downed survivor may send (rule 14); it may also ping.
+const DOWNED_LINES: Array[StringName] = [NEED_RESCUE, DANGER]
 ## Packet dictionary keys: kind, world point (location and warning point), target (item: map interactable
 ## index = net id; warning player: player id). Unused fields are still present so the shape is fixed.
 const PING_KEY := "ping"
@@ -69,6 +82,12 @@ var _line_clear: Callable
 var _identity_of: Callable
 var _is_hidden: Callable
 var _in_play: Callable
+var _monster: int = -1
+var _status_of: Callable
+var _life_of: Callable
+var _form: Callable
+var _transforming: Callable
+var _locked: Callable
 ## Map interactable index -> [point, type]; built by set_map.
 var _items: Dictionary[int, Array] = {}
 var _point_height_m: float = 0.0
@@ -79,7 +98,8 @@ var _point_height_m: float = 0.0
 ## player's body position (Vector3.ZERO / unlive bodies are the composer's concern); `line_clear(sender, from,
 ## to, item_index) -> bool` is the server sight ray (`item_index` -1 for a point: a closed door leaf other than
 ## the item's own blocks); `identity_of(player) -> int` the displayed appearance id; `is_hidden(player) -> bool`;
-## `in_play(player) -> bool` (not Eliminated or Escaped; unset = everyone is).
+## `in_play(player) -> bool` whether a warning ping may target `player` (not Eliminated or Escaped; unset =
+## everyone may be targeted). Who may send is can_send's.
 func set_sources(eye_of: Callable, position_of: Callable, line_clear: Callable, identity_of: Callable,
 		is_hidden: Callable, in_play: Callable = Callable()) -> void:
 	_eye_of = eye_of
@@ -88,6 +108,51 @@ func set_sources(eye_of: Callable, position_of: Callable, line_clear: Callable, 
 	_identity_of = identity_of
 	_is_hidden = is_hidden
 	_in_play = in_play
+
+
+## Story 002: injects the sender-state sources can_send reads. `status_of(player) -> MatchFlow.Status`
+## (Escaped, Eliminated); `life_of(player) -> Downing.LifeState` (Seized, Downed); `form() -> int` and
+## `transforming() -> bool` are Borrowed Face's (form is the borrowed survivor's id or TRUE_FORM);
+## `locked(player) -> bool` is StateKeys.SHOCK_STUN_LOCK (Survivor Defense: false for a hit inside the
+## post-lock window, which adds no lock). Unset = no sender is gated.
+func set_sender_sources(monster: int, status_of: Callable, life_of: Callable, form: Callable,
+		transforming: Callable, locked: Callable) -> void:
+	_monster = monster
+	_status_of = status_of
+	_life_of = life_of
+	_form = form
+	_transforming = transforming
+	_locked = locked
+
+
+## Rules 14, 21-23: whether `player`'s state lets it send a ping (`kind` a ping kind, `line` ignored) or a
+## callout (`kind` CALLOUT, `line` one of CALLOUT_LINES). A pure read of the injected sources.
+## Survivor: Healthy sends all; Downed pings and DOWNED_LINES; Seized, Eliminated, Escaped (or any status
+## other than Healthy or Downed) nothing. Monster: nothing in true form or while transforming; disguised
+## sends all unless the borrowed survivor is Eliminated or Escaped (its Downed, Seized or Hidden state never
+## restricts the monster). Both: nothing under the shock lock.
+## Inference: a Disconnected borrowed survivor does not block the monster (rule 21 names Eliminated and
+## Escaped only); a designer ruling on disconnects would settle it.
+func can_send(player: int, kind: int, line: StringName = &"") -> bool:
+	var callout := kind == CALLOUT
+	if not (callout and line in CALLOUT_LINES) and not (kind in [LOCATION, ITEM, WARNING_POINT, WARNING_PLAYER]):
+		return false
+	if not _status_of.is_valid():
+		return true
+	if _locked.call(player):
+		return false
+	if player == _monster:
+		var borrowed: int = _form.call()
+		return borrowed != BorrowedFace.TRUE_FORM and not _transforming.call() \
+				and _status_of.call(borrowed) not in [MatchFlow.Status.ELIMINATED, MatchFlow.Status.ESCAPED]
+	if _status_of.call(player) not in [MatchFlow.Status.HEALTHY, MatchFlow.Status.DOWNED]:
+		return false
+	match _life_of.call(player):
+		Downing.LifeState.HEALTHY:
+			return true
+		Downing.LifeState.DOWNED:
+			return not callout or line in DOWNED_LINES
+	return false
 
 
 ## Injects the map's pingable interactables, indexed by net id (MapData.interactables order). `point_height_m`
@@ -187,9 +252,9 @@ func _take_token(player: int, tick: int) -> bool:
 	return true
 
 
-## Rule 6 minus the bucket and the sender-state gates (story 002): a record for a valid ping, else null.
+## Rule 6 minus the bucket: a record for a valid ping, else null.
 func _validate(sender: int, req: Dictionary, tick: int) -> PingRecord:
-	if _in_play.is_valid() and not _in_play.call(sender):
+	if not can_send(sender, req["kind"]):
 		return null
 	var rec := PingRecord.new()
 	rec.sender = sender

@@ -30,11 +30,11 @@ stories:
     name: "Sender-state gating for pings and callouts"
     file: "production/epics/pings-and-callouts/story-002-sender-state-gating.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "pings-3"
     name: "Callout acceptance limits and attached item ping"
     file: "production/epics/pings-and-callouts/story-003-callout-limits-attached-ping.md"

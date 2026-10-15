@@ -142,7 +142,11 @@ func test_accepted_records_clear_on_the_next_tick() -> void:
 
 
 func test_sender_not_in_play_is_rejected() -> void:
-	_in_play[A] = false
+	# Story 002 moved the sender check to can_send; Escaped stands for not in play here.
+	_pc.set_sender_sources(M,
+			func(p: int) -> MatchFlow.Status: return MatchFlow.Status.ESCAPED if p == A else MatchFlow.Status.HEALTHY,
+			func(_p: int) -> Downing.LifeState: return Downing.LifeState.HEALTHY,
+			func() -> int: return B, func() -> bool: return false, func(_p: int) -> bool: return false)
 	assert_bool(_loc(A, 0)).is_false()
 
 

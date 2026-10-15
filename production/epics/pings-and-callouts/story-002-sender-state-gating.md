@@ -1,7 +1,7 @@
 # Story 002: Sender-state gating for pings and callouts
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
@@ -33,10 +33,10 @@ What a player may send depends on its state: life state for survivors, form for 
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A ping or callout from a Seized, Eliminated or Escaped survivor is rejected; a Downed survivor can send pings, "Need rescue" and "Danger" only.
-- [ ] In true form and while transforming, the monster's ping and callout requests are rejected.
-- [ ] For `stun_duration_s` after a taser hit, a ping or callout from a shocked survivor or a stunned disguised monster is rejected, and the first one after it ends is accepted; after a hit on an immune disguised monster or a survivor inside its post-lock window, it is accepted.
-- [ ] A disguised monster whose borrowed survivor is Eliminated or Escaped has its requests rejected; one whose borrowed survivor is Downed or Seized can send any callout (for example "Drive here").
+- [x] A ping or callout from a Seized, Eliminated or Escaped survivor is rejected; a Downed survivor can send pings, "Need rescue" and "Danger" only.
+- [x] In true form and while transforming, the monster's ping and callout requests are rejected.
+- [x] For `stun_duration_s` after a taser hit, a ping or callout from a shocked survivor or a stunned disguised monster is rejected, and the first one after it ends is accepted; after a hit on an immune disguised monster or a survivor inside its post-lock window, it is accepted.
+- [x] A disguised monster whose borrowed survivor is Eliminated or Escaped has its requests rejected; one whose borrowed survivor is Downed or Seized can send any callout (for example "Drive here").
 
 ---
 
@@ -65,7 +65,7 @@ What a player may send depends on its state: life state for survivors, form for 
 **Story Type**: Logic
 **Required evidence**: `tests/unit/pings-and-callouts/sender_state_gating_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/pings-and-callouts/sender_state_gating_test.gd` (11 cases)
 
 ---
 
@@ -73,3 +73,13 @@ What a player may send depends on its state: life state for survivors, form for 
 
 - Depends on: Story 001
 - Unlocks: Stories 003, 004, 006
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-pc2. Full suite 1312/1312, no leak lines. Mutations caught: Downed allowed every callout, shock-lock check removed, Escaped dropped from the borrowed-survivor rejection, transforming check removed.
+
+Deviations (inference):
+- `can_send(player, kind, line)` reads sources injected by the composer (`set_sender_sources`): MatchFlow status for Escaped and Eliminated, Downing life state for Seized and Downed. Neither source alone holds all five states.
+- Callout line ids (`drive_here`, `need_rescue`, ...) are placeholders; the GDD names lines by text. Story 003 may rename them.
+- A disguised monster whose borrowed survivor is Disconnected is not blocked; rule 21 names only Eliminated and Escaped. A designer ruling settles it.
+- A survivor whose status is not Healthy or Downed (Disconnected, Did Not Escape) is rejected.

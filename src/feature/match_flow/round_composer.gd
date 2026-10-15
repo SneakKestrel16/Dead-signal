@@ -168,6 +168,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	lifecycle.watch = _watch
 	lifecycle.match_flow().set_exit(queries, _position)
 	bf.set_status_source(lifecycle.match_flow().status_of)
+	pings.set_sender_sources(monster, lifecycle.match_flow().status_of, downing.life_state, bf.form, bf.transforming,
+			sd.locked)
 	if hidden != null:
 		hidden.setup(net)
 		candidates = CandidateReplication.new(hidden, map)
@@ -418,7 +420,8 @@ func _ping_clear(sender: int, from: Vector3, to: Vector3, item: int) -> bool:
 	return queries.clear_line(from, to, item, rules, _space(), _rid(sender))
 
 
-## Pings come from the shapeshifter and from survivors still Healthy or Downed.
+## A warning ping may target the shapeshifter and survivors still Healthy or Downed (who may send is
+## PingsCallouts.can_send, story 002).
 func _ping_in_play(id: int) -> bool:
 	if id == monster:
 		return true
