@@ -11,8 +11,9 @@ class_name MatchDisplay extends RefCounted
 ## which is MatchFlow's own tick count while the round runs; RoundEnded's batch tick stops it. Between
 ## snapshots advance() extrapolates by local time; each newer snapshot replaces that with the server
 ## value, so a skewed local clock never accumulates. Only packets from the server peer count.
-## A client that reconnects mid-round missed the Infiltration batch and shows no clock until the server
-## re-sends the round state (story match-flow/007).
+## A client that reconnects mid-round missed the Infiltration batch: the server re-sends it, at its
+## original tick, with the later phase changes and RoundEnded (ServerMovement.catch_up, story
+## match-flow/007), so the same rules rebuild the clock.
 ## Usage (client composition root):
 ##   var view := MatchDisplay.new(knobs, multiplayer as SceneMultiplayer)
 ##   func _process(delta): view.advance(delta); hud.show(view.phase(), view.time_remaining_s())
@@ -140,7 +141,7 @@ func _apply(tick: int, type: StringName, p: Dictionary) -> void:
 		if ph == MatchFlow.Phase.INFILTRATION: # rule 3: a new round's clock starts at this tick
 			_start_tick = tick
 			_end_tick = -1
-			_server_tick = tick
+			_server_tick = maxi(_server_tick, tick) # a catch-up's old tick never moves the clock back
 			_local_s = 0.0
 			_outcome = -1
 			_reason = -1

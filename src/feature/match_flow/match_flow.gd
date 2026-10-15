@@ -18,6 +18,8 @@ class_name MatchFlow extends RefCounted
 ## logged through the bus's delivered-event list (`EventBus.take_tick_events`), the only log path so far.
 ## Story 006 (rule 20): set `shapeshifter_id` before start_round; when its grace expires the win check
 ## forfeits to the survivors, last in rule 16 order, so an earned result in the same tick beats it.
+## Story 007 (ADR-0004 §9): `catch_up()` is the round state a reconnecting client missed, as the events
+## that set it; ServerMovement re-projects and sends them to that client once (`ServerMovement.catch_up`).
 
 enum Phase { INFILTRATION, INVESTIGATION, EVACUATION }
 ## `RoundEnded.outcome` values; text in OUTCOME_TEXT (rule 23).
@@ -61,6 +63,12 @@ var _position_of: Callable
 var _grace_start: Dictionary[int, int] = {}
 var _grace_ticks: int = 0
 var _forfeited: bool = false ## the shapeshifter's grace expired (rule 20)
+## Catch-up record: every RoundPhaseChanged emitted, the latest life-state event per survivor, the open
+## connection event (DISCONNECTED / GRACE_EXPIRED) per player, and RoundEnded.
+var _phase_events: Array[ServerEvent] = []
+var _life_event: Dictionary[int, ServerEvent] = {}
+var _conn_event: Dictionary[int, ServerEvent] = {}
+var _ended_event: ServerEvent
 
 
 ## Getter-only view of the clock for StateKeys.ROUND_CLOCK readers. Holds the module weakly, so no
@@ -138,6 +146,10 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_grace_start = {}
 	_grace_ticks = knobs.ticks(knobs.match_flow.reconnect_grace_s)
 	_forfeited = false
+	_phase_events = []
+	_life_event = {}
+	_conn_event = {}
+	_ended_event = null
 	for id in survivor_ids:
 		_status[id] = Status.HEALTHY
 	registry.register_view(StateKeys.ROUND_CLOCK, &"MatchFlow", ClockView.new(self))
@@ -179,6 +191,7 @@ func server_tick(_tick: int) -> void:
 func begin() -> void:
 	var ev := EvRoundPhaseChanged.new()
 	ev.phase = _phase
+	_phase_events.append(ev)
 	_bus.emit(ev)
 
 
@@ -215,6 +228,26 @@ func is_locked() -> bool:
 ## Last known status of survivor `id`; ELIMINATED for an id not on the roster.
 func status_of(id: int) -> Status:
 	return _status.get(id, Status.ELIMINATED)
+
+
+## True while player `id` is in reconnect grace (dropped, not yet back or expired).
+func in_grace(id: int) -> bool:
+	return _grace_start.has(id)
+
+
+## The round state a reconnecting client needs from Match Flow (ADR-0004 §9, TR-matchflow-006), as the
+## events that set it, each with its original tick: every phase change (the Infiltration one fixes the
+## client's clock start, MatchDisplay), each survivor's latest Downed / Rescued / Eliminated / Escaped,
+## each player still in or past grace, and RoundEnded. Empty before begin(). Replayed, never re-emitted:
+## no server subscriber sees them twice. Life states beyond the roster (bleed-out timers, objective
+## progress) are their owners' to resync.
+func catch_up() -> Array[ServerEvent]:
+	var out: Array[ServerEvent] = _phase_events.duplicate()
+	out.append_array(_life_event.values())
+	out.append_array(_conn_event.values())
+	if _ended_event != null:
+		out.append(_ended_event)
+	return out
 
 
 ## MATCH_FLOW_RESOLVE slot, after every gameplay event of the tick was delivered: the rule 16 win
@@ -277,28 +310,30 @@ func _end(outcome: Outcome, reason: Reason) -> void:
 	var ev := EvRoundEnded.new()
 	ev.outcome = outcome
 	ev.reason = reason # results payload: story 008
+	_ended_event = ev
 	_bus.emit(ev)
 
 
-func _set_status(id: int, s: Status) -> void:
+func _set_status(id: int, s: Status, e: ServerEvent) -> void:
 	if _status.has(id):
 		_status[id] = s
+		_life_event[id] = e
 
 
 func _on_downed(e: ServerEvent) -> void:
-	_set_status((e as EvSurvivorDowned).survivor, Status.DOWNED)
+	_set_status((e as EvSurvivorDowned).survivor, Status.DOWNED, e)
 
 
 func _on_rescued(e: ServerEvent) -> void:
-	_set_status((e as EvSurvivorRescued).survivor, Status.HEALTHY)
+	_set_status((e as EvSurvivorRescued).survivor, Status.HEALTHY, e)
 
 
 func _on_eliminated(e: ServerEvent) -> void:
-	_set_status((e as EvSurvivorEliminated).survivor, Status.ELIMINATED)
+	_set_status((e as EvSurvivorEliminated).survivor, Status.ELIMINATED, e)
 
 
 func _on_escaped(e: ServerEvent) -> void:
-	_set_status((e as EvSurvivorEscaped).survivor, Status.ESCAPED)
+	_set_status((e as EvSurvivorEscaped).survivor, Status.ESCAPED, e)
 
 
 ## Disconnect and reconnect change no status: in grace a survivor counts as inside in their last state
@@ -309,10 +344,13 @@ func _on_connection(e: ServerEvent) -> void:
 	match c.status:
 		EvPlayerConnectionChanged.DISCONNECTED:
 			_grace_start[c.player] = c.tick
+			_conn_event[c.player] = c
 		EvPlayerConnectionChanged.RECONNECTED:
-			_grace_start.erase(c.player)
+			if _grace_start.erase(c.player): # a late notice after expiry keeps GRACE_EXPIRED
+				_conn_event.erase(c.player)
 		EvPlayerConnectionChanged.GRACE_EXPIRED:
 			_mark_disconnected(c.player)
+			_conn_event[c.player] = c
 
 
 ## A still-inside survivor whose grace expired is Disconnected; Escaped or Eliminated keep theirs.
@@ -342,4 +380,5 @@ func _update_phase() -> void:
 	_phase = next
 	var ev := EvRoundPhaseChanged.new()
 	ev.phase = _phase
+	_phase_events.append(ev)
 	_bus.emit(ev)

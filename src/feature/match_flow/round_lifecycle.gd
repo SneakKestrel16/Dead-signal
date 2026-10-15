@@ -11,9 +11,15 @@ class_name RoundLifecycle extends RefCounted
 ##   freeze(player_id: int)                    stop applying gameplay intents (set_frozen, cancel a hold)
 ##   over(ended: bool)                         RoundServer.end_round(); RosterHandoff.end_round(ended)
 ##   remove(player_id: int) -> Vector3         take the body out of the world, return where it stood
+##   watch(spectator: int, survivor: int)      ServerMovement.watch
 ## Story 005 (rule 19): while Running, a player's DISCONNECTED removes their body; a RECONNECTED inside
 ## grace spawns it again where it stood. Their Healthy/Downed state and down count are Downing's and are
 ## untouched by a disconnect; carried items are dropped by Survivor Objectives on the same event.
+## Story 007 (rule 10, ADR-0004 §8): a survivor who is Eliminated or Escaped loses their body (`remove`,
+## unless a disconnect already took it) and spectates: `watch` points them at the lowest-id survivor still
+## inside and connected. When that survivor goes Out or drops, every spectator on them moves to the next;
+## a reconnect does not pull them back. With nobody left to watch nothing switches; the round is ending.
+## A spectator's own disconnect removes no body and its reconnect spawns none.
 ## A host that quits ends the process: over is never called, so no result is recorded (rule 19 of
 ## lobby-role-assignment.md; clients see NetAuthority.host_left).
 ## Usage:
@@ -33,9 +39,11 @@ var spawn: Callable
 var freeze: Callable
 ## Hook: Callable(ended: bool), once: true after Results, false for Cancelled.
 var over: Callable
-## Hook: Callable(player_id: int) -> Vector3, on a disconnect while Running: removes the body and
-## returns its position, used for the respawn on reconnect.
+## Hook: Callable(player_id: int) -> Vector3, on a disconnect while Running (the position is used for
+## the respawn on reconnect) and when a survivor goes Out: removes the body and returns its position.
 var remove: Callable
+## Hook: Callable(spectator: int, survivor: int), each time a spectator's watched survivor changes.
+var watch: Callable
 
 var _roster: Roster
 var _map: MapData
@@ -50,6 +58,8 @@ var _load_timeout_ticks := 0
 var _results_ticks := 0
 ## player id -> where their body stood when they disconnected; cleared on reconnect or grace expiry.
 var _away: Dictionary[int, Vector3] = {}
+## Out survivor -> the survivor they watch, -1 until somebody is watchable.
+var _spectators: Dictionary[int, int] = {}
 
 
 ## Runs in the MATCH_FLOW_RESOLVE slot; forwards to RoundLifecycle._on_resolve. Holds the lifecycle
@@ -101,6 +111,8 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 			_mf.shapeshifter_id = id
 	_mf.setup(tick_runner, bus, registry, knobs)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
+	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
+	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 
 
 ## The module to register at TickOrder.MATCH_FLOW_RESOLVE.
@@ -139,6 +151,12 @@ func match_flow() -> MatchFlow:
 	return _mf
 
 
+## The survivor `spectator` watches, -1 when it is not a spectator or nobody is watchable yet. Pings &
+## Callouts reads it to refuse an Out player's ping (rule 10).
+func watched_by(spectator: int) -> int:
+	return _spectators.get(spectator, -1)
+
+
 ## Player IDs that reported loaded, ascending.
 func loaded_ids() -> Array[int]:
 	var out: Array[int] = []
@@ -172,7 +190,7 @@ func _on_connection(e: ServerEvent) -> void:
 	var c := e as EvPlayerConnectionChanged
 	match c.status:
 		EvPlayerConnectionChanged.DISCONNECTED:
-			if _state == State.RUNNING and remove.is_valid():
+			if _state == State.RUNNING and remove.is_valid() and not _spectators.has(c.player):
 				_away[c.player] = remove.call(c.player)
 		EvPlayerConnectionChanged.RECONNECTED:
 			if _away.has(c.player) and spawn.is_valid():
@@ -180,6 +198,53 @@ func _on_connection(e: ServerEvent) -> void:
 			_away.erase(c.player)
 		EvPlayerConnectionChanged.GRACE_EXPIRED:
 			_away.erase(c.player)
+	_retarget()
+
+
+## Subscribed after MatchFlow, so its status is already Eliminated / Escaped.
+func _on_eliminated(e: ServerEvent) -> void:
+	_go_out((e as EvSurvivorEliminated).survivor)
+
+
+func _on_escaped(e: ServerEvent) -> void:
+	_go_out((e as EvSurvivorEscaped).survivor)
+
+
+## A disconnected survivor has no body to remove, and must not get one back on reconnect.
+func _go_out(id: int) -> void:
+	if _spectators.has(id) or not _mf.survivor_ids.has(id):
+		return
+	if _away.has(id):
+		_away.erase(id)
+	elif remove.is_valid():
+		remove.call(id)
+	_spectators[id] = -1
+	_retarget()
+
+
+func _watchable(id: int) -> bool:
+	var s := _mf.status_of(id)
+	return (s == MatchFlow.Status.HEALTHY or s == MatchFlow.Status.DOWNED) and not _mf.in_grace(id)
+
+
+## Moves every spectator whose survivor is not watchable to the lowest-id watchable survivor.
+func _retarget() -> void:
+	var ids := _mf.survivor_ids.duplicate()
+	ids.sort()
+	var target := -1
+	for id in ids:
+		if _watchable(id):
+			target = id
+			break
+	if target == -1:
+		return
+	for sp: int in _spectators:
+		var cur := _spectators[sp]
+		if cur != -1 and _watchable(cur):
+			continue
+		_spectators[sp] = target
+		if watch.is_valid():
+			watch.call(sp, target)
 
 
 func _start() -> void:

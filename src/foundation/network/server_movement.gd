@@ -57,6 +57,12 @@ var _watching: Dictionary[int, int] = {}
 ## Every player's last net.history_ticks ticks of position, capsule and chest (ADR-0003 §4), pushed in
 ## the history phase; LagCompensation reads it.
 var history: RewindHistory
+## Round state a rejoining client missed (ADR-0004 §9): each Callable() -> Array[ServerEvent] (e.g.
+## MatchFlow.catch_up). On the first stream after a rejoin, every event is projected for the viewer and
+## sent in its own batch stamped with the event's tick, after the handle messages, before the live batch.
+var catch_up: Array[Callable] = []
+## Players rejoined since their last stream: they get the catch-up once.
+var _needs_catch_up: Dictionary[int, bool] = {}
 
 
 class PlayerState extends RefCounted:
@@ -312,6 +318,13 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 	var msgs := scope.handles.take(viewer)
 	if not msgs.is_empty():
 		_smp.send_bytes(HandleTable.encode(msgs), peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
+	if _needs_catch_up.erase(viewer):
+		for provider in catch_up:
+			for e: ServerEvent in provider.call():
+				var one: Array[ServerEvent] = [e]
+				var old := EventBatch.build(e.tick, as_player, one, [], positions[as_player], handles, monster)
+				if not old.is_empty():
+					_smp.send_bytes(old, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
 	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster)
 	if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
 		_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
@@ -339,9 +352,10 @@ func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 	return e
 
 
-## The rebound client starts a new puppet map: re-issue every handle (ADR-0004 §9).
+## The rebound client starts a new puppet map: re-issue every handle and send the catch-up (ADR-0004 §9).
 func _on_rejoined(player_id: int, _new_peer_id: int) -> void:
 	scope.reset_viewer(player_id)
+	_needs_catch_up[player_id] = true
 
 
 func _gait(f: InputFrame) -> int:
