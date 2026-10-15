@@ -50,6 +50,9 @@ var monster: int = -1
 ## The owner's hold for its own snapshot entry (ADR-0008 §8): HoldService.hold_of, (actor) -> Dictionary,
 ## {} when idle. Set by the composition root; unset means every entry says no hold.
 var hold_of: Callable
+## Every entry's appearance (ADR-0004 §4): BorrowedFace.appearance_of, (player) -> CharacterDef
+## appearance id. Set by the composition root; unset means SnapshotCodec.NO_APPEARANCE.
+var appearance_of: Callable
 ## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
 var _sounds: Array[EventBatch.Sound] = []
 ## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
@@ -345,7 +348,8 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 ## `id` is the viewer's handle for the body; the own entry carries the viewer's own player ID.
 func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 	var p: PlayerState = _players[player_id]
-	var e := {"id": id, "pos": p.body.global_position, "yaw": p.frame.yaw, "gait": _gait(p.frame)}
+	var e := {"id": id, "pos": p.body.global_position, "yaw": p.frame.yaw, "gait": _gait(p.frame),
+		"appearance": appearance_of.call(player_id) if appearance_of.is_valid() else SnapshotCodec.NO_APPEARANCE}
 	if own:
 		e["own"] = true
 		e["seq"] = p.ack_seq

@@ -6,6 +6,9 @@ class_name BorrowedFace extends RefCounted
 ## persistence (rules 5-6, 13, Edge Cases "Target ..." rows). Story 003 adds the state machine of
 ## "States and Transitions": cooldown, stun interrupt and FormChanged (rules 7-10, 14-15, Formulas
 ## "Form-change timing", Edge Cases "Stun lands on ...", "Round ends mid-transformation").
+## Story 007 (ADR-0004 §3-4, §9): appearance_of() feeds every snapshot entry's appearance, so every
+## client renders the form from replicated state; on_form_event retires lingering handles; a shapeshifter
+## that disconnects loses its disguise; catch_up() gives a rejoining shapeshifter client its own form.
 ## Server only. Observation counts ticks of `net.sim_tick_hz`, never wall time, and never decays.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   eye_of(player) -> Vector3                  the shapeshifter's eye position
@@ -69,6 +72,13 @@ var _transforming := false
 var _transform_end_tick: int = 0
 ## The first request received since the last tick, or INVALID_FORM: one request per tick.
 var _pending: int = INVALID_FORM
+var _appearance_of: Callable
+## Tick of the last form change (0 = round start), stamped on the catch-up event.
+var _form_tick: int = 0
+## Callable(player) run when a transformation starts and when the form changes (ADR-0004 §4: a form
+## change or transformation start on a lingering body retires its handle). The composition root sets it
+## to ServerMovement.scope.form_changed; unset = nothing.
+var on_form_event: Callable
 
 
 ## Injects the round's roster. Call before RoundServer.start_round (setup resets state from it).
@@ -96,6 +106,22 @@ func set_status_source(status_of: Callable) -> void:
 ## Injects the attack source (see the class comment): a transformation never cancels an attack (rule 11).
 func set_attack_source(attacking: Callable) -> void:
 	_attacking = attacking
+
+
+## Injects character_appearance(player) -> int, the CharacterDef appearance id of a player's own
+## character (survivors; the lobby's character assignment). Unset = every body NO_APPEARANCE.
+func set_appearance_source(character_appearance: Callable) -> void:
+	_appearance_of = character_appearance
+
+
+## The appearance id clients render `player`'s body with: its own character, except the shapeshifter,
+## which shows the copied survivor's character or CharacterDef.TRUE_FORM_APPEARANCE_ID (ADR-0004 §4).
+## No player ID, role or observation travels with it.
+func appearance_of(player: int) -> int:
+	if player == _monster and _form == TRUE_FORM:
+		return CharacterDef.TRUE_FORM_APPEARANCE_ID
+	var who := _form if player == _monster else player
+	return _appearance_of.call(who) if _appearance_of.is_valid() else SnapshotCodec.NO_APPEARANCE
 
 
 ## The bytes the shapeshifter's client sends to request a change into `form` (a survivor id or TRUE_FORM).
@@ -143,7 +169,9 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_target = TRUE_FORM
 	_transforming = false
 	_pending = INVALID_FORM
+	_form_tick = 0
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
+	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
 
 
 ## BORROWED_FACE slot: observation, then a transformation due this tick completes, then this
@@ -159,6 +187,7 @@ func server_tick(tick: int) -> void:
 		_target = req
 		_transforming = true
 		_transform_end_tick = tick + _transform_ticks
+		_form_event()
 
 
 ## Rule 9: switch the form, start the cooldown and emit FormChanged; Scare Events reads it for the
@@ -172,7 +201,44 @@ func _complete(tick: int) -> void:
 	_form = _target
 	_transforming = false
 	_cooldown_end_tick = tick + _cooldown_ticks
+	_form_tick = tick
+	_form_event()
 	_bus.emit(e)
+
+
+func _form_event() -> void:
+	if on_form_event.is_valid():
+		on_form_event.call(_monster)
+
+
+## Edge Cases "Shapeshifter disconnects while disguised": the disguise is lost at the drop (true form,
+## any transformation discarded, no FormChanged since none completed, cooldown and observation kept), so
+## it rejoins in true form. Inference: the GDD row names the reconnect outcome, not when the form drops;
+## dropping it at the disconnect means no client renders a disguise on an empty seat. A Borrowed Face
+## ruling on mid-grace presentation settles it.
+func _on_connection_changed(e: ServerEvent) -> void:
+	var c := e as EvPlayerConnectionChanged
+	if c.player != _monster or c.status != EvPlayerConnectionChanged.DISCONNECTED:
+		return
+	var changed := _form != TRUE_FORM
+	_transforming = false
+	_form = TRUE_FORM
+	if changed:
+		_form_tick = e.tick
+		_form_event()
+
+
+## Reconnect catch-up (ADR-0004 §9, ServerMovement.catch_up): the current form as a FormChanged, which
+## projects to the shapeshifter's own client only. Survivor clients get the form from the snapshot
+## appearance of the body's fresh introduce.
+func catch_up() -> Array[ServerEvent]:
+	var e := EvFormChanged.new()
+	e.tick = _form_tick
+	e.player = _monster
+	e.previous = _form
+	e.form = _form
+	var out: Array[ServerEvent] = [e]
+	return out
 
 
 ## Rule 10: a stun during a transformation keeps the previous form and starts the full cooldown at
