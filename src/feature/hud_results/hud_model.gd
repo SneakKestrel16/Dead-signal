@@ -12,6 +12,8 @@ class_name HudModel extends RefCounted
 ## ObjectiveProgressChanged ({centre, radius_m, duration_s}). A survivor client never receives either, so
 ## is_shapeshifter() stays false there. Deviation from ADR-0014 §6: a seventh signal, monster_state_changed,
 ## for that element group. on_cooldown() keeps story 001's single-cooldown shape for tests; nothing sends it.
+## Story 011: the roster with names arrives as EventBatch.ROSTER (RosterFeed) and the activation countdown as
+## WorldProgress's ACTIVATION_KEY entry of EventBatch.PROGRESS; both are subscribed here.
 ## Own state (story 004, H15, H16, HUD States): own life from EventBatch.OWN_LIFE (SurvivorHudFeed), hiding
 ## from EventBatch.HIDING, the shock window from PlayerShocked {own}, bleed-out from SurvivorDowned's
 ## bleed_out_s and BLEED_RING, all for `own_id`; the watched survivor is the own snapshot entry's id when it is
@@ -61,7 +63,9 @@ var _observe_s: float
 var _monster: Dictionary = {} ## the newest MONSTER_HUD payload; empty on a survivor client
 var _alerts: Array[Dictionary] = [] ## install alerts {centre, radius_m, expires (server tick)}
 var _names: Dictionary[int, String] = {} ## survivor player id -> display name (set_survivors)
-var _activation: Dictionary = {} ## {remaining_s, paused} (on_activation); empty = unknown
+var _activation: Dictionary = {} ## {remaining_s, paused, tick} (on_activation); empty = unknown
+var _evac_s: float
+var _max_players: int
 var _shock_ticks: int
 var _rescue_full_s: float
 var _life: int = Downing.LifeState.HEALTHY ## own, from OWN_LIFE
@@ -83,6 +87,8 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 	_marker_max_active = knobs.ping.ping_max_active
 	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
 	_observe_s = knobs.borrowed_face.observe_time_s
+	_evac_s = knobs.objectives.evac_activation_s
+	_max_players = knobs.lobby.max_players
 	# ShockPresenter's own jitter lasts stun_root_s too (inference: the GDD gives no shocked duration; the
 	# victim is rooted for it, survivor-defense.md rule 10).
 	_shock_ticks = knobs.ticks(knobs.defense.stun_root_s)
@@ -94,6 +100,8 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 		router.subscribe(EventBatch.CALLOUT, on_callout)
 		router.subscribe(EventBatch.PING, on_ping)
 		router.subscribe(EventBatch.MONSTER_HUD, on_monster_hud)
+		router.subscribe(EventBatch.ROSTER, on_roster)
+		router.subscribe(EventBatch.PROGRESS, on_progress)
 		router.subscribe(EventBatch.OWN_LIFE, on_own_life)
 		router.subscribe(EventBatch.HIDING, on_hiding)
 		router.subscribe(EventBatch.BLEED_RING, on_bleed_ring)
@@ -142,9 +150,7 @@ func name_of(survivor: int) -> String:
 
 
 ## Seeds the round's survivors (player id -> display name) as Healthy, keeping any state already heard
-## (story hud-results/002, H4). No server message carries the round roster to clients yet (lobby-to-round
-## wiring, match-flow story 013, is the inferred producer); until then the roster holds only the survivors
-## an event named.
+## (story hud-results/002, H4). The server's RosterFeed entry reaches it through on_roster (story 011).
 func set_survivors(names: Dictionary) -> void:
 	for id: Variant in names:
 		if id is int:
@@ -154,19 +160,49 @@ func set_survivors(names: Dictionary) -> void:
 	roster_changed.emit()
 
 
-## Evacuation activation countdown (H3): {remaining_s: float, paused: bool}, empty when unknown. A copy.
+## Evacuation activation countdown (H3): {remaining_s: float, paused: bool}, empty when unknown. While not
+## paused remaining_s runs down from the entry's tick to the newest server tick (the server sends on change only).
 func activation() -> Dictionary:
-	return _activation.duplicate()
+	if _activation.is_empty():
+		return {}
+	var left: float = _activation["remaining_s"]
+	if not _activation["paused"]:
+		left = maxf(left - float(maxi(_display.server_tick() - _activation["tick"], 0)) / _hz, 0.0)
+	return {"remaining_s": left, "paused": _activation["paused"]}
 
 
-## Handler for the activation countdown: {remaining_s: float, paused: bool}. No server message carries it
-## yet (inference: SurvivorObjectives' _activation_ticks and zone check, sent per change; wired when the
-## objectives epic names the producer), so H3 shows the terminal's Activating state without seconds.
-func on_activation(_tick: int, p: Dictionary) -> void:
+## Handler for the activation countdown at server tick `tick`: {remaining_s: float, paused: bool}. on_progress
+## feeds it from the server.
+func on_activation(tick: int, p: Dictionary) -> void:
 	if not (p.get("remaining_s") is float and p.get("paused") is bool):
 		return
-	_activation = {"remaining_s": p["remaining_s"], "paused": p["paused"]}
+	_activation = {"remaining_s": p["remaining_s"], "paused": p["paused"], "tick": tick}
 	objectives_changed.emit()
+
+
+## ClientEventRouter handler for EventBatch.PROGRESS: only WorldProgress.ACTIVATION_KEY is read (the other bars
+## are WorldProgressBars'); progress 0-1 of evac_activation_s becomes the seconds left; `end` clears it.
+func on_progress(tick: int, p: Dictionary) -> void:
+	if p.get("key") != WorldProgress.ACTIVATION_KEY:
+		return
+	if p.get("end", false):
+		_activation = {}
+		objectives_changed.emit()
+		return
+	if p.get("progress") is float:
+		on_activation(tick, {"remaining_s": (1.0 - p["progress"]) * _evac_s, "paused": p.get("paused")})
+
+
+## ClientEventRouter handler for EventBatch.ROSTER (RosterFeed): {survivors: {player id: name}}. A payload with
+## a non-int id or a non-String name, or more than max_players rows, is ignored whole.
+func on_roster(_tick: int, p: Dictionary) -> void:
+	var s: Variant = p.get("survivors")
+	if not s is Dictionary or s.size() > _max_players:
+		return
+	for id: Variant in s:
+		if not (id is int and s[id] is String):
+			return
+	set_survivors(s)
 
 
 ## The own body's snapshot entry (gait, hold echo, ...), a copy; empty before the first snapshot.

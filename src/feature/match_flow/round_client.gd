@@ -281,6 +281,7 @@ func _on_connected() -> void:
 		bar.self_modulate = Color.TRANSPARENT # the predictor only: InteractionHud draws the ring
 		interaction = InteractionHud.new(InputGlyphs.new(), ping_hud.contexts, bar, prompt_of)
 		hud.add_child(interaction)
+		router.subscribe(EventBatch.HOLD_END, interaction.on_hold_end) # H9 server reason (hud-results/011)
 		hud.add_child(OwnStateHud.new(hud_model, net.local_player_id, interaction)) # H15, H16, states (hud-results/004)
 		hud.add_child(FormPicker.for_client(hud_model, ping_hud.contexts, knobs, smp, interaction.refuse,
 				match_display.server_tick)) # borrowed-face/011

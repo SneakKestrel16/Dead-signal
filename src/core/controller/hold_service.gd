@@ -30,6 +30,11 @@ class_name HoldService extends RefCounted
 
 const RANGE_EPS_M := 1e-6
 
+## Optional observer `on_end(actor, reason: StringName)` (story hud-results/011, H9): every cancel with its
+## reason, and a refused Start that got as far as range, sight or the lock: &"too_far", &"no_sight", &"in_use".
+## Other refusals report nothing. HoldReasonFeed is the user; it decides what reaches a client.
+var on_end: Callable
+
 var _knobs: Knobs
 var _players: Callable
 var _frames: Callable
@@ -99,6 +104,7 @@ func cancel(actor: int, reason: StringName) -> void:
 		return
 	var h: Dictionary = _holds[actor]
 	_holds.erase(actor)
+	_ended(actor, reason)
 	if h.fake:
 		return
 	var item: Interactable = h.item
@@ -170,8 +176,10 @@ func _try_start(actor: int, f: InputFrame) -> void:
 	var fake := _fakes(actor, item)
 	var centre: Vector3 = _centre_of.call(actor)
 	if centre.distance_to(item.point) > item.range_m + RANGE_EPS_M:
+		_ended(actor, &"too_far")
 		return ## Start is strict range_m; tolerance is for continuation (story 009)
 	if not _sight.call(actor, item):
+		_ended(actor, &"no_sight")
 		return
 	if fake:
 		# Inference: a fake ignores a held lock too (rule 25: "at any objective point"); the fake on a
@@ -179,6 +187,7 @@ func _try_start(actor: int, f: InputFrame) -> void:
 		_holds[actor] = {"item": item, "elapsed": 0, "fake": true}
 		return
 	if item.lock_key != &"" and _locks.has(item.lock_key):
+		_ended(actor, &"in_use")
 		return ## AC1: a held exclusive lock rejects every Start on its key, instant ones included
 	for other: int in _holds.keys(): ## a real Start cancels fakes on the same interactable (rule 25)
 		if _holds[other].fake and _holds[other].item == item:
@@ -246,6 +255,11 @@ func _continue(actor: int) -> void:
 		return
 	if not _sight.call(actor, item):
 		cancel(actor, &"sight")
+
+
+func _ended(actor: int, reason: StringName) -> void:
+	if on_end.is_valid():
+		on_end.call(actor, reason)
 
 
 func _is_barred(actor: int) -> bool:

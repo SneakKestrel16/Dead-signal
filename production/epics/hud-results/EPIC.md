@@ -78,7 +78,7 @@ This epic is complete when:
 | 008 | Results screen | UI | In Review | ADR-0014 |
 | 009 | Lobby "Last round" view | UI | In Review | ADR-0014 |
 | 010 | Visual budget and accessibility verification pass | UI | Ready | ADR-0014 |
-| 011 | Server feeds the HUD still lacks: round roster names and hold refusal reasons | Integration | Ready | ADR-0004 |
+| 011 | Server feeds the HUD still lacks: round roster names and hold refusal reasons | Integration | Complete | ADR-0004 |
 | 012 | Gamepad bindings for every action | UI | Ready | ADR-0014 |
 
 ## Next Step

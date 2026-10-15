@@ -63,6 +63,9 @@ var scares: ScareEvents
 var scare_state: FacilityScareState
 ## The shapeshifter HUD state sender (hud-results/006); held here, batch_extras holds only its method.
 var monster_hud: MonsterHudFeed
+## The H4 roster names and the H9 hold end reasons (hud-results/011); held here like monster_hud.
+var roster_feed: RosterFeed
+var hold_reasons: HoldReasonFeed
 ## The survivors' own life state sender (hud-results/004); held here, batch_extras holds only its method.
 var survivor_hud: SurvivorHudFeed
 var round_script: RoundScript
@@ -231,6 +234,11 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	monster_hud = MonsterHudFeed.new(monster, survivors, _tick, ma.ready_tick, bf.cooldown_end_tick,
 			bf.transform_end_tick, sd.lock_end_tick, sd.free_tick, bf.observation_s, bf.appearance_of)
 	sm.batch_extras.append(monster_hud.entries)
+	roster_feed = RosterFeed.new(roster, survivors, lifecycle.loaded_ids)
+	sm.batch_extras.append(roster_feed.entries)
+	hold_reasons = HoldReasonFeed.new(_tick)
+	holds.on_end = hold_reasons.note
+	sm.batch_extras.append(hold_reasons.entries)
 	survivor_hud = SurvivorHudFeed.new(survivors, _tick, downing.life_state, downing.rescue_progress_s)
 	sm.batch_extras.append(survivor_hud.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])

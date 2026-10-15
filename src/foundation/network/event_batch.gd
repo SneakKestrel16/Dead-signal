@@ -51,6 +51,12 @@ const PROGRESS := &"Progress"
 ## {ready: {lunge, false_signal, blackout, form}, transform_end, stun_end, immune_end, faces: [[survivor,
 ## observed_ticks, appearance], ...]}, all times server ticks. Sent to the shapeshifter's peer only, on change.
 const MONSTER_HUD := &"MonsterHud"
+## Entry type of the round's survivor roster (RosterFeed.entries, story hud-results/011, H4): {survivors: {player
+## id: display name}}. Sent to survivor viewers only, once after their map-loaded report and in full on a rejoin.
+const ROSTER := &"SurvivorRoster"
+## Entry type of the server's reason the viewer's own hold was refused or cancelled (HoldReasonFeed.entries, story
+## hud-results/011, H9): {reason: StringName}, one of HoldReasonFeed.TEXT's keys. Sent to the actor's peer only.
+const HOLD_END := &"HoldEnd"
 ## Entry type of a survivor's own life state (SurvivorHudFeed.entries, story hud-results/004, ADR-0004 §5):
 ## {life: Downing.LifeState, rescue_s: float (tenths)}. Sent to that survivor's stream only (its spectators
 ## included), on change. The roster has no Seized state, so this is the only carrier of the victim's Seized.

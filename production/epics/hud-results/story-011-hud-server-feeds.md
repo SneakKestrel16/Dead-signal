@@ -1,7 +1,7 @@
 # Story 011: Server feeds the HUD still lacks: round roster names and hold refusal reasons
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Presentation
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -33,9 +33,9 @@ HUD-2 and HUD-3 found values no server message carries: the round roster with di
 
 *From GDD `design/ux/hud.md`, scoped to this story:*
 
-- [ ] At round start every client's HudModel receives the survivor roster with display names, and the shipped lobby-to-round path shows names in H4 with no round_view seeding.
-- [ ] While the terminal activates, every survivor sees the H3 countdown seconds and "Paused" when nobody holds, driven by the server feed.
-- [ ] A refused or cancelled hold shows its server reason in H9 instead of the generic text (real ENet test with at least one refusal and one cancel).
+- [x] At round start every client's HudModel receives the survivor roster with display names, and the shipped lobby-to-round path shows names in H4 with no round_view seeding.
+- [x] While the terminal activates, every survivor sees the H3 countdown seconds and "Paused" when nobody holds, driven by the server feed.
+- [x] A refused or cancelled hold shows its server reason in H9 instead of the generic text (real ENet test with at least one refusal and one cancel).
 
 ---
 
@@ -63,7 +63,7 @@ HUD-2 and HUD-3 found values no server message carries: the round roster with di
 **Story Type**: Integration
 **Required evidence**: `tests/integration/hud-results/hud_server_feeds_test.gd` (real ENet where the AC names clients)
 
-**Status**: [ ] Not yet created
+**Status**: [x] tests/integration/hud-results/hud_server_feeds_test.gd
 
 ---
 
@@ -71,3 +71,13 @@ HUD-2 and HUD-3 found values no server message carries: the round roster with di
 
 - Depends on: Stories 002, 003, 005; match-flow 013
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+- RosterFeed sends survivor clients the lobby display names (from RosterHandoff's Roster) after map load and on rejoin; the shapeshifter gets none.
+- HudModel derives the activation countdown from WorldProgress's existing entry; no new feed.
+- HoldService on_end hook plus HoldReasonFeed send allow-listed refusal and cancel reasons to the actor only; InteractionHud shows them in H9. Event-batch entry, not a snapshot byte (no codec bump).
+- Tests: tests/unit/hud-results/server_feeds_test.gd and tests/integration/hud-results/hud_server_feeds_test.gd (real ENet, one refusal "In use", one cancel "Moved away"); three mutations caught. batch_extras now 14.
+- Evidence: production/qa/evidence/hud-server-feeds/ (shipped lobby path, H4 shows real names).
+- Full suite on merge: 1545 tests, 0 failures, 0 leak lines.
+- Inference: "Found" label for a Hide hold ended by a search needs a ux-designer ruling. tests/manual/round_view.gd still seeds View<i> names over the real ones.
