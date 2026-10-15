@@ -3,7 +3,8 @@ class_name MonsterAbilities extends RefCounted
 ## Story monster-abilities/001 implements the request path and the Lunge state machine:
 ## design/gdd/monster-abilities.md rules 1-4 and "States and Transitions"; ADR-0002 (client sends a
 ## request and an aim point only, the server validates and owns cooldown and state), ADR-0005 (tick
-## order slot MONSTER_ABILITIES), ADR-0006 (AbilityKnobs). Wind-up and dash movement (story 002), the hit
+## order slot MONSTER_ABILITIES), ADR-0006 (AbilityKnobs). Story 002 adds the wind-up root and the dash
+## (rules 5-6, ADR-0007) as the "lunge" entry of the monster's MovementModifiers (set_modifiers). The hit
 ## test (003), miss slow (004) and the False Signal and Blackout bodies (009-010) are not here yet.
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
@@ -17,6 +18,7 @@ class_name MonsterAbilities extends RefCounted
 ##   ma.set_monster(1)   # BEFORE start_round
 ##   ma.set_status_sources(view.get_form, view.get_transforming, locked)
 ##   ma.set_position_source(position_of)   # story 005: AbilityUsed position
+##   ma.set_modifiers(server_movement.modifiers_of)
 ##   server.start_round({TickOrder.MONSTER_ABILITIES: ma}, knobs)
 ##   smp.peer_packet -> ma.request_ability(net.player_id_of(peer), bytes)
 
@@ -40,6 +42,8 @@ const REQUEST_CAP_BYTES := 64
 const ABILITY_KEY := "ability"
 const AIM_KEY := "aim"
 const REQUEST_FIELDS: Array[String] = [ABILITY_KEY, AIM_KEY]
+## The owner of the Lunge's entry in the monster's MovementModifiers.
+const MOD_OWNER := &"lunge"
 
 var _monster: int = -1
 var _form: Callable
@@ -55,6 +59,12 @@ var _phase_end_tick: int = 0
 var _ready_tick: Dictionary[int, int] = {}
 ## The first decoded request since the last tick ({} = none): one request per tick.
 var _pending: Dictionary = {}
+## player id -> MovementModifiers (ServerMovement.modifiers_of); unset = the Lunge moves nothing.
+var _modifiers_of: Callable
+## Wind-up and dash turn caps (rad/s) and the dash speed (m/s), from AbilityKnobs in setup.
+var _windup_turn: float = 0.0
+var _dash_turn: float = 0.0
+var _dash_speed: float = 0.0
 ## Callable(state: Lunge, tick: int) run on every Lunge transition (telemetry, tests); unset = nothing.
 var on_lunge_state: Callable
 ## Story 005: position_of(player) -> Vector3, the monster's server position for AbilityUsed; unset = origin.
@@ -121,6 +131,12 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_windup_ticks = knobs.ticks(knobs.ability.lunge_windup_s)
 	_dash_ticks = knobs.ticks(knobs.ability.lunge_dash_s)
 	_lunge_cooldown_ticks = knobs.ticks(knobs.ability.lunge_cooldown_s)
+	_windup_turn = deg_to_rad(knobs.ability.lunge_windup_turn_deg_s)
+	_dash_turn = deg_to_rad(knobs.ability.lunge_dash_turn_deg_s)
+	# Rule 6: lunge_distance_m over exactly the dash's whole ticks, so tick quantisation of lunge_dash_s
+	# changes the speed, never the distance.
+	# A dash of 0 ticks moves nothing.
+	_dash_speed = 0.0 if _dash_ticks == 0 else knobs.ability.lunge_distance_m * knobs.net.sim_tick_hz / _dash_ticks
 	_lunge = Lunge.READY
 	_pending = {}
 	_ready_tick = {}
@@ -138,8 +154,8 @@ func server_tick(tick: int) -> void:
 	if _lunge == Lunge.WIND_UP and tick >= _phase_end_tick:
 		_set_lunge(Lunge.ACTIVE, tick)
 		_phase_end_tick = tick + _dash_ticks
-	elif _lunge == Lunge.ACTIVE and tick >= _phase_end_tick:
-		_resolve(tick) ## dash end with no hit
+	elif _lunge == Lunge.ACTIVE and (tick >= _phase_end_tick or _dash_blocked()):
+		_resolve(tick) ## dash end with no hit, or stopped by an obstacle (rule 6): a miss
 	elif _lunge == Lunge.COOLDOWN and tick >= _ready_tick[Ability.LUNGE]:
 		_set_lunge(Lunge.READY, tick)
 	var req := _pending
@@ -173,6 +189,12 @@ func attacking() -> bool:
 	return _lunge == Lunge.WIND_UP or _lunge == Lunge.ACTIVE or _lunge == Lunge.TAKEDOWN_COMMIT
 
 
+## Injects the movement modifier sets: `source.call(player_id) -> MovementModifiers`, null for a
+## player with no body (ServerMovement.modifiers_of in the composer). Unset, the Lunge moves nothing.
+func set_modifiers(source: Callable) -> void:
+	_modifiers_of = source
+
+
 ## Current Lunge state.
 func lunge_state() -> Lunge:
 	return _lunge
@@ -196,6 +218,7 @@ func _set_lunge(state: Lunge, tick: int) -> void:
 		push_error("MonsterAbilities: illegal Lunge transition %d -> %d" % [_lunge, state])
 		return
 	_lunge = state
+	_apply_lunge_modifiers(state)
 	if on_lunge_state.is_valid():
 		on_lunge_state.call(state, tick)
 
@@ -230,3 +253,27 @@ func _emit_used(ability: Ability, target: Vector3) -> void:
 	e.position = _position_of.call(_monster) if _position_of.is_valid() else Vector3.ZERO
 	e.target = target
 	_bus.emit(e)
+
+
+## Rules 5-6 as the monster's "lunge" modifier: wind-up roots and caps the turn; Active forces the dash
+## and caps its steering; any other state removes the entry.
+func _apply_lunge_modifiers(state: Lunge) -> void:
+	var mods := _monster_mods()
+	if mods == null:
+		return
+	mods.remove(MOD_OWNER)
+	if state == Lunge.WIND_UP:
+		mods.add(MOD_OWNER, MovementModifiers.Kind.ROOT)
+		mods.set_turn_cap(MOD_OWNER, _windup_turn)
+	elif state == Lunge.ACTIVE:
+		mods.set_turn_cap(MOD_OWNER, _dash_turn)
+		mods.set_dash(MOD_OWNER, _dash_speed)
+
+
+func _dash_blocked() -> bool:
+	var mods := _monster_mods()
+	return mods != null and mods.dash_blocked
+
+
+func _monster_mods() -> MovementModifiers:
+	return _modifiers_of.call(_monster) as MovementModifiers if _modifiers_of.is_valid() else null

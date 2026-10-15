@@ -22,8 +22,26 @@ var rooted: bool = false
 ## No movement or look input is applied while locked. Derived from the set.
 var locked: bool = false
 
+## Lunge controls (monster-abilities.md rules 5-6, ADR-0007: turn caps and the dash are controller
+## modifiers), per owner like the speed modifiers and removed by the same remove(). Server only: a
+## snapshot carries neither, so the owner's prediction is corrected by the server (inference: the GDD
+## does not say whether the client predicts the dash; a playtest of the monster's own view settles it).
+## Lowest turn cap in rad/s, INF when none: the step turns the frame's yaw toward the input by at most
+## turn_cap × dt. Derived from the set.
+var turn_cap: float = INF
+## Forced speed in m/s along the facing, 0.0 when none: the step moves the body by it, ignoring move
+## input and gait, and stops it at the first obstacle. Root and lock still win. Derived from the set.
+var dash_speed: float = 0.0
+## Written by the step: the yaw it last applied (NAN before any step) and whether the dash met an
+## obstacle since the last set_dash.
+var facing: float = NAN
+var dash_blocked := false
+
 ## owner -> [Kind, mult]. One entry per owner: a second add() by the same owner replaces it.
 var _entries: Dictionary[StringName, Array] = {}
+## owner -> turn cap (rad/s); owner -> dash speed (m/s).
+var _turn_caps: Dictionary[StringName, float] = {}
+var _dashes: Dictionary[StringName, float] = {}
 
 
 ## Adds or replaces `owner`'s modifier. `mult` is used by SLOW only and clamped to 0-1 (GDD Output
@@ -35,8 +53,24 @@ func add(owner: StringName, kind: Kind, mult: float = 1.0) -> void:
 
 ## Removes `owner`'s modifier; an owner with none changes nothing.
 func remove(owner: StringName) -> void:
-	if _entries.erase(owner):
+	var had := _entries.erase(owner)
+	had = _turn_caps.erase(owner) or had
+	had = _dashes.erase(owner) or had
+	if had:
 		_rebuild()
+
+
+## Adds or replaces `owner`'s turn cap in rad/s (negative reads as 0: no turning).
+func set_turn_cap(owner: StringName, rad_s: float) -> void:
+	_turn_caps[owner] = maxf(rad_s, 0.0)
+	_rebuild()
+
+
+## Adds or replaces `owner`'s forced dash speed in m/s and clears dash_blocked.
+func set_dash(owner: StringName, speed: float) -> void:
+	_dashes[owner] = maxf(speed, 0.0)
+	dash_blocked = false
+	_rebuild()
 
 
 ## effective_speed for a gait speed `base`: 0 when locked or rooted, else base × lowest slow.
@@ -66,6 +100,12 @@ func _rebuild() -> void:
 	locked = false
 	rooted = false
 	speed_scale = 1.0
+	turn_cap = INF
+	for c: float in _turn_caps.values():
+		turn_cap = minf(turn_cap, c)
+	dash_speed = 0.0
+	for v: float in _dashes.values():
+		dash_speed = maxf(dash_speed, v)
 	for e: Array in _entries.values():
 		match e[0]:
 			Kind.LOCK:

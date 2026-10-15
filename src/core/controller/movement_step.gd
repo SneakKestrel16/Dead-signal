@@ -3,6 +3,8 @@ class_name MovementStep
 ## ADR-0002 apply_move; first-person-controller.md Formulas: gait_speed, effective_speed).
 ## Horizontal velocity moves toward input_dir × effective_speed and reaches it in accel_time_s from
 ## rest; vertical velocity is gravity off the floor and zero on it; one move_and_slide. No jump.
+## MovementModifiers.turn_cap clamps the frame's yaw; a Lunge dash (dash_speed) replaces all of the
+## above with one move_and_collide along the facing.
 ## The only place a player's velocity is set. Floor and slide settings live on the body (PlayerBody.setup).
 ## Usage:
 ##   var state := MovementStep.MoveState.new(); state.crouched = true
@@ -67,6 +69,16 @@ static func wants_low(frame: InputFrame, state: MoveState, low_now: bool) -> boo
 ## One tick for `body`: sets its velocity and calls move_and_slide().
 static func step(body: CharacterBody3D, frame: InputFrame, state: MoveState, knobs: Knobs) -> void:
 	var dt := 1.0 / Engine.physics_ticks_per_second
+	var mods := state.modifiers
+	# Turn cap (monster-abilities.md rules 5-6): the frame is the server's copy, so clamping it here is
+	# what ViewState, the snapshot and the dash all read.
+	if mods.turn_cap < INF and is_finite(mods.facing):
+		var turn := mods.turn_cap * dt
+		frame.yaw = wrapf(mods.facing + clampf(angle_difference(mods.facing, frame.yaw), -turn, turn), -PI, PI)
+	mods.facing = frame.yaw
+	if mods.dash_speed > 0.0 and not (mods.rooted or mods.locked):
+		_dash(body, frame.yaw, mods, dt)
+		return
 	var move := frame.move.limit_length(1.0) ## move_input is capped at 1: a diagonal is never faster
 	var full := gait_speed(gait(frame, state), state, knobs)
 	var rooted := state.modifiers.rooted or state.modifiers.locked or (state.holding and state.hold_roots)
@@ -92,6 +104,21 @@ static func step(body: CharacterBody3D, frame: InputFrame, state: MoveState, kno
 	else:
 		body.velocity.y += body.get_gravity().y * dt
 	body.move_and_slide()
+
+
+## The Lunge dash: dash_speed along `yaw`, stopping at the first body on the body's mask (walls, glass,
+## door blockers, other players: monster-abilities.md rule 6). Once blocked it stays put until the
+## owner removes the dash. ponytail: no gravity or slide during the 0.3 s dash, so a ramp or step on the
+## path also stops it; add a floor-following sweep if level design puts slopes in lunge range.
+static func _dash(body: CharacterBody3D, yaw: float, mods: MovementModifiers, dt: float) -> void:
+	body.velocity = Vector3.ZERO
+	if mods.dash_blocked:
+		return
+	var v := Basis(Vector3.UP, yaw) * Vector3.FORWARD * mods.dash_speed
+	if body.move_and_collide(v * dt) != null:
+		mods.dash_blocked = true
+	else:
+		body.velocity = v
 
 
 static func _in_sprint_cone(move: Vector2) -> bool:
