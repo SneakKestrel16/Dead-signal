@@ -9,77 +9,14 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 8
-goal: "Build the last two Vertical Slice Feature systems, Pings & Callouts and Scare Events, server half first, then their client presentation; carry the 12 sprint-7 In Review stories until the designer signs them off."
-start: "2027-01-19"
-end: "2027-02-01"
+sprint: 9
+goal: "Make the shipped build playable end to end: wire lobby to round to results to lobby, and build the HUD and Results screen on HudModel; carry the In Review stories until the designer signs them off."
+start: "2027-02-02"
+end: "2027-02-15"
 generated: "2026-10-15"
 updated: "2026-10-15"
 
 stories:
-  - id: "pings-1"
-    name: "Ping module, request validation and token bucket"
-    file: "production/epics/pings-and-callouts/story-001-ping-validation-token-bucket.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-2"
-    name: "Sender-state gating for pings and callouts"
-    file: "production/epics/pings-and-callouts/story-002-sender-state-gating.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-3"
-    name: "Callout acceptance limits and attached item ping"
-    file: "production/epics/pings-and-callouts/story-003-callout-limits-attached-ping.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-4"
-    name: "Ping recipients and per-peer delivery"
-    file: "production/epics/pings-and-callouts/story-004-ping-recipients-delivery.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-5"
-    name: "Marker lifecycle: static position, lifetime and max active"
-    file: "production/epics/pings-and-callouts/story-005-marker-lifecycle.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-6"
-    name: "Callout recipients, range and monster audio-only"
-    file: "production/epics/pings-and-callouts/story-006-callout-recipients-delivery.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "pings-7"
-    name: "Displayed identity, (not you) mark and fake-callout parity"
-    file: "production/epics/pings-and-callouts/story-007-identity-fake-parity.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
   - id: "pings-8"
     name: "Ping input, marker display, callout wheel and feed"
     file: "production/epics/pings-and-callouts/story-008-ping-callout-presentation.md"
@@ -89,51 +26,6 @@ stories:
     estimate_days: 1.5
     blocker: "designer sign-off"
     completed: ""
-  - id: "scare-1"
-    name: "Scare catalogue data and the server Scare module"
-    file: "production/epics/scare-events/story-001-scare-catalogue-module.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "scare-2"
-    name: "Per-recipient scare gating, budgets and repeat block"
-    file: "production/epics/scare-events/story-002-per-recipient-gating.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "scare-3"
-    name: "Scoped delivery: shared relevance and single-client hallucinations"
-    file: "production/epics/scare-events/story-003-scoped-delivery-hallucinations.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "scare-4"
-    name: "Monster-source scares: door burst, reveal and Blackout"
-    file: "production/epics/scare-events/story-004-monster-source-scares.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "scare-5"
-    name: "Ambush lunge scare and flinch suppression near a lunge"
-    file: "production/epics/scare-events/story-005-ambush-lunge-flinch.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
   - id: "scare-6"
     name: "Facility scare state machine and RoundScript anchors"
     file: "production/epics/scare-events/story-006-facility-scare-state-roundscript.md"
@@ -143,15 +35,6 @@ stories:
     estimate_days: 1.5
     blocker: "user: allow scare anchors in research_facility.tres"
     completed: ""
-  - id: "scare-7"
-    name: "Presentation-only guarantees: slammed doors and no fake teammates"
-    file: "production/epics/scare-events/story-007-presentation-only-scares.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
   - id: "scare-8"
     name: "Scare audio: positional origin, stingers, ducking and volume scales"
     file: "production/epics/scare-events/story-008-scare-audio.md"
@@ -278,15 +161,6 @@ stories:
     estimate_days: 0.5
     blocker: ""
     completed: ""
-  - id: "pings-10"
-    name: "Rejection echo for over-cap pings and the sight test blind spot"
-    file: "production/epics/pings-and-callouts/story-010-ping-reject-echo-sight-fix.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
   - id: "pings-11"
     name: "Warning pings and feed scrollback key"
     file: "production/epics/pings-and-callouts/story-011-warning-pings-feed-scrollback.md"
@@ -296,12 +170,102 @@ stories:
     estimate_days: 1
     blocker: ""
     completed: ""
-  - id: "scare-10"
-    name: "Server trigger for the impossible surveillance frame"
-    file: "production/epics/scare-events/story-010-monitor-hallucination-trigger.md"
+  - id: "match-flow-13"
+    name: "Lobby countdown starts the composed round; round end returns to the lobby"
+    file: "production/epics/match-flow/story-013-lobby-to-round-wiring.md"
+    priority: must-have
+    status: in-progress
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "hud-1"
+    name: "HudModel, UiLayers and the full InputContextStack"
+    file: "production/epics/hud-results/story-001-hud-model-and-ui-layers.md"
+    priority: must-have
+    status: in-progress
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-2"
+    name: "Clock, phase, roster, objective checklist and crosshair"
+    file: "production/epics/hud-results/story-002-always-on-hud.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-3"
+    name: "Interaction prompt, hold ring, reject label and input glyphs"
+    file: "production/epics/hud-results/story-003-prompt-hold-ring-reject.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-4"
+    name: "Own-state vignettes, own bleed-out and the HUD state table"
+    file: "production/epics/hud-results/story-004-own-state-and-hud-states.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-8"
+    name: "Results screen"
+    file: "production/epics/hud-results/story-008-results-screen.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "hud-5"
+    name: "Edge cues, flinch-off pulse, taser count and world progress bars"
+    file: "production/epics/hud-results/story-005-edge-cues-items-progress.md"
     priority: should-have
-    status: done
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-6"
+    name: "Shapeshifter HUD and survivor-side absence"
+    file: "production/epics/hud-results/story-006-shapeshifter-hud.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "hud-7"
+    name: "Feed cap, opaque backing, marker cap, shapes and wheel stick steering"
+    file: "production/epics/hud-results/story-007-feed-and-marker-conformance.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "hud-9"
+    name: "Lobby \"Last round\" view"
+    file: "production/epics/hud-results/story-009-lobby-last-round.md"
+    priority: nice-to-have
+    status: backlog
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
+    completed: ""
+  - id: "hud-10"
+    name: "Visual budget and accessibility verification pass"
+    file: "production/epics/hud-results/story-010-hud-budget-accessibility-pass.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
