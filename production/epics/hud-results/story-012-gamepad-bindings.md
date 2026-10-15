@@ -78,3 +78,5 @@
 - Unit test tests/unit/hud-results/gamepad_bindings_test.gd (5 cases); three mutations caught.
 - Evidence: production/qa/evidence/gamepad-bindings/prompt-pad.png shows the X pad glyph. AC2 (wheel steered by the right stick) has no screenshot; it rests on the tested steer_wheel path, now reached via LB.
 - Full suite on merge: 1550 tests, 0 failures, 0 leak lines.
+
+- 2026-10-15: designer waived the physical-gamepad check for AC2 (wheel steered by the right stick). Injected pad events and the tested steer_wheel path stand as the evidence.
