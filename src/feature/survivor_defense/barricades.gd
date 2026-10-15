@@ -3,15 +3,17 @@ class_name Barricades extends RefCounted
 ## "barricade completes while the monster is in the doorway" edge case; story survivor-defense/007;
 ## ADR-0008 holds and locks; systems-index "Barricade state", owner Survivor Defense). Server only.
 ## Each barricadable door gets two BarricadeHolds on the shared HoldService, Barricade and Remove,
-## on the door's one exclusive lock_key (Break, story 008, takes the same key). The barricade extends
+## on the door's one exclusive lock_key, plus a BarricadeBreak (story 008) on the same key. The barricade extends
 ## the door's state, it is not a second one: only a closed door can be barricaded, and while barricaded
 ## Doors refuses to open it (Doors.set_held_shut), so its blocker and every door_closed reader already
 ## treat it as closed. A completed hold is the only way in: no client message completes a barricade.
-## Not here: break, lockout, BarricadeBroken (story 008); the shock lock gate (story 003, through
-## `healthy`); which input selects Barricade over the door toggle (the aim callable must resolve to
+## Story 008: break time accumulates per door across holds (kept on any cancel, a stun included) and
+## clears on removal or break; a break emits BarricadeBroken and locks the door out of Barricade for
+## rebarricade_lockout_s, read against the TickRunner's current tick.
+## Not here: the shock lock gate (story 003, through `healthy` and `monster`); which input selects Barricade over the door toggle (the aim callable must resolve to
 ## build_id / remove_id; unwired, see the story's deviations).
 ## Usage:
-##   var bars := Barricades.new(holds, doors, map, healthy_survivor, monster_capsules)
+##   var bars := Barricades.new(holds, doors, map, healthy_survivor, monster_capsules, monster)
 ##   bars.setup(tick_runner, bus, registry, knobs)   # after Doors.setup (doors take the first net ids)
 
 ## Getter-only registry view for StateKeys.BARRICADE_STATE. Holds the module weakly.
@@ -39,23 +41,42 @@ var _barricaded: Dictionary[int, bool] = {}
 ## door net id -> Barricade / Remove interactable net id.
 var _build: Dictionary[int, int] = {}
 var _remove: Dictionary[int, int] = {}
+## door net id -> Break interactable net id.
+var _break: Dictionary[int, int] = {}
+var _monster: Callable
+var _bus: EventBus
+var _runner: TickRunner
+var _lockout_ticks: int
+## door net id -> stored break time, s (rule 27).
+var _break_s: Dictionary[int, float] = {}
+## door net id -> tick the barricade broke on (rule 28 lockout).
+var _broken_at: Dictionary[int, int] = {}
 
 
 ## `healthy(actor) -> bool`: a Healthy survivor (rule 25; Downing.action_locked and the shock lock
 ## fold in here). `monster_capsules() -> Array[Vector4]`: the monster's capsule as Doors' capsule format,
-## empty when it takes no space.
-func _init(holds: HoldService, doors: Doors, map: MapData, healthy: Callable, monster_capsules: Callable) -> void:
+## empty when it takes no space. `monster(actor) -> bool`: the monster, any form, free to act (the stun
+## lock folds in here); unset = nobody breaks.
+func _init(holds: HoldService, doors: Doors, map: MapData, healthy: Callable, monster_capsules: Callable,
+		monster: Callable = Callable()) -> void:
 	_holds = holds
 	_doors = doors
 	_map = map
 	_queries = MapQueries.new(map)
 	_healthy = healthy
 	_monster_capsules = monster_capsules
+	_monster = monster
 
 
 ## RoundServer entry: registers Barricade and Remove on every barricadable door, unbarricaded, and the
 ## registry view; makes Doors refuse to open a barricaded door.
-func setup(_tick_runner: Node, _bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+	_runner = tick_runner
+	_bus = bus
+	_lockout_ticks = knobs.ticks(knobs.defense.rebarricade_lockout_s)
+	_break = {}
+	_break_s = {}
+	_broken_at = {}
 	_radius = knobs.controller.player_radius_m
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_barricaded = {}
@@ -76,6 +97,15 @@ func setup(_tick_runner: Node, _bus: EventBus, registry: StateRegistry, knobs: K
 			h.duration_s = knobs.defense.barricade_remove_s if remove else knobs.defense.barricade_duration_s
 			h.lock_key = lock_key(i)
 			(_remove if remove else _build)[i] = _holds.register(h)
+		var brk := BarricadeBreak.new()
+		brk.owner = weakref(self)
+		brk.door = i
+		brk.point = p.position + Vector3.UP * rules.point_height_m
+		brk.range_m = rules.door_range_m
+		brk.duration_s = knobs.defense.barricade_break_s
+		brk.roots_actor = true
+		brk.lock_key = lock_key(i)
+		_break[i] = _holds.register(brk)
 	_doors.set_held_shut(is_barricaded)
 	registry.register_view(StateKeys.BARRICADE_STATE, &"SurvivorDefense", BarricadeView.new(self))
 
@@ -100,14 +130,49 @@ func remove_id(net_id: int) -> int:
 	return _remove.get(net_id, -1)
 
 
+## Net id of door `net_id`'s Break interactable, -1 when it is not barricadable.
+func break_id(net_id: int) -> int:
+	return _break.get(net_id, -1)
+
+
 ## True while door `net_id` is barricaded.
 func is_barricaded(net_id: int) -> bool:
 	return _barricaded.has(net_id)
 
 
-## Rule 25: a Healthy survivor on a closed, unbarricaded barricadable door.
+## Rule 25: a Healthy survivor on a closed, unbarricaded barricadable door; rule 28: not until
+## rebarricade_lockout_s after a break (allowed on the tick it runs out).
 func can_build(actor: int, net_id: int) -> bool:
-	return _build.has(net_id) and not is_barricaded(net_id) and _doors.is_closed(net_id) and _healthy.call(actor)
+	return _build.has(net_id) and not is_barricaded(net_id) and _doors.is_closed(net_id) 		and _now() >= _broken_at.get(net_id, -_lockout_ticks) + _lockout_ticks and _healthy.call(actor)
+
+
+## Rule 27: the monster, in any form, on a barricaded door. Survivors never.
+func can_break(actor: int, net_id: int) -> bool:
+	return is_barricaded(net_id) and _monster.is_valid() and _monster.call(actor)
+
+
+## Rule 27: break time door `net_id` has taken so far, s.
+func break_progress_s(net_id: int) -> float:
+	return _break_s.get(net_id, 0.0)
+
+
+## A Break hold ended early (HoldService only): its progress persists while the barricade stands.
+func keep_break_progress(net_id: int, progress_s: float) -> void:
+	if is_barricaded(net_id):
+		_break_s[net_id] = progress_s
+
+
+## A Break hold completed (HoldService only): the barricade is gone, the door stays closed, the
+## lockout starts and BarricadeBroken is emitted (ADR-0005).
+func break_barricade(net_id: int) -> void:
+	if not _barricaded.erase(net_id):
+		return
+	_break_s.erase(net_id)
+	_broken_at[net_id] = _now()
+	if _bus != null:
+		var e := EvBarricadeBroken.new()
+		e.barricade = net_id
+		_bus.emit(e)
 
 
 ## Rule 26: a survivor on a barricaded door. Inference: "Survivor" in rule 28a, read as the same
@@ -120,6 +185,7 @@ func can_remove(actor: int, net_id: int) -> bool:
 ## "No trapping the monster"); progress is not kept. Returns true when the state changed.
 func complete(net_id: int, remove: bool) -> bool:
 	if remove:
+		_break_s.erase(net_id)
 		return _barricaded.erase(net_id)
 	if not _doors.is_closed(net_id) or _monster_in_doorway(net_id):
 		return false
@@ -135,3 +201,7 @@ func _monster_in_doorway(net_id: int) -> bool:
 		if _queries.capsule_overlaps_swing(id, Vector3(c.x, c.y + c.w / 2.0, c.z), c.w, _radius):
 			return true
 	return false
+
+
+func _now() -> int:
+	return _runner.current_tick() if _runner != null else 0

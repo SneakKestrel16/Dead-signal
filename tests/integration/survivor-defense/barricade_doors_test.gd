@@ -2,9 +2,8 @@
 # (design/gdd/survivor-defense.md rules 24-26, 28a and the "monster in the doorway" edge case;
 # ADR-0008 holds and one exclusive lock per door; ADR-0007 §5 door blockers).
 # Integration: real HoldService, Doors, DoorBlockers, Jolt PlayerBody capsules and Barricades on a
-# fixture map with one barricadable door. Break (story 008) and the lunge (Monster Abilities) have not
-# landed: a fixture Break interactable on the door's lock key, and a stub dash mover (doors_test.gd's)
-# against the real doors layer. Re-run when MA-6 and SD-12 land.
+# fixture map with one barricadable door, Break included (story 008). The lunge (Monster Abilities) has
+# not landed: a stub dash mover (doors_test.gd's) against the real doors layer. Re-run when MA-6 and SD-12 land.
 extends GdUnitTestSuite
 
 const A := 1 ## survivor
@@ -18,21 +17,6 @@ const A_FEET := Vector3(1.2, 0.0, 1.0) ## 1.56 m from the door point, clear of t
 const B_FEET := Vector3(-1.2, 0.0, 1.0)
 const M_AWAY := Vector3(0.0, 0.0, -5.0)
 const M_DOORWAY := Vector3(0.0, 0.0, -0.5) ## inside the swing box, south of the closed leaf
-
-
-## Story 008's Break stand-in: a monster hold on the door's shared lock key.
-class BreakFixture extends Interactable:
-	func eligible(actor: int) -> bool:
-		return actor == M
-
-	func start_progress_s() -> float:
-		return 0.0
-
-	func on_complete(_actor: int) -> void:
-		pass
-
-	func on_cancel(_actor: int, _progress_s: float, _reason: StringName) -> void:
-		pass
 
 
 var _knobs: Knobs
@@ -72,7 +56,7 @@ func before_test() -> void:
 	_doors = Doors.new(_holds, _map, _capsules)
 	_registry = StateRegistry.new()
 	_doors.setup(null, null, _registry, _knobs)
-	_bars = Barricades.new(_holds, _doors, _map, _healthy_survivor, _monster_capsules)
+	_bars = Barricades.new(_holds, _doors, _map, _healthy_survivor, _monster_capsules, _is_monster)
 	_bars.setup(null, null, _registry, _knobs)
 	_blocker()
 	_doors.blockers = DoorBlockers.new(_world, _map)
@@ -88,6 +72,10 @@ func after_test() -> void:
 
 func _healthy_survivor(actor: int) -> bool:
 	return actor == A or actor == B
+
+
+func _is_monster(actor: int) -> bool:
+	return actor == M
 
 
 func _monster_capsules() -> Array[Vector4]:
@@ -292,13 +280,7 @@ func test_a_door_closed_on_the_dash_tick_stops_the_lunge() -> void:
 
 func test_a_running_break_refuses_build_and_remove() -> void:
 	_barricade()
-	var brk := BreakFixture.new()
-	brk.point = Vector3.UP * _knobs.controller.capsule_height_m / 2.0
-	brk.range_m = _knobs.objectives.interact_range_m
-	brk.duration_s = _knobs.defense.barricade_break_s
-	brk.roots_actor = true
-	brk.lock_key = Barricades.lock_key(DOOR)
-	var brk_id := _holds.register(brk)
+	var brk_id := _bars.break_id(DOOR)
 	_bodies[M].global_position = Vector3(0.0, 0.0, -1.5)
 	_hold(M, brk_id, 1)
 	_step({M: _f(M, true, brk_id), B: _f(B, true, _bars.remove_id(DOOR))})
