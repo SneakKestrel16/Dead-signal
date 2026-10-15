@@ -82,6 +82,21 @@ func interactable_on_ray(eye: Vector3, dir: Vector3, centre: Vector3, rules: Int
 	return best
 
 
+## Line of sight for a hold (ADR-0008 §4): true when no world or glass surface (one ray on `space`
+## over PROJECTILE, `exclude` = the actor's own RID) and no closed door leaf other than `target_id`'s
+## lies between `eye` and `point`. HoldService's sight callable on the server.
+## Usage: `q.clear_line(eye, item.point, item.net_id, rules, space, [body.get_rid()])`
+func clear_line(eye: Vector3, point: Vector3, target_id: int, rules: InteractRules,
+		space: PhysicsDirectSpaceState3D, exclude: Array[RID] = []) -> bool:
+	if _targets.is_empty():
+		_targets = _map.interactables()
+	var q := PhysicsRayQueryParameters3D.create(eye, point, PhysicsLayers.PROJECTILE, exclude)
+	q.collide_with_areas = false
+	if not space.intersect_ray(q).is_empty():
+		return false
+	return not _door_blocks(eye, point, target_id, rules)
+
+
 ## A closed door's leaf (other than the target itself) crossing the segment eye -> point.
 func _door_blocks(from: Vector3, to: Vector3, target_id: int, rules: InteractRules) -> bool:
 	if not rules.door_closed.is_valid():

@@ -1,12 +1,12 @@
 # Story 008: HoldService: Start, contested locks and completion
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -36,10 +36,10 @@ Every hold in the game runs through one server service. This story builds Start 
 
 *From `first-person-controller.md` Acceptance Criteria (Hold-to-interact) and ADR-0008 Validation Criteria, scoped to this story:*
 
-- [ ] A Start is rejected, and the client bar cancels, when the actor is ineligible (shocked, hidden, Downed, wrong role), line of sight is blocked, or another actor holds the exclusive lock.
-- [ ] Two Starts on one exclusive target in one tick: the first in rotated player order is accepted and the second rejected (ADR-0008 Verification 3).
-- [ ] Stop arriving before acceptance: the hold is accepted and cancelled on that tick with progress 0.
-- [ ] With `duration_s` D held continuously, completion fires once on the first server tick where elapsed ≥ D (±1 tick); `duration_s` 0 completes on the Start tick and takes no lock.
+- [x] A Start is rejected, and the client bar cancels, when the actor is ineligible (shocked, hidden, Downed, wrong role), line of sight is blocked, or another actor holds the exclusive lock.
+- [x] Two Starts on one exclusive target in one tick: the first in rotated player order is accepted and the second rejected (ADR-0008 Verification 3).
+- [x] Stop arriving before acceptance: the hold is accepted and cancelled on that tick with progress 0.
+- [x] With `duration_s` D held continuously, completion fires once on the first server tick where elapsed ≥ D (±1 tick); `duration_s` 0 completes on the Start tick and takes no lock.
 
 ---
 
@@ -85,7 +85,7 @@ Every hold in the game runs through one server service. This story builds Start 
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/hold_service_start_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created, 23 tests passing (suite 388/388)
 
 ---
 
@@ -93,3 +93,21 @@ Every hold in the game runs through one server service. This story builds Start 
 
 - Depends on: Story 007; event-catalog story 004 (tick order); network-authority story 005 (input frames)
 - Unlocks: Stories 009, 010, 016; every owner epic with an interaction
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (`tests/integration/first-person-controller/hold_service_start_test.gd`, 23 tests). Every rule was also checked by mutation (20 mutations, each caught by a named test, run with gdUnit `-c` so fail-fast cannot hide a later test).
+**ADR-0008 Verification**: (1) PASS: a `void` override with no `return` compiles (`Stub.on_start`). (3) PASS: two Starts on one lock in one tick go to the first actor in rotated order, on even and odd ticks.
+**Deviations**:
+- `HoldService.new(knobs, players, frames, centre_of, sight, aim, body_target)` takes Callables, not the ADR's `setup(tick_runner, map, bodies, knobs)`. `BodyIndex` does not exist yet, and Callables keep the service unit-testable (ADR-0005 §6). On the server, `sight` is the new `MapQueries.clear_line`, `aim` is `MapQueries.interactable_on_ray` with `ViewState.server_dir`, and `frames` is the new `ServerMovement.frames_of`.
+- Net-id Starts are checked against the server's own view ray (GDD rule 10 and the AC "resolves against the server's ray"). ADR-0008 §3 only says the client sends the target, so the two do not conflict.
+- A held exclusive lock also rejects an instant interactable on the same key (AC1). The ADR says only that instants take no lock.
+- A press, release and press in one tick start on the last press.
+**Not wired yet**: no composition root registers HoldService at `TickOrder.HOLDS`. It is registered when the first owner epic adds an interactable.
+**Deferred**:
+- Body targets resolve through the handle table, but are not yet checked against the server ray. The Downing epic adds the body aim check.
+- Dynamic interactables (a Dropped drive) are not in the map's ray list, so the aim check would reject them. They must join the aim query when the objectives epic adds them.
+- An `on_start` that unregisters an instant interactable still gets `on_complete` (S4, re-entrancy). Owners must not unregister from `on_start`.

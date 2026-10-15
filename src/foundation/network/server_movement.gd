@@ -164,6 +164,17 @@ func last_valid_position_of(player_id: int) -> Vector3:
 	return _players[player_id].last_valid
 
 
+## The frames the input phase consumed this tick, oldest first; the repeated (or released) frame when
+## it starved. HoldService reads every one so a press and release in one catch-up tick are both seen.
+func frames_of(player_id: int) -> Array[InputFrame]:
+	var p: PlayerState = _players[player_id]
+	var taken := p.queue.taken()
+	if not taken.is_empty():
+		return taken.duplicate()
+	var out: Array[InputFrame] = [p.frame]
+	return out
+
+
 ## The player's InputQueue (for tests and the telemetry that reads its counters).
 func queue_of(player_id: int) -> InputQueue:
 	return _players[player_id].queue
