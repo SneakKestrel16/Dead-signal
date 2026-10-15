@@ -62,8 +62,8 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 005 | [AbilityUsed emission and Lunge state publishing](story-005-ability-used-and-state.md) | Integration | Complete | ADR-0004 |
 | 006 | [Integrate with Downing and Borrowed Face](story-006-integrate-downing-borrowed-face.md) | Integration | Complete | ADR-0005 |
 | 007 | [Lunge cue, coil pose and hit feedback](story-007-lunge-presentation.md) | Visual/Feel | Ready | ADR-0013 (Proposed) |
-| 008 | [Ability stats for results](story-008-ability-stats.md) | Logic | Ready | ADR-0011 (Proposed) |
-| 009 | [False Signal (Vertical Slice)](story-009-false-signal.md) | Logic | Ready | ADR-0004; ADR-0013 (Proposed) |
+| 008 | [Ability stats for results](story-008-ability-stats.md) | Logic | Complete | ADR-0011 (Proposed) |
+| 009 | [False Signal (Vertical Slice)](story-009-false-signal.md) | Logic | Complete | ADR-0004; ADR-0013 (Proposed) |
 | 010 | [Blackout (Vertical Slice)](story-010-blackout.md) | Integration | Complete | ADR-0009 (Proposed) |
 
 ## Definition of Done

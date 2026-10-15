@@ -1,7 +1,7 @@
 # Story 010: Hiding noise and the long-hide cue
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 days
@@ -35,8 +35,8 @@ Entering or leaving makes a soft sound audible within `hide_noise_radius_m`; aft
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] Enter and exit each make a sound heard within 8 m (rule 19).
-- [ ] A survivor hidden for 20 s triggers the cue, then again every 5 s; it stops on exit (rule 21).
+- [x] Enter and exit each make a sound heard within 8 m (rule 19).
+- [x] A survivor hidden for 20 s triggers the cue, then again every 5 s; it stops on exit (rule 21).
 
 ---
 
@@ -66,7 +66,7 @@ Entering or leaving makes a soft sound audible within `hide_noise_radius_m`; aft
 **Story Type**: Integration
 **Required evidence**: Integration: `tests/integration/survivor-defense/hide_noise_cue_test.gd`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/hide_noise_cue_test.gd` (5 tests)
 
 ---
 
@@ -74,3 +74,17 @@ Entering or leaving makes a soft sound audible within `hide_noise_radius_m`; aft
 
 - Depends on: Story 006; ADR-0013 accepted
 - Unlocks: Story 011
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-213):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1151/1151 after the wave merge, no leak warnings.
+- The cue uses the 8 m hide-noise radius: rule 21 calls it faint but names no radius (a cue-radius knob would settle it).
+- The occupant hears all three sounds (source -1). The entry sound plays on completion only; a cancelled entry is silent (reading of rule 19).
+- Sound-set names hide_enter, hide_exit, hide_cue are new; story 011's audio catalog must match.
+**Test Evidence**: 5 tests. Mutations caught: cue one interval late, quiet timer not cleared on leave, no exit sound.
+**Code Review**: Complete (orchestrator review at merge)

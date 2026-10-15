@@ -1,7 +1,7 @@
 # Story 005: Lobby screen: player list, Ready and countdown
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: UI
 > **Estimate**: [fill before sprint planning]
@@ -74,3 +74,25 @@ Players see who is in the lobby, toggle Ready, see the countdown, and the host s
 
 - Depends on: Stories 001, 002; ADR-0014 Accepted
 - Unlocks: Story 012
+
+
+## Progress Notes (2026-10-15)
+
+Merged to main:
+- `src/core/lobby/lobby_sync.gd` and `src/ui/lobby/lobby_screen.gd` (in the boot scene).
+- `NetAuthority.add_host_player`.
+- Test: `tests/unit/lobby/lobby_screen_test.gd` (8 cases).
+
+Mutations caught: Ready-on read as off; the Ready type check removed; `apply_ready` acting on any bytes.
+
+Evidence: six screenshots in `production/qa/evidence/lobby-screen/`, written up in `production/qa/evidence/lobby-screen-evidence.md`. The designer's sign-off is pending, and the story stays In Review until it is given.
+
+Deviations:
+- There is no lobby UX spec, so the layout and wording are the agent's.
+- There is no InputContextStack or UiLayers yet.
+- LobbyScreen owns the host session pieces until a client composition root exists.
+- There is no character picker.
+- The screen shows "Starting" but no round launches.
+- The build version is read from `application/config/version` (inference).
+
+Engine gotcha: calling `NetAuthority.close()` inside the `join_rejected` handler segfaults 4.7.2, so the close is deferred.

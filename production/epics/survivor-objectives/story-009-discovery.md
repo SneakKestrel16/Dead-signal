@@ -1,12 +1,12 @@
 # Story 009: Objective discovery
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 
 ## Context
@@ -35,9 +35,9 @@ Fuse boxes and the terminal are always known to survivors; a drive room or fuse 
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] A drive room or fuse spawn appears on all survivor clients once any survivor has had it in view within `discover_range_m`, and not before; a survivor client receives no data for an undiscovered point (rule 7).
-- [ ] The shapeshifter is told every active point at round start; hidden survivors and the shapeshifter never discover.
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] A drive room or fuse spawn appears on all survivor clients once any survivor has had it in view within `discover_range_m`, and not before; a survivor client receives no data for an undiscovered point (rule 7).
+- [x] The shapeshifter is told every active point at round start; hidden survivors and the shapeshifter never discover.
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -67,7 +67,7 @@ Fuse boxes and the terminal are always known to survivors; a drive room or fuse 
 **Required evidence**:
 - Integration: `tests/integration/survivor-objectives/discovery_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-objectives/discovery_test.gd` (4 tests)
 
 ---
 
@@ -75,3 +75,18 @@ Fuse boxes and the terminal are always known to survivors; a drive room or fuse 
 
 - Depends on: Story 008
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-212):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1151/1151 after the wave merge, no leak warnings.
+- Borrowed Face's _observable not moved onto SightTest (other epic's file; its rule rays to all body points). Follow-up.
+- SightTest takes a line_clear Callable (MapQueries.clear_sight) instead of the ADR's (space, doors: DoorBoxes); no DoorBoxes type exists.
+- One sample point per objective: marker raised by capsule_height_m/2 (inference; authored per-room sample points would settle it).
+- Replication and the monster's round-start grant are FM-8's test.
+**Test Evidence**: 4 tests. Mutations caught: range check removed, cone check removed, hidden check removed, once-only removed.
+**Code Review**: Complete (orchestrator review at merge)

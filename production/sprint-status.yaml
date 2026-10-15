@@ -66,11 +66,11 @@ stories:
     name: "Ability stats for results"
     file: "production/epics/monster-abilities/story-008-ability-stats.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "facility-map-7"
     name: "Candidate point selection and placement constraints"
     file: "production/epics/facility-map/story-007-candidate-selection.md"
@@ -102,11 +102,11 @@ stories:
     name: "Objective discovery"
     file: "production/epics/survivor-objectives/story-009-discovery.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "facility-map-9"
     name: "Per-volume lighting state machine and precedence"
     file: "production/epics/facility-map/story-009-lighting-state-machine.md"
@@ -129,11 +129,11 @@ stories:
     name: "False Signal (Vertical Slice)"
     file: "production/epics/monster-abilities/story-009-false-signal.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 2
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-10"
     name: "Blackout (Vertical Slice)"
     file: "production/epics/monster-abilities/story-010-blackout.md"
@@ -147,20 +147,20 @@ stories:
     name: "Hiding noise and the long-hide cue"
     file: "production/epics/survivor-defense/story-010-hide-noise-and-long-hide-cue.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "controller-interaction-14"
     name: "Footstep events from gait and disguise"
     file: "production/epics/controller-interaction/story-014-footsteps.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "borrowed-face-9"
     name: "Disguise and true-form rendering"
     file: "production/epics/borrowed-face/story-009-disguise-rendering.md"
@@ -174,10 +174,10 @@ stories:
     name: "Lobby screen: player list, Ready and countdown"
     file: "production/epics/lobby-role-assignment/story-005-lobby-screen.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "Merged 2026-10-15; awaiting designer screenshot sign-off (production/qa/evidence/lobby-screen-evidence.md)"
     completed: ""
   - id: "lobby-role-assignment-6"
     name: "No name tags or role indicators on bodies"

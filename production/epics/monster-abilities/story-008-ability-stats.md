@@ -1,12 +1,12 @@
 # Story 008: Ability stats for results
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,8 +34,8 @@ The results screen shows ability counts. This module counts lunges (hit, miss, i
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] Lunge hit, miss and interrupted counts are exposed through a getter-only view and appear in the `RoundEnded` results payload
-- [ ] Counters reset at round start
+- [x] Lunge hit, miss and interrupted counts are exposed through a getter-only view and appear in the `RoundEnded` results payload
+- [x] Counters reset at round start
 
 ---
 
@@ -63,7 +63,7 @@ The results screen shows ability counts. This module counts lunges (hit, miss, i
 **Required evidence**:
 - Logic: `tests/unit/monster-abilities/ability_stats_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/monster-abilities/ability_stats_test.gd` (7 tests)
 
 ---
 
@@ -71,3 +71,17 @@ The results screen shows ability counts. This module counts lunges (hit, miss, i
 
 - Depends on: Story 004; ADR-0011 accepted
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-211):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1151/1151 after the wave merge, no leak warnings.
+- ADR-0011 listed only landed and missed; the story ACs want interrupted in RoundEnded, so the key was added to Match Flow and the ADR's stats.abilities row.
+- A monster disconnect mid-lunge counts as interrupted (inference; GDD telemetry names only hit, miss, interrupted).
+- Counts are tick lists (size()) because the knob-literal scan rejects the literal 1.
+**Test Evidence**: 7 tests. Mutations caught: missed count removed, commit guard dropped, each of three setup resets removed (after the reset test reused one module), Blackout getter returning 0.
+**Code Review**: Complete (orchestrator review at merge)
