@@ -3,6 +3,10 @@ class_name SurvivorDefense extends RefCounted
 ## design/gdd/survivor-defense.md rules 1, 7, 8 (fire and reuse only), 13 and 29; story
 ## survivor-defense/001; ADR-0002 (clients send intent only), ADR-0005 (TickOrder.SURVIVOR_DEFENSE),
 ## ADR-0006 (DefenseKnobs). Later stories add the trace (002), the shock lock (003) and hiding (006).
+## Story 003, the shock lock (rules 11, 14; ADR-0007, ADR-0008): every hit, survivor or monster alike,
+## cancels the target's hold and, unless the target is under the lock or its post-lock window, locks it
+## for stun_duration_s (rooted for stun_root_s, then stun_slow_mult) with no doors, interact, items,
+## pings or callouts. The window is stun_immunity_s from the lock's end. Published as SHOCK_STUN_LOCK.
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time. Clients send a fire intent
 ## and nothing else: the server owns every charge, so a client claim of a hit, a charge or a finished
 ## barricade has no entry point and changes nothing (rule 1).
@@ -10,6 +14,8 @@ class_name SurvivorDefense extends RefCounted
 ##   var sd := SurvivorDefense.new()
 ##   sd.set_roster([2, 3, 4, 5], 1)        # survivor ids, monster id: BEFORE start_round
 ##   sd.set_locked(downing.action_locked)  # Seized / Downed gate (downing-and-rescue.md rule 4.2)
+##   sd.set_modifiers(movement.modifiers_of); sd.set_holds(holds)   # story 003
+##   holds.set_barred(<sd.locked or any other bar, e.g. Transforming>)  # doors, interact, barricades
 ##   server.start_round({TickOrder.SURVIVOR_DEFENSE: sd}, knobs)
 ##   smp.peer_packet -> sd.request_intent(net.player_id_of(peer), bytes)
 
@@ -26,6 +32,10 @@ const TRACE_EPS := 1e-4
 ## a flip, so a duplicated or resent packet cannot invert it.
 const LIGHT_ON := 2
 const LIGHT_OFF := 3
+## Story 003: the MovementModifiers owner the shock lock adds (ROOT, then SLOW) and removes.
+const MOD_OWNER := &"taser"
+## Story 003: HoldService.cancel reason for a hold ended by a hit (rule 11).
+const CANCEL_SHOCKED := &"shocked"
 ## Intent packet dictionary key.
 const INTENT_KEY := "item"
 ## decode_intent's result for bytes that are not an intent.
@@ -64,6 +74,18 @@ var _pending: Dictionary[int, int] = {}
 var _light: Dictionary[int, bool] = {}
 ## player -> this tick's wanted flashlight state (the last one received since the last tick).
 var _light_pending: Dictionary[int, bool] = {}
+## Story 003 lock sources and timers, all in ticks. _runner gives the tick `locked` reads.
+var _runner: TickRunner
+var _modifiers_of: Callable
+var _holds: HoldService
+var _root_ticks: int = 0
+var _slow_mult: float = 1.0
+var _duration_ticks: int = 0
+var _immunity_ticks: int = 0
+## player -> tick its running lock started; erased when the lock ends.
+var _lock_start: Dictionary[int, int] = {}
+## player -> first tick a hit may lock again (lock end + post-lock window); no refresh before it.
+var _free_tick: Dictionary[int, int] = {}
 
 
 ## Getter-only view for StateKeys.HIDDEN_ITEM_USE readers. Holds the module weakly; after the module
@@ -83,6 +105,20 @@ class DefenseView extends RefCounted:
 	func is_hidden(player: int) -> bool:
 		var sd := _sd.get_ref() as SurvivorDefense
 		return sd.is_hidden(player) if sd != null else false
+
+
+## Getter-only view for StateKeys.SHOCK_STUN_LOCK readers (Pings & Callouts, Objectives, Borrowed
+## Face, Monster Abilities, Downing). Holds the module weakly; after it is freed nobody is locked.
+class ShockLockView extends RefCounted:
+	var _sd: WeakRef
+
+	func _init(sd: SurvivorDefense) -> void:
+		_sd = weakref(sd)
+
+	## Whether `player` is under the shock lock on the current tick.
+	func locked(player: int) -> bool:
+		var sd := _sd.get_ref() as SurvivorDefense
+		return sd.locked(player) if sd != null else false
 
 
 ## Injects the round's roster. Call before RoundServer.start_round (setup resets state from it).
@@ -110,6 +146,18 @@ func set_locked(source: Callable) -> void:
 	_is_locked = source
 
 
+## Story 003: injects the per-player movement modifier sets, `source.call(player_id) ->
+## MovementModifiers` (null: no body). Unset, the lock roots and slows nobody (it still bars actions).
+func set_modifiers(source: Callable) -> void:
+	_modifiers_of = source
+
+
+## Story 003: injects the round's HoldService; a hit cancels the target's hold on it (rescue,
+## objective, barricade, search, break). Unset, hits cancel nothing.
+func set_holds(holds: HoldService) -> void:
+	_holds = holds
+
+
 ## Marks `player` hidden (`on` true) or not. Story 006's hide flow drives this; nothing else should.
 func set_hidden(player: int, on: bool) -> void:
 	if on:
@@ -120,7 +168,7 @@ func set_hidden(player: int, on: bool) -> void:
 
 ## Injected by RoundServer. Every survivor starts with `stun_item_charges` cartridges (rules 7, 29),
 ## no reuse delay, not hidden. Publishes the HIDDEN_ITEM_USE view and subscribes to SurvivorEliminated.
-func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_stun_item_charges = knobs.defense.stun_item_charges
 	_reuse_ticks = knobs.ticks(knobs.defense.stun_item_reuse_s)
 	_charges = {}
@@ -134,10 +182,18 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_aim_tol_rad = deg_to_rad(knobs.defense.stun_aim_tolerance_deg)
 	_light = {}
 	_light_pending = {}
+	_runner = tick_runner
+	_root_ticks = knobs.ticks(knobs.defense.stun_root_s)
+	_slow_mult = knobs.defense.stun_slow_mult
+	_duration_ticks = knobs.ticks(knobs.defense.stun_duration_s)
+	_immunity_ticks = knobs.ticks(knobs.defense.stun_immunity_s)
+	_lock_start = {}
+	_free_tick = {}
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
 		_light[s] = false
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
+	registry.register_view(StateKeys.SHOCK_STUN_LOCK, &"SurvivorDefense", ShockLockView.new(self))
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
 
 
@@ -192,13 +248,15 @@ func server_tick(tick: int) -> void:
 				_queued.append(Vector2i(tick + _use_delay_ticks, p))
 	_pending = {}
 	_resolve_shots(tick)
+	for p: int in _lock_start.keys():
+		_apply_lock_modifier(p, tick)
 
 
-## Rules 7, 8, 13: `player` is a survivor with a cartridge left, outside the reuse delay, not Seized,
-## Downed or hidden on `tick`.
+## Rules 7, 8, 13, 14: `player` is a survivor with a cartridge left, outside the reuse delay, not
+## Seized, Downed, hidden or shock-locked on `tick`.
 func can_fire(player: int, tick: int) -> bool:
 	return _charges.get(player, 0) > 0 and tick >= _ready_tick.get(player, 0) and not is_hidden(player) \
-		and not (_is_locked.is_valid() and _is_locked.call(player))
+		and not (_is_locked.is_valid() and _is_locked.call(player)) and not _locked_at(player, tick)
 
 
 ## Cartridges `player` has left (0 for the monster or any id not in the roster).
@@ -209,6 +267,48 @@ func charges(player: int) -> int:
 ## Whether `player`'s flashlight is on (rule 3: every client sees the cone). ServerMovement.flashlight_of.
 func flashlight_on(player: int) -> bool:
 	return _light.get(player, false)
+
+
+## Story 003: whether `player` is under the shock lock on the current tick (StateKeys.SHOCK_STUN_LOCK).
+## Free again from the tick stun_duration_s after the hit.
+func locked(player: int) -> bool:
+	return _runner != null and _locked_at(player, _runner.current_tick())
+
+
+## Story 003, rules 11 and 14: a hit on `player` (survivor or monster, no branch) on `tick`. Always
+## cancels its hold. Locks and roots it, returning true, only when no lock is running and its post-lock
+## window is over; otherwise adds nothing (no refresh) and returns false, which story 005 reads to pick
+## the presentation. Story 004 adds the monster's own cancels and early window ends.
+func shock(player: int, tick: int) -> bool:
+	if _holds != null:
+		_holds.cancel(player, CANCEL_SHOCKED)
+	if tick < _free_tick.get(player, tick):
+		return false
+	_lock_start[player] = tick
+	_free_tick[player] = tick + _duration_ticks + _immunity_ticks
+	_apply_lock_modifier(player, tick)
+	return true
+
+
+func _locked_at(player: int, tick: int) -> bool:
+	return _lock_start.has(player) and tick < _lock_start[player] + _duration_ticks
+
+
+## Rule 14: ROOT for stun_root_s from the hit, then SLOW stun_slow_mult until stun_duration_s, then
+## nothing (the lock record is dropped; its window lives on in _free_tick).
+func _apply_lock_modifier(player: int, tick: int) -> void:
+	var mods: MovementModifiers = _modifiers_of.call(player) if _modifiers_of.is_valid() else null
+	var since := tick - _lock_start[player]
+	if since >= _duration_ticks:
+		_lock_start.erase(player)
+		if mods != null:
+			mods.remove(MOD_OWNER)
+	elif mods == null:
+		return
+	elif since < _root_ticks:
+		mods.add(MOD_OWNER, MovementModifiers.Kind.ROOT)
+	else:
+		mods.add(MOD_OWNER, MovementModifiers.Kind.SLOW, _slow_mult)
 
 
 ## Whether `player` is hidden.
@@ -225,7 +325,7 @@ func _on_eliminated(e: ServerEvent) -> void:
 
 
 ## Story 002: the shots traced on the latest tick, each {shooter, tick, hit (player id or -1),
-## reason (SHOT_*)}. Stories 003 and 004 act on them; this story applies nothing.
+## reason (SHOT_*), locked (story 003: the hit applied a lock)}.
 func resolved_shots() -> Array[Dictionary]:
 	return _resolved
 
@@ -286,6 +386,7 @@ func _resolve_shots(tick: int) -> void:
 			targets, _not_a_body, _blocked)
 		r["shooter"] = shooter
 		r["tick"] = tick
+		r["locked"] = r.hit != -1 and shock(r.hit, tick)
 		_resolved.append(r)
 
 
