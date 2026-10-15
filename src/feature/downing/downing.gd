@@ -77,6 +77,12 @@ var _ring_out: Array = []
 ## Players with no body in the world: escaped, or disconnected until they reconnect.
 var _escaped: Dictionary[int, bool] = {}
 var _disconnected: Dictionary[int, bool] = {}
+## Story match-flow/014 round stats (StateKeys.STATS_DOWNING via DowningRoundStatsView): rescuer -> rescues
+## completed, survivor -> fate cause, completed takedowns and eliminations (any SurvivorEliminated). Reset in setup.
+var _rescues_done: Dictionary[int, int] = {}
+var _fate_cause: Dictionary[int, StringName] = {}
+var _takedowns: int = 0
+var _eliminations: int = 0
 
 
 ## Getter-only view for StateKeys.TAKEDOWN_ELIGIBILITY readers: life state, down count and
@@ -188,17 +194,23 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_disconnected = {}
 	_life = {}
 	_downs_taken = {}
+	_rescues_done = {}
+	_fate_cause = {}
+	_takedowns = 0
+	_eliminations = 0
 	for s in _survivors:
 		_life[s] = LifeState.HEALTHY
 		_downs_taken[s] = 0
 	_victim = -1
 	registry.register_view(StateKeys.TAKEDOWN_ELIGIBILITY, &"Downing", LifeView.new(self))
 	registry.register_view(StateKeys.COMMITTING_STATE, &"Downing", CommitView.new(self))
+	registry.register_view(StateKeys.STATS_DOWNING, &"Downing", DowningRoundStatsView.new(self))
 	bus.subscribe(&"SurvivorHit", _on_survivor_hit)
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 	bus.subscribe(&"PlayerShocked", _on_player_shocked)
+	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
 
 
 ## DOWNING slot: advances every bleed-out timer one tick, eliminating on expiry (rule 6), then
@@ -306,6 +318,7 @@ func rescue_completed(survivor: int, rescuer: int) -> void:
 		return
 	_remove_rescue(survivor)
 	stand_up(survivor)
+	_rescues_done[rescuer] = _rescues_done.get(rescuer, 0) + 1
 	_apply_modifiers()
 	var e := EvSurvivorRescued.new()
 	e.survivor = survivor
@@ -326,6 +339,26 @@ func life_state(player: int) -> LifeState:
 ## Completed takedowns on `player` this round.
 func downs_taken(player: int) -> int:
 	return _downs_taken.get(player, 0)
+
+
+## Rescues `player` completed this round (results payload, ADR-0011 `stats.downing`).
+func rescues_performed(player: int) -> int:
+	return _rescues_done.get(player, 0)
+
+
+## Why `player` was eliminated: &"bled_out", &"takedown", or &"" (not eliminated).
+func fate_cause(player: int) -> StringName:
+	return _fate_cause.get(player, &"")
+
+
+## Takedown commits the monster completed this round (an eliminating one included).
+func takedowns() -> int:
+	return _takedowns
+
+
+## Survivors eliminated this round, by any SurvivorEliminated.
+func eliminations() -> int:
+	return _eliminations
 
 
 ## Rule 3: a survivor in the roster who is a valid takedown target on the current tick.
@@ -432,6 +465,15 @@ func _on_player_shocked(e: ServerEvent) -> void:
 			return
 
 
+## Round stats: every SurvivorEliminated (Downing's own and any other emitter's) counts once per survivor.
+func _on_eliminated(e: ServerEvent) -> void:
+	var el := e as EvSurvivorEliminated
+	if _fate_cause.has(el.survivor):
+		return
+	_eliminations += 1
+	_fate_cause[el.survivor] = &"bled_out" if el.reason == EvSurvivorEliminated.BLED_OUT else &"takedown"
+
+
 func _on_escaped(e: ServerEvent) -> void:
 	_escaped[(e as EvSurvivorEscaped).survivor] = true
 
@@ -496,6 +538,7 @@ func _complete_commit() -> void:
 	var s := _victim
 	_victim = -1
 	_downs_taken[s] += 1
+	_takedowns += 1
 	if _downs_taken[s] >= _downs_to_eliminate:
 		_life[s] = LifeState.ELIMINATED
 		var el := EvSurvivorEliminated.new()

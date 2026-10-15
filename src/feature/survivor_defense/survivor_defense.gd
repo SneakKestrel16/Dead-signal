@@ -100,6 +100,11 @@ var _form_of: Callable
 var _charges_sent: Dictionary[int, int] = {}
 var _charges_out: Dictionary[int, int] = {}
 var _out_tick: int = -1
+## Story match-flow/014 round stats (StateKeys.STATS_DEFENSE via DefenseRoundStatsView): monster stuns from any
+## source, and per shooter the taser hits on the monster that stunned it or were resisted. Reset in setup.
+var _monster_stuns: int = 0
+var _stuns_landed: Dictionary[int, int] = {}
+var _resists_caused: Dictionary[int, int] = {}
 
 
 ## Getter-only view for StateKeys.HIDDEN_ITEM_USE readers. Holds the module weakly; after the module
@@ -212,6 +217,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_charges_sent = {}
 	_charges_out = {}
 	_out_tick = -1
+	_monster_stuns = 0
+	_stuns_landed = {}
+	_resists_caused = {}
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
 		_light[s] = false
@@ -219,6 +227,7 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 		_light[_monster] = false # rule 6: cosmetic, the shapeshifter toggles it itself
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
 	registry.register_view(StateKeys.SHOCK_STUN_LOCK, &"SurvivorDefense", ShockLockView.new(self))
+	registry.register_view(StateKeys.STATS_DEFENSE, &"SurvivorDefense", DefenseRoundStatsView.new(self))
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
 	_bus = bus
 	bus.subscribe(&"AbilityUsed", _on_ability_used)
@@ -355,12 +364,28 @@ func shock(player: int, tick: int) -> bool:
 		s.player = player
 		_bus.emit(s)
 	if stunned and player == _monster:
+		_monster_stuns += 1
 		var e := EvMonsterStunned.new()
 		e.tick = tick
 		e.monster = player
 		e.true_form = true_form
 		_bus.emit(e)
 	return stunned
+
+
+## Times the monster was stunned this round (results payload, ADR-0011 `stats.defense`).
+func monster_stuns() -> int:
+	return _monster_stuns
+
+
+## Taser hits by `player` that stunned the monster this round.
+func stuns_landed(player: int) -> int:
+	return _stuns_landed.get(player, 0)
+
+
+## Taser hits by `player` the monster resisted: immune and in true form (survivor-defense.md rule 10).
+func resists_caused(player: int) -> int:
+	return _resists_caused.get(player, 0)
 
 
 ## Story 004, rule 16: an accepted Lunge wind-up ends the monster's immunity (a rejected one emits nothing).
@@ -489,6 +514,10 @@ func _resolve_shots(tick: int) -> void:
 		r["shooter"] = shooter
 		r["tick"] = tick
 		r["locked"] = r.hit != -1 and shock(r.hit, tick)
+		if r.hit == _monster and r.locked:
+			_stuns_landed[shooter] = _stuns_landed.get(shooter, 0) + 1
+		elif r.hit == _monster and (not _form_of.is_valid() or _form_of.call() == BorrowedFace.TRUE_FORM):
+			_resists_caused[shooter] = _resists_caused.get(shooter, 0) + 1
 		_resolved.append(r)
 
 

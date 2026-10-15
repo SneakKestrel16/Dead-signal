@@ -78,6 +78,8 @@ var _pending: int = INVALID_FORM
 var _appearance_of: Callable
 ## Tick of the last form change (0 = round start), stamped on the catch-up event.
 var _form_tick: int = 0
+## Completed form changes this round (story match-flow/014, StateKeys.STATS_BORROWED_FACE). Reset in setup.
+var _form_changes: int = 0
 ## Callable(player) run when a transformation starts and when the form changes (ADR-0004 §4: a form
 ## change or transformation start on a lingering body retires its handle). The composition root sets it
 ## to ServerMovement.scope.form_changed; unset = nothing.
@@ -171,6 +173,7 @@ func request_form_change(player: int, bytes: PackedByteArray) -> void:
 func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
 	registry.register_view(StateKeys.TRANSFORMING, &"BorrowedFace", TransformView.new(self))
+	registry.register_view(StateKeys.STATS_BORROWED_FACE, &"BorrowedFace", BorrowedFaceRoundStatsView.new(self))
 	_hz = knobs.net.sim_tick_hz
 	_observe_ticks = knobs.ticks(knobs.borrowed_face.observe_time_s)
 	_range_m = knobs.borrowed_face.observe_range_m
@@ -187,6 +190,7 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_transforming = false
 	_pending = INVALID_FORM
 	_form_tick = 0
+	_form_changes = 0
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
 
@@ -229,6 +233,7 @@ func _complete(tick: int) -> void:
 	_transforming = false
 	_cooldown_end_tick = tick + _cooldown_ticks
 	_form_tick = tick
+	_form_changes += 1
 	_form_event()
 	_bus.emit(e)
 
@@ -236,6 +241,11 @@ func _complete(tick: int) -> void:
 func _form_event() -> void:
 	if on_form_event.is_valid():
 		on_form_event.call(_monster)
+
+
+## Completed form changes this round (results payload, ADR-0011 `stats.borrowed_face`).
+func form_changes() -> int:
+	return _form_changes
 
 
 ## Edge Cases "Shapeshifter disconnects while disguised": the disguise is lost at the drop (true form,

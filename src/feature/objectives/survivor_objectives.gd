@@ -128,6 +128,12 @@ var _discover: Callable
 var _status_of: Callable
 ## Marker index -> objective id (DRIVE_ID + i / FUSE_ID + i) of each active point not yet discovered.
 var _undiscovered: Dictionary[int, int] = {}
+## Story match-flow/014 round stats (StateKeys.STATS_OBJECTIVES via ObjectivesRoundStatsView), from _emit: per
+## line (RoundResults.LINES names) the objective ids that reached it and the server tick it completed; per
+## survivor the drives carried out at escape. Reset in setup.
+var _line_ids: Dictionary[StringName, Dictionary] = {}
+var _line_tick: Dictionary[StringName, int] = {}
+var _escape_drives: Dictionary[int, int] = {}
 
 
 ## `is_healthy(actor: int) -> bool` is the life-state source (Downing's view once it exists); pass an
@@ -162,7 +168,7 @@ func set_discovery(eye_of: Callable, yaw_of: Callable, sight: Callable, discover
 
 ## RoundServer entry: builds the active points and registers their interactables (drives, fuses, boxes,
 ## then at the terminal: dock slots, the activation panel and one pickup per drive).
-func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+func setup(_tick_runner: Node, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
 	_knobs = knobs
 	_states = []
@@ -179,6 +185,10 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_activation_ticks = 0
 	_last = {}
 	_undiscovered = {}
+	_line_ids = {}
+	_line_tick = {}
+	_escape_drives = {}
+	registry.register_view(StateKeys.STATS_OBJECTIVES, &"SurvivorObjectives", ObjectivesRoundStatsView.new(self))
 	## Named method, not a lambda: the bus must not keep the module alive (no RefCounted cycle).
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 	bus.subscribe(&"SurvivorDowned", _on_downed)
@@ -560,6 +570,7 @@ func _activate() -> void:
 ## Rule 22: the drives an escaping survivor carries leave with them as Extracted.
 func _on_escaped(e: ServerEvent) -> void:
 	var actor := (e as EvSurvivorEscaped).survivor
+	_escape_drives[actor] = carried_by(actor)
 	for drive in _carriers.size():
 		if _carriers[drive] == actor:
 			_states[drive] = DriveState.EXTRACTED
@@ -643,7 +654,45 @@ func _emit(objective: int, state: int, carrier := -1, at := Vector3.INF) -> void
 	e.carrier = carrier
 	e.at = at
 	_last[POWERED_KEY if objective == TERMINAL_ID and state == TerminalState.POWERED else objective] = e
+	_record_line(objective, state)
 	_bus.emit(e)
+
+
+## Round stats: the line (objective, state) advances, if any; a line completes on its last unit.
+func _record_line(objective: int, state: int) -> void:
+	var line := &""
+	var total := ACTIVE_DRIVES
+	if objective < FUSE_ID:
+		line = {DriveState.CARRIED: &"drives_recovered", DriveState.DOCKED: &"drives_docked",
+			DriveState.EXTRACTED: &"drives_extracted"}.get(state, &"")
+	elif objective < FUSE_BOX_ID and state == FuseState.INSTALLED:
+		line = &"fuses_installed"
+		total = FUSES_REQUIRED
+	elif objective == TERMINAL_ID and state == TerminalState.ACTIVATED:
+		line = &"evacuation_activated"
+		total = 1
+	if line == &"":
+		return
+	if not _line_ids.has(line):
+		_line_ids[line] = {}
+	_line_ids[line][objective] = true
+	if _line_ids[line].size() == total and not _line_tick.has(line):
+		_line_tick[line] = _bus.tick
+
+
+## How many of `line` (RoundResults.LINES) are done this round.
+func line_count(line: StringName) -> int:
+	return _line_ids.get(line, {}).size()
+
+
+## Server tick `line` completed, -1 while incomplete.
+func line_completed_tick(line: StringName) -> int:
+	return _line_tick.get(line, -1)
+
+
+## Drives `player` carried when they escaped this round.
+func drives_carried_at_escape(player: int) -> int:
+	return _escape_drives.get(player, 0)
 
 
 ## The drive console (GDD rule 8).

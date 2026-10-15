@@ -318,8 +318,8 @@ stories:
     name: "Register every round stats view so live Results show real values"
     file: "production/epics/match-flow/story-014-register-round-stats-views.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
