@@ -265,9 +265,17 @@ static func wheel_pick(aim: Vector2, n: int) -> int:
 static func place(cam: Camera3D, point: Vector3, size: Vector2, inset: float) -> Array:
 	var centre := size / 2.0
 	var behind := cam.is_position_behind(point)
-	var off := cam.unproject_position(point) - centre
-	if behind:
-		off = -off
+	var local := cam.global_transform.affine_inverse() * point
+	var off: Vector2
+	if is_zero_approx(local.z):
+		# BUG-0016: in the camera plane unproject_position divides by zero depth (logs `p.d == 0`). The point
+		# is behind (is_position_behind counts the near distance), so only its direction matters: camera x
+		# right, camera y up = screen y down.
+		off = Vector2(local.x, -local.y)
+	else:
+		off = cam.unproject_position(point) - centre
+		if behind:
+			off = -off
 	var half := centre - Vector2(inset, inset)
 	var on := not behind and absf(off.x) <= half.x and absf(off.y) <= half.y
 	if not on:

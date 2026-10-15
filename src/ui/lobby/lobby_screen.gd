@@ -377,7 +377,9 @@ func _drop_round() -> void:
 		round_client.queue_free()
 	round_client = null
 	if _seat != null:
-		get_tree().set_multiplayer(null, _seat.get_path())
+		# BUG-0015: the seat's multiplayer stays rooted until the seat has left the tree, so its synchronizers
+		# stop replication on the API that tracks them (unrooted first, they reach the lobby's and log errors).
+		_seat.tree_exited.connect(get_tree().set_multiplayer.bind(null, _seat.get_path()), CONNECT_ONE_SHOT)
 		_seat.queue_free()
 	_seat = null
 	_round_line.hide()

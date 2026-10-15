@@ -159,6 +159,7 @@ func adopt(session: NetAuthority) -> void:
 
 ## Stops listening and leaves the session. Safe to call twice.
 func close() -> void:
+	_lost = true # BUG-0015: no predict (and send) between close and the free; the session may already be gone
 	if predictor != null:
 		predictor.close()
 	if puppets != null:
