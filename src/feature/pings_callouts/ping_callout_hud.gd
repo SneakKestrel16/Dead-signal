@@ -79,6 +79,8 @@ const PICK_RADIUS_M := 0.3
 const PICK_SLACK_M := 0.5
 const WARNINGS: Array[int] = [PingsCallouts.WARNING_POINT, PingsCallouts.WARNING_PLAYER]
 
+## Accessibility reduced motion: markers keep full alpha until they expire (a cut, no fade-out; BUG-0008).
+var reduced_motion := false
 ## Seconds the "Too fast" label still shows.
 var too_fast_s := 0.0
 ## True while the scrollback key is held: the feed shows every retained line.
@@ -336,7 +338,7 @@ func markers_now() -> Array[Dictionary]:
 		out.append({"point": m["point"], "kind": m.get("kind", PingsCallouts.LOCATION),
 			"colour": WARNING_COLOUR if warn else colour_of(m["from"]),
 			"pending": false, "warning": warn, "label": label,
-			"alpha": clampf((m["expires"] - now) / fade, 0.0, 1.0)})
+			"alpha": 1.0 if reduced_motion else clampf((m["expires"] - now) / fade, 0.0, 1.0)})
 	return out
 
 

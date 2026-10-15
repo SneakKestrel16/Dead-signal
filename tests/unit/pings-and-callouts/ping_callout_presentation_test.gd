@@ -108,6 +108,18 @@ func test_marker_names_sender_colour_distance_and_fades_at_expiry() -> void:
 	assert_int(_hud.markers_now().size()).is_equal(0)
 
 
+## BUG-0008: with reduced motion the marker stays at full alpha until expiry (a cut, no fade-out).
+func test_marker_fade_out_is_a_cut_with_reduced_motion() -> void:
+	_deliver(100, [EventBatch.PING, {"kind": PingsCallouts.LOCATION, "point": Vector3(3, 0, -4), "item": -1,
+		"type": &"", "identity": -1, "from": SPEAKER, "handle": 4, "not_you": true}])
+	var life := _knobs.ticks(_knobs.ping.ping_lifetime_s)
+	_hud.reduced_motion = true
+	_now = 100 + life - _knobs.ticks(PingCalloutHud.FADE_S) / 2.0
+	assert_float(_hud.markers_now()[0]["alpha"]).is_equal(1.0)
+	_now = 100 + life
+	assert_int(_hud.markers_now().size()).is_equal(0)
+
+
 func test_off_screen_and_behind_targets_clamp_to_the_edge_pointing_the_right_way() -> void:
 	var size := _camera.get_viewport().get_visible_rect().size # unproject_position's space
 	var ahead := PingCalloutHud.place(_camera, Vector3(0, 0, -10), size, 48.0)

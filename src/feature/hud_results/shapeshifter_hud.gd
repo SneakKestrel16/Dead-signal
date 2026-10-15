@@ -28,6 +28,9 @@ func _init(model: HudModel, camera: Camera3D) -> void:
 	name = &"ShapeshifterHud"
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# One theme for the S Labels (ADR-0014): the HUD text size, not the 16 px engine default (BUG-0010).
+	theme = Theme.new()
+	theme.default_font_size = AlwaysOnHud.TEXT_FONT
 	alert = ShapeshifterInstallAlert.new(model, camera)
 	add_child(alert)
 	face_list = ShapeshifterFaceList.new(model)

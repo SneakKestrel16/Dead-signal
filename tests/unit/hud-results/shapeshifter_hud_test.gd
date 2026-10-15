@@ -201,3 +201,23 @@ func test_shapeshifter_hud_shows_s1_s3_always_and_s4_s6_in_their_trigger_states(
 	assert_bool((hud.find_child("S5Stun", true, false) as Control).visible).is_true()
 	assert_int(_layer.get_children().filter(func(c: Node) -> bool: return c is ShapeshifterHud).size()) \
 			.override_failure_message("mounted once").is_equal(1)
+
+
+## BUG-0009: world marker labels are at least 20 px (hud.md AC 10 / H12).
+func test_install_alert_label_is_at_least_the_marker_font() -> void:
+	assert_int(ShapeshifterInstallAlert.FONT_PX).is_greater_equal(PingCalloutHud.MARKER_FONT)
+
+
+## BUG-0010: S1-S3 and S5 Labels render at the HUD text size, not the 16 px engine default.
+func test_s_labels_use_the_hud_text_size() -> void:
+	_now = 50
+	_deliver(_now, _feed().entries(MONSTER))
+	await get_tree().process_frame
+	var hud := _layer.get_node(^"ShapeshifterHud") as ShapeshifterHud
+	hud.refresh()
+	var labels: Array[Label] = [hud.kit.get_node(^"S2Form"), hud.kit.get_node(^"S3Abilities"),
+		hud.status.get_node(^"S5Stun")]
+	labels.append(hud.face_list.get_child(0).get_child(0))
+	for l in labels:
+		assert_int(l.get_theme_font_size(&"font_size")).is_equal(AlwaysOnHud.TEXT_FONT)
+

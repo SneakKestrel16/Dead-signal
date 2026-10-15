@@ -78,6 +78,12 @@ var match_display: MatchDisplay
 var interaction: InteractionHud
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
 var flinch_enabled := true
+## Accessibility reduced motion (hud.md Accessibility), pushed to every HUD presenter by set_reduced_motion().
+## INFERENCE: no client settings store exists yet, so the initial value is the `--reduced-motion` user flag;
+## a settings screen/store would replace that one line.
+var reduced_motion := OS.get_cmdline_user_args().has("--reduced-motion")
+## FM-12 zone ambience text overlay: a diagnostic, shown only with the `--ambience-debug` user flag (BUG-0011).
+var ambience_debug := OS.get_cmdline_user_args().has("--ambience-debug")
 ## Camera on the watched survivor while spectating (BUG-0005); null when not rendering.
 var spectator_cam: SpectatorCamera
 ## When set, used instead of LocalInput each tick (scripted runs and tests); yaw/pitch come from it.
@@ -256,7 +262,8 @@ func _on_connected() -> void:
 		hud.add_child(AlwaysOnHud.new(hud_model, net.local_player_id)) # H1-H6 (hud-results story 002)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)
-		hud.add_child(ambience.make_overlay())
+		if ambience_debug:
+			hud.add_child(ambience.make_overlay())
 		ping_hud = PingCalloutHud.new(knobs, pings, hud_model, callouts, InputContextStack.new(),
 				audio, camera, remotes, puppets.state_of, estimated_tick,
 				func() -> int: return local_target(head.rotation.y, head.rotation.x),
@@ -285,6 +292,7 @@ func _on_connected() -> void:
 		hud.add_child(OwnStateHud.new(hud_model, net.local_player_id, interaction)) # H15, H16, states (hud-results/004)
 		hud.add_child(FormPicker.for_client(hud_model, ping_hud.contexts, knobs, smp, interaction.refuse,
 				match_display.server_tick)) # borrowed-face/011
+		push_reduced_motion(hud, reduced_motion) # BUG-0008: one place for every presenter
 	else:
 		bar = PredictedHoldBar.new() # not drawn; keeps the same per-tick path as the rendering client
 		add_child(bar)
@@ -307,6 +315,21 @@ func is_spawned() -> bool:
 ## Whether this client plays the shapeshifter in its true form (own entry shows the true-form appearance).
 func is_monster() -> bool:
 	return predictor != null and predictor.last_own.get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID
+
+
+## Sets reduced motion on every HUD presenter under `layer` that has the property (AlwaysOnHud, EdgeCues,
+## OwnStateHud, InteractionHud, PingCalloutHud).
+static func push_reduced_motion(layer: Node, on: bool) -> void:
+	for n in layer.get_children():
+		if &"reduced_motion" in n:
+			n.set(&"reduced_motion", on)
+
+
+## Changes reduced motion for the whole HUD (BUG-0008).
+func set_reduced_motion(on: bool) -> void:
+	reduced_motion = on
+	if hud != null:
+		push_reduced_motion(hud, on)
 
 
 ## Changes the flinch toggle and tells the server (ADR-0015 §4).

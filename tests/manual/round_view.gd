@@ -92,7 +92,7 @@ extends Node3D
 ## <tag>.json of rects: world markers (excluded from coverage), roster/checklist/marker rects, text rects.
 ## Phase-label and prompt changes save BUDGET_RUN consecutive HUD-only frames (evac_NN, prompt_NN); --clock waits
 ## for 26 s left and saves clock_off_NN with reduced motion off, then clock_on_NN at 22 s with it on, then quits.
-## --reduced-motion sets the shown client's AlwaysOnHud, EdgeCues and OwnStateHud reduced_motion.
+## --reduced-motion sets reduced motion on every HUD presenter of the shown client.
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -543,20 +543,15 @@ func _conform_bot(c0: RoundClient) -> void:
 		get_tree().quit()
 
 
-## Story hud-results/002: no message carries the round roster to clients yet, so once every client stands in
-## the map the shown client's HudModel is seeded with the survivors (player id -> "View<i>"). --no-roster turns
-## the shown HUD's Show roster off.
+## --no-roster turns the shown HUD's Show roster off. The roster names come from the server's RosterFeed
+## (HUD-11); this no longer seeds placeholder names.
 func _seed_roster() -> void:
 	if _shown == null or has_meta(&"roster"):
 		return
-	var names := {}
-	for i in _clients.size():
-		if not _clients[i].is_spawned():
+	for c in _clients:
+		if not c.is_spawned():
 			return
-		if not _role(_clients[i]):
-			names[_clients[i].net.local_player_id] = "View%d" % i
 	set_meta(&"roster", true)
-	_shown.hud_model.set_survivors(names)
 	(_shown.hud.get_node(^"AlwaysOnHud") as AlwaysOnHud).show_roster = not _args.has("no-roster")
 
 
@@ -1339,9 +1334,7 @@ func _budget_bot(c0: RoundClient) -> void:
 
 
 func _set_reduced_motion(c0: RoundClient, on: bool) -> void:
-	for n in c0.hud.get_children():
-		if n is AlwaysOnHud or n is EdgeCues or n is OwnStateHud:
-			n.set(&"reduced_motion", on)
+	c0.set_reduced_motion(on)
 	print("BUDGET reduced_motion=%s" % on)
 
 

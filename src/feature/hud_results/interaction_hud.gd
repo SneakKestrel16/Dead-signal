@@ -13,7 +13,7 @@ class_name InteractionHud extends Control
 ## - Z4 holds one of prompt, ring, bleed-out or transforming bar: `z4_taken` (set by the bleed-out and transform
 ##   widgets) hides prompt and ring. While actions are masked (callout wheel, overlays) nothing here shows.
 ## PLACEHOLDER look: plain shapes and the fallback font; the HUD art pass replaces the drawing, not the states.
-## No motion setting exists yet, so the 150 ms fades always run (reduced motion: cut, when the setting lands).
+## reduced_motion turns the 150 ms fades into cuts (hud.md Accessibility; BUG-0008).
 ## Usage (client, rendering): hud.add_child(InteractionHud.new(InputGlyphs.new(), contexts, bar, prompt_of))
 ##   where prompt_of() -> {text: String, hold: bool}, or {} for no valid target.
 
@@ -36,6 +36,8 @@ const FONT_PX := 22
 ## True while a bleed-out or transforming bar owns Z4 (hud.md Z4 rule), or nothing may show there (Seized,
 ## spectating; story 004).
 var z4_taken := false
+## Accessibility reduced motion: prompt and label appear and disappear at full alpha (set by RoundClient).
+var reduced_motion := false
 ## When not empty, the only prompt shown ({text, hold}), whatever the target (hud.md HUD States, Hidden: the
 ## prompt shows "Leave" only; set by OwnStateHud, story 004).
 var only_prompt: Dictionary = {}
@@ -106,6 +108,16 @@ func ring_value() -> float:
 ## The Z5 label as drawn ("" when hidden).
 func label_text() -> String:
 	return _label if _label_s > 0.0 and _contexts.allows_actions() else ""
+
+
+## Alpha of the prompt as drawn: fades in over FADE_S, 1 with reduced motion.
+func prompt_alpha() -> float:
+	return 1.0 if reduced_motion else minf(_prompt_age / FADE_S, 1.0)
+
+
+## Alpha of the Z5 label as drawn: fades out over FADE_S, 1 with reduced motion.
+func label_alpha() -> float:
+	return 1.0 if reduced_motion else minf(_label_s / FADE_S, 1.0)
 
 
 ## Shows the generic refusal label (P10); a server reason (on_hold_end) replaces it when one comes.
@@ -201,15 +213,15 @@ func _draw() -> void:
 			draw_arc(c, RING_RADIUS_PX, 0.0, TAU, 48, Color(0, 0, 0, 0.6), RING_WIDTH_PX + 2.0)
 			draw_arc(c, RING_RADIUS_PX, -PI / 2.0, -PI / 2.0 + TAU * ring_value(), 48, Color.WHITE, RING_WIDTH_PX)
 		&"cancel":
-			var a := _end_s / RING_END_S
+			var a := 1.0 if reduced_motion else _end_s / RING_END_S
 			for i in RING_SEGMENTS: # broken ring: gaps between segments, fading out
 				var s := -PI / 2.0 + TAU * i / RING_SEGMENTS
 				draw_arc(c, RING_RADIUS_PX, s, s + TAU / RING_SEGMENTS * 0.55, 8, Color(1, 1, 1, a), RING_WIDTH_PX)
 		&"prompt":
-			_text(c + Vector2(0, PROMPT_BELOW_PX), _prompt, minf(_prompt_age / FADE_S, 1.0))
+			_text(c + Vector2(0, PROMPT_BELOW_PX), _prompt, prompt_alpha())
 	var l := label_text()
 	if l != "":
-		_text(c + Vector2(0, LABEL_BELOW_PX), l, minf(_label_s / FADE_S, 1.0))
+		_text(c + Vector2(0, LABEL_BELOW_PX), l, label_alpha())
 
 
 func _text(at: Vector2, t: String, alpha: float) -> void:

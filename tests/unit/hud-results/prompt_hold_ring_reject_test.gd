@@ -185,3 +185,21 @@ func test_a_newer_label_replaces_the_older_one() -> void:
 	_hud.step(DT)
 	_hud.on_hold_ended(&"released")
 	assert_str(_hud.label_text()).is_equal("Released")
+
+
+# --- BUG-0008: reduced motion cuts the fades ---
+
+func test_prompt_fades_in_over_fade_s_and_cuts_with_reduced_motion() -> void:
+	_prompt = {"text": "Extract drive", "hold": true}
+	_hud.step(DT / 5.0)
+	assert_float(_hud.prompt_alpha()).is_less(1.0)
+	_hud.reduced_motion = true
+	assert_float(_hud.prompt_alpha()).is_equal(1.0)
+
+
+func test_label_fade_cuts_with_reduced_motion() -> void:
+	_hud.refuse()
+	_steps(1.45)
+	assert_float(_hud.label_alpha()).is_less(1.0)
+	_hud.reduced_motion = true
+	assert_float(_hud.label_alpha()).is_equal(1.0)

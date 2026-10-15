@@ -6,7 +6,8 @@ class_name ShapeshifterInstallAlert extends Control
 
 const COLOUR := Color(1.0, 0.55, 0.1)
 const RING_PX := 18.0
-const FONT_PX := 18
+## Same as PingCalloutHud.MARKER_FONT: world marker labels are at least 20 px (BUG-0009).
+const FONT_PX := 20
 
 var _model: HudModel
 var _camera: Camera3D
