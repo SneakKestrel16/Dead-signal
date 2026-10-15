@@ -15,6 +15,13 @@ class_name SurvivorDefense extends RefCounted
 
 ## Intent value: fire one cartridge (rule 8).
 const FIRE := 1
+## Story 002: trace result reasons (Game Feel's failure texture reads them later).
+const SHOT_HIT := "hit"
+const SHOT_MISSED := "missed"
+const SHOT_BLOCKED := "blocked"
+const SHOT_RANGE := "range"
+## Float slack on the inclusive range and aim boundaries (float32 positions).
+const TRACE_EPS := 1e-4
 ## Intent packet dictionary key.
 const INTENT_KEY := "item"
 ## decode_intent's result for bytes that are not an intent.
@@ -31,6 +38,19 @@ var _is_locked: Callable
 var _charges: Dictionary[int, int] = {}
 ## survivor -> first tick a fire is accepted again (rule 8 reuse delay); absent = no delay running.
 var _ready_tick: Dictionary[int, int] = {}
+var _monster: int = -1
+## Story 002 trace sources (set_trace); _lc null means no trace runs.
+var _lc: LagCompensation
+var _eye_of: Callable
+var _frame_of: Callable
+var _blocked: Callable
+var _use_delay_ticks: int = 0
+var _range_m: float = 0.0
+var _aim_tol_rad: float = 0.0
+## Fired shots waiting out stun_use_delay_s: Vector2i(due tick, shooter), oldest first.
+var _queued: Array[Vector2i] = []
+## Shots resolved on the latest tick (see resolved_shots).
+var _resolved: Array[Dictionary] = []
 ## Hidden survivors. Story 006's hide flow drives this through set_hidden.
 var _hidden: Dictionary[int, bool] = {}
 ## player -> this tick's intent (the first one received since the last tick).
@@ -57,9 +77,22 @@ class DefenseView extends RefCounted:
 
 
 ## Injects the round's roster. Call before RoundServer.start_round (setup resets state from it).
-## The monster id is not kept: it has no items (rule 13), which the roster alone already says.
-func set_roster(survivors: Array[int], _monster: int) -> void:
+## The monster has no items (rule 13); its id is kept only as a taser target (story 002).
+func set_roster(survivors: Array[int], monster: int) -> void:
 	_survivors = survivors.duplicate()
+	_monster = monster
+
+
+## Story 002: injects the taser trace sources (ADR-0003 §6). `lc` gives the rewind and the rewound
+## capsules; `eye_of.call(player) -> Vector3` is the shooter's current eye point (never rewound, §5);
+## `frame_of.call(player) -> InputFrame` gives the view yaw and pitch (ServerMovement.frame_of);
+## `blocked.call(from, to) -> bool` is true when a wall, glass (PROJECTILE mask) or a closed door leaf
+## lies between (unset = nothing blocks). Unset `lc`: fires spend cartridges but trace nothing.
+func set_trace(lc: LagCompensation, eye_of: Callable, frame_of: Callable, blocked: Callable = Callable()) -> void:
+	_lc = lc
+	_eye_of = eye_of
+	_frame_of = frame_of
+	_blocked = blocked
 
 
 ## Injects the Seized/Downed gate: `source.call(player_id) -> bool` (Downing.action_locked).
@@ -85,6 +118,11 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_ready_tick = {}
 	_hidden = {}
 	_pending = {}
+	_queued = []
+	_resolved = []
+	_use_delay_ticks = knobs.ticks(knobs.defense.stun_use_delay_s)
+	_range_m = knobs.defense.stun_range_m
+	_aim_tol_rad = deg_to_rad(knobs.defense.stun_aim_tolerance_deg)
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
@@ -125,7 +163,10 @@ func server_tick(tick: int) -> void:
 		if can_fire(p, tick):
 			_charges[p] -= 1
 			_ready_tick[p] = tick + _reuse_ticks
+			if _lc != null:
+				_queued.append(Vector2i(tick + _use_delay_ticks, p))
 	_pending = {}
+	_resolve_shots(tick)
 
 
 ## Rules 7, 8, 13: `player` is a survivor with a cartridge left, outside the reuse delay, not Seized,
@@ -150,3 +191,74 @@ func _on_eliminated(e: ServerEvent) -> void:
 	var s := (e as EvSurvivorEliminated).survivor
 	if _charges.has(s):
 		_charges[s] = 0
+
+
+## Story 002: the shots traced on the latest tick, each {shooter, tick, hit (player id or -1),
+## reason (SHOT_*)}. Stories 003 and 004 act on them; this story applies nothing.
+func resolved_shots() -> Array[Dictionary]:
+	return _resolved
+
+
+## Rule 8 trace, pure: the nearest target in `targets` (LagCompensation.targets_at capsules) whose
+## nearest axis point to the ray lies within `range_m` of `origin` and inside the aim tolerance (the
+## ray passes within the capsule radius, or the angle to that point is at most `tol_rad`; both bounds
+## inclusive). `skip.call(id)` true = not a body (Seized, Downed, hidden: current tick, ADR-0003 §5).
+## `blocked.call(origin, point)` true = geometry stops the dart. Returns {hit: id or -1, reason: SHOT_*}.
+## Range is measured to the capsule axis, not its surface: inference from the GDD's "5 m" and the AC
+## "5.1 m hits nothing"; a designer ruling on surface vs centre distance would settle it.
+static func trace(origin: Vector3, dir: Vector3, range_m: float, tol_rad: float, targets: Array,
+		skip: Callable, blocked: Callable = Callable()) -> Dictionary:
+	var d := dir.normalized()
+	var far := origin + d * (range_m * 2.0 + 1.0)
+	var best := INF
+	var best_point := Vector3.ZERO
+	var best_id := -1
+	var beyond := false
+	for t: Dictionary in targets:
+		if skip.is_valid() and skip.call(t.id):
+			continue
+		var r: float = t.radius
+		var pos: Vector3 = t.pos
+		var lo := Vector3(pos.x, pos.y + r, pos.z)
+		var hi := Vector3(pos.x, maxf(pos.y + r, pos.y + t.height - r), pos.z)
+		var p := Geometry3D.get_closest_points_between_segments(origin, far, lo, hi)
+		var to: Vector3 = p[1] - origin
+		if not (p[0].distance_to(p[1]) <= r or d.angle_to(to) <= tol_rad + TRACE_EPS):
+			continue
+		var dist := to.length()
+		if dist > range_m + TRACE_EPS:
+			beyond = true
+		elif dist < best:
+			best = dist
+			best_point = p[1]
+			best_id = t.id
+	if best_id == -1:
+		return {"hit": -1, "reason": SHOT_RANGE if beyond else SHOT_MISSED}
+	if blocked.is_valid() and blocked.call(origin, best_point):
+		return {"hit": -1, "reason": SHOT_BLOCKED}
+	return {"hit": best_id, "reason": SHOT_HIT}
+
+
+## Traces every queued shot due on `tick` against target positions rewound to the shooter's view tick,
+## capped at max_rewind_ms (rule 8, ADR-0003 §3: the lunge's path).
+func _resolve_shots(tick: int) -> void:
+	_resolved = []
+	while not _queued.is_empty() and _queued[0].x <= tick:
+		var shooter: int = _queued.pop_front().y
+		var ids: Array[int] = []
+		for id: int in _survivors + [_monster]:
+			if id != shooter and id != -1:
+				ids.append(id)
+		var targets := _lc.targets_at(tick, _lc.rewind_ticks(shooter, tick), ids)
+		var f: InputFrame = _frame_of.call(shooter)
+		var r := trace(_eye_of.call(shooter), ViewState.direction(f.yaw, f.pitch), _range_m, _aim_tol_rad,
+			targets, _not_a_body, _blocked)
+		r["shooter"] = shooter
+		r["tick"] = tick
+		_resolved.append(r)
+
+
+## Rule 8: Seized and Downed survivors are not bodies for the shot; nor are hidden ones (story 006).
+## Survivors only: the monster mid-takedown is action-locked too, and is exactly whom a rescuer shoots.
+func _not_a_body(player: int) -> bool:
+	return _survivors.has(player) and (is_hidden(player) or (_is_locked.is_valid() and _is_locked.call(player)))
