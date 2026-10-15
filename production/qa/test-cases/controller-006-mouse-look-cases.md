@@ -56,8 +56,8 @@
 - ±5° is about 35 pixels of the 628-pixel travel. That is roughly the repeatability expected from a slow swipe between fixed stops.
 - The spread of the three full-size readings settles whether the method meets that tolerance. That is why the INCONCLUSIVE rule exists.
 
-**Actual Result**:
-**Pass/Fail**:
+**Actual Result**: Stretch `canvas_items` (temporary `override.cfg`, removed after; `project.godot` untouched). Full window: yaw 1 to 141 (140°). Half window (F11): yaw 6 to 146 (140°). Same travel between desk stops. Window sizes not recorded. Designer, 2026-10-15.
+**Pass/Fail**: PASS
 
 ---
 
@@ -80,8 +80,8 @@
 
 **Pass Criteria**: PASS if, in both return methods, the yaw changes on the first mouse motion after focus returns and no cursor is visible over the game. FAIL if either method needs a click, or if the cursor stays visible.
 
-**Actual Result**:
-**Pass/Fail**:
+**Actual Result**: Alt-tab away and back re-captured the mouse without a click. Designer, 2026-10-15.
+**Pass/Fail**: PASS
 
 ---
 
@@ -108,8 +108,8 @@
 
 **Pass Criteria**: PASS if the readings at Steps 2 and 6 are 85.0 and at Step 5 is -85.0 (the label shows one decimal), and Step 3 shows a value under 85.0 straight after the first downward motion.
 
-**Actual Result**:
-**Pass/Fail**:
+**Actual Result**: Pitch stopped at +85 and -85. Designer, 2026-10-15.
+**Pass/Fail**: PASS
 
 ---
 
@@ -130,5 +130,5 @@
 
 **Pass Criteria**: PASS if, after Esc, the yaw and pitch on the label stay constant (±0.1°) through at least 5 seconds of mouse motion, and the cursor is visible.
 
-**Actual Result**:
-**Pass/Fail**:
+**Actual Result**: Esc released the mouse. Designer, 2026-10-15.
+**Pass/Fail**: PASS
