@@ -5,7 +5,7 @@
 > **Architecture Module**: Survivor Objectives (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready (point-selection and discovery stories block on ADR-0012, install noise on ADR-0013, HUD display on ADR-0014; all Proposed)
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories survivor-objectives`
+> **Stories**: 10 stories (8 Ready, 2 Blocked on Proposed ADR-0012)
 
 ## Overview
 
@@ -41,6 +41,21 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | TR-objectives-010 | All timings and counts are data; candidates authored in the map | ADR-0006 (Accepted) |
 | TR-objectives-011 | Carried drive visible on the carrier model and survivor HUDs | ADR-0004 (Accepted); ADR-0014 (Proposed) |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [Drive extract and carry](story-001-drive-extract-and-carry.md) | Integration | Ready | ADR-0008 |
+| 002 | [Item drops and pickups](story-002-drops-and-pickups.md) | Integration | Ready | ADR-0005 |
+| 003 | [Fuses, fuse boxes and power restored](story-003-fuses-and-power.md) | Integration | Ready | ADR-0008 |
+| 004 | [Install alert to the shapeshifter](story-004-install-alert.md) | Logic | Ready | ADR-0004 |
+| 005 | [Docking and the evacuation terminal](story-005-docking-and-terminal.md) | Logic | Ready | ADR-0005 |
+| 006 | [Drive extraction at the exit](story-006-extraction.md) | Integration | Ready | ADR-0005 |
+| 007 | [Shapeshifter fake interactions](story-007-shapeshifter-fake-interactions.md) | Integration | Ready | ADR-0008 |
+| 008 | [Active point selection](story-008-active-point-selection.md) | Logic | Blocked | ADR-0012 |
+| 009 | [Objective discovery](story-009-discovery.md) | Integration | Blocked | ADR-0012 |
+| 010 | [Objective state replication to clients](story-010-objective-state-replication.md) | Integration | Ready | ADR-0004 |
+
 ## Definition of Done
 
 This epic is complete when:
@@ -51,4 +66,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories survivor-objectives` to break this epic into implementable stories.
+Run `/story-readiness production/epics/survivor-objectives/story-001-drive-extract-and-carry.md`, then `/dev-story`.

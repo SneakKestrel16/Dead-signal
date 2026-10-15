@@ -5,7 +5,7 @@
 > **Architecture Module**: Downing, Rescue & Elimination (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories downing-and-rescue`
+> **Stories**: 7 stories (all Ready)
 
 ## Overview
 
@@ -38,6 +38,18 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | TR-downing-008 | Disconnected players keep bleeding out | ADR-0001 (Accepted) |
 | TR-downing-009 | Tuning knobs are data; downs_to_eliminate fixed at 2 | ADR-0006 (Accepted) |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | [Life state and takedown commit](story-001-takedown-commit.md) | Logic | Ready | ADR-0005 |
+| 002 | [Grace windows and takedown eligibility](story-002-grace-and-eligibility.md) | Logic | Ready | ADR-0005 |
+| 003 | [Bleed-out timer and anti-camping slow](story-003-bleed-out.md) | Logic | Ready | ADR-0005 |
+| 004 | [Rescue hold with persisting progress](story-004-rescue-hold.md) | Integration | Ready | ADR-0008 |
+| 005 | [Downed crawl and action restrictions](story-005-downed-movement-restrictions.md) | Integration | Ready | ADR-0007 |
+| 006 | [Disconnects during a commit or while Downed](story-006-disconnects.md) | Integration | Ready | ADR-0001 |
+| 007 | [Life state replication and information hiding](story-007-life-state-replication.md) | Integration | Ready | ADR-0004 |
+
 ## Definition of Done
 
 This epic is complete when:
@@ -48,4 +60,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories downing-and-rescue` to break this epic into implementable stories.
+Run `/story-readiness production/epics/downing-and-rescue/story-001-takedown-commit.md`, then `/dev-story`.
