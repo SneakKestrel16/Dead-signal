@@ -1,7 +1,7 @@
 # Story 011: Shipped client input for Lunge, False Signal and Blackout, with placement preview
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: 1.5 days
@@ -65,7 +65,7 @@ The server accepts ability requests (`MonsterAbilities.request_packet`, `signal_
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/client-ability-input/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `production/qa/evidence/client-ability-input/` (7 screenshots, lead sign-off pending); `tests/unit/monster-abilities/client_ability_input_test.gd` (10 tests)
 
 ---
 
@@ -73,3 +73,7 @@ The server accepts ability requests (`MonsterAbilities.request_packet`, `signal_
 
 - Depends on: match-flow 013; hud-results 006
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged 09f9ddd..1374fe9 (round_view bot conflict with HUD-4 resolved keeping both). ShapeshifterAim (mounted on first shapeshifter state; gated by HudModel.is_shapeshifter() and contexts.allows_actions(); a context push drops the aim): Lunge on press; False Signal and Blackout preview while held (snapped floor point and footstep path; target volume outline), send on release; invalid preview crossed out and sends nothing. MapQueries.floor_point shared by client preview and server. SERVER FIX: RoundComposer now passes the False Signal sources (floor snap, observed, status_of, footstep set c<appearance>.walk, install sound radius, step interval); before this the shipped server rejected every False Signal. Model, contexts and multiplayer bound as WeakRefs (first version leaked on survivor clients). INFERENCE: bindings lunge = right mouse, False Signal = R, Blackout = X; False Signal always Footsteps along the view direction as the first face-list survivor (no selector in the spec); floor snap assumes volumes tile a flat floor; no path cut (straight lines through walls, server and preview alike); preview range from camera minus eye height (server uses body); preview does not check blackout_able, dark zones or cooldowns. Evidence via round_host + round_view (same RoundClient as the lobby); bo_dark.png looks like the preview because emergency light stays on. 10 unit tests (watched fail first); 3 mutations caught; tests/integration/hud-results clean. Full suite 1510/1510, no leak lines.

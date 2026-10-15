@@ -189,6 +189,11 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	lifecycle.watch = _watch
 	lifecycle.match_flow().set_exit(queries, _position)
 	bf.set_status_source(lifecycle.match_flow().status_of)
+	# MA-11: False Signal on MapQueries.floor_point (the S7 preview's snap); step_s is the walk footstep interval
+	# Footsteps sends (footstep_spacing_m at walk_speed). No path cut yet: a straight path (MA-9 deviation).
+	var fake_radius: Dictionary[StringName, float] = {SurvivorObjectives.INSTALL_SOUND: knobs.objectives.install_noise_radius_m}
+	ma.set_false_signal_sources(sm.emit_sound, queries.floor_point, bf.observed, lifecycle.match_flow().status_of,
+			_footstep_set_of, fake_radius, knobs.controller.footstep_spacing_m / knobs.controller.walk_speed)
 	pings.set_sender_sources(monster, lifecycle.match_flow().status_of, downing.life_state, bf.form, bf.transforming,
 			sd.locked)
 	if hidden != null:
@@ -527,6 +532,13 @@ func _objective_volume(objective: int) -> StringName:
 
 
 ## Blackout aim sight: the monster's eye sees `aim` (doors closed block).
+## A survivor's walk footstep set as Footsteps names it (`c<appearance>.walk`), &"" for anyone else.
+func _footstep_set_of(id: int) -> StringName:
+	if not survivors.has(id):
+		return &""
+	return StringName("c%d.%s" % [bf.appearance_of(id), Footsteps.GAIT_NAMES[MovementStep.Gait.WALK]])
+
+
 func _monster_sees(id: int, aim: Vector3) -> bool:
 	return queries.clear_sight(_eye(id), aim, doors.is_closed, _space(), _rid(id))
 

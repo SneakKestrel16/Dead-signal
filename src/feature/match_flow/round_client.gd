@@ -260,6 +260,7 @@ func _on_connected() -> void:
 				func() -> int: return predictor.last_own.get("appearance", -1), _map)
 		hud.add_child(ping_hud)
 		input.contexts = ping_hud.contexts
+		ShapeshifterAim.mount(hud, hud_model, camera, ping_hud.contexts, smp, _map, knobs) # MA-11: abilities, S7
 		ping_hud.contexts.viewport = get_viewport()
 		edge_cues = EdgeCues.new(knobs, camera.get_global_transform, func() -> bool: return flinch_enabled)
 		hud.add_child(edge_cues)

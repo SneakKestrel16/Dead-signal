@@ -178,6 +178,18 @@ func volume_at(point: Vector3) -> StringName:
 	return &""
 
 
+## The walkable floor point under `point`, or null in no volume (a wall gap or off the facility): `point` dropped
+## to the floor of the lighting volume containing it (x, z only). The server's False Signal snap
+## (monster-abilities.md rule 13, RoundComposer) and the client's S7 preview (ShapeshifterAim) call this same
+## function. Inference: the lighting volumes tile the walkable floor and are flat; the map has no navmesh. A
+## floor-collider or navmesh query would settle obstacles inside a volume.
+func floor_point(point: Vector3) -> Variant:
+	for v in _map.volumes:
+		if v.contains(point):
+			return Vector3(point.x, v.box.position.y, point.z)
+	return null
+
+
 ## The footstep send-radius multiplier at `point` (MapVolume.footstep_radius_scale; ADR-0013 §7): 1.0 in no
 ## volume. Footsteps.radius_scale_at on the server.
 func footstep_radius_scale_at(point: Vector3) -> float:

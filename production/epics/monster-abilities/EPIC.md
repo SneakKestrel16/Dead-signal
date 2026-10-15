@@ -65,7 +65,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 008 | [Ability stats for results](story-008-ability-stats.md) | Logic | Complete | ADR-0011 (Proposed) |
 | 009 | [False Signal (Vertical Slice)](story-009-false-signal.md) | Logic | Complete | ADR-0004; ADR-0013 (Proposed) |
 | 010 | [Blackout (Vertical Slice)](story-010-blackout.md) | Integration | Complete | ADR-0009 (Proposed) |
-| 011 | [Shipped client input for Lunge, False Signal and Blackout, with placement preview](story-011-client-ability-input.md) | UI | Ready | ADR-0014 |
+| 011 | [Shipped client input for Lunge, False Signal and Blackout, with placement preview](story-011-client-ability-input.md) | UI | In Review | ADR-0014 |
 
 ## Definition of Done
 

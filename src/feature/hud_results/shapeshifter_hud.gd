@@ -4,8 +4,7 @@ class_name ShapeshifterHud extends Control
 ## value is read from HudModel. mount() instances it on the first shapeshifter state the model receives, and
 ## only the shapeshifter's peer is ever sent one (MonsterHudFeed, ADR-0004 §5), so a survivor client never
 ## holds any S node: absent by data, not hidden by visibility (story Control Manifest rule).
-## S7 placement preview is not built: no client aiming exists yet (abilities are requested by raw packets
-## from tests/manual/round_view.gd), so there is no trigger state to show it in.
+## S7 placement preview and the ability input are ShapeshifterAim (story monster-abilities/011), mounted the same way.
 ## Usage (client composition root): ShapeshifterHud.mount(hud_layer, hud_model, camera)
 
 var face_list: ShapeshifterFaceList

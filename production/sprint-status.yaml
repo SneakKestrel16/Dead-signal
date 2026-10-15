@@ -273,10 +273,10 @@ stories:
     name: "Shipped client input for Lunge, False Signal and Blackout, with placement preview"
     file: "production/epics/monster-abilities/story-011-client-ability-input.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "borrowed-face-11"
     name: "Shipped client form picker and transform input"

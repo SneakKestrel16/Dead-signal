@@ -71,6 +71,12 @@ extends Node3D
 ## survivors each call out a different line in the same drawn frame, then each pings twice, turning between
 ## the pings (the shown survivor's second one is a warning ping). Shots: feed.png (4 lines visible), scrollback.png (all 5 with feed_scrollback held),
 ## markers.png (10 pings sent, at most 6 drawn). Prints the feed and marker counts.
+## --bot=aim (story monster-abilities/011; --count=5 --view=monster): the shown shapeshifter uses its abilities
+## through the shipped actions (Input.action_press, read by its ShapeshifterAim): holds false_signal at the floor
+## ahead (fs_preview.png), releases it, holds it looking up (invalid.png if the ray finds no floor in range),
+## releases, holds blackout at the floor (bo_preview.png), releases (bo_dark.png). Each release and the
+## shapeshifter's cooldowns after it are printed (a running cooldown = the server accepted it).
+## --via-input with --bot=lunge presses the lunge action on the shapeshifter's client instead of raw bytes.
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -133,6 +139,7 @@ var _step := 0
 var _step_frame := -1
 var _times: Dictionary[String, Array] = {}
 var _blackout_sent := false
+var _aim_start := -1
 var _routed: Dictionary[int, bool] = {}
 var _measure: Array[float] = []
 var _lunged := false
@@ -224,6 +231,8 @@ func _process(delta: float) -> void:
 		_conform_bot(c0)
 	elif _args.get("bot", "") == "ownstate":
 		_own_bot(c0)
+	elif _args.get("bot", "") == "aim":
+		_aim_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -844,8 +853,12 @@ func _lunge_bot(c: RoundClient) -> void:
 	m.scripted.move = Vector2.ZERO if near or _lunged else Vector2(0, 1)
 	if near and not _lunged:
 		_lunged = true
-		(m.multiplayer as SceneMultiplayer).send_bytes(
-				MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		if _args.has("via-input"):
+			Input.action_press(&"lunge") # read by the shapeshifter's ShapeshifterAim, the only one mounted
+			get_tree().create_timer(0.1).timeout.connect(Input.action_release.bind(&"lunge"))
+		else:
+			(m.multiplayer as SceneMultiplayer).send_bytes(
+					MonsterAbilities.request_packet(MonsterAbilities.Ability.LUNGE), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 		print("LUNGE requested at %.2f m (frame %d)" % [Vector2(to.x, to.z).length(), Engine.get_frames_drawn()])
 	var pose := c.lunge_fx.pose()
 	if pose == &"coil" and _coil_at == Vector3.INF:
@@ -866,6 +879,49 @@ func _lunge_bot(c: RoundClient) -> void:
 		set_meta(&"miss", true)
 		_shot("miss")
 		print("STUMBLE seen at frame %d" % Engine.get_frames_drawn())
+
+
+## --bot=aim: [drawn frame since start, pitch, press (&"" none), release (&"" none), shot ("" none)].
+const AIM_STEPS: Array = [[60, -0.5, &"false_signal", &"", ""], [100, -0.5, &"", &"", "fs_preview"],
+	[105, -0.5, &"", &"false_signal", ""], [150, 1.2, &"false_signal", &"", ""], [190, 1.2, &"", &"", "invalid"],
+	[195, 1.2, &"", &"false_signal", ""], [220, -0.5, &"blackout", &"", ""], [260, -0.5, &"", &"", "bo_preview"],
+	[265, -0.5, &"", &"blackout", ""], [330, -0.5, &"", &"", "bo_dark"]]
+
+
+func _aim_bot(c: RoundClient) -> void:
+	var aim := c.hud.find_child("S7PlacementPreview", false, false) as ShapeshifterAim
+	if aim == null:
+		return
+	if _aim_start < 0:
+		_aim_start = Engine.get_frames_drawn()
+	var f := Engine.get_frames_drawn() - _aim_start
+	for st: Array in AIM_STEPS:
+		if f < st[0]:
+			c.scripted.pitch = st[1]
+			break
+		if f != st[0]:
+			continue
+		if st[2] != &"":
+			Input.action_press(st[2])
+		if st[3] != &"":
+			var p := aim.preview()
+			Input.action_release(st[3])
+			print("AIM %s released at frame %d: valid %s aim %s point %s volume %s" % [st[3], f, p["valid"], p["aim"],
+					p["point"], p["volume"]])
+			get_tree().create_timer(1.0).timeout.connect(_print_cooldowns.bind(c))
+		if st[4] != "":
+			if st[4] != "bo_dark":
+				var p := aim.preview()
+				print("PREVIEW %s: valid %s aim %s point %s end %s volume %s" % [st[4], p["valid"], p["aim"],
+						p["point"], p["end"], p["volume"]])
+			_shot(st[4])
+
+
+func _print_cooldowns(c: RoundClient) -> void:
+	var row := PackedStringArray()
+	for k: StringName in MonsterHudFeed.ABILITY_KEYS:
+		row.append("%s %.1f s" % [k, c.hud_model.cooldown_remaining_s(k)])
+	print("COOLDOWNS " + ", ".join(row))
 
 
 func _coil_frame() -> int:
