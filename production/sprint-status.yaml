@@ -41,7 +41,7 @@ stories:
     name: "Win evaluation order and immediate endings"
     file: "production/epics/match-flow/story-002-win-evaluation.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
@@ -71,7 +71,7 @@ stories:
     name: "Fuses, fuse boxes and power restored"
     file: "production/epics/survivor-objectives/story-003-fuses-and-power.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
@@ -111,7 +111,7 @@ stories:
     name: "Life state and takedown commit"
     file: "production/epics/downing-and-rescue/story-001-takedown-commit.md"
     priority: should-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
