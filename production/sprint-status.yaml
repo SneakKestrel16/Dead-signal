@@ -121,7 +121,7 @@ stories:
     name: "Item drops and pickups"
     file: "production/epics/survivor-objectives/story-002-drops-and-pickups.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 1
     blocker: ""
@@ -141,7 +141,7 @@ stories:
     name: "Clients display server phase and outcome only"
     file: "production/epics/match-flow/story-009-client-display-authority.md"
     priority: nice-to-have
-    status: backlog
+    status: in-progress
     owner: ""
     estimate_days: 0.5
     blocker: ""
