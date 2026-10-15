@@ -1,7 +1,8 @@
 class_name Downing extends RefCounted
 ## Downing, Rescue & Elimination: life state, down count and the takedown commit (Feature layer).
 ## Implements design/gdd/downing-and-rescue.md rules 2-5, Formulas "Takedown outcome" and the
-## commit rows of Edge Cases; story downing-and-rescue/001; ADR-0005. Story 003 adds the bleed-out
+## commit rows of Edge Cases; story downing-and-rescue/001; ADR-0005. Story 002 adds grace (rules
+## 4.4, 8) and the hidden check to eligibility (rule 3). Story 003 adds the bleed-out
 ## timer (rule 6, rule 10, Formulas "Bleed-out"), counted in ticks and advanced in server_tick.
 ## Server only. The commit counts ticks of `net.sim_tick_hz`, never wall time. Order within a tick:
 ## MonsterStunned (Survivor Defense slot, 200) and SurvivorHit (Monster Abilities slot, 400) are
@@ -11,8 +12,8 @@ class_name Downing extends RefCounted
 ##   var d := Downing.new()
 ##   d.set_roster([2, 3, 4, 5], 1)   # survivor ids, monster id: BEFORE start_round
 ##   d.set_positions(func(p: int) -> Vector3: return ...)   # for the camping slow
+##   d.set_hidden(func(p: int) -> bool: return ...)          # Survivor Defense's hidden state
 ##   server.start_round({TickOrder.DOWNING: d}, knobs)
-## Story 002 adds grace by extending `eligible(player)`.
 
 enum LifeState { HEALTHY, SEIZED, DOWNED, ELIMINATED }
 
@@ -26,8 +27,14 @@ var _hz: int = 0
 var _bleed_ticks: int = 0
 var _camp_slow_radius_m: float = 0.0
 var _camp_slow_mult: float = 0.0
+var _release_grace_ticks: int = 0
+var _rescue_grace_ticks: int = 0
 ## player id -> Vector3; invalid means no positions, so nothing slows bleed-out.
 var _position_of: Callable
+## player id -> bool, Survivor Defense's hidden state; invalid means nobody is hidden.
+var _is_hidden: Callable
+## Survivor -> first tick on which grace no longer applies (absent = no grace).
+var _grace_end: Dictionary[int, int] = {}
 ## player id -> LifeState
 var _life: Dictionary[int, int] = {}
 ## player id -> completed takedowns this round
@@ -102,6 +109,12 @@ func set_positions(source: Callable) -> void:
 	_position_of = source
 
 
+## Injects Survivor Defense's hidden state: `source.call(player_id) -> bool`. Unset, nobody is hidden
+## (rule 3: an absent owner reads as not hidden).
+func set_hidden(source: Callable) -> void:
+	_is_hidden = source
+
+
 ## Injected by RoundServer. Reads knobs, resets every survivor to Healthy with 0 downs (rule 2),
 ## publishes the views and subscribes to SurvivorHit, MonsterStunned, PlayerConnectionChanged and
 ## SurvivorEscaped.
@@ -114,6 +127,9 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_bleed_ticks = knobs.ticks(knobs.downing.bleedout_s)
 	_camp_slow_radius_m = knobs.downing.camp_slow_radius_m
 	_camp_slow_mult = knobs.downing.camp_slow_mult
+	_release_grace_ticks = knobs.ticks(knobs.downing.post_release_grace_s)
+	_rescue_grace_ticks = knobs.ticks(knobs.downing.post_rescue_grace_s)
+	_grace_end = {}
 	_bleed = {}
 	_rescuing = {}
 	_escaped = {}
@@ -183,10 +199,28 @@ func downs_taken(player: int) -> int:
 	return _downs_taken.get(player, 0)
 
 
-## Rule 3: a survivor in the roster who is Healthy. Story 002 extends this with grace; hidden is
-## Survivor Defense's and is checked by Monster Abilities before it emits SurvivorHit.
+## Rule 3: a survivor in the roster who is a valid takedown target on the current tick.
 func eligible(player: int) -> bool:
-	return _life.get(player, -1) == LifeState.HEALTHY
+	var hidden: bool = _is_hidden.is_valid() and _is_hidden.call(player)
+	return is_eligible(_life.get(player, -1), hidden, _bus.tick, _grace_end.get(player, 0))
+
+
+## Rule 3 as a pure function: Healthy (so not Seized in a commit), not hidden, and `tick` at or past
+## `grace_end_tick`. Example: `Downing.is_eligible(LifeState.HEALTHY, false, 100, 100)` -> true.
+static func is_eligible(state: int, hidden: bool, tick: int, grace_end_tick: int) -> bool:
+	return state == LifeState.HEALTHY and not hidden and tick >= grace_end_tick
+
+
+## Rule 8: Downed `player` stands up Healthy, `downs_taken` unchanged, with `post_rescue_grace_s`
+## from the current tick. Story 004's rescue completion calls this; nothing else should. No-op
+## unless Downed.
+func stand_up(player: int) -> void:
+	if life_state(player) != LifeState.DOWNED:
+		return
+	_bleed.erase(player)
+	_rescuing.erase(player)
+	_life[player] = LifeState.HEALTHY
+	_grace_end[player] = _bus.tick + _rescue_grace_ticks
 
 
 ## True while the monster is Committing.
@@ -272,12 +306,13 @@ func _bleed_out(s: int) -> void:
 	_bus.emit(el)
 
 
-## Rule 4.4: the victim returns to Healthy with downs_taken unchanged. Story 002 starts
-## post_release_grace_s here.
+## Rule 4.4: the victim returns to Healthy with downs_taken unchanged and `post_release_grace_s`
+## from the cancelling event's tick.
 func _cancel_commit() -> void:
 	if not committing():
 		return
 	_life[_victim] = LifeState.HEALTHY
+	_grace_end[_victim] = _bus.tick + _release_grace_ticks
 	_victim = -1
 
 
