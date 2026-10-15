@@ -11,10 +11,15 @@ class_name HidingSpots extends RefCounted
 ## A search completing while the spot is being entered is held until the entry completes, then ejects
 ## (edge case "Monster Searches the spot a survivor is entering"); an entry cancelled first spends it.
 ## A stun interrupts the search through SurvivorDefense.shock's holds.cancel (rule 15).
-## Not here: hide noise and the long-hide cue (story 010), the peek view (011), catalog events (the
+## Rules 19, 21 (story 010, ADR-0013 / ADR-0004 §6): an entry or a leave (an eject is a leave) sends a
+## sound at the spot within hide_noise_radius_m through emit_sound; after hide_quiet_s of continuous hiding
+## the spot sends the long-hide cue every hide_cue_interval_s until the occupant leaves. Playback is the
+## client's (story 011). Register after the Holds step, so the cue counts from the entry's own tick.
+## Not here: the peek view (011), catalog events (the
 ## catalog has no hide or search event), the Controller's flinch re-baseline (no hook exists yet).
 ## Usage:
 ##   var spots := HidingSpots.new(holds, map, healthy_survivor, is_monster, sd.set_hidden, movement.modifiers_of, place)
+##   spots.emit_sound = server_movement.emit_sound
 ##   spots.setup(tick_runner, bus, registry, knobs)
 
 ## first-person-controller.md edge case "front is blocked": the farthest a blocked eject may move from the
@@ -24,6 +29,14 @@ const EJECT_SEARCH_M := 1.0
 const MOD_OWNER := &"hiding"
 ## HoldService.cancel reason for an occupant's hold ended by an eject.
 const CANCEL_EJECTED := &"ejected"
+## Sound sets of the entry, the leave and the long-hide cue (rules 19, 21); playback is presentation.
+const ENTER_SOUND := &"hide_enter"
+const EXIT_SOUND := &"hide_exit"
+const CUE_SOUND := &"hide_cue"
+
+## `emit_sound(position: Vector3, sound_set: StringName, radius_m: float)`, the positional sound send
+## (ServerMovement.emit_sound). Invalid = no hide noise or cue is sent.
+var emit_sound: Callable = Callable()
 
 var _holds: HoldService
 var _map: MapData
@@ -47,6 +60,11 @@ var _runner: TickRunner
 var _hide_sent: Dictionary[int, int] = {}
 var _hide_out: Dictionary[int, int] = {}
 var _out_tick: int = -1
+## Rule 21: occupied spot -> ticks hidden; hide_quiet_s and hide_cue_interval_s in ticks.
+var _quiet: Dictionary[int, int] = {}
+var _quiet_ticks: int = 0
+var _cue_ticks: int = 1
+var _noise_m: float = 0.0
 
 
 ## `healthy(actor) -> bool`: a Healthy survivor (rule 19; Downing and the shock lock fold in here).
@@ -70,6 +88,10 @@ func setup(tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: K
 	_hide_sent = {}
 	_hide_out = {}
 	_out_tick = -1
+	_quiet = {}
+	_quiet_ticks = knobs.ticks(knobs.defense.hide_quiet_s)
+	_cue_ticks = maxi(1, knobs.ticks(knobs.defense.hide_cue_interval_s))
+	_noise_m = knobs.defense.hide_noise_radius_m
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_points = []
 	_exits = []
@@ -98,9 +120,14 @@ func setup(tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: K
 			(_search if search else _hide).append(_holds.register(h))
 
 
-## Timed by HoldService: nothing to advance.
+## Holds are timed by HoldService; this advances the long-hide cue (rule 21): at hide_quiet_s after the
+## entry, then every hide_cue_interval_s.
 func server_tick(_tick: int) -> void:
-	pass
+	for spot: int in _quiet:
+		var t := _quiet[spot] - _quiet_ticks
+		if t >= 0 and t % _cue_ticks == 0:
+			_sound(spot, CUE_SOUND)
+		_quiet[spot] += 1
 
 
 ## Interaction point of `spot`.
@@ -185,6 +212,8 @@ func hide_completed(actor: int, spot: int) -> void:
 	_entering.erase(spot)
 	_occupant[spot] = actor
 	_set_hidden.call(actor, true)
+	_quiet[spot] = 0
+	_sound(spot, ENTER_SOUND)
 	var mods := _mods(actor)
 	if mods != null:
 		mods.add(MOD_OWNER, MovementModifiers.Kind.ROOT)
@@ -234,10 +263,19 @@ func _exit_point(m: MapMarker, knobs: Knobs) -> Variant:
 func _leave(spot: int) -> void:
 	var actor: int = _occupant[spot]
 	_occupant.erase(spot)
+	_quiet.erase(spot)
 	_set_hidden.call(actor, false)
+	_sound(spot, EXIT_SOUND)
 	var mods := _mods(actor)
 	if mods != null:
 		mods.remove(MOD_OWNER)
+
+
+## Inference: the cue uses hide_noise_radius_m too (rule 21 says "faint" but names no radius) and every
+## hide sound reaches the occupant as well (source -1). A cue radius knob in the GDD would settle the first.
+func _sound(spot: int, sound_set: StringName) -> void:
+	if emit_sound.is_valid():
+		emit_sound.call(_points[spot], sound_set, _noise_m)
 
 
 func _mods(actor: int) -> MovementModifiers:
