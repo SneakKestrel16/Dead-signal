@@ -141,8 +141,8 @@ stories:
     name: "Clients display server phase and outcome only"
     file: "production/epics/match-flow/story-009-client-display-authority.md"
     priority: nice-to-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"

@@ -1,12 +1,12 @@
 # Story 009: Clients display server phase and outcome only
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -34,9 +34,9 @@ Clients show the clock and phase the server replicates and never decide anything
 
 *From GDD `design/gdd/match-flow.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] All 5 clients show the same phase within 200 ms of each `RoundPhaseChanged`, and the same outcome, reason and results payload at round end.
-- [ ] A modified client that sends a fake "round won" or "phase change" message has no effect on any client's state.
-- [ ] A client whose local clock drifts corrects its display to the server value; its phase changes only on `RoundPhaseChanged`.
+- [x] All 5 clients show the same phase within 200 ms of each `RoundPhaseChanged`, and the same outcome, reason and results payload at round end.
+- [x] A modified client that sends a fake "round won" or "phase change" message has no effect on any client's state.
+- [x] A client whose local clock drifts corrects its display to the server value; its phase changes only on `RoundPhaseChanged`.
 
 ---
 
@@ -80,9 +80,9 @@ Clients show the clock and phase the server replicates and never decide anything
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/match-flow/client-display-authority_test.gd` OR playtest doc
+- Integration: `tests/integration/match-flow/client_display_authority_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/match-flow/client_display_authority_test.gd` (5 tests)
 
 ---
 
@@ -90,3 +90,18 @@ Clients show the clock and phase the server replicates and never decide anything
 
 - Depends on: Story 004
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (automated; real ENet loopback for AC-1 and AC-2)
+**Deviations** (AD-135):
+- Implemented by network-programmer in a git worktree, in parallel with SO-2; reviewed and merged by the orchestrator.
+- New client-only `MatchDisplay` (`src/feature/match_flow/match_display.gd`, not `*_view.gd`: that suffix means a getter-only registry view to `state_registry_test`). It applies only packets from the server peer; phase changes only on a RoundPhaseChanged entry, outcome/reason/results only on RoundEnded; bad payloads are rejected and counted.
+- No new wire field, key or knob for the clock: a client derives `elapsed = (snapshot tick - tick of the RoundPhaseChanged(Infiltration) batch) / sim_tick_hz`, which equals MatchFlow's tick count (clock 0 at begin, rule 3); the RoundEnded batch tick freezes it. Local time only extrapolates between snapshots; each newer snapshot snaps to the server value, an older reordered one never moves it back.
+- A client reconnecting mid-round has no clock or phase until the server re-sends round state (story 007).
+- Investigation is not reached over ENet (7200 ticks); the hand-fed AC-3 test covers it.
+**Test Evidence**: `tests/integration/match-flow/client_display_authority_test.gd`, 5 tests (5 real clients for AC-1; 7 fake packets for AC-2); green 3 runs. Mutations caught: server-peer filter removed, snap to server value removed.
+**Code Review**: Complete (orchestrator review)
