@@ -10,6 +10,10 @@ class_name RoundLifecycle extends RefCounted
 ##   spawn(player_id: int, position: Vector3)  place the player's body
 ##   freeze(player_id: int)                    stop applying gameplay intents (set_frozen, cancel a hold)
 ##   over(ended: bool)                         RoundServer.end_round(); RosterHandoff.end_round(ended)
+##   remove(player_id: int) -> Vector3         take the body out of the world, return where it stood
+## Story 005 (rule 19): while Running, a player's DISCONNECTED removes their body; a RECONNECTED inside
+## grace spawns it again where it stood. Their Healthy/Downed state and down count are Downing's and are
+## untouched by a disconnect; carried items are dropped by Survivor Objectives on the same event.
 ## A host that quits ends the process: over is never called, so no result is recorded (rule 19 of
 ## lobby-role-assignment.md; clients see NetAuthority.host_left).
 ## Usage:
@@ -29,6 +33,9 @@ var spawn: Callable
 var freeze: Callable
 ## Hook: Callable(ended: bool), once: true after Results, false for Cancelled.
 var over: Callable
+## Hook: Callable(player_id: int) -> Vector3, on a disconnect while Running: removes the body and
+## returns its position, used for the respawn on reconnect.
+var remove: Callable
 
 var _roster: Roster
 var _map: MapData
@@ -41,6 +48,8 @@ var _spawn_points: Dictionary[int, StringName] = {}
 var _ticks := 0 ## ticks spent in the current Loading or Results state
 var _load_timeout_ticks := 0
 var _results_ticks := 0
+## player id -> where their body stood when they disconnected; cleared on reconnect or grace expiry.
+var _away: Dictionary[int, Vector3] = {}
 
 
 ## Runs in the MATCH_FLOW_RESOLVE slot; forwards to RoundLifecycle._on_resolve. Holds the lifecycle
@@ -88,6 +97,7 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_mf.survivor_ids.assign(_roster.player_ids().filter(
 		func(id: int) -> bool: return _roster.entry(id).role == Roster.SURVIVOR))
 	_mf.setup(tick_runner, bus, registry, knobs)
+	bus.subscribe(&"PlayerConnectionChanged", _on_connection)
 
 
 ## The module to register at TickOrder.MATCH_FLOW_RESOLVE.
@@ -152,6 +162,21 @@ func _on_resolve(tick: int) -> void:
 		_ticks += 1
 		if _ticks >= _results_ticks:
 			_finish(true)
+
+
+## Subscribed after MatchFlow, so its grace timer has seen the event first.
+func _on_connection(e: ServerEvent) -> void:
+	var c := e as EvPlayerConnectionChanged
+	match c.status:
+		EvPlayerConnectionChanged.DISCONNECTED:
+			if _state == State.RUNNING and remove.is_valid():
+				_away[c.player] = remove.call(c.player)
+		EvPlayerConnectionChanged.RECONNECTED:
+			if _away.has(c.player) and spawn.is_valid():
+				spawn.call(c.player, _away[c.player])
+			_away.erase(c.player)
+		EvPlayerConnectionChanged.GRACE_EXPIRED:
+			_away.erase(c.player)
 
 
 func _start() -> void:

@@ -12,6 +12,10 @@ class_name MatchFlow extends RefCounted
 ##       func(id: int) -> bool: return roster.entry(id).role == Roster.SURVIVOR))
 ## Story 003 (rules 10, 14, 15): the BEGIN slot detects escapes (`set_exit`); both drives Extracted
 ## locks a survivor win, and the round ends at the first of all-out, deadline or the post-escape window.
+## Story 005 (rules 19, 21, 22): Match Flow owns the reconnect grace timer. A DISCONNECTED notice starts it
+## at the event's tick (the drop's detection tick); RECONNECTED stops it; `reconnect_grace_s` later the
+## RESOLVE slot emits GRACE_EXPIRED and runs the win check on that tick. Every disconnect and reconnect is
+## logged through the bus's delivered-event list (`EventBus.take_tick_events`), the only log path so far.
 
 enum Phase { INFILTRATION, INVESTIGATION, EVACUATION }
 ## `RoundEnded.outcome` values; text in OUTCOME_TEXT (rule 23).
@@ -49,6 +53,9 @@ var _lock_end_ticks: int = -1
 var _window_ticks: int = 0
 var _exit: MapQueries
 var _position_of: Callable
+## player id -> tick its drop was detected, while in reconnect grace (any role: story 006 reads it too).
+var _grace_start: Dictionary[int, int] = {}
+var _grace_ticks: int = 0
 
 
 ## Getter-only view of the clock for StateKeys.ROUND_CLOCK readers. Holds the module weakly, so no
@@ -123,6 +130,8 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_window_ticks = knobs.ticks(knobs.match_flow.post_escape_window_s)
 	_extracted = {}
 	_status = {}
+	_grace_start = {}
+	_grace_ticks = knobs.ticks(knobs.match_flow.reconnect_grace_s)
 	for id in survivor_ids:
 		_status[id] = Status.HEALTHY
 	registry.register_view(StateKeys.ROUND_CLOCK, &"MatchFlow", ClockView.new(self))
@@ -205,9 +214,10 @@ func status_of(id: int) -> Status:
 ## MATCH_FLOW_RESOLVE slot, after every gameplay event of the tick was delivered: the rule 16 win
 ## check, first match wins, once per tick. Evidence escaped locks the outcome; after the lock only
 ## rule 15 runs: the round ends when nobody is inside, at the deadline or when the window closes.
-func _on_resolve(_tick: int) -> void:
+func _on_resolve(tick: int) -> void:
 	if _ended:
 		return
+	_expire_grace(tick)
 	if not is_locked() and _extracted.size() >= SurvivorObjectives.ACTIVE_DRIVES:
 		_lock_end_ticks = _elapsed_ticks + _window_ticks
 	var inside := 0
@@ -228,6 +238,21 @@ func _on_resolve(_tick: int) -> void:
 		_end(Outcome.SHAPESHIFTER_WINS, Reason.DEADLINE)
 	elif _forfeit_due():
 		_end(Outcome.SURVIVORS_WIN, Reason.FORFEIT)
+
+
+## Rule 19: grace ends `reconnect_grace_s` after the drop, the tick ConnectionRouter.in_grace turns
+## false, so a rejoin it admitted was delivered (BEGIN flush) before this RESOLVE check. The status is set
+## here, not on delivery, so this tick's win check counts the survivor out (rule 16).
+func _expire_grace(tick: int) -> void:
+	for id: int in _grace_start.keys():
+		if tick - _grace_start[id] < _grace_ticks:
+			continue
+		_grace_start.erase(id)
+		_mark_disconnected(id)
+		var e := EvPlayerConnectionChanged.new()
+		e.player = id
+		e.status = EvPlayerConnectionChanged.GRACE_EXPIRED
+		_bus.emit(e)
 
 
 ## Forfeit hook (rule 20): true once the shapeshifter's reconnect grace expired. Story 006 supplies
@@ -269,13 +294,25 @@ func _on_escaped(e: ServerEvent) -> void:
 	_set_status((e as EvSurvivorEscaped).survivor, Status.ESCAPED)
 
 
-## Disconnect and reconnect change nothing: in grace a survivor counts as inside in their last state
-## (rule 13). Only grace expiry takes a still-inside survivor out (rule 19).
+## Disconnect and reconnect change no status: in grace a survivor counts as inside in their last state
+## (rule 13); they only start and stop the grace timer. Only grace expiry takes a still-inside survivor
+## out (rule 19). A RECONNECTED after expiry finds no timer and changes nothing.
 func _on_connection(e: ServerEvent) -> void:
 	var c := e as EvPlayerConnectionChanged
-	var s: Status = _status.get(c.player, Status.ESCAPED)
-	if c.status == EvPlayerConnectionChanged.GRACE_EXPIRED and (s == Status.HEALTHY or s == Status.DOWNED):
-		_status[c.player] = Status.DISCONNECTED
+	match c.status:
+		EvPlayerConnectionChanged.DISCONNECTED:
+			_grace_start[c.player] = c.tick
+		EvPlayerConnectionChanged.RECONNECTED:
+			_grace_start.erase(c.player)
+		EvPlayerConnectionChanged.GRACE_EXPIRED:
+			_mark_disconnected(c.player)
+
+
+## A still-inside survivor whose grace expired is Disconnected; Escaped or Eliminated keep theirs.
+func _mark_disconnected(id: int) -> void:
+	var s: Status = _status.get(id, Status.ESCAPED)
+	if s == Status.HEALTHY or s == Status.DOWNED:
+		_status[id] = Status.DISCONNECTED
 
 
 func _on_objective_progress(e: ServerEvent) -> void:
