@@ -59,7 +59,7 @@ Match Flow's results screen needs counts and times owned by six other systems (`
 | Stats key | Owner | Fields |
 |---|---|---|
 | `stats.downing` | Downing | per survivor: downs taken, rescues performed, fate cause (bled out, takedown); round: takedowns, eliminations |
-| `stats.abilities` | Monster Abilities | lunges landed, lunges missed, False Signals used, Blackouts used |
+| `stats.abilities` | Monster Abilities | lunges landed, lunges missed, lunges interrupted (story monster-abilities/008), False Signals used, Blackouts used |
 | `stats.defense` | Survivor Defense | times monster stunned; per survivor: stuns landed, resists caused |
 | `stats.borrowed_face` | Borrowed Face | form changes |
 | `stats.objectives` | Survivor Objectives | per objective line (drives recovered, docked, fuses installed, evacuation activated, drives extracted): count and completion tick; per survivor: drives carried at escape |
@@ -101,7 +101,7 @@ var duration_s: float
 var shapeshifter_player_id: int
 var survivors: Array[Dictionary] # {player_id, name, fate, drives_carried, downs, rescues, stuns_landed}
 var objectives: Array[Dictionary]# {line, count, of, completed_s or -1.0}
-var monster: Dictionary[StringName, int]  # takedowns, eliminations, lunges_landed, lunges_missed, times_stunned, form_changes, false_signals, blackouts
+var monster: Dictionary[StringName, int]  # takedowns, eliminations, lunges_landed, lunges_missed, lunges_interrupted, times_stunned, form_changes, false_signals, blackouts
 func to_dict() -> Dictionary     # fresh untyped containers built field by field, so the wire never depends on typed-container encoding
 ```
 

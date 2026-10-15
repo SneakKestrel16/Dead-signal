@@ -75,6 +75,11 @@ var _modifiers_of: Callable
 var _windup_turn: float = 0.0
 var _dash_turn: float = 0.0
 var _dash_speed: float = 0.0
+## Story 008 round stats (StateKeys.STATS_ABILITIES via AbilitiesRoundStatsView): the tick of each landed,
+## missed and interrupted lunge this round; counts are their sizes. Cleared in setup.
+var _landed_ticks: Array[int] = []
+var _missed_ticks: Array[int] = []
+var _interrupted_ticks: Array[int] = []
 ## Callable(state: Lunge, tick: int) run on every Lunge transition (telemetry, tests); unset = nothing.
 var on_lunge_state: Callable
 ## Story 005: position_of(player) -> Vector3, the monster's server position for AbilityUsed; unset = origin.
@@ -191,6 +196,10 @@ func request_ability(player: int, bytes: PackedByteArray) -> void:
 func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
 	registry.register_view(StateKeys.LUNGE_STATE, &"MonsterAbilities", LungeView.new(self))
+	registry.register_view(StateKeys.STATS_ABILITIES, &"MonsterAbilities", AbilitiesRoundStatsView.new(self))
+	_landed_ticks.clear()
+	_missed_ticks.clear()
+	_interrupted_ticks.clear()
 	_windup_ticks = knobs.ticks(knobs.ability.lunge_windup_s)
 	_dash_ticks = knobs.ticks(knobs.ability.lunge_dash_s)
 	_lunge_cooldown_ticks = knobs.ticks(knobs.ability.lunge_cooldown_s)
@@ -235,6 +244,7 @@ func server_tick(tick: int) -> void:
 	# A hit moves the Lunge to Takedown Commit when SurvivorHit is flushed at the end of this tick.
 	if _lunge == Lunge.ACTIVE and not _try_hit(tick) and (tick >= _phase_end_tick or _dash_blocked()):
 		_resolve(tick) ## dash end with no hit, or stopped by an obstacle (rule 6): a miss
+		_missed_ticks.append(tick)
 		# Rule 12: a stun landing this tick (not flushed yet; see _try_hit) interrupts it: no slow.
 		if not (_locked.is_valid() and _locked.call(_monster)):
 			_start_miss_slow(tick)
@@ -396,6 +406,7 @@ func _set_lunge(state: Lunge, tick: int) -> void:
 ## Rule 8: a hit ends the dash and starts Downing's takedown commit.
 func _on_survivor_hit(e: ServerEvent) -> void:
 	if _lunge == Lunge.ACTIVE:
+		_landed_ticks.append(e.tick)
 		_set_lunge(Lunge.TAKEDOWN_COMMIT, e.tick)
 
 
@@ -415,6 +426,7 @@ func _on_monster_stunned(e: ServerEvent) -> void:
 	if (e as EvMonsterStunned).monster != _monster:
 		return
 	if attacking():
+		_count_interrupt(e.tick)
 		_resolve(e.tick)
 	_end_miss_slow()
 
@@ -426,7 +438,31 @@ func _on_monster_stunned(e: ServerEvent) -> void:
 func _on_connection_changed(e: ServerEvent) -> void:
 	var c := e as EvPlayerConnectionChanged
 	if c.player == _monster and c.status == EvPlayerConnectionChanged.DISCONNECTED and attacking():
+		_count_interrupt(e.tick)
 		_resolve(e.tick)
+
+
+## Story 008: a wind-up or dash ended by a stun or a disconnect is interrupted; a stun during the takedown
+## commit cancels a lunge that already hit (counted landed). Inference: the GDD's telemetry names
+## hit/miss/interrupted only, so a disconnect counts as interrupted; a results-screen ruling would settle it.
+func _count_interrupt(tick: int) -> void:
+	if _lunge != Lunge.TAKEDOWN_COMMIT:
+		_interrupted_ticks.append(tick)
+
+
+## Lunges that hit a survivor this round (story 008).
+func lunges_landed() -> int:
+	return _landed_ticks.size()
+
+
+## Lunges whose dash ended with no hit this round (story 008).
+func lunges_missed() -> int:
+	return _missed_ticks.size()
+
+
+## Lunges stopped in wind-up or dash by a stun or disconnect this round (story 008).
+func lunges_interrupted() -> int:
+	return _interrupted_ticks.size()
 
 
 ## Rule 10: the monster moves at miss_slow_multiplier for miss_slow_s from the miss's resolution tick.

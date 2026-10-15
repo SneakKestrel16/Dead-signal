@@ -229,6 +229,8 @@ func test_in_range_with_sight_accepted_and_cooldown_runs_from_activation() -> vo
 	assert_int(_now()).is_equal(ready - 1)
 	assert_bool(_blackout(OWN)).override_failure_message("on the ready tick").is_true()
 	assert_int(_ma.blackouts_used()).is_equal(2)
+	var stats := _server.registry.view(StateKeys.STATS_ABILITIES, AbilitiesStatsView) as AbilitiesStatsView
+	assert_int(stats.get_blackouts_used()).is_equal(2) ## story 008: the results view reads it
 
 
 # AC-2 ------------------------------------------------------------------------------------------

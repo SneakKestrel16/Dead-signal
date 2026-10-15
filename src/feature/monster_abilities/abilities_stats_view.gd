@@ -14,6 +14,11 @@ func get_lunges_missed() -> int:
 	return 0
 
 
+## Lunges stopped in wind-up or dash (stun or disconnect) before any hit.
+func get_lunges_interrupted() -> int:
+	return 0
+
+
 ## False Signals used.
 func get_false_signals_used() -> int:
 	return 0

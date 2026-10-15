@@ -13,7 +13,7 @@ const LINE_TOTALS: Array[int] = [SurvivorObjectives.ACTIVE_DRIVES, SurvivorObjec
 	SurvivorObjectives.FUSES_REQUIRED, 1, SurvivorObjectives.ACTIVE_DRIVES]
 ## Monster stats keys (rule 26).
 const MONSTER_STATS: Array[StringName] = [&"takedowns", &"eliminations", &"lunges_landed",
-	&"lunges_missed", &"times_stunned", &"form_changes", &"false_signals", &"blackouts"]
+	&"lunges_missed", &"lunges_interrupted", &"times_stunned", &"form_changes", &"false_signals", &"blackouts"]
 
 var outcome: int = -1 ## MatchFlow.Outcome
 var reason: int = -1 ## MatchFlow.Reason
@@ -63,6 +63,7 @@ static func read(registry: StateRegistry, survivor_ids: Array[int], shapeshifter
 			"of": LINE_TOTALS[i], "completed_s": float(done - start) / hz if done >= 0 else -1.0})
 	r.monster = {&"takedowns": down.get_takedowns(), &"eliminations": down.get_eliminations(),
 		&"lunges_landed": abil.get_lunges_landed(), &"lunges_missed": abil.get_lunges_missed(),
+		&"lunges_interrupted": abil.get_lunges_interrupted(),
 		&"times_stunned": def.get_times_monster_stunned(), &"form_changes": face.get_form_changes(),
 		&"false_signals": abil.get_false_signals_used(), &"blackouts": abil.get_blackouts_used()}
 	return r
