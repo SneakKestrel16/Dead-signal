@@ -4,7 +4,8 @@ class_name RosterHandoff extends RefCounted
 ## (RoundServer.start_round builds the round's registry) and the composition root calls publish() to
 ## register the read-only RosterView under StateKeys.PLAYER_ROSTER. Sending the roster to clients and
 ## Loading on every peer belong to Match Flow. end_round() returns the lobby to Waiting after Results
-## or a Cancelled round (AC-LB-27). A roster that cannot lock sends the lobby back to Waiting.
+## or a Cancelled round (AC-LB-27) and advances the session's RotationQueue only for Ended (rule 9).
+## A roster that cannot lock sends the lobby back to Waiting.
 ## Server only. Usage:
 ##   var handoff := RosterHandoff.new(lobby, RosterHandoff.info_from(net), knobs, rng, session_id)
 ##   handoff.handed_off.connect(func(r): server.start_round(modules, knobs); handoff.publish(server.registry))
@@ -20,6 +21,7 @@ var _knobs: Knobs
 var _rng: RandomNumberGenerator
 var _session: String
 var _round_index := 0
+var _queue := RotationQueue.new() ## lives as long as the session (this handoff)
 
 
 ## `info`: Callable(token) -> {player_id, name}; info_from(net) builds it from NetAuthority.
@@ -48,14 +50,23 @@ func publish(registry: StateRegistry) -> void:
 	registry.register_view(StateKeys.PLAYER_ROSTER, &"Lobby", RosterView.new(roster))
 
 
-## After Results or a Cancelled round: every connected player back in Waiting, Ready cleared.
-func end_round() -> void:
+## After Results (`ended` true, forfeits included) or a Cancelled round (`ended` false): every
+## connected player back in Waiting, Ready cleared. Only Ended moves the shapeshifter to the back of
+## the queue; after Cancelled the same token is the shapeshifter again and characters are redealt.
+func end_round(ended: bool) -> void:
+	if ended:
+		_queue.advance()
 	roster = null
 	_lobby.return_to_waiting()
 
 
+## The rotation queue, head first (rule 11: the lobby shows it).
+func queue_order() -> PackedStringArray:
+	return _queue.order()
+
+
 func _on_locked(tokens: PackedStringArray) -> void:
-	var r := Roster.lock(tokens, _info, _session, _round_index + 1, _knobs, _rng)
+	var r := Roster.lock(tokens, _info, _session, _round_index + 1, _knobs, _queue, _rng)
 	if r == null:
 		push_error("RosterHandoff: roster of %d refused (outside %d-%d, unknown or repeated player)" % [
 			tokens.size(), _knobs.lobby.min_players, _knobs.lobby.max_players])

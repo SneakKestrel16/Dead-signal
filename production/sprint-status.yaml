@@ -111,11 +111,11 @@ stories:
     name: "Rotation queue"
     file: "production/epics/lobby-role-assignment/story-007-rotation-queue.md"
     priority: nice-to-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "export-preset-1"
     name: "Export preset (TD-004, carryover)"

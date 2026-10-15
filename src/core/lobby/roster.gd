@@ -2,10 +2,10 @@ class_name Roster extends RefCounted
 ## The locked roster of one round (lobby-role-assignment.md rules 7, 8, 14; AC-LB-01, AC-LB-24). Built
 ## once at countdown 0 and never changed: `player_count` is fixed for the round. Players are named by
 ## player ID, never peer ID (control manifest: peer IDs stay inside NetAuthority; the GDD's "peer ID"
-## predates that rule, AD-108). Phase M1: the shapeshifter is picked uniformly at random with the
-## injected RNG (story 007's rotation queue replaces it); survivors' characters come from
-## CharacterAssignment.deal_m1. Server-side; Match Flow and every reader see it through RosterView.
-## Usage: `var r := Roster.lock(tokens, info, session_id, round_index, knobs, rng)` (null = refused)
+## predates that rule, AD-108). The shapeshifter is the session RotationQueue's pick (rules 8-10);
+## survivors' characters come from CharacterAssignment.deal_m1. Server-side; Match Flow and every
+## reader see it through RosterView.
+## Usage: `var r := Roster.lock(tokens, info, session_id, round_index, knobs, queue, rng)` (null = refused)
 
 const SHAPESHIFTER := &"shapeshifter"
 const SURVIVOR := &"survivor"
@@ -19,9 +19,10 @@ var _players: Dictionary[int, Dictionary] = {}
 
 ## Locks the roster for `tokens` (join order). `info` is Callable(token) -> {player_id: int, name:
 ## String}. Returns null when the count is outside lobby.min_players..max_players (AC-LB-01: 3 or 7
-## refused), or when any token is unknown (player_id -1).
+## refused), or when any token is unknown (player_id -1); a refused lock leaves `queue` untouched.
+## `rng` shuffles Q_1 (the session's first lock) and deals the characters.
 static func lock(tokens: PackedStringArray, info: Callable, session: String, index: int, knobs: Knobs,
-		rng: RandomNumberGenerator) -> Roster:
+		queue: RotationQueue, rng: RandomNumberGenerator) -> Roster:
 	if tokens.size() < knobs.lobby.min_players or tokens.size() > knobs.lobby.max_players:
 		return null
 	var ids: Array[int] = []
@@ -37,7 +38,7 @@ static func lock(tokens: PackedStringArray, info: Callable, session: String, ind
 	r._session_id = session
 	r._round_index = index
 	r._player_count = ids.size()
-	var monster: int = ids[rng.randi_range(0, ids.size() - 1)]
+	var monster: int = ids[tokens.find(queue.pick(tokens, rng))]
 	var survivors: Array[int] = ids.filter(func(id: int) -> bool: return id != monster)
 	var chars := CharacterAssignment.deal_m1(survivors, CharacterDef.IDS, rng)
 	for id in ids:

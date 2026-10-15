@@ -1,12 +1,12 @@
 # Story 007: Shapeshifter rotation queue (post-M1)
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -32,9 +32,9 @@ Post-M1 phase. Instead of a random pick, a shuffled queue of session tokens deci
 
 *From `lobby-role-assignment.md` AC-LB-13, AC-LB-15, AC-LB-16, scoped to this story:*
 
-- [ ] With N connected tokens and a seeded RNG before the first round, Q_1 holds each token exactly once, its order is reproducible from the seed, and its head is the shapeshifter.
-- [ ] With a stable roster of N = 4, 5 and 6, over 2N rounds reaching Ended (one by forfeit), `shapeshifter(r) = Q_1[(r − 1) mod N]` and every token is the shapeshifter exactly twice.
-- [ ] After a Cancelled round the queue is unchanged, the same token is the shapeshifter, and character assignment runs again.
+- [x] With N connected tokens and a seeded RNG before the first round, Q_1 holds each token exactly once, its order is reproducible from the seed, and its head is the shapeshifter.
+- [x] With a stable roster of N = 4, 5 and 6, over 2N rounds reaching Ended (one by forfeit), `shapeshifter(r) = Q_1[(r − 1) mod N]` and every token is the shapeshifter exactly twice.
+- [x] After a Cancelled round the queue is unchanged, the same token is the shapeshifter, and character assignment runs again.
 
 ---
 
@@ -72,7 +72,7 @@ Post-M1 phase. Instead of a random pick, a shuffled queue of session tokens deci
 **Required evidence**:
 - Logic: `tests/unit/lobby/rotation_queue_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (8 tests, plus 15 in `tests/integration/lobby/roster_lock_test.gd`)
 
 ---
 
@@ -80,3 +80,20 @@ Post-M1 phase. Instead of a random pick, a shuffled queue of session tokens deci
 
 - Depends on: Story 002; network-authority story 002 (tokens)
 - Unlocks: Stories 008, 012
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (automated)
+**Deviations** (AD-114):
+- Implemented by gameplay-programmer in a git worktree, in parallel with CI-9 at the designer's request; reviewed and merged by the orchestrator.
+- `RotationQueue` (session-long, owned by `RosterHandoff`): Q_1 is a seeded Fisher-Yates shuffle of the tokens at the first lock (every connected player must be Ready to lock, so this is the GDD's "connected before the first round"); the first present token is the shapeshifter; `advance()` moves that picked token (not necessarily the head) to the back.
+- `RosterHandoff.end_round(ended: bool)` is required, not defaulted: only Ended advances the queue, Cancelled leaves it and redeals characters. A forfeit reaches Ended (rule 9); Match Flow's forfeit-to-Ended mapping is its own story's test.
+- First-time joiners are appended at the next lock whatever the last round's outcome (the GDD formula adds them after Ended): a reading of rule 10.
+- `Roster.lock` takes the queue; a refused lock never touches it (refusal checks run before the pick).
+- `RosterHandoff` round index still counts Cancelled rounds (story 002's test); the GDD's `r` counts Ended rounds only. The queue does not depend on it. Design question recorded, not changed.
+- Deferred: a "next shapeshifter" query for the lobby display while in Waiting (rule 11) is the lobby-screen story's; `queue_order()` is empty before the first lock. Absent and reconnecting tokens are story 008 (AC-LB-17).
+**Test Evidence**: Unit: `tests/unit/lobby/rotation_queue_test.gd`; 5 mutations caught, 1 equivalent (a repeated advance() is a no-op either way). Full suite 479/479.
+**Code Review**: Complete (qa-tester reviewing code and tests; S3s fixed: redeal check could not fail, forfeit recorded; S4 typing and shadowing fixed)

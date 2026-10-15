@@ -74,23 +74,23 @@ func _roles(r: Roster) -> Dictionary:
 # --- AC1: 4-6 players, exactly one shapeshifter ----------------------------------
 
 func test_four_five_and_six_players_hold_one_shapeshifter() -> void:
-	for n in [4, 5, 6]:
-		var r := Roster.lock(_tokens(n), _info, SESSION, 1, _knobs, _rng())
+	for n: int in [4, 5, 6]:
+		var r := Roster.lock(_tokens(n), _info, SESSION, 1, _knobs, RotationQueue.new(), _rng())
 		assert_int(r.player_count()).is_equal(n)
 		assert_dict(_roles(r)).override_failure_message("%d players" % n) \
 			.is_equal({Roster.SHAPESHIFTER: 1, Roster.SURVIVOR: n - 1})
 
 
 func test_three_or_seven_players_are_refused() -> void:
-	for n in [3, 7]:
-		assert_object(Roster.lock(_tokens(n), _info, SESSION, 1, _knobs, _rng())) \
+	for n: int in [3, 7]:
+		assert_object(Roster.lock(_tokens(n), _info, SESSION, 1, _knobs, RotationQueue.new(), _rng())) \
 			.override_failure_message("%d players" % n).is_null()
 
 
 ## Code review 2026-10-14: two tokens naming one player counted it twice.
 func test_two_tokens_naming_one_player_are_refused() -> void:
 	var info := func(t: String) -> Dictionary: return {"player_id": 1, "name": "P1"} if t == "t2" else _info(t)
-	assert_object(Roster.lock(_tokens(4), info, SESSION, 1, _knobs, _rng())).is_null()
+	assert_object(Roster.lock(_tokens(4), info, SESSION, 1, _knobs, RotationQueue.new(), _rng())).is_null()
 
 
 ## Code review 2026-10-14: a player who drops in the lock tick (info gives -1) refuses the roster
@@ -114,15 +114,15 @@ func test_an_unknown_token_is_refused() -> void:
 	var tokens := _tokens(4)
 	tokens[2] = "nobody"
 	var info := func(t: String) -> Dictionary: return {"player_id": -1} if t == "nobody" else _info(t)
-	assert_object(Roster.lock(tokens, info, SESSION, 1, _knobs, _rng())).is_null()
+	assert_object(Roster.lock(tokens, info, SESSION, 1, _knobs, RotationQueue.new(), _rng())).is_null()
 
 
-## M1 picks uniformly: over 4000 seeds each of 4 players is the shapeshifter about 1000 times
-## (850-1150 is about 5.5 standard deviations wide each side).
-func test_m1_shapeshifter_pick_is_uniform_over_seeds() -> void:
+## The first round's pick (Q_1's head, story 007) is uniform: over 4000 seeds each of 4 players is the
+## shapeshifter about 1000 times (850-1150 is about 5.5 standard deviations wide each side).
+func test_first_round_shapeshifter_pick_is_uniform_over_seeds() -> void:
 	var counts := {}
 	for s in 4000:
-		var r := Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, _rng(s))
+		var r := Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, RotationQueue.new(), _rng(s))
 		for id in r.player_ids():
 			if r.entry(id).role == Roster.SHAPESHIFTER:
 				counts[id] = counts.get(id, 0) + 1
@@ -186,7 +186,7 @@ func test_the_roster_is_published_as_a_roster_view() -> void:
 # --- AC3: RosterView is read-only ------------------------------------------------
 
 func test_roster_view_exposes_no_setter_and_no_public_field() -> void:
-	var view := RosterView.new(Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, _rng()))
+	var view := RosterView.new(Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, RotationQueue.new(), _rng()))
 	for m in (view.get_script() as Script).get_script_method_list(): # its own methods, not Object's
 		assert_bool(String(m.name).begins_with("set_")).override_failure_message(m.name).is_false()
 	for p in view.get_property_list():
@@ -195,7 +195,7 @@ func test_roster_view_exposes_no_setter_and_no_public_field() -> void:
 
 
 func test_roster_entries_are_copies() -> void:
-	var r := Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, _rng())
+	var r := Roster.lock(_tokens(4), _info, SESSION, 1, _knobs, RotationQueue.new(), _rng())
 	var id := r.player_ids()[0]
 	r.entry(id).role = &"hacked"
 	assert_str(r.entry(id).role).is_not_equal("hacked")
@@ -211,7 +211,7 @@ func test_after_results_everyone_is_back_in_waiting_with_ready_cleared() -> void
 			gone = id
 	_lobby.leave("t%d" % gone) # a survivor whose grace expired mid-round
 	_lobby.join("t9") # joined the dormant lobby mid-match
-	_handoff.end_round()
+	_handoff.end_round(true)
 	assert_str(_lobby.state()).is_equal(LobbyState.WAITING)
 	var expected := ["t1", "t2", "t3", "t4", "t5", "t9"]
 	expected.erase("t%d" % gone)
@@ -224,7 +224,7 @@ func test_after_results_everyone_is_back_in_waiting_with_ready_cleared() -> void
 
 func test_after_a_cancelled_round_the_next_lock_is_round_two() -> void:
 	_lock(4)
-	_handoff.end_round() # Cancelled: same return path
+	_handoff.end_round(false) # Cancelled: same return path
 	_tick += 1
 	_lobby.server_tick(_tick)
 	assert_str(_lobby.state()).is_equal(LobbyState.WAITING) # Ready cleared: no countdown starts
