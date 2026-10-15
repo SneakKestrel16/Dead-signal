@@ -33,7 +33,10 @@ Each screenshot is the drawn frame, saved after `RenderingServer.frame_post_draw
     --quit-after 600 -- --port=24742 --count=5 --view=survivor --bot=look --light --shot-at=560 --shots=<tmp>
 ```
 
-## Known gap
+## Known gap (resolved by AD-217, 2026-10-15)
+
+Resolved: the client names the map index and the server translates it (see
+`predicted-hold-bar-evidence.md`, "Accepted Start, bar completes"). The original note:
 
 The server rejects every non-door hold Start a client sends. `HoldService._resolve` requires
 `InputFrame.interact_target` to equal the HoldService net id under the server's ray

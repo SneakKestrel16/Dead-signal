@@ -85,11 +85,13 @@ func test_rejected_start_cancels_at_the_ack_without_progress_flash() -> void:
 		assert_float(v).is_less_equal(predicted)
 
 
-func test_hold_on_another_interactable_counts_as_rejection() -> void:
-	var press := _frame(true)
+## AD-217: a press names a map index; the server's hold carries a net id that differs from it (a hiding
+## spot's Hide or Search). Any hold at the ack is this press's (a press ends the old hold).
+func test_map_index_press_follows_a_hold_whose_net_id_differs() -> void:
+	var press := _frame(true, 3)
 	_bar.advance(press, true, DURATION_S)
-	_bar.on_snapshot(_own(press.seq, NET_ID + 1, 1))
-	assert_bool(_bar.visible).is_false()
+	_bar.on_snapshot(_own(press.seq, 42, 1))
+	assert_bool(_bar.visible).is_true()
 
 
 func test_accepted_start_follows_the_server_plus_unacked_ticks() -> void:

@@ -4,9 +4,9 @@ class_name PredictedHoldBar extends ProgressBar
 ## this bar never feeds anything back (manifest: owner_timed_hold).
 ## It appears on the press tick when the local target query found a target, so it does not wait a
 ## round trip. Until the server acknowledges the press seq it advances one tick per physics tick. The
-## first own snapshot whose seq acknowledges the press decides: no hold (or a hold on another
-## interactable) hides it with the value it had, so a rejection never shows server progress; a hold
-## sets it to the server's elapsed ticks plus the frames sent since that seq. Release hides it at once
+## first own snapshot whose seq acknowledges the press decides: no hold hides it with the value it had,
+## so a rejection never shows server progress; a hold (necessarily this press's: a press always ends the
+## old one, HoldService rule 16; the press names a map index, not a net id, AD-217) sets it to the server's elapsed ticks plus the frames sent since that seq. Release hides it at once
 ## (the server stops every hold on release, ADR-0008 §3).
 ## Usage, once per physics tick on the owner's client:
 ##   bar.advance(frame, local_target_found, target_duration_s)   # after OwnerPredictor.predict(frame)
@@ -15,8 +15,6 @@ class_name PredictedHoldBar extends ProgressBar
 var _ticks_per_s: int
 var _was_down := false
 var _active := false
-## Net id the press targeted, or -1 for a body target (a handle the server resolves: any hold matches).
-var _net_id := -1
 var _press_seq := 0
 var _last_seq := 0
 var _elapsed := 0
@@ -49,7 +47,6 @@ func advance(f: InputFrame, target_found: bool, duration_s: float) -> void:
 		var ticks := roundi(duration_s * _ticks_per_s)
 		if target_found and ticks > 0:
 			_active = true
-			_net_id = -1 if f.target_is_body else f.interact_target
 			_press_seq = f.seq
 			_elapsed = 0
 			_duration = ticks
@@ -64,8 +61,7 @@ func advance(f: InputFrame, target_found: bool, duration_s: float) -> void:
 func on_snapshot(own: Dictionary) -> void:
 	if not _active or own.is_empty() or own.seq < _press_seq:
 		return
-	var held: int = own.get("hold_net_id", -1)
-	if held < 0 or (_net_id >= 0 and held != _net_id):
+	if own.get("hold_net_id", -1) < 0:
 		_hide()
 		return
 	_elapsed = own.hold_elapsed_ticks + maxi(_last_seq - own.seq, 0)

@@ -248,8 +248,13 @@ func _physics_process(_delta: float) -> void:
 	if input != null and scripted == null and Input.is_action_just_pressed(&"flashlight"):
 		toggle_flashlight()
 	var f := _frame()
-	predictor.predict(f)
+	# AD-217: interact_target is the map index the server's ray must also pick. Stamped before predict(),
+	# which sends the frame, so from the pre-move position; the server's Holds step aims after the move.
+	# Inference: one tick of movement rarely changes the picked object; a mismatch at an object's edge only
+	# costs that press (rejected, bar hides at the ack).
 	var t := local_target(f.yaw, f.pitch)
+	f.interact_target = t
+	predictor.predict(f)
 	bar.advance(f, t >= 0, duration_of(t))
 	bar.on_snapshot(predictor.last_own)
 	if not predictor.last_own.is_empty():

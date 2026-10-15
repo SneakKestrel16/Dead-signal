@@ -52,3 +52,21 @@ Caveats:
   no `interact_target` net id (see `client-round-scene-evidence.md`, Known gap), so the bar hides at the
   ack. The measured delay is the same for an accepted Start: the bar appears on the press tick from the
   local target query alone.
+
+## Accepted Start, bar completes (AD-217, 2026-10-15)
+
+AD-217 makes a non-body `interact_target` the map interactable index; the client now stamps it, and the
+server picks the first eligible hold at that object. Rerun (real time, not movie mode; host on
+`--port=24790`, which is now outside the manual-capture range 30000-30999: use that range for reruns):
+`round_view.tscn --windowed --quit-after 3000 -- --count=5 --view=0 --bot=hold --light --latency-ms=150`.
+
+```text
+PRESS frame 365 target 27
+BAR frame 366: 1 drawn frames after the press
+SERVER HOLD net id 45 at frame 391 (bar visible true)
+BAR FULL at frame 485 (server hold net id 45)
+```
+
+The server accepted the Start on map index 27 as hold net id 45 (the spot's Hide; index and net id
+differ), the bar stayed visible at the ack and filled. Frame: `client-round-scene/hold-bar-full-frame485.png`
+(the full bar under the view centre). The caveat above that the press was not valid no longer applies.

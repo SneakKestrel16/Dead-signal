@@ -2,8 +2,8 @@
 # over real ENet, predicts its own body onto the greybox floor at the server's spawn, and draws every remote
 # body it is sent, by handle, in its appearance colour; a handle missing from the newest snapshot (a hidden
 # survivor, a body out of scope) is not drawn; a flashlight toggled on one client shows its cone on another.
-# The hold bar on a real hiding spot is shown by the round_view capture (production/qa/evidence/
-# predicted-hold-bar-evidence.md): a real hold needs the aimed walk the capture's bot does.
+# A survivor aimed at a hiding spot starts its Hide hold through the map index (AD-217); the bar's look is
+# the round_view capture (production/qa/evidence/predicted-hold-bar-evidence.md).
 extends GdUnitTestSuite
 
 const WAIT_S := 8.0
@@ -177,6 +177,31 @@ func test_five_clients_join_composed_round_predict_and_see_each_other() -> void:
 	survivor.toggle_flashlight()
 	assert_bool(survivor.light.is_on()).is_true()
 	await _until(_cone_seen.bind(survivor), "another client shows the flashlight cone")
+	# AD-217: the survivor aims at a hiding spot and presses; its frame names the map index, and the server
+	# starts the spot's Hide hold (a net id other than the index) and the client's bar follows it.
+	var spot := -1
+	var targets := map.interactables()
+	for i in targets.size():
+		if targets[i] is MapMarker and (targets[i] as MapMarker).type == &"hiding":
+			spot = i
+			break
+	var sid := survivor.net.local_player_id
+	var point := (targets[spot] as MapMarker).position + Vector3.UP * _knobs.controller.capsule_height_m * 0.5
+	_c.bodies[sid].global_position = (targets[spot] as MapMarker).position + Vector3(0.0, 0.0, 1.0)
+	await _until(_all_settled, "the survivor's predicted body at the spot")
+	var eye := survivor.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
+	var flat := Vector2(point.x - eye.x, point.z - eye.z)
+	survivor.scripted.yaw = atan2(-flat.x, -flat.y)
+	survivor.scripted.pitch = atan2(point.y - eye.y, flat.length())
+	assert_int(survivor.local_target(survivor.scripted.yaw, survivor.scripted.pitch)).is_equal(spot)
+	survivor.scripted.interact = true
+	await _until(func() -> bool: return not _c.holds.hold_of(sid).is_empty(), "the server starts the hiding hold")
+	var held: int = _c.holds.hold_of(sid).net_id
+	assert_bool(_c._ids_at[spot].has(held) and held != spot).is_true()
+	assert_object(_c.holds._items[held]).is_instanceof(HidingHold)
+	await _until(func() -> bool: return survivor.predictor.last_own.get("hold_net_id", -1) == held,
+			"the survivor's snapshot shows the hold")
+	assert_bool(survivor.bar.visible).is_true()
 
 
 func _all_settled() -> bool:

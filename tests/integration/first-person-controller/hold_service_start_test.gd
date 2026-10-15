@@ -24,10 +24,11 @@ var _tick := 0
 class Stub extends Interactable:
 	var log: Array[String] = []
 	var allowed := true
+	var only := -1 ## >= 0: only this actor is eligible (a hiding spot's Hide vs Search)
 	var stored_s := 0.0
 
-	func eligible(_actor: int) -> bool:
-		return allowed
+	func eligible(actor: int) -> bool:
+		return allowed and (only < 0 or actor == only)
 
 	func start_progress_s() -> float:
 		return stored_s
@@ -388,3 +389,45 @@ func test_frames_of_returns_a_catch_up_ticks_frames_oldest_first_and_the_repeat_
 	sm.detach()
 	runner.free()
 	net.free()
+
+
+# --- AD-217: a non-body target is a map interactable index ----------------------------
+
+const SPOT := 0 ## map index of a hiding spot whose holds sit at other net ids
+
+
+## Two holds at map index SPOT: Hide for A (the survivor), Search for B (the monster).
+func _spot() -> Array[Stub]:
+	_stub() # net id 0 = SPOT, eligible to all: the map index alone must not name a hold
+	var hide := _stub()
+	hide.only = A
+	var search := _stub()
+	search.only = B
+	_holds.set_ids_at(func(idx: int) -> Array: return [hide.net_id, search.net_id] if idx == SPOT else [])
+	return [hide, search]
+
+
+func test_map_index_starts_the_first_eligible_hold_at_that_object() -> void:
+	var s := _spot()
+	_press(A, SPOT)
+	_press(B, SPOT)
+	assert_int(_holds.hold_of(A).net_id).is_equal(s[0].net_id)
+	assert_int(_holds.hold_of(B).net_id).is_equal(s[1].net_id)
+	assert_array(s[0].log).is_equal(["start:%d" % A])
+	assert_array(s[1].log).is_equal(["start:%d" % B])
+
+
+func test_map_index_the_server_ray_does_not_pick_is_rejected() -> void:
+	var s := _spot()
+	_aimed[A] = SPOT + 1
+	_press(A, SPOT)
+	assert_dict(_holds.hold_of(A)).is_empty()
+	assert_array(s[0].log).is_empty()
+
+
+func test_object_with_only_ineligible_holds_is_rejected() -> void:
+	var s := _spot()
+	_centres[3] = Vector3.ZERO # a third actor nobody's hold is for
+	_press(3, SPOT)
+	assert_dict(_holds.hold_of(3)).is_empty()
+	assert_array(s[0].log + s[1].log).is_empty()

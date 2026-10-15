@@ -107,6 +107,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sd = SurvivorDefense.new()
 	ma = MonsterAbilities.new()
 	holds.set_barred(_barred)
+	holds.set_ids_at(_ids_of)
 	downing.set_roster(survivors, monster)
 	downing.set_positions(_position)
 	downing.set_hidden(sd.is_hidden)
@@ -334,15 +335,15 @@ func _hold_sight(actor: int, i: Interactable) -> bool:
 	return queries.clear_line(_eye(actor), i.point, i.net_id, rules, _space(), _rid(actor))
 
 
-## The hold net id the server's own view ray picks: the claimed one when it sits at the picked map object
-## (a door also carries Barricade/Remove/Break; a hiding spot Hide and Search), else the first there.
+## The map interactable index the server's own view ray picks (AD-217: what a client's interact_target names).
 func _aim(actor: int) -> int:
-	var idx := queries.interactable_on_ray(_eye(actor), view.server_dir(actor), _centre(actor), rules, _space(), _rid(actor))
-	var ids: Array = _ids_at.get(idx, [])
-	if ids.is_empty():
-		return -1
-	var want := sm.frame_of(actor).interact_target
-	return want if ids.has(want) else ids[0]
+	return queries.interactable_on_ray(_eye(actor), view.server_dir(actor), _centre(actor), rules, _space(), _rid(actor))
+
+
+## HoldService ids_at: the hold net ids at map interactable `idx` (a door also carries Barricade/Remove/Break;
+## a hiding spot Hide and Search), in net id order.
+func _ids_of(idx: int) -> Array:
+	return _ids_at.get(idx, [])
 
 
 ## Builds _ids_at: each registered interactable belongs to the nearest map interactable's point.

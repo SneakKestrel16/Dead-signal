@@ -7,7 +7,8 @@ extends Node3D
 ## the others stand still. Mouse look and WASD drive the shown client unless --bot is given.
 ## --latency-ms puts client 0 behind a UdpLink with that round trip (half each way) on port + 100.
 ## --bot=hold walks client 0 to the nearest hiding spot, aims at it and holds interact; it prints the drawn
-## frame of the press and of the first frame the hold bar is visible (the CI-16 AC1 capture).
+## frame of the press, of the first frame the hold bar is visible (the CI-16 AC1 capture) and of the
+## first frame it is full (the server accepted the Start, AD-217).
 ## --bot=look turns the shown client to face the nearest remote body it draws (the screenshots).
 ## --bot=walk walks a survivor from the A1 spawn through the A1-H-S archway into H-S1 (zone A -> link) and
 ## saves zone_a.png, crossfade.png (half a crossfade after the border) and link.png (FM-12 ambience overlay).
@@ -16,7 +17,7 @@ extends Node3D
 ## --shots it saves windup.png (mid wind-up), dash.png (just after it) and hit.png (the hit-stop), as the
 ## shown client's LungePresenter shows them. Use --view=survivor.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
-## --shots=<dir> saves press.png and bar.png (bot) and view.png at drawn frame --shot-at=N.
+## --shots=<dir> saves press.png, bar.png and full.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
 ## client's spawn, the shapeshifter beside one survivor (its target) in the middle, and turns the shown client
 ## to them. With --disguise the shapeshifter then faces its target and requests that survivor's form until
@@ -192,6 +193,11 @@ func _bot(c: RoundClient) -> void:
 		set_meta(&"acked", true)
 		print("SERVER HOLD net id %d at frame %d (bar visible %s)" % [c.predictor.last_own.hold_net_id,
 				Engine.get_frames_drawn(), c.bar.visible])
+	if has_meta(&"acked") and not has_meta(&"full") and c.bar.visible and c.bar.value >= 1.0:
+		set_meta(&"full", true)
+		_shot("full")
+		print("BAR FULL at frame %d (server hold net id %d)" % [Engine.get_frames_drawn(),
+				c.predictor.last_own.get("hold_net_id", -1)])
 
 
 ## Saves this frame once it is drawn (the viewport texture read in _process still holds the last frame).

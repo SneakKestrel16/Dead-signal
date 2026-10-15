@@ -15,12 +15,15 @@ class_name HoldService extends RefCounted
 ##   frames(actor) -> Array[InputFrame]          frames consumed this tick, oldest first (the repeat when starved)
 ##   centre_of(actor) -> Vector3                 capsule centre
 ##   sight(actor, i: Interactable) -> bool       eye to point clear (MapQueries.clear_line on the server)
-##   aim(actor) -> int                           net id the server's own view ray picks (MapQueries.interactable_on_ray
-##                                               with ViewState.server_dir), -1 if none; a net-id Start must match it
+##   aim(actor) -> int                           map interactable index the server's own view ray picks
+##                                               (MapQueries.interactable_on_ray with ViewState.server_dir), -1 if
+##                                               none; a non-body Start's interact_target must match it (AD-217)
 ##   body_target(actor, handle) -> int           net id on the body the actor's handle names, or -1
 ##   is_shapeshifter(actor) -> bool              the actor's role; unset = nobody (no fake holds)
 ##   barred(actor) -> bool                       set_barred: the actor may not interact at all, fakes
 ##                                               included (borrowed-face.md rule 8: Transforming); unset = never
+##   ids_at(index) -> Array                      set_ids_at: hold net ids at map interactable `index` (a hiding
+##                                               spot carries Hide and Search); unset = [index] (doors register first)
 ## Usage:
 ##   var holds := HoldService.new(knobs, players, frames, centre_of, sight, aim)
 ##   holds.register(slot); holds.server_tick(tick)   # from the Holds step
@@ -36,6 +39,7 @@ var _aim: Callable
 var _body_target: Callable
 var _is_shapeshifter: Callable
 var _barred: Callable
+var _ids_at: Callable
 var _items: Array[Interactable] = []
 ## actor -> {"item": Interactable, "elapsed": int, "fake": bool}
 var _holds: Dictionary[int, Dictionary] = {}
@@ -61,6 +65,12 @@ func _init(knobs: Knobs, players: Callable, frames: Callable, centre_of: Callabl
 ## running hold, real or fake, cancels with &"ineligible" on the next Holds step.
 func set_barred(barred: Callable) -> void:
 	_barred = barred
+
+
+## Injects `ids_at(index) -> Array` (see the class comment): a non-body Start on map index `index` takes
+## the first net id there the actor may start (eligible, or a shapeshifter's fake).
+func set_ids_at(ids_at: Callable) -> void:
+	_ids_at = ids_at
 
 
 ## Registers `i` under the next net id (map interactables first, in map order) and returns it.
@@ -154,12 +164,10 @@ static func rotated(ids: Array, tick: int) -> Array[int]:
 func _try_start(actor: int, f: InputFrame) -> void:
 	if _is_barred(actor):
 		return
-	var item := _resolve(actor, f)
+	var item := _resolve(actor, f) ## eligible, or a fake (§6): a fake asks the owner nothing
 	if item == null:
 		return
-	var fake: bool = item.fakeable and _is_shapeshifter.is_valid() and _is_shapeshifter.call(actor)
-	if not fake and not item.eligible(actor):
-		return ## a shapeshifter on a non-fakeable target is refused here, by its owner (§6)
+	var fake := _fakes(actor, item)
 	var centre: Vector3 = _centre_of.call(actor)
 	if centre.distance_to(item.point) > item.range_m + RANGE_EPS_M:
 		return ## Start is strict range_m; tolerance is for continuation (story 009)
@@ -186,14 +194,34 @@ func _try_start(actor: int, f: InputFrame) -> void:
 
 
 func _resolve(actor: int, f: InputFrame) -> Interactable:
-	var id := f.interact_target
 	if f.target_is_body:
-		id = _body_target.call(actor, id) if _body_target.is_valid() else -1
-	elif _aim.call(actor) != id:
+		var body := _item(_body_target.call(actor, f.interact_target) if _body_target.is_valid() else -1)
+		return body if _startable(actor, body) else null
+	# AD-217: a non-body target is a map interactable index; clients never learn hold net ids.
+	var idx := f.interact_target
+	if idx < 0 or _aim.call(actor) != idx:
 		return null ## GDD rule 10: the Start resolves against the server's ray, not the client's claim
-	if id < 0 or id >= _items.size():
-		return null
-	return _items[id]
+	var ids: Array = _ids_at.call(idx) if _ids_at.is_valid() else [idx]
+	for id: int in ids:
+		var item := _item(id)
+		# Inference: the first startable id wins, a fake included; no object yet carries both a fakeable
+		# and a real hold for one actor. A designer ruling on such an object would settle the order.
+		if _startable(actor, item):
+			return item
+	return null
+
+
+## A shapeshifter on a non-fakeable target is refused here, by its owner's eligible() (§6).
+func _startable(actor: int, item: Interactable) -> bool:
+	return item != null and (_fakes(actor, item) or item.eligible(actor))
+
+
+func _fakes(actor: int, item: Interactable) -> bool:
+	return item.fakeable and _is_shapeshifter.is_valid() and _is_shapeshifter.call(actor)
+
+
+func _item(id: int) -> Interactable:
+	return _items[id] if id >= 0 and id < _items.size() else null
 
 
 ## ADR-0008 §4: the hold ends this tick when the actor is no longer eligible (the owner's state changed:
