@@ -385,14 +385,20 @@ func advance(delta: float) -> void:
 			_gestures.erase(g)
 
 
+## Whether ping, warning ping and the wheel take input: actions live and not spectating (pings-and-callouts.md
+## rule 7: a spectator has no wheel and no ping; hud.md HUD States, story hud-results/004).
+func can_act() -> bool:
+	return contexts.allows_actions() and not _model.spectating()
+
+
 func _process(delta: float) -> void:
 	if is_visible_in_tree():
-		if Input.is_action_just_pressed(&"ping") and contexts.allows_actions():
+		if Input.is_action_just_pressed(&"ping") and can_act():
 			ping()
-		if Input.is_action_just_pressed(&"warning_ping") and contexts.allows_actions():
+		if Input.is_action_just_pressed(&"warning_ping") and can_act():
 			warn()
 		scrollback = Input.is_action_pressed(&"feed_scrollback") and contexts.allows_actions()
-		if Input.is_action_just_pressed(&"callout_wheel") and contexts.allows_actions():
+		if Input.is_action_just_pressed(&"callout_wheel") and can_act():
 			open_wheel()
 		elif Input.is_action_just_released(&"callout_wheel"):
 			close_wheel(true)

@@ -71,7 +71,7 @@ This epic is complete when:
 | 001 | HudModel, UiLayers and the full InputContextStack | Logic | Complete | ADR-0014 |
 | 002 | Clock, phase, roster, objective checklist and crosshair | UI | In Review | ADR-0014 |
 | 003 | Interaction prompt, hold ring, reject label and input glyphs | UI | In Review | ADR-0014 |
-| 004 | Own-state vignettes, own bleed-out and the HUD state table | UI | Ready | ADR-0014 |
+| 004 | Own-state vignettes, own bleed-out and the HUD state table | UI | In Review | ADR-0014 |
 | 005 | Edge cues, flinch-off pulse, taser count and world progress bars | UI | In Review | ADR-0014 |
 | 006 | Shapeshifter HUD and survivor-side absence | UI | In Review | ADR-0014 |
 | 007 | Feed cap, opaque backing, marker cap, shapes and wheel stick steering | UI | In Review | ADR-0014 |

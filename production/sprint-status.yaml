@@ -210,10 +210,10 @@ stories:
     name: "Own-state vignettes, own bleed-out and the HUD state table"
     file: "production/epics/hud-results/story-004-own-state-and-hud-states.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-8"
     name: "Results screen"

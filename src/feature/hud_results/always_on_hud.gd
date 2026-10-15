@@ -9,8 +9,8 @@ class_name AlwaysOnHud extends Control
 ## The spec's Tuning Knobs HUD scale, Show roster and Reduced motion are per-player settings, so they are
 ## properties here, not data/knobs: knobs are hashed into the join version (ADR-0006 §7) and must match on
 ## every peer. A settings store (Accessibility Options) sets them; until then they keep the hud.md defaults.
-## Not drawn yet (no data in HudModel): the Wounded state, the Hidden state's crosshair hide, and the
-## final-30-second ticking layer (audio event system).
+## Not drawn yet (no data in HudModel): the Wounded state and the final-30-second ticking layer (audio event
+## system). Story 004: the crosshair also hides while hidden (HudModel.own_hidden).
 ## Usage (client composition root):
 ##   hud_layer.add_child(AlwaysOnHud.new(hud_model, multiplayer.get_unique_id()))
 
@@ -133,7 +133,7 @@ func refresh() -> void:
 	_roster()
 	_checklist()
 	var own := _model.roster_state(_own_id)
-	crosshair.visible = own == HudModel.LIFE_HEALTHY or own == HudModel.LIFE_UNKNOWN
+	crosshair.visible = (own == HudModel.LIFE_HEALTHY or own == HudModel.LIFE_UNKNOWN) and not _model.own_hidden() 			and not _model.spectating()
 	_layout()
 
 

@@ -59,6 +59,10 @@ extends Node3D
 ## walks to the nearest survivor watching it, and once the face is available changes into it; that survivor
 ## then tases it. Shots of its HUD (S1-S5): trueform.png (Lunge cooling, observation filling), transforming.png
 ## (S4 mid-bar), disguised.png (form cooldown) and stunned.png (S5).
+## --bot=ownstate (story hud-results/004; --count=5 --view=survivor): the shown survivor walks to the nearest
+## hiding spot and hides (hidden.png), leaves, then the shapeshifter walks at it and lunges (seized.png in the
+## commit, downed.png once Downed); everyone else then walks away so no camping slow stretches the bleed-out,
+## and once it bleeds out the shown client spectates (spectating.png), then the view quits.
 ## --bot=warn (story pings-and-callouts/011; --count=5 --view=survivor): the shown client faces the true-form
 ## body it draws (else the nearest) and warning-pings it, another survivor warning-pings where it looks, two
 ## call out. Shots: warning.png (warning markers), expired.png (feed past its 8 s), scrollback.png (the
@@ -181,6 +185,9 @@ func _process(delta: float) -> void:
 	_scare_shots()
 	_edge_shots()
 	var c0 := _shown
+	if c0 != null and _own_step == 4:
+		_own_bot(c0) # a spectator's own body is not "spawned" (see _own_bot)
+		return
 	if c0 == null or not c0.is_spawned():
 		return
 	if _args.has("yaw"):
@@ -215,6 +222,8 @@ func _process(delta: float) -> void:
 		_shifter_bot(c0)
 	elif _args.get("bot", "") == "conform":
 		_conform_bot(c0)
+	elif _args.get("bot", "") == "ownstate":
+		_own_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -511,7 +520,7 @@ func _seed_roster() -> void:
 		if not _clients[i].is_spawned():
 			return
 		if not _role(_clients[i]):
-			names[_clients[i].multiplayer.get_unique_id()] = "View%d" % i
+			names[_clients[i].net.local_player_id] = "View%d" % i
 	set_meta(&"roster", true)
 	_shown.hud_model.set_survivors(names)
 	(_shown.hud.get_node(^"AlwaysOnHud") as AlwaysOnHud).show_roster = not _args.has("no-roster")
@@ -1020,3 +1029,92 @@ func _shifter_bot(c0: RoundClient) -> void:
 				_shot("stunned")
 				print("HUD stunned: %.1f s" % m.stun_remaining_s())
 				_shifter_step = 4
+
+
+## --bot=ownstate step: 0 hide, 1 hidden then leave, 2 lunged (Seized, then Downed), 3 Downed, 4 spectating.
+var _own_step := 0
+var _own_frame := -1
+
+
+func _own_bot(c0: RoundClient) -> void:
+	var f := Engine.get_frames_drawn()
+	var m := c0.hud_model
+	var st := m.hud_state()
+	var always := c0.hud.get_node(^"AlwaysOnHud") as AlwaysOnHud
+	var own := c0.hud.get_node(^"OwnStateHud") as OwnStateHud
+	match _own_step:
+		0:
+			var feet := c0.body.global_position
+			if _target == Vector3.INF:
+				var best := INF
+				for t in _map.interactables():
+					var mk := t as MapMarker
+					if mk != null and mk.type == &"hiding" and feet.distance_to(mk.position) < best:
+						best = feet.distance_to(mk.position)
+						_target = mk.position
+			var point := _target + Vector3.UP * _knobs.controller.capsule_height_m * 0.5
+			var eye := feet + Vector3.UP * _knobs.controller.eye_height_m
+			var flat := Vector2(point.x - eye.x, point.z - eye.z)
+			c0.scripted.yaw = atan2(-flat.x, -flat.y)
+			c0.scripted.pitch = atan2(point.y - eye.y, flat.length())
+			var near := flat.length() < _knobs.objectives.interact_range_m * 0.6
+			c0.scripted.move = Vector2.ZERO if near else Vector2(0, 1)
+			c0.scripted.interact = near and c0.body.velocity.length() < 0.05
+			if m.own_hidden():
+				c0.scripted.interact = false
+				_own_step = 1
+				_own_frame = f
+		1:
+			if f == _own_frame + 30:
+				_shot("hidden")
+				print("HUD hidden: state %s prompt '%s' crosshair %s" % [st, c0.interaction.prompt_text(),
+						always.crosshair.visible])
+			c0.scripted.interact = f > _own_frame + 40
+			if not m.own_hidden():
+				c0.scripted.interact = false
+				_own_step = 2
+				print("LEFT the hiding spot at frame %d" % f)
+		2:
+			_lunge_bot(c0)
+			if st == HudModel.STATE_SEIZED and not has_meta(&"seized_at"):
+				set_meta(&"seized_at", f)
+			if has_meta(&"seized_at") and f == get_meta(&"seized_at") + 20:
+				_shot("seized")
+				print("HUD seized: word '%s' vignette %.2f z4 '%s'" % [own.word(), own.vignette(), c0.interaction.shown()])
+			if st == HudModel.STATE_DOWNED:
+				_own_step = 3
+				_own_frame = f
+		3:
+			for o in _clients:
+				if o == c0:
+					continue
+				if o.scripted == null:
+					o.scripted = InputFrame.new()
+				var away := o.body.global_position - c0.body.global_position
+				o.scripted.yaw = atan2(-away.x, -away.z)
+				o.scripted.move = Vector2(0, 1) if f < _own_frame + 600 else Vector2.ZERO
+			if f == _own_frame + 30:
+				_shot("downed")
+				print("HUD downed: word '%s' bleed '%s' z4 '%s' crosshair %s" % [own.word(), own.bleed_text(),
+						c0.interaction.shown(), always.crosshair.visible])
+			if (f - _own_frame) % 300 == 0:
+				print("BLEED %.1f s at frame %d" % [m.bleed_out_s(), f])
+			if m.spectating():
+				_own_step = 4
+				_own_frame = f
+		4:
+			# RoundClient has no spectator camera yet: OwnerPredictor keeps replaying the spectator's never-acked
+			# inputs on top of the watched survivor's entry, so the body falls away below the map. For the shot
+			# the head is put on the entry's eye, facing its yaw (manual capture only; the client bug is reported).
+			if c0.predictor.last_own.has("pos"):
+				c0.head.global_position = c0.predictor.last_own["pos"] + Vector3.UP * _knobs.controller.eye_height_m
+				c0.scripted.yaw = c0.predictor.last_own["yaw"]
+				c0.scripted.pitch = -0.1
+			if m.watched() >= 0 and not has_meta(&"spect_at"):
+				set_meta(&"spect_at", f)
+			if has_meta(&"spect_at") and f == get_meta(&"spect_at") + 30:
+				_shot("spectating")
+				print("HUD spectating: '%s' watched %d can_act %s z4 '%s'" % [own.spectating_text(), m.watched(),
+						c0.ping_hud.can_act(), c0.interaction.shown()])
+			if has_meta(&"spect_at") and f == get_meta(&"spect_at") + 40:
+				get_tree().quit()

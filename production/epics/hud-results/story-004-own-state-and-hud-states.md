@@ -1,7 +1,7 @@
 # Story 004: Own-state vignettes, own bleed-out and the HUD state table
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@ H15 and H16 and the HUD States table: Seized, Downed, shocked, hidden and specta
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/own-state-and-hud-states/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created: `production/qa/evidence/own-state-and-hud-states-evidence.md` (lead sign-off pending)
 
 ---
 
@@ -71,3 +71,7 @@ H15 and H16 and the HUD States table: Seized, Downed, shocked, hidden and specta
 
 - Depends on: Stories 001, 002
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged edff945..d7381a9. OwnStateHud (vignette edge bands, own bleed-out takes Z4, Seized and shocked rows, hidden prompt "Leave", spectating hides crosshair and blocks ping/warning/wheel; feed scrollback stays). HudModel hud_state(), spectating(), watched(), bleed-out and rescue values. SERVER: SurvivorHudFeed sends EventBatch.OWN_LIFE {life, rescue_s} per survivor on change (rescue in tenths), diffed once per tick, monster gets nothing; batch_extras 12. BUG FIX outside story: round_client passed the network peer id as own player id to AlwaysOnHud (HUD-2 crosshair never hid on own Downed); now net.local_player_id. DEFECTS NOT FIXED: spectating 3D view is black (no spectator camera; OwnerPredictor replays the spectator inputs on the watched body, which falls below the map); TaserCount still shows the watched survivor kit while spectating (state table says no kit). INFERENCE: shocked lasts stun_root_s; vignette is placeholder bands, not the P11 shader. Shocked, rescue ring and the 250 ms transition are unit-tested only. 12 unit tests; 3 mutations caught. Full suite 1500/1500.

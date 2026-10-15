@@ -51,6 +51,10 @@ const PROGRESS := &"Progress"
 ## {ready: {lunge, false_signal, blackout, form}, transform_end, stun_end, immune_end, faces: [[survivor,
 ## observed_ticks, appearance], ...]}, all times server ticks. Sent to the shapeshifter's peer only, on change.
 const MONSTER_HUD := &"MonsterHud"
+## Entry type of a survivor's own life state (SurvivorHudFeed.entries, story hud-results/004, ADR-0004 §5):
+## {life: Downing.LifeState, rescue_s: float (tenths)}. Sent to that survivor's stream only (its spectators
+## included), on change. The roster has no Seized state, so this is the only carrier of the victim's Seized.
+const OWN_LIFE := &"OwnLife"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

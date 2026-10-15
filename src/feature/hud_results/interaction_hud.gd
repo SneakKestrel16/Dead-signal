@@ -30,8 +30,12 @@ const PROMPT_BELOW_PX := 60.0
 const LABEL_BELOW_PX := 100.0
 const FONT_PX := 22
 
-## True while a bleed-out or transforming bar owns Z4 (hud.md Z4 rule).
+## True while a bleed-out or transforming bar owns Z4 (hud.md Z4 rule), or nothing may show there (Seized,
+## spectating; story 004).
 var z4_taken := false
+## When not empty, the only prompt shown ({text, hold}), whatever the target (hud.md HUD States, Hidden: the
+## prompt shows "Leave" only; set by OwnStateHud, story 004).
+var only_prompt: Dictionary = {}
 
 var _glyphs: InputGlyphs
 var _contexts: InputContextStack
@@ -126,7 +130,7 @@ func on_hold_ended(cause: StringName) -> void:
 func step(delta: float) -> void:
 	_label_s = maxf(_label_s - delta, 0.0)
 	_end_s = maxf(_end_s - delta, 0.0)
-	var p: Dictionary = _prompt_of.call()
+	var p: Dictionary = only_prompt if not only_prompt.is_empty() else _prompt_of.call()
 	var was := _prompt
 	_prompt = ""
 	if not p.is_empty():

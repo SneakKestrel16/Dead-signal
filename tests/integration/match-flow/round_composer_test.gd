@@ -209,7 +209,8 @@ func test_every_module_built_and_every_hook_wired() -> void:
 		assert_object(m).is_not_null()
 		unset.append_array(_unset(m))
 	assert_array(unset).override_failure_message("unset hooks:\n" + "\n".join(unset)).is_empty()
-	assert_int(_c.sm.batch_extras.size()).is_equal(11)
+	assert_int(_c.sm.batch_extras.size()).is_equal(12)
+	assert_bool(_c.sm.batch_extras.has(Callable(_c.survivor_hud, &"entries"))).is_true() ## hud-results story 004
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.world_progress, &"entries"))).is_true() ## hud-results story 005
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.monster_hud, &"entries"))).is_true() ## hud-results story 006
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.scare_state, &"entries"))).is_true() ## scare-events story 006

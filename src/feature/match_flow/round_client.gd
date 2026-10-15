@@ -250,7 +250,7 @@ func _on_connected() -> void:
 		match_display = MatchDisplay.new(knobs, smp)
 		hud_model = HudModel.new(match_display, knobs, router)
 		ShapeshifterHud.mount(hud, hud_model, camera) # hud-results/006: instanced on shapeshifter state only
-		hud.add_child(AlwaysOnHud.new(hud_model, smp.get_unique_id())) # H1-H6 (hud-results story 002)
+		hud.add_child(AlwaysOnHud.new(hud_model, net.local_player_id)) # H1-H6 (hud-results story 002)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)
 		hud.add_child(ambience.make_overlay())
@@ -278,6 +278,7 @@ func _on_connected() -> void:
 		bar.self_modulate = Color.TRANSPARENT # the predictor only: InteractionHud draws the ring
 		interaction = InteractionHud.new(InputGlyphs.new(), ping_hud.contexts, bar, prompt_of)
 		hud.add_child(interaction)
+		hud.add_child(OwnStateHud.new(hud_model, net.local_player_id, interaction)) # H15, H16, states (hud-results/004)
 	else:
 		bar = PredictedHoldBar.new() # not drawn; keeps the same per-tick path as the rendering client
 		add_child(bar)

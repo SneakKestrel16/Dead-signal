@@ -12,6 +12,11 @@ class_name HudModel extends RefCounted
 ## ObjectiveProgressChanged ({centre, radius_m, duration_s}). A survivor client never receives either, so
 ## is_shapeshifter() stays false there. Deviation from ADR-0014 §6: a seventh signal, monster_state_changed,
 ## for that element group. on_cooldown() keeps story 001's single-cooldown shape for tests; nothing sends it.
+## Own state (story 004, H15, H16, HUD States): own life from EventBatch.OWN_LIFE (SurvivorHudFeed), hiding
+## from EventBatch.HIDING, the shock window from PlayerShocked {own}, bleed-out from SurvivorDowned's
+## bleed_out_s and BLEED_RING, all for `own_id`; the watched survivor is the own snapshot entry's id when it is
+## not `own_id` (ServerMovement sends a spectator the watched survivor's stream). hud_state() picks the one
+## state the HUD shows; widgets never infer it.
 ## Usage (client composition root):
 ##   var model := HudModel.new(match_display, knobs, router)
 ##   model.own_state_changed.connect(widget.refresh); widget.show(model.objective_lines())
@@ -30,6 +35,13 @@ const LIFE_HEALTHY := 0
 const LIFE_DOWNED := 1
 const LIFE_ELIMINATED := 2
 const LIFE_ESCAPED := 3
+## HUD states (hud.md HUD States by Gameplay Context) hud_state() returns; NONE is exploration or holding.
+const STATE_NONE := &""
+const STATE_SPECTATING := &"spectating"
+const STATE_DOWNED := &"downed"
+const STATE_SEIZED := &"seized"
+const STATE_SHOCKED := &"shocked"
+const STATE_HIDDEN := &"hidden"
 ## hud.md Visual Budget: at most 6 world markers at once; further markers keep the newest (story 007).
 const MAX_MARKERS := 6
 
@@ -50,6 +62,16 @@ var _monster: Dictionary = {} ## the newest MONSTER_HUD payload; empty on a surv
 var _alerts: Array[Dictionary] = [] ## install alerts {centre, radius_m, expires (server tick)}
 var _names: Dictionary[int, String] = {} ## survivor player id -> display name (set_survivors)
 var _activation: Dictionary = {} ## {remaining_s, paused} (on_activation); empty = unknown
+var _shock_ticks: int
+var _rescue_full_s: float
+var _life: int = Downing.LifeState.HEALTHY ## own, from OWN_LIFE
+var _rescue_s := 0.0
+var _hidden := false
+var _shock_end := -1 ## server tick the own shock window ends
+var _bleed: Dictionary = {} ## own ring {at: tick, left: s, rate}; empty = none
+
+## This client's player id; set by the client root (OwnStateHud). -1: no own state is read.
+var own_id := -1
 
 
 ## `router`: subscribes the event handlers; null = call them by hand (tests).
@@ -60,6 +82,10 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 	_marker_max_active = knobs.ping.ping_max_active
 	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
 	_observe_s = knobs.borrowed_face.observe_time_s
+	# ShockPresenter's own jitter lasts stun_root_s too (inference: the GDD gives no shocked duration; the
+	# victim is rooted for it, survivor-defense.md rule 10).
+	_shock_ticks = knobs.ticks(knobs.defense.stun_root_s)
+	_rescue_full_s = knobs.downing.rescue_duration_s
 	if router != null:
 		router.subscribe(&"ObjectiveProgressChanged", on_objective)
 		for t: StringName in [&"SurvivorDowned", &"SurvivorRescued", &"SurvivorEliminated", &"SurvivorEscaped"]:
@@ -67,6 +93,10 @@ func _init(display: MatchDisplay, knobs: Knobs, router: ClientEventRouter = null
 		router.subscribe(EventBatch.CALLOUT, on_callout)
 		router.subscribe(EventBatch.PING, on_ping)
 		router.subscribe(EventBatch.MONSTER_HUD, on_monster_hud)
+		router.subscribe(EventBatch.OWN_LIFE, on_own_life)
+		router.subscribe(EventBatch.HIDING, on_hiding)
+		router.subscribe(EventBatch.BLEED_RING, on_bleed_ring)
+		router.subscribe(&"PlayerShocked", on_shocked)
 
 
 ## Current Phase (MatchFlow.Phase), -1 before the round begins (MatchDisplay).
@@ -188,10 +218,16 @@ func on_objective(tick: int, p: Dictionary) -> void:
 
 
 ## ClientEventRouter handler (bound with the event type) for the survivor life events.
-func on_survivor_event(_tick: int, p: Dictionary, type: StringName) -> void:
+func on_survivor_event(tick: int, p: Dictionary, type: StringName) -> void:
 	var id: Variant = p.get("survivor")
 	if not id is int:
 		return
+	if id == own_id:
+		_bleed = {}
+		var left: Variant = p.get("bleed_out_s")
+		if type == &"SurvivorDowned" and left is float and is_finite(left):
+			_bleed = {"at": tick, "left": left, "rate": 1.0}
+		own_state_changed.emit()
 	match type:
 		&"SurvivorDowned": _roster[id] = LIFE_DOWNED
 		&"SurvivorRescued": _roster[id] = LIFE_HEALTHY
@@ -307,3 +343,102 @@ func install_alerts() -> Array[Dictionary]:
 
 func _until_s(end_tick: int) -> float:
 	return float(maxi(0, end_tick - maxi(_display.server_tick(), 0))) / float(_hz)
+
+## The HUD state for this client (hud.md HUD States), one of STATE_*: spectating wins (the watched survivor's
+## entries are not this player's), then Downed, Seized, the shock window, hidden.
+func hud_state() -> StringName:
+	if spectating():
+		return STATE_SPECTATING
+	if _life == Downing.LifeState.DOWNED:
+		return STATE_DOWNED
+	if _life == Downing.LifeState.SEIZED:
+		return STATE_SEIZED
+	if shocked():
+		return STATE_SHOCKED
+	if _hidden:
+		return STATE_HIDDEN
+	return STATE_NONE
+
+
+## True while this player is out (Eliminated or Escaped) or the server streams another survivor's view.
+func spectating() -> bool:
+	var st := roster_state(own_id)
+	return watched() >= 0 or st == LIFE_ELIMINATED or st == LIFE_ESCAPED
+
+
+## The survivor this spectator watches (the own snapshot entry's id when it is not own_id), else -1.
+func watched() -> int:
+	var id: Variant = _own.get("id")
+	return id if id is int and own_id >= 0 and id != own_id else -1
+
+
+## Own Downing.LifeState as the server sent it (Healthy until an OWN_LIFE entry says otherwise).
+func own_life() -> int:
+	return _life
+
+
+## True while the own body is in a hiding spot.
+func own_hidden() -> bool:
+	return _hidden
+
+
+## True inside the own shock window (PlayerShocked to the shocked player, stun_root_s long).
+func shocked() -> bool:
+	return _display.server_tick() < _shock_end
+
+
+## Own bleed-out seconds left at the newest server tick, -1.0 when not bleeding out (H16).
+func bleed_out_s() -> float:
+	if _bleed.is_empty():
+		return -1.0
+	var ran := float(maxi(_display.server_tick() - _bleed["at"], 0)) / _hz
+	return maxf(_bleed["left"] - _bleed["rate"] * ran, 0.0)
+
+
+## Rescue progress on the own Downed body, seconds (tenths), 0 when none (H16).
+func rescue_s() -> float:
+	return _rescue_s
+
+
+## Rescue progress on the own Downed body as a fraction of rescue_duration_s, 0-1 (the H16 ring).
+func rescue_fill() -> float:
+	return clampf(_rescue_s / _rescue_full_s, 0.0, 1.0) if _rescue_full_s > 0.0 else 0.0
+
+
+## Handler for EventBatch.OWN_LIFE {life, rescue_s}. A Healthy state ends the own ring.
+func on_own_life(_tick: int, p: Dictionary) -> void:
+	var life: Variant = p.get("life")
+	var r: Variant = p.get("rescue_s")
+	if not (life is int and life >= 0 and life < Downing.LifeState.size() and r is float and is_finite(r)):
+		return
+	_life = life
+	_rescue_s = maxf(r, 0.0)
+	if _life != Downing.LifeState.DOWNED:
+		_bleed = {}
+	own_state_changed.emit()
+
+
+## Handler for EventBatch.HIDING {spot}: -1 left or ejected.
+func on_hiding(_tick: int, p: Dictionary) -> void:
+	if not p.get("spot") is int:
+		return
+	_hidden = p["spot"] >= 0
+	own_state_changed.emit()
+
+
+## Handler for EventBatch.BLEED_RING: the own survivor's ring restarts at `remaining_s`, running at `rate`.
+func on_bleed_ring(tick: int, p: Dictionary) -> void:
+	var left: Variant = p.get("remaining_s")
+	var rate: Variant = p.get("rate")
+	if p.get("survivor") != own_id or not (left is float and rate is float and is_finite(left) and is_finite(rate)):
+		return
+	_bleed = {"at": tick, "left": maxf(left, 0.0), "rate": maxf(rate, 0.0)}
+	own_state_changed.emit()
+
+
+## Handler for PlayerShocked: only the shocked player's own copy ({own: true}) opens the window.
+func on_shocked(tick: int, p: Dictionary) -> void:
+	if p.get("own") != true:
+		return
+	_shock_end = tick + _shock_ticks
+	own_state_changed.emit()
