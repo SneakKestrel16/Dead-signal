@@ -74,6 +74,8 @@ var _peer_by_player: Dictionary = {}
 var _pending: Dictionary = {}
 ## token -> player_id.
 var _tokens: Dictionary = {}
+## Server: player ID -> sanitized display name, for the roster (LB-2). Public: names are shown.
+var _names: Dictionary[int, String] = {}
 ## player_id -> Array of MultiplayerSynchronizer this player may see (set_player_visibility).
 var _visibility: Dictionary = {}
 var _next_player_id: int = 0
@@ -148,6 +150,7 @@ func close() -> void:
 	_peer_by_player.clear()
 	_pending.clear()
 	_tokens.clear()
+	_names.clear()
 	_visibility.clear()
 
 
@@ -168,6 +171,17 @@ func token_of(player_id: int) -> String:
 		if _tokens[token] == player_id:
 			return token
 	return ""
+
+
+## Server: the player whose session token is `token`, or -1. Server-side routing only (the lobby is
+## keyed by token).
+func player_id_of_token(token: String) -> int:
+	return _tokens.get(token, -1)
+
+
+## Server: `player_id`'s sanitized display name (the latest it joined with), or "" when unknown.
+func display_name_of(player_id: int) -> String:
+	return _names.get(player_id, "")
 
 
 ## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
@@ -258,6 +272,7 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 			token = Crypto.new().generate_random_bytes(16).hex_encode()
 			_tokens[token] = player_id
 		_pending[id] = {"player_id": player_id, "token": token, "rebind": rebind}
+		_names[player_id] = verdict.name
 		_smp.send_auth(id, var_to_bytes({"ok": true, "player_id": player_id, "token": token}))
 		_smp.complete_auth(id)
 		return
@@ -269,8 +284,8 @@ func _server_auth(id: int, data: PackedByteArray) -> void:
 		_smp.disconnect_peer(id)
 
 
-## Runs the checks in the ADR order. Returns {ok: true} (plus player_id and token for a rebind) or the
-## reject reply.
+## Runs the checks in the ADR order. Returns {ok: true, name} (plus player_id and token for a rebind)
+## or the reject reply.
 func _validate(data: PackedByteArray) -> Dictionary:
 	if data.size() > _knobs.net.auth_payload_cap_bytes:
 		return _reject(REASON_BAD_PAYLOAD)
@@ -291,13 +306,13 @@ func _validate(data: PackedByteArray) -> Dictionary:
 		for p: Dictionary in _pending.values():
 			if p.player_id == rebind_id:
 				return _reject(REASON_TOKEN_IN_USE)
-		return {"ok": true, "player_id": rebind_id, "token": d.token}
+		return {"ok": true, "player_id": rebind_id, "token": d.token, "name": n}
 	if _lobby.state() != &"waiting":
 		return _reject(REASON_ROUND_IN_PROGRESS)
 	var new_joins := _pending.values().filter(func(p: Dictionary) -> bool: return not p.rebind).size()
 	if _lobby.player_count() + new_joins >= _knobs.lobby.max_players:
 		return _reject(REASON_LOBBY_FULL)
-	return {"ok": true}
+	return {"ok": true, "name": n}
 
 
 func _in_grace(token: String) -> bool:
@@ -385,4 +400,5 @@ func _on_auth_failed(id: int) -> void:
 	if _pending.has(id):
 		if not _pending[id].rebind:
 			_tokens.erase(_pending[id].token)
+			_names.erase(_pending[id].player_id) ## a new joiner that never joined leaves no name behind
 		_pending.erase(id)

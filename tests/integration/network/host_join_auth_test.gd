@@ -393,3 +393,31 @@ func test_second_auth_packet_from_a_pending_peer_is_ignored() -> void:
 	var b := _client(port, "Bob")
 	assert_str(String(await _outcome(b))).is_equal("ok")
 	assert_int(b.net.local_player_id).is_equal(first + 1)
+
+
+## LB-2: the server keeps each player's sanitized name and maps its token back, for the roster.
+func test_server_knows_each_players_name_and_token() -> void:
+	var port := _port()
+	var s := _server(port)
+	var joined: Array = []
+	s.player_joined.connect(func(p: int) -> void: joined.append(p))
+	var c := _client(port, "An" + _chars([0x202E]) + "n") # a bidi override is stripped
+	assert_str(String(await _outcome(c))).is_equal("ok")
+	await _until(func() -> bool: return not joined.is_empty(), "player_joined")
+	var pid: int = joined[0]
+	assert_str(s.display_name_of(pid)).is_equal("Ann") # the sanitized name
+	assert_int(s.player_id_of_token(s.token_of(pid))).is_equal(pid)
+	assert_int(s.player_id_of_token("no-such-token")).is_equal(-1)
+	var info := RosterHandoff.info_from(s) # the roster's real adapter
+	assert_dict(info.call(s.token_of(pid))).is_equal({"player_id": pid, "name": "Ann"})
+
+
+## Code review 2026-10-14: a new joiner whose auth failed left its name behind for good.
+func test_failed_auth_of_a_new_joiner_drops_its_name() -> void:
+	var na: NetAuthority = auto_free(NetAuthority.new())
+	na._pending[5] = {"player_id": 9, "token": "tok", "rebind": false}
+	na._tokens["tok"] = 9
+	na._names[9] = "Ann"
+	na._on_auth_failed(5)
+	assert_str(na.display_name_of(9)).is_equal("")
+	assert_int(na.player_id_of_token("tok")).is_equal(-1)

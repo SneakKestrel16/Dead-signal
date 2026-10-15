@@ -1,12 +1,12 @@
 # Story 002: Roster lock, Match Flow hand-off and return to Waiting
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -33,10 +33,10 @@ At lock the server builds a roster of 4–6 players with exactly one shapeshifte
 
 *From `lobby-role-assignment.md` AC-LB-01, AC-LB-24, AC-LB-27, scoped to this story:*
 
-- [ ] Rosters of 4, 5 and 6 players hold exactly 1 shapeshifter and 3, 4, 5 survivors; 3 or 7 players are refused.
-- [ ] At countdown 0 Match Flow receives a roster with `player_count` and, per player, peer ID, display name and role; survivors have a character and the shapeshifter none; loading begins on every peer and `player_count` does not change for the round.
-- [ ] The roster is published as a read-only `RosterView`; a test fails if the view exposes a setter.
-- [ ] After a round ends in Results, and separately after a Cancelled round, every connected peer is back in Waiting with Ready cleared; a survivor whose grace expired mid-round is absent from the lobby.
+- [x] Rosters of 4, 5 and 6 players hold exactly 1 shapeshifter and 3, 4, 5 survivors; 3 or 7 players are refused.
+- [x] At countdown 0 Match Flow receives a roster with `player_count` and, per player, peer ID, display name and role; survivors have a character and the shapeshifter none; loading begins on every peer and `player_count` does not change for the round.
+- [x] The roster is published as a read-only `RosterView`; a test fails if the view exposes a setter.
+- [x] After a round ends in Results, and separately after a Cancelled round, every connected peer is back in Waiting with Ready cleared; a survivor whose grace expired mid-round is absent from the lobby.
 
 ---
 
@@ -80,7 +80,7 @@ At lock the server builds a roster of 4–6 players with exactly one shapeshifte
 **Required evidence**:
 - Integration: `tests/integration/lobby/roster_lock_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (15 tests, plus 2 in `tests/integration/network/host_join_auth_test.gd`)
 
 ---
 
@@ -88,3 +88,16 @@ At lock the server builds a roster of 4–6 players with exactly one shapeshifte
 
 - Depends on: Stories 001, 003; event-catalog stories 003, 004
 - Unlocks: Match Flow epic; Story 007
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (automated)
+**Deviations** (AD-108):
+- The roster carries player IDs, not peer IDs: the control manifest keeps peer IDs inside NetAuthority. AC2's "peer ID" is read as the player ID.
+- AC2's "loading begins on every peer" is Match Flow's: this story hands Match Flow the roster (`RosterHandoff.handed_off`). Sending the roster to clients and Loading are out of scope (Match Flow epic).
+- The view is registered by `RosterHandoff.publish(registry)`, which the composition root calls after `RoundServer.start_round`, because each round builds a fresh registry after countdown 0.
+**Test Evidence**: Integration: `tests/integration/lobby/roster_lock_test.gd`; 16 mutations each caught. Full suite 425/425.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester; every finding verified and fixed)

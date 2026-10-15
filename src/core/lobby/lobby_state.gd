@@ -7,8 +7,8 @@ class_name LobbyState extends RefCounted
 ## moment it is applied, so a disconnect processed in the lock tick has already sent the lobby back to
 ## Waiting before server_tick() runs.
 ## Server only: clients display the replicated state and never call these methods.
-## In Match the lobby is dormant: joins, leaves and Ready changes still update its membership (for the
-## return to Waiting, AC-LB-27, a later story) but never touch the roster already handed to Match Flow.
+## In Match the lobby is dormant: joins, leaves and Ready changes still update its membership (for
+## return_to_waiting, AC-LB-27) but never touch the roster already handed to Match Flow.
 ## Not thread-safe: server main thread only. Host left -> Closed belongs to network-authority story 003.
 ## Usage:
 ##   var lobby := LobbyState.new(knobs)
@@ -16,7 +16,7 @@ class_name LobbyState extends RefCounted
 ##   lobby.server_tick(tick)   # once per server tick
 ##   lobby.roster_locked.connect(match_flow.start)
 
-## The countdown reached 0 and rule 13 still held: these tokens play. Story 002 owns the hand-off.
+## The countdown reached 0 and rule 13 still held: these tokens play. RosterHandoff builds the roster.
 signal roster_locked(tokens: PackedStringArray)
 
 const WAITING := &"waiting"
@@ -88,6 +88,16 @@ func server_tick(tick: int) -> void:
 		_state = IN_MATCH
 		_start_tick = -1
 		roster_locked.emit(tokens())
+
+
+## After Results or a Cancelled round (AC-LB-27): back to Waiting with every Ready cleared. Players
+## who left during the match (a survivor whose grace expired) were removed by leave() and are absent.
+func return_to_waiting() -> void:
+	if _state != IN_MATCH:
+		return
+	_state = WAITING
+	for token in _ready_by_token:
+		_ready_by_token[token] = false
 
 
 ## Rule 13: at least min_players connected and every connected player Ready.

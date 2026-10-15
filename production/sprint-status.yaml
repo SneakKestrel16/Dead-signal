@@ -61,11 +61,11 @@ stories:
     name: "Roster lock and hand-off"
     file: "production/epics/lobby-role-assignment/story-002-roster-lock-handoff.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "facility-map-5"
     name: "Visibility table"
