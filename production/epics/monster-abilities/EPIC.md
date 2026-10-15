@@ -5,7 +5,7 @@
 > **Architecture Module**: Monster Abilities (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories monster-abilities`
+> **Stories**: 10 stories — see table below
 
 ## Overview
 
@@ -51,6 +51,21 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | TR-monster-011 | Lunge wind-up cue within 20 m; coil pose; stats exported to results | ADR-0013, ADR-0011 (Proposed) |
 | TR-monster-012 | MVP is Lunge only; False Signal and Blackout are Vertical Slice; all numbers in data with safe ranges | ADR-0006 (Accepted) |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Ability requests and Lunge state machine | Logic | Ready | ADR-0002 |
+| 002 | Lunge wind-up root and dash | Integration | Ready | ADR-0007 |
+| 003 | Lunge hit test with lag compensation | Logic | Ready | ADR-0003 |
+| 004 | Lunge resolution, cooldown and miss slow | Logic | Ready | ADR-0007 |
+| 005 | AbilityUsed emission and Lunge state publishing | Integration | Ready | ADR-0004 |
+| 006 | Integrate with Downing and Borrowed Face | Integration | Ready | ADR-0005 |
+| 007 | Lunge cue, coil pose and hit feedback | Visual/Feel | Blocked | ADR-0013 (Proposed) |
+| 008 | Ability stats for results | Logic | Blocked | ADR-0011 (Proposed) |
+| 009 | False Signal (Vertical Slice) | Logic | Blocked | ADR-0004; ADR-0013 (Proposed) |
+| 010 | Blackout (Vertical Slice) | Integration | Blocked | ADR-0009 (Proposed) |
+
 ## Definition of Done
 
 This epic is complete when:
@@ -62,4 +77,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories monster-abilities` to break this epic into implementable stories.
+Run `/story-readiness production/epics/monster-abilities/story-001-request-validation-and-lunge-states.md`, then `/dev-story`.

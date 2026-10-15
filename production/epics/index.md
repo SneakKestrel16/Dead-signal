@@ -15,5 +15,5 @@ Engine: Godot 4.7.2
 | [Match Flow & Win Conditions](match-flow/EPIC.md) | Feature | Match Flow & Win Conditions | match-flow.md | 9 stories | Ready |
 | [Survivor Objectives](survivor-objectives/EPIC.md) | Feature | Survivor Objectives | survivor-objectives.md | 10 stories | Ready |
 | [Downing, Rescue & Elimination](downing-and-rescue/EPIC.md) | Feature | Downing, Rescue & Elimination | downing-and-rescue.md | 7 stories | Ready |
-| [Survivor Defense](survivor-defense/EPIC.md) | Feature | Survivor Defense | survivor-defense.md | Not yet created | Ready |
-| [Monster Abilities](monster-abilities/EPIC.md) | Feature | Monster Abilities | monster-abilities.md | Not yet created | Ready |
+| [Survivor Defense](survivor-defense/EPIC.md) | Feature | Survivor Defense | survivor-defense.md | 12 stories | Ready |
+| [Monster Abilities](monster-abilities/EPIC.md) | Feature | Monster Abilities | monster-abilities.md | 10 stories | Ready |

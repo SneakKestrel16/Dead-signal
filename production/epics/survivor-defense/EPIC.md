@@ -5,7 +5,7 @@
 > **Architecture Module**: Survivor Defense (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
 > **Control Manifest**: 2026-10-13
-> **Stories**: Not yet created — run `/create-stories survivor-defense`
+> **Stories**: 12 stories, see the Stories table below
 
 ## Overview
 
@@ -49,6 +49,23 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | TR-defense-010 | Interactable contract table (hide, barricade, remove, search, break, door) feeds the hold framework; all values are data | ADR-0008, ADR-0006 (Accepted) |
 | TR-defense-011 | Shock/stun presentation per form, chosen by the body shown at that moment | ADR-0010, ADR-0013 (Proposed) |
 
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Defense module, charges and intent validation | Logic | Ready | ADR-0002 |
+| 002 | Taser trace along the view ray with rewind | Logic | Ready | ADR-0003 |
+| 003 | One shock lock, no refresh, post-lock window | Logic | Ready | ADR-0007 |
+| 004 | Monster stun, immunity and cancels | Logic | Ready | ADR-0005 |
+| 005 | Identity-hiding stun and shock events | Integration | Ready | ADR-0004 |
+| 006 | Hiding spots: enter, exit, occupancy, search | Integration | Ready | ADR-0008 |
+| 007 | Barricade build and remove, closed doors block the dash | Integration | Ready | ADR-0008 |
+| 008 | Barricade break, persistence and rebarricade lockout | Logic | Ready | ADR-0005 |
+| 009 | Flashlight toggle and replicated cone | Integration | Ready | ADR-0004 |
+| 010 | Hiding noise and the long-hide cue | Integration | Blocked | ADR-0013 |
+| 011 | Shock presentation per form and cosmetic flashlight copy | Visual/Feel | Blocked | ADR-0010 |
+| 012 | Five-client agreement and retiring the stand-ins | Integration | Ready | ADR-0002 |
+
 ## Definition of Done
 
 This epic is complete when:
@@ -60,4 +77,4 @@ This epic is complete when:
 
 ## Next Step
 
-Run `/create-stories survivor-defense` to break this epic into implementable stories.
+Run `/story-readiness production/epics/survivor-defense/story-001-defense-module-charges-intents.md`, then `/dev-story`.
