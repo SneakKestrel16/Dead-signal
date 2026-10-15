@@ -63,6 +63,10 @@ var history: RewindHistory
 var catch_up: Array[Callable] = []
 ## Players rejoined since their last stream: they get the catch-up once.
 var _needs_catch_up: Dictionary[int, bool] = {}
+## Non-catalog batch entries: `provider.call(as_player) -> Array` of [type, payload], already projected
+## for that player (a spectator gets the watched survivor's), appended to every stream's event batch
+## this tick. Downing.ring_entries is one (story downing-and-rescue/007).
+var batch_extras: Array[Callable] = []
 
 
 class PlayerState extends RefCounted:
@@ -325,7 +329,10 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 				var old := EventBatch.build(e.tick, as_player, one, [], positions[as_player], handles, monster)
 				if not old.is_empty():
 					_smp.send_bytes(old, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
-	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster)
+	var extra: Array = []
+	for provider in batch_extras:
+		extra.append_array(provider.call(as_player))
+	var batch := EventBatch.build(tick, as_player, events, sounds, positions[as_player], handles, monster, extra)
 	if not batch.is_empty(): ## same reliable channel, after the handle messages it may name
 		_smp.send_bytes(batch, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
 	var bodies: Array[Dictionary] = [_entry(as_player, as_player, true)]

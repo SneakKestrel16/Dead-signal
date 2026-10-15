@@ -19,6 +19,9 @@ const CATALOG: Array[StringName] = [
 	&"AbilityUsed", &"BarricadeBroken", &"PlayerConnectionChanged",
 ]
 
+## Batch entry types that are not catalog events (EventBatch).
+const NON_CATALOG: Array[StringName] = [EventBatch.SOUND, EventBatch.BLEED_RING]
+
 ## Event batches that failed to decode.
 var rejected: int = 0
 ## Entries dropped for a type outside the catalog (each type is logged once).
@@ -44,9 +47,9 @@ func close() -> void:
 
 
 ## Adds `handler(tick: int, payload: Dictionary)` (a named method) for entries of `type`, a catalog
-## name or EventBatch.SOUND. Returns false, and adds nothing, for any other name.
+## name or one of NON_CATALOG. Returns false, and adds nothing, for any other name.
 func subscribe(type: StringName, handler: Callable) -> bool:
-	if type != EventBatch.SOUND and type not in CATALOG:
+	if type not in NON_CATALOG and type not in CATALOG:
 		return false
 	if not _handlers.has(type):
 		_handlers[type] = []
@@ -64,7 +67,7 @@ func on_packet(peer_id: int, bytes: PackedByteArray) -> void:
 		return
 	for entry: Array in b.entries:
 		var type: StringName = entry[0]
-		if type != EventBatch.SOUND and type not in CATALOG:
+		if type not in NON_CATALOG and type not in CATALOG:
 			dropped += 1
 			if not _warned.has(type):
 				_warned[type] = true

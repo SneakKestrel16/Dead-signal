@@ -12,6 +12,9 @@ class_name EventBatch extends RefCounted
 const TAG := 0xF2
 ## Entry type of a positional sound (not a catalog event name).
 const SOUND := &"Sound"
+## Entry type of a Downed survivor's bleed-out ring (Downing.ring_entries, story downing-and-rescue/007):
+## {survivor, remaining_s, rate}. Not a catalog event; its provider sends it to survivor viewers only.
+const BLEED_RING := &"BleedRing"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays
@@ -24,14 +27,16 @@ class Sound extends RefCounted:
 	var source: int = -1
 
 
-## The viewer's batch, or empty bytes when nothing reaches it (no empty batch is sent).
+## The viewer's batch, or empty bytes when nothing reaches it (no empty batch is sent). `extra` holds
+## [type, payload] entries already projected for this viewer by their provider (ServerMovement.batch_extras).
 static func build(tick: int, viewer: int, events: Array[ServerEvent], sounds: Array[Sound],
-		viewer_pos: Vector3, handles: HandleTable, monster: int) -> PackedByteArray:
+		viewer_pos: Vector3, handles: HandleTable, monster: int, extra: Array = []) -> PackedByteArray:
 	var entries: Array = []
 	for e in events:
 		var payload := e.project(viewer, handles, monster)
 		if not payload.is_empty():
 			entries.append([e.type(), payload])
+	entries.append_array(extra)
 	for s in sounds:
 		if s.source != viewer and viewer_pos.distance_to(s.position) <= s.radius_m:
 			entries.append([SOUND, {"pos": s.position, "set": s.sound_set}])

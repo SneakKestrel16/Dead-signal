@@ -70,6 +70,10 @@ var _commit_end_tick: int = 0
 var _bleed: Dictionary[int, float] = {}
 ## Downed survivors whose rescue hold is active (story 004 drives it through set_rescuing).
 var _rescuing: Dictionary[int, bool] = {}
+## Downed survivor -> bleed-out rate last published on the ring (ticks per tick: 1, camp_slow_mult or 0).
+var _ring_rate: Dictionary[int, float] = {}
+## This tick's ring entries (EventBatch.BLEED_RING), for ring_entries(); rebuilt every server_tick.
+var _ring_out: Array = []
 ## Players with no body in the world: escaped, or disconnected until they reconnect.
 var _escaped: Dictionary[int, bool] = {}
 var _disconnected: Dictionary[int, bool] = {}
@@ -178,6 +182,8 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_grace_end = {}
 	_bleed = {}
 	_rescuing = {}
+	_ring_rate = {}
+	_ring_out = []
 	_escaped = {}
 	_disconnected = {}
 	_life = {}
@@ -208,11 +214,18 @@ func server_tick(tick: int) -> void:
 		if _position_of.is_valid():
 			r.point = _position_of.call(s)
 	var healthy := _healthy_survivors()
+	_ring_out = []
 	for s: int in _bleed.keys():
-		_bleed[s] = bleed_step(_bleed[s], 1.0, _rescuing.has(s), _nearest_distance_m(s), healthy,
+		# bleed_step from 0 is this tick's rate; adding it equals bleed_step(_bleed[s], ...) exactly.
+		var rate := bleed_step(0.0, 1.0, _rescuing.has(s), _nearest_distance_m(s), healthy,
 			_camp_slow_radius_m, _camp_slow_mult)
+		_bleed[s] += rate
 		if _bleed[s] >= _bleed_ticks:
 			_bleed_out(s)
+		elif _ring_rate.get(s, -1.0) != rate:
+			_ring_rate[s] = rate
+			_ring_out.append([EventBatch.BLEED_RING,
+				{"survivor": s, "remaining_s": (_bleed_ticks - _bleed[s]) / _hz, "rate": rate}])
 	if _victim >= 0 and tick >= _commit_end_tick:
 		_complete_commit()
 	_apply_modifiers()
@@ -229,6 +242,16 @@ static func bleed_step(elapsed: float, dt: float, rescuing: bool, nearest_player
 	if nearest_player_distance_m <= camp_slow_radius_m and healthy_survivors >= 1:
 		return elapsed + dt * camp_slow_mult
 	return elapsed + dt
+
+
+## ServerMovement.batch_extras provider (story 007, ADR-0004 §5 "bleed-out state to survivors only"):
+## this tick's bleed-out ring changes, [EventBatch.BLEED_RING, {survivor, remaining_s, rate}], for
+## `viewer`. Sent on change only (a down, the rate moving between 1, camp_slow_mult and 0 for a rescue);
+## the client runs the ring at `rate` between changes. A rate carries no identity: any non-Downed
+## player in the radius gives the same camp_slow_mult (GDD re-review R1). Survivors only; nothing for
+## the shapeshifter, any other id, or before roles are dealt (fails closed like SurvivorDowned).
+func ring_entries(viewer: int) -> Array:
+	return _ring_out if _monster >= 0 and viewer != _monster and _survivors.has(viewer) else []
 
 
 ## Pauses (`on` true) or resumes the bleed-out timer of Downed `player` during a rescue hold.
@@ -315,6 +338,7 @@ func stand_up(player: int) -> void:
 		return
 	_bleed.erase(player)
 	_rescuing.erase(player)
+	_ring_rate.erase(player)
 	_life[player] = LifeState.HEALTHY
 	_grace_end[player] = _bus.tick + _rescue_grace_ticks
 
@@ -437,6 +461,7 @@ func _nearest_distance_m(s: int) -> float:
 func _bleed_out(s: int) -> void:
 	_bleed.erase(s)
 	_rescuing.erase(s)
+	_ring_rate.erase(s)
 	_remove_rescue(s)
 	_life[s] = LifeState.ELIMINATED
 	var el := EvSurvivorEliminated.new()
