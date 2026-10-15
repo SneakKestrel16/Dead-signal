@@ -3,7 +3,11 @@ class_name HoldService extends RefCounted
 ## (TickOrder.HOLDS, inside TickRunner's physics phase) for each player in ADR-0007 §6's rotated
 ## order: stop, then Start on a rising edge (eligibility, strict range_m, line of sight, lock), then
 ## continue (eligible, range_m + hold_range_tolerance_m, line of sight; story 009), then advance. Owners
-## register Interactables and get direct calls; HoldService emits no events. Story 010 adds fake holds.
+## register Interactables and get direct calls; HoldService emits no events.
+## Fake holds (ADR-0008 §6; GDD rule 17): a shapeshifter Start on a `fakeable` interactable passes range
+## and sight only, then holds with no lock, no progress, no owner call (eligible() included) and never
+## completes; range or sight loss and release end it silently. A real Start accepted on the same
+## interactable cancels it. hold_of() shows it like a real hold, so observers' `holding` bit matches (§8).
 ## The view direction is not checked while holding: a hold survives looking away (GDD rule 14).
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection; BodyIndex of the ADR
 ## interface does not exist yet):
@@ -14,6 +18,7 @@ class_name HoldService extends RefCounted
 ##   aim(actor) -> int                           net id the server's own view ray picks (MapQueries.interactable_on_ray
 ##                                               with ViewState.server_dir), -1 if none; a net-id Start must match it
 ##   body_target(actor, handle) -> int           net id on the body the actor's handle names, or -1
+##   is_shapeshifter(actor) -> bool              the actor's role; unset = nobody (no fake holds)
 ## Usage:
 ##   var holds := HoldService.new(knobs, players, frames, centre_of, sight, aim)
 ##   holds.register(slot); holds.server_tick(tick)   # from the Holds step
@@ -27,8 +32,9 @@ var _centre_of: Callable
 var _sight: Callable
 var _aim: Callable
 var _body_target: Callable
+var _is_shapeshifter: Callable
 var _items: Array[Interactable] = []
-## actor -> {"item": Interactable, "elapsed": int}
+## actor -> {"item": Interactable, "elapsed": int, "fake": bool}
 var _holds: Dictionary[int, Dictionary] = {}
 ## lock_key -> actor
 var _locks: Dictionary[StringName, int] = {}
@@ -37,7 +43,7 @@ var _down: Dictionary[int, bool] = {}
 
 
 func _init(knobs: Knobs, players: Callable, frames: Callable, centre_of: Callable, sight: Callable,
-		aim: Callable, body_target: Callable = Callable()) -> void:
+		aim: Callable, body_target: Callable = Callable(), is_shapeshifter: Callable = Callable()) -> void:
 	_knobs = knobs
 	_players = players
 	_frames = frames
@@ -45,6 +51,7 @@ func _init(knobs: Knobs, players: Callable, frames: Callable, centre_of: Callabl
 	_sight = sight
 	_aim = aim
 	_body_target = body_target
+	_is_shapeshifter = is_shapeshifter
 
 
 ## Registers `i` under the next net id (map interactables first, in map order) and returns it.
@@ -66,12 +73,15 @@ func unregister(net_id: int) -> void:
 	_items[net_id] = null
 
 
-## Owner interrupt (ADR-0008 §5): ends `actor`'s hold, releases its lock, calls on_cancel.
+## Owner interrupt (ADR-0008 §5): ends `actor`'s hold, releases its lock, calls on_cancel. A fake hold
+## just ends: it holds no lock and the owner never heard of it (§6).
 func cancel(actor: int, reason: StringName) -> void:
 	if not _holds.has(actor):
 		return
 	var h: Dictionary = _holds[actor]
 	_holds.erase(actor)
+	if h.fake:
+		return
 	var item: Interactable = h.item
 	_release(item, actor)
 	item.on_cancel(actor, h.elapsed / float(_knobs.net.sim_tick_hz), reason)
@@ -83,7 +93,7 @@ func hold_of(actor: int) -> Dictionary:
 		return {}
 	var h: Dictionary = _holds[actor]
 	var item: Interactable = h.item
-	return {"net_id": item.net_id, "elapsed_ticks": h.elapsed, "fake": false, "roots": item.roots_actor}
+	return {"net_id": item.net_id, "elapsed_ticks": h.elapsed, "fake": h.fake, "roots": item.roots_actor}
 
 
 ## The Holds step.
@@ -134,22 +144,33 @@ static func rotated(ids: Array, tick: int) -> Array[int]:
 
 func _try_start(actor: int, f: InputFrame) -> void:
 	var item := _resolve(actor, f)
-	if item == null or not item.eligible(actor):
+	if item == null:
 		return
+	var fake: bool = item.fakeable and _is_shapeshifter.is_valid() and _is_shapeshifter.call(actor)
+	if not fake and not item.eligible(actor):
+		return ## a shapeshifter on a non-fakeable target is refused here, by its owner (§6)
 	var centre: Vector3 = _centre_of.call(actor)
 	if centre.distance_to(item.point) > item.range_m + RANGE_EPS_M:
 		return ## Start is strict range_m; tolerance is for continuation (story 009)
 	if not _sight.call(actor, item):
 		return
+	if fake:
+		# Inference: a fake ignores a held lock too (rule 25: "at any objective point"); the fake on a
+		# free target is all the GDD's AC fixes. A designer ruling on faking beside a real holder settles it.
+		_holds[actor] = {"item": item, "elapsed": 0, "fake": true}
+		return
 	if item.lock_key != &"" and _locks.has(item.lock_key):
 		return ## AC1: a held exclusive lock rejects every Start on its key, instant ones included
+	for other: int in _holds.keys(): ## a real Start cancels fakes on the same interactable (rule 25)
+		if _holds[other].fake and _holds[other].item == item:
+			cancel(other, &"replaced")
 	if item.duration_s <= 0.0:
 		item.on_start(actor)
 		item.on_complete(actor) ## instant: takes no lock, keeps no hold
 		return
 	if item.lock_key != &"":
 		_locks[item.lock_key] = actor
-	_holds[actor] = {"item": item, "elapsed": _knobs.ticks(item.start_progress_s())}
+	_holds[actor] = {"item": item, "elapsed": _knobs.ticks(item.start_progress_s()), "fake": false}
 	item.on_start(actor)
 
 
@@ -171,7 +192,7 @@ func _continue(actor: int) -> void:
 	if not _holds.has(actor):
 		return
 	var item: Interactable = _holds[actor].item
-	if not item.eligible(actor):
+	if not _holds[actor].fake and not item.eligible(actor): ## a fake never asks the owner
 		cancel(actor, &"ineligible")
 		return
 	var centre: Vector3 = _centre_of.call(actor)
@@ -186,6 +207,8 @@ func _advance(actor: int) -> void:
 	if not _holds.has(actor):
 		return
 	var h: Dictionary = _holds[actor]
+	if h.fake:
+		return ## no progress, never completes
 	h.elapsed += 1
 	var item: Interactable = h.item
 	if h.elapsed >= _knobs.ticks(item.duration_s):

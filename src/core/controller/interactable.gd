@@ -15,6 +15,8 @@ var duration_s: float
 var roots_actor: bool
 ## &"" = no lock. Interactables sharing a key exclude each other (a door's barricade and break).
 var lock_key: StringName = &""
+## The shapeshifter's Start becomes a fake hold, unseen by the owner (ADR-0008 §6); false: the owner's
+## eligible() refuses the shapeshifter as for any other actor it refuses.
 var fakeable: bool
 
 
