@@ -51,7 +51,7 @@ Lighting, camera-feed, zone-audio and reduced-flash requirements rest on ADR-000
 | 005 | [Per-volume visibility table for relevance](story-005-visibility-table.md) | Integration | Ready | ADR-0004 |
 | 006 | [Traversal budget walk-through](story-006-traversal-budget.md) | Integration | Complete | ADR-0007 |
 | 007 | [Candidate point selection and placement constraints](story-007-candidate-selection.md) | Logic | Complete | ADR-0012 (Proposed) |
-| 008 | [Candidate replication and discovery agreement](story-008-candidate-replication.md) | Integration | Ready | ADR-0012 (Proposed), ADR-0004 |
+| 008 | [Candidate replication and discovery agreement](story-008-candidate-replication.md) | Integration | Complete | ADR-0012 (Proposed), ADR-0004 |
 | 009 | [Per-volume lighting state machine and precedence](story-009-lighting-state-machine.md) | Logic | Complete | ADR-0009 (Proposed) |
 | 010 | [Lighting replication, Blackout scope and reduced flash](story-010-lighting-render-blackout.md) | Visual/Feel | Ready | ADR-0009 (Proposed) |
 | 011 | [Surveillance cameras at the C1 monitor](story-011-surveillance-cameras.md) | Visual/Feel | Ready | ADR-0009 (Proposed) |

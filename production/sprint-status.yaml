@@ -39,20 +39,20 @@ stories:
     name: "Display state catch-up on rejoin"
     file: "production/epics/match-flow/story-012-display-catch-up-on-rejoin.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-13"
     name: "Hiding marker facing and eject in front"
     file: "production/epics/survivor-defense/story-013-hiding-marker-facing.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "match-flow-8"
     name: "Results payload"
     file: "production/epics/match-flow/story-008-results-payload.md"
@@ -84,20 +84,20 @@ stories:
     name: "Candidate replication and discovery agreement"
     file: "production/epics/facility-map/story-008-candidate-replication.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-objectives-8"
     name: "Active point selection"
     file: "production/epics/survivor-objectives/story-008-active-point-selection.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-objectives-9"
     name: "Objective discovery"
     file: "production/epics/survivor-objectives/story-009-discovery.md"
@@ -120,10 +120,10 @@ stories:
     name: "Flinch view offset and client-only camera effects"
     file: "production/epics/controller-interaction/story-013-view-offset-camera-effects.md"
     priority: must-have
-    status: ready-for-dev
+    status: in-progress
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "Server side merged (bc5b9b0); client fold, CameraFx, ScarePresenter, spectator projection, flinch-toggle RPC remain; ADR-0015 epoch deviation AD-210"
     completed: ""
   - id: "monster-abilities-9"
     name: "False Signal (Vertical Slice)"
@@ -138,11 +138,11 @@ stories:
     name: "Blackout (Vertical Slice)"
     file: "production/epics/monster-abilities/story-010-blackout.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 2
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-10"
     name: "Hiding noise and the long-hide cue"
     file: "production/epics/survivor-defense/story-010-hide-noise-and-long-hide-cue.md"

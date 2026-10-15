@@ -1,7 +1,7 @@
 # Story 013: Flinch view offset and client-only camera effects
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
@@ -75,3 +75,23 @@ The scare flinch is the one sanctioned server-side view change; every other came
 
 - Depends on: Story 006; ADR-0015 Accepted
 - Unlocks: Scare Events epic
+
+
+## Progress Notes (2026-10-15)
+
+Server side merged in `bc5b9b0`: `src/core/controller/view_offset.gd`, `src/foundation/network/flinch_record.gd`, `ViewState` applying the frame's own record, `record_id`/`offset_tick` on input frames, `ViewOffsetChanged` carrying the record. Test: `tests/unit/first-person-controller/view_offset_test.gd` (11). Mutations caught: integer division in offset_at, newest record instead of the frame's, toggle check removed, offset stacking.
+
+Remaining:
+- Client fold and stamping in `LocalInput` and `ClientEventRouter`. Until then clients stamp `record_id` 0, so the server applies no offset and both sides agree.
+- `CameraFx` and `ScarePresenter`.
+- Spectator projection.
+- `set_flinch_enabled` RPC and `PlayerSettingsView`.
+- Screenshot evidence.
+
+Deviation, pending review (AD-210): no view epoch byte. A rebaseline is a zero record with `rebaseline=true` and `fold`, and `record_id` tells the server whether the client folded. ADR-0015 §3 says the epoch handshake is mandatory, so this needs an ADR amendment or a revert. The flinch toggle defaults to on (inference; the GDD is silent). `offset_tick` is a full int32, not 16 bits.
+
+Composer wiring:
+- `ViewOffset.new(in_wind_up)`
+- `offset.setup(...)`
+- `ViewState.new(sm, offset)`
+- `offset.rebaseline(pid)` on Hidden and Seized; the `hiding_spots` comment still says no hook exists.

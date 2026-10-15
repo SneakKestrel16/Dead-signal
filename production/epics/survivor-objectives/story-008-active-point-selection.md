@@ -1,12 +1,12 @@
 # Story 008: Active point selection
 
 > **Epic**: Survivor Objectives
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 
 ## Context
@@ -35,9 +35,9 @@ Each round the server draws the active drive rooms, fuse spawns, fuse boxes and 
 
 *From GDD `design/gdd/survivor-objectives.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] With a fixed seed, over 20 rounds the active points vary (at least 4 distinct drive pairs, all 3 terminal candidates appear), all come from authored candidates (6 drive, 7 fuse, 3 fuse box, 3 terminal), and no round breaks a rule 6 constraint.
-- [ ] Candidate counts come from data and must match the map; a mismatch fails load-time validation.
-- [ ] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
+- [x] With a fixed seed, over 20 rounds the active points vary (at least 4 distinct drive pairs, all 3 terminal candidates appear), all come from authored candidates (6 drive, 7 fuse, 3 fuse box, 3 terminal), and no round breaks a rule 6 constraint.
+- [x] Candidate counts come from data and must match the map; a mismatch fails load-time validation.
+- [x] Every value this story uses is read from `ObjectivesKnobs`, not hardcoded.
 
 ---
 
@@ -65,9 +65,9 @@ Each round the server draws the active drive rooms, fuse spawns, fuse boxes and 
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/survivor-objectives/active-point-selection_test.gd` — must exist and pass
+- Logic: `tests/unit/survivor-objectives/active_point_selection_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-objectives/active_point_selection_test.gd` (6 tests)
 
 ---
 
@@ -75,3 +75,18 @@ Each round the server draws the active drive rooms, fuse spawns, fuse boxes and 
 
 - Depends on: Story 001
 - Unlocks: Story 009
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-205):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1110/1110 after the wave merge, no leak warnings.
+- Rule-6 constraint checks, the 1,000-seed check and the 2,280 count are reused from FM-7's candidate_selection_test rather than re-tested.
+- Active counts (2/2/2/1) stay constants: the GDD lists them as rules, not knobs; AC3 covers the candidate-count knobs.
+- Ten existing integration suites pin `placement = FirstMarkers.of(map)` so their hard-coded positions hold.
+- Test file snake_case, not the story's hyphenated name. A five_client_agreement_test failure in the agent's batch run passed alone (BUG-0003 class).
+**Test Evidence**: 6 tests. Mutations caught: rng ignored, candidate-count check disabled, map order instead of the draw, placement override ignored.
+**Code Review**: Complete (orchestrator review at merge)

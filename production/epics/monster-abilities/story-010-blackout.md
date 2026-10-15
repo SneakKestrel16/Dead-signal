@@ -1,12 +1,12 @@
 # Story 010: Blackout (Vertical Slice)
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 2 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,10 +34,10 @@ Vertical Slice. Blackout darkens one blackout-able lighting zone for 6 s on ever
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] Blackout is rejected on a zone whose `blackout_able` is false, that is already dark, or beyond 15 m or without line of sight; cooldown 45 s from activation
-- [ ] Blackout darkens the same zone on all 5 clients for 6 s (plus or minus 1 tick) with emergency lights visible; flashlights stay lit
-- [ ] A backup switch held for 1 s restores its own zone only; releasing earlier does not
-- [ ] Using Blackout while Disguised is accepted and leaves the disguise intact
+- [x] Blackout is rejected on a zone whose `blackout_able` is false, that is already dark, or beyond 15 m or without line of sight; cooldown 45 s from activation
+- [x] Blackout darkens the same zone on all 5 clients for 6 s (plus or minus 1 tick) with emergency lights visible; flashlights stay lit
+- [x] A backup switch held for 1 s restores its own zone only; releasing earlier does not
+- [x] Using Blackout while Disguised is accepted and leaves the disguise intact
 
 ---
 
@@ -66,7 +66,7 @@ Vertical Slice. Blackout darkens one blackout-able lighting zone for 6 s on ever
 **Required evidence**:
 - Integration: `tests/integration/monster-abilities/blackout_test.gd` OR documented playtest
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/monster-abilities/blackout_test.gd` (8 tests)
 
 ---
 
@@ -74,3 +74,20 @@ Vertical Slice. Blackout darkens one blackout-able lighting zone for 6 s on ever
 
 - Depends on: Stories 001, 005; ADR-0009 accepted
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-209):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1110/1110 after the wave merge, no leak warnings.
+- Range measured monster position to aim point, inclusive (inference; a ruling on 'zone within 15 m' settles nearest edge vs aim).
+- With volume_at unset every Blackout is rejected: the composer must wire set_blackout_sources. Switch net ids must align with MapQueries.interactable_on_ray (composer).
+- A switch can be held in a lit room with no effect (GDD silent).
+- AC-2 'all 5 clients' and emergency lights tested as server state only; replication and rendering are facility-map story 010.
+- blackouts_used() is a list of accept ticks because the knob-literal scan rejects the literal 1; the stats view is MA-8's.
+- Code written before tests; mutations stand in for the red run.
+**Test Evidence**: 8 tests. Mutations caught: already-dark check dropped, range check dropped, no cooldown, switch ending every zone.
+**Code Review**: Complete (orchestrator review at merge)

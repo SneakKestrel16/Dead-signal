@@ -1,12 +1,12 @@
 # Story 012: Display state catch-up on rejoin
 
 > **Epic**: Match Flow & Win Conditions
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 0.5 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 
 ## Context
@@ -26,9 +26,9 @@ The `batch_extras` display entries are sent only when something changes. These a
 
 ## Acceptance Criteria
 
-- [ ] On rejoin, ServerMovement sends each `batch_extras` provider's full current state for that viewer: the ring, charges, hiding and barricades. Afterwards the client's displays match a client that never left.
-- [ ] The replay keeps each provider's visibility rule (AD-194): a rejoining monster gets no charges or hiding entries.
-- [ ] Test: a real-ENet client drops, misses a barricade break and a charge spend, then rejoins and shows both correctly. The test is bounded, with no widened timing.
+- [x] On rejoin, ServerMovement sends each `batch_extras` provider's full current state for that viewer: the ring, charges, hiding and barricades. Afterwards the client's displays match a client that never left.
+- [x] The replay keeps each provider's visibility rule (AD-194): a rejoining monster gets no charges or hiding entries.
+- [x] Test: a real-ENet client drops, misses a barricade break and a charge spend, then rejoins and shows both correctly. The test is bounded, with no widened timing.
 
 ---
 
@@ -40,8 +40,23 @@ The `batch_extras` display entries are sent only when something changes. These a
 
 **Story Type**: Integration
 **Required evidence**: `tests/integration/match-flow/display_catch_up_test.gd`
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/match-flow/display_catch_up_test.gd` (real ENet, 3 clients)
 
 ## Dependencies
 
 - Depends on: survivor-defense story 012 and downing-and-rescue story 007 (both Complete)
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-208):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1110/1110 after the wave merge, no leak warnings.
+- Bleed-ring full mode is untested (the story's test covers barricades and charges).
+- A survivor downed on the rejoin tick arrives through the change-only path next tick (rate set next tick; inference from Downing.server_tick).
+- Barricade replay sends every door, so doors reset to default during a drop are corrected too.
+- Objective display has its own channel, out of scope.
+**Test Evidence**: Red run against unfixed code: 'client 0 charges 2, want 1', door 15 stale. Mutations caught: full always false, charges full mode empty, hiding full mode reaching the monster.
+**Code Review**: Complete (orchestrator review at merge)
