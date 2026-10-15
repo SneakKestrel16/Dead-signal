@@ -1,7 +1,7 @@
 # Story 009: Lobby "Last round" view
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 0.5 day
@@ -62,7 +62,7 @@
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/lobby-last-round/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/lobby-last-round/
 
 ---
 
@@ -70,3 +70,10 @@
 
 - Depends on: Story 008
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+- ResultsScreen.last_round(payload, contexts) builds the HUD-8 screen with no countdown, a "Last round" title and Back (R9); LobbyScreen stores the last payload and shows a Last round button.
+- Unit test tests/unit/hud-results/lobby_last_round_test.gd (6 cases); four mutations caught.
+- Evidence: production/qa/evidence/lobby-last-round/ (lobby.png, view.png, back.png); captured from the shipped LobbyScreen with a recorded payload, not a networked round.
+- Full suite on merge: 1528 tests, 0 failures, 0 leak lines.

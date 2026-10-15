@@ -11,14 +11,21 @@ class_name ResultsScreen extends CanvasLayer
 ## first Down / Tab focuses the first stop, Up / Shift+Tab the last. Esc / B do nothing on this screen.
 ## Deviations: no enter fade or 200 ms stagger (no reduced-motion setting exists yet, so the spec's
 ## reduced-motion cut is used for everyone); the countdown runs on local time from show, cosmetic (the
-## server's return to the lobby wins); the Last round view (R9) is story 009. "Survivor stuns landed" and
+## server's return to the lobby wins). "Survivor stuns landed" and
 ## "Rescues" in Z4 are sums of the payload's survivor rows (inference from the wireframe: the payload has no
 ## round totals for them; match-flow.md rule 26 settles whether they should).
+## Last round view (story hud-results/009; results.md Entry & Exit, R9, AD-31): last_round() builds a read-only
+## copy for the lobby: title "Last round" above R1, no countdown and no Leave session (R7, R8), a Back button
+## (R9) with initial focus; Back, Esc or B emit `closed` and the owner frees the screen. MENU is pushed with
+## Back focused, so the pop on exit restores focus to the control that opened it.
 ## Usage: var s := ResultsScreen.new(display.results(), knobs.match_flow.results_duration_s, contexts)
 ##   add_child(s); s.leave_confirmed.connect(_on_leave)
+##   var v := ResultsScreen.last_round(payload, contexts); v.closed.connect(_on_closed); add_child(v)
 
 ## The player confirmed Leave session (the caller disconnects; results.md Events Fired).
 signal leave_confirmed
+## Last round view: the player chose Back (the owner frees the screen).
+signal closed
 
 const BODY_PX := 24 ## menu text minimum at 1080p (results.md Accessibility)
 const OUTCOME_PX := 48 ## R1 minimum
@@ -53,8 +60,10 @@ const STATS := [[&"takedowns", "Takedowns %s", StateKeys.STATS_DOWNING],
 var focus_stops: Array[Control] = []
 var outcome_label: Label
 var countdown: Label
-var leave_button: Button
-var confirm: ConfirmationDialog
+var leave_button: Button ## null in the Last round view
+var confirm: ConfirmationDialog ## null in the Last round view
+var title_label: Label ## Last round view only
+var back_button: Button ## R9, Last round view only
 
 var _view: Dictionary
 var _left_s: float
@@ -62,6 +71,7 @@ var _shown_n := -1
 var _contexts: InputContextStack
 var _menu := false
 var _modal := false
+var _last_round := false
 var _ring := StyleBoxFlat.new()
 var _plain := StyleBoxEmpty.new()
 
@@ -75,6 +85,13 @@ func _init(payload: Dictionary, results_duration_s: float, contexts: InputContex
 	_left_s = results_duration_s
 	_contexts = contexts
 	layer = UiLayers.OVERLAY
+
+
+## The read-only Last round view of `payload` (R9): no countdown, Back instead of Leave session.
+static func last_round(payload: Dictionary, contexts: InputContextStack = null) -> ResultsScreen:
+	var s := ResultsScreen.new(payload, NAN, contexts)
+	s._last_round = true
+	return s
 
 
 ## The payload as display text. Keys: outcome, reason, outcome_a11y (R1, R2); survivors (rows of name,
@@ -287,6 +304,9 @@ func _ready() -> void:
 	page.add_theme_constant_override("separation", 16)
 	margin.add_child(page)
 
+	if _last_round:
+		title_label = _label(page, tr("Last round"))
+		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var z1 := _stop(page, _view.outcome_a11y)
 	var z1_box := VBoxContainer.new()
 	z1.add_child(z1_box)
@@ -359,8 +379,23 @@ func _ready() -> void:
 	page.add_child(footer)
 	countdown = _label(footer, "") # never a live region (ADR-0014 §9)
 	countdown.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _last_round:
+		back_button = Button.new()
+		back_button.text = tr("Back")
+		back_button.pressed.connect(closed.emit)
+		footer.add_child(back_button)
+		focus_stops.append(back_button)
+		_link_focus()
+		countdown.hide()
+		if _contexts != null:
+			_contexts.push(InputContextStack.Ctx.MENU, back_button) # initial focus on R9
+			_menu = true
+		else:
+			back_button.grab_focus.call_deferred()
+		return
 	leave_button = Button.new()
 	leave_button.text = tr("Leave session")
+	leave_button.accessibility_name = tr("Leave session")
 	leave_button.pressed.connect(_on_leave_pressed)
 	footer.add_child(leave_button)
 	focus_stops.append(leave_button)
@@ -396,10 +431,12 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if confirm.visible:
+	if confirm != null and confirm.visible:
 		return
-	if event.is_action_pressed(&"ui_cancel"): # Esc / B do nothing on the live screen (AD-30)
+	if event.is_action_pressed(&"ui_cancel"): # Esc / B: Back in the Last round view, nothing live (AD-30)
 		get_viewport().set_input_as_handled()
+		if _last_round:
+			closed.emit()
 		return
 	if get_viewport().gui_get_focus_owner() != null:
 		return
@@ -415,7 +452,6 @@ func _unhandled_input(event: InputEvent) -> void:
 func _tick_countdown() -> void:
 	if is_nan(_left_s):
 		countdown.hide()
-		leave_button.accessibility_name = tr("Leave session")
 		return
 	var n := ceili(_left_s)
 	if n == _shown_n:

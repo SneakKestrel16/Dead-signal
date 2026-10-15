@@ -255,10 +255,10 @@ stories:
     name: "Lobby \"Last round\" view"
     file: "production/epics/hud-results/story-009-lobby-last-round.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 0.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-10"
     name: "Visual budget and accessibility verification pass"

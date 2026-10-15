@@ -23,6 +23,10 @@ class_name LobbyScreen extends Control
 ## shows only a greybox line from MatchDisplay (phase and time); on RoundEnded it shows the ResultsScreen
 ## (hud-results story 008) until the round is dropped, and its Leave session leaves the session. A host that leaves sends every client back to the boot scene
 ## with "Host left" (leave_to, Main.return_with; ADR-0001 §7).
+## Last round (hud-results story 009; results.md Entry & Exit, AD-31): the room's Last round button reopens the
+## last RoundEnded payload, kept for the session, in ResultsScreen.last_round (no countdown) under MENU on the
+## lobby's own InputContextStack; Back closes it and focus returns to the button. The payload is dropped when
+## the session closes (Leave, kick, host left), and a starting round closes an open view.
 ## Command-line flags after `--` drive it for evidence captures: --lobby-host, --lobby-join=ADDR,
 ## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle).
 ## --lobby-shots=DIR (story match-flow/013 evidence) saves lobby.png once the room lists min_players,
@@ -54,6 +58,9 @@ var _display: MatchDisplay
 var _in_round := false
 var _round_line: Label
 var _results: ResultsScreen ## the Results screen while the round is in Results
+var _last_round: Dictionary = {} ## the last RoundEnded payload of this session (AD-31); {} = none yet
+var _last_round_view: ResultsScreen ## the open Last round view
+var _contexts := InputContextStack.new(InputContextStack.Ctx.MENU) ## the lobby's own; the round has the HUD's
 var _rooted := false ## this screen's path carries its session's SceneMultiplayer
 var _shots: Dictionary[String, float] = {} ## --lobby-shots: shot name -> seconds its condition has held
 var _played := false ## --lobby-shots: a round was entered
@@ -78,10 +85,12 @@ var _voice: CheckButton
 var _ready_button: Button
 var _pref: OptionButton
 var _queue: Label
+var _last_round_button: Button
 
 
 func _ready() -> void:
 	_knobs = knobs if knobs != null else Knobs.load_all()
+	_contexts.viewport = get_viewport()
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -162,6 +171,7 @@ func _build_room(box: VBoxContainer) -> void:
 	_room.add_child(buttons)
 	_ready_button = _button(buttons, "Ready", _on_ready_toggled)
 	_ready_button.toggle_mode = true
+	_last_round_button = _button(buttons, "Last round", _on_last_round)
 	_button(buttons, "Leave", _on_leave)
 
 
@@ -199,6 +209,7 @@ func _show_room() -> void:
 	_room.show()
 	_ready_button.button_pressed = false
 	_ready_button.grab_focus.call_deferred()
+	_last_round_button.visible = not _last_round.is_empty()
 
 
 func _new_net() -> NetAuthority:
@@ -264,6 +275,8 @@ func _close(message: String) -> void:
 		if multiplayer.peer_packet.is_connected(c):
 			multiplayer.peer_packet.disconnect(c)
 	_drop_round()
+	_close_last_round()
+	_last_round = {}
 	if round_host != null:
 		round_host.queue_free()
 	round_host = null
@@ -345,6 +358,7 @@ func _arm_client() -> void:
 
 
 func _enter_round() -> void:
+	_close_last_round()
 	_in_round = true
 	_display = MatchDisplay.new(_knobs, round_client.multiplayer as SceneMultiplayer)
 	_room.hide()
@@ -395,11 +409,28 @@ func _process(delta: float) -> void:
 ## RoundEnded arrived: the Results screen over the frozen round (results.md Entry; story hud-results/008).
 func _show_results() -> void:
 	var hud := round_client.ping_hud if round_client != null else null
-	_results = ResultsScreen.new(_display.results(), _knobs.match_flow.results_duration_s,
+	_last_round = _display.results()
+	_results = ResultsScreen.new(_last_round, _knobs.match_flow.results_duration_s,
 			hud.contexts if hud != null else null)
 	_results.leave_confirmed.connect(_on_leave)
 	add_child(_results)
 	_round_line.hide()
+
+
+## The Last round view of the stored payload (R9); it pushes MENU with Back focused.
+func _on_last_round() -> void:
+	if _last_round_view != null or _last_round.is_empty():
+		return
+	_last_round_view = ResultsScreen.last_round(_last_round, _contexts)
+	_last_round_view.closed.connect(_close_last_round)
+	add_child(_last_round_view)
+
+
+## Frees the Last round view; its exit pops MENU, which restores focus to the Last round button.
+func _close_last_round() -> void:
+	if _last_round_view != null:
+		_last_round_view.queue_free()
+	_last_round_view = null
 
 
 ## --lobby-shots: each step's screenshot once its condition held SHOT_AFTER_S.
