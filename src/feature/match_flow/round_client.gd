@@ -42,6 +42,8 @@ var camera_fx: CameraFx
 ## Projected events from the server (ViewOffsetChanged, ScareTriggered); null until joined.
 var router: ClientEventRouter
 var scares: ScarePresenter
+## Shock and stun stagger and vocal cue on remote bodies (borrowed-face story 009); null when not rendering.
+var disguise: DisguisePresenter
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -148,6 +150,10 @@ func _on_connected() -> void:
 		scares = ScarePresenter.new(FlashLimiter.new(knobs.facility.max_flashes_per_s), camera_fx, {})
 		add_child(scares)
 		router.subscribe(&"ScareTriggered", scares.on_scare)
+		disguise = DisguisePresenter.new(remotes, puppets.state_of, knobs)
+		add_child(disguise)
+		router.subscribe(&"PlayerShocked", disguise.on_shock)
+		router.subscribe(&"MonsterStunned", disguise.on_shock)
 		hud = CanvasLayer.new()
 		add_child(hud)
 		bar = PredictedHoldBar.new()

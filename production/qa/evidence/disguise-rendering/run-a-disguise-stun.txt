@@ -1,0 +1,15 @@
+SHOWING Client0 (survivor)
+DISGUISED as appearance 3 at frame 1115
+DRAWN handle 289306627 appearance 2 at (1.296487, 0.001, 27.57331) visible true stagger 0.00
+DRAWN handle 1465717274 appearance 3 at (3.595139, 0.00123, 27.63804) visible true stagger 0.00
+DRAWN handle 1597191926 appearance 4 at (4.800615, 0.001, 27.64841) visible true stagger 0.00
+DRAWN handle 1312889956 appearance 3 at (2.518243, 0.001, 27.4423) visible true stagger 0.00
+SHOT C:/Users/Ockey/AppData/Local/Temp/bf9a/disguise.png of frame 1145
+FIRE at frame 1169
+CUE voice_c3.shocked_grunt at (2.518243, 0.001, 27.4423) frame 1196
+STAGGER on handle 1312889956 at frame 1196
+DRAWN handle 289306627 appearance 2 at (1.296487, 0.001, 27.57331) visible true stagger 0.00
+DRAWN handle 1465717274 appearance 3 at (3.595139, 0.00123, 27.63804) visible true stagger 0.00
+DRAWN handle 1597191926 appearance 4 at (4.800615, 0.001, 27.64841) visible true stagger 0.00
+DRAWN handle 1312889956 appearance 3 at (2.518243, 0.001, 27.4423) visible true stagger 0.80
+SHOT C:/Users/Ockey/AppData/Local/Temp/bf9a/stagger.png of frame 1202

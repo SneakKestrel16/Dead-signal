@@ -1,0 +1,9 @@
+SHOWING Client0 (survivor)
+FIRE at frame 1237
+CUE voice_c0.pain_cry at (2.656968, 0.001, 27.407) frame 1259
+STAGGER on handle 4068624221 at frame 1259
+DRAWN handle 740761805 appearance 5 at (4.801168, 0.001, 27.6487) visible true stagger 0.00
+DRAWN handle 2560967642 appearance 2 at (1.309219, 0.001, 27.5766) visible true stagger 0.00
+DRAWN handle 2582682839 appearance 4 at (3.592544, 0.001, 27.64482) visible true stagger 0.00
+DRAWN handle 4068624221 appearance 0 at (2.656968, 0.001, 27.407) visible true stagger 0.80
+SHOT C:/Users/Ockey/AppData/Local/Temp/bf9c/stagger.png of frame 1265
