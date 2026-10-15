@@ -9,9 +9,10 @@ const S2 := 3
 const S3 := 4
 const SURVIVORS: Array[int] = [2, 3, 4]
 const EYE := Vector3(0.0, 1.6, 0.0)
-## observe_time_s 3 s and transform_duration_s 2 s at 60 Hz (data/knobs/borrowed_face.tres, net.tres).
+## observe_time_s 3 s, transform_duration_s 2 s and form_change_cooldown_s 12 s at 60 Hz (data/knobs/borrowed_face.tres, net.tres).
 const OBSERVE_TICKS := 180
 const TRANSFORM_TICKS := 120
+const COOLDOWN_TICKS := 720
 
 var _server: RoundServer
 var _bf: BorrowedFace
@@ -73,12 +74,13 @@ func _request(form: int, sender: int = MONSTER) -> void:
 	_step(1)
 
 
-## Requests `form` and runs the whole transformation.
+## Requests `form` and runs the whole transformation and the cooldown after it (Story 003).
 func _become(form: int) -> void:
 	_request(form)
 	assert_bool(_bf.transforming()).is_true()
 	_step(TRANSFORM_TICKS)
 	assert_int(_bf.form()).is_equal(form)
+	_step(COOLDOWN_TICKS)
 
 
 func test_round_starts_in_true_form() -> void:

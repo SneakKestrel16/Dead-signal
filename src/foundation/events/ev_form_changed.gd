@@ -5,6 +5,9 @@ class_name EvFormChanged
 extends ServerEvent
 
 var player: int
+## Form before the change (borrowed-face.md rule 9): BorrowedFace.TRUE_FORM or a survivor's player id.
+var previous: int
+## Form after the change, same encoding.
 var form: int
 
 

@@ -3,7 +3,9 @@ class_name BorrowedFace extends RefCounted
 ## observation accumulator: design/gdd/borrowed-face.md rules 1-3 and Formulas "Observation
 ## accumulation"; ADR-0005 (tick order slot BORROWED_FACE), ADR-0007 §5 (sight rays on SIGHT, doors
 ## analytic), ADR-0006 (BorrowedFaceKnobs). Story 002 adds form-change requests and target
-## persistence (rules 5-6, 13, Edge Cases "Target ..." rows). Story 003 adds cooldown, stun and FormChanged.
+## persistence (rules 5-6, 13, Edge Cases "Target ..." rows). Story 003 adds the state machine of
+## "States and Transitions": cooldown, stun interrupt and FormChanged (rules 7-10, 14-15, Formulas
+## "Form-change timing", Edge Cases "Stun lands on ...", "Round ends mid-transformation").
 ## Server only. Observation counts ticks of `net.sim_tick_hz`, never wall time, and never decays.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   eye_of(player) -> Vector3                  the shapeshifter's eye position
@@ -51,7 +53,11 @@ var _range_m: float = 0.0
 var _half_fov: float = 0.0
 ## survivor -> valid observation ticks this round (rule 1: obs_time in ticks)
 var _obs: Dictionary[int, int] = {}
+var _bus: EventBus
 var _transform_ticks: int = 0
+var _cooldown_ticks: int = 0
+## First tick a request may be accepted again (rule 9); 0 at round start, so no cooldown runs.
+var _cooldown_end_tick: int = 0
 var _form: int = TRUE_FORM
 ## Target of the transformation in progress; TRUE_FORM is a valid target, so _transforming says if one runs.
 var _target: int = TRUE_FORM
@@ -109,13 +115,17 @@ func request_form_change(player: int, bytes: PackedByteArray) -> void:
 
 
 ## Injected by RoundServer. Reads knobs, resets every survivor's observation to 0 (rule 1) and puts
-## the shapeshifter in true form, not transforming (rule 5).
-func setup(_tick_runner: TickRunner, _bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+## the shapeshifter in true form, not transforming, no cooldown (rule 5), discarding anything left
+## from a round that ended mid-transformation. Subscribes to MonsterStunned (rule 10).
+func setup(_tick_runner: TickRunner, bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+	_bus = bus
 	_hz = knobs.net.sim_tick_hz
 	_observe_ticks = knobs.ticks(knobs.borrowed_face.observe_time_s)
 	_range_m = knobs.borrowed_face.observe_range_m
 	_half_fov = deg_to_rad(knobs.borrowed_face.observe_fov_deg / 2.0)
 	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
+	_cooldown_ticks = knobs.ticks(knobs.borrowed_face.form_change_cooldown_s)
+	_cooldown_end_tick = 0
 	_obs = {}
 	for s in _survivors:
 		_obs[s] = 0
@@ -123,31 +133,57 @@ func setup(_tick_runner: TickRunner, _bus: EventBus, _registry: StateRegistry, k
 	_target = TRUE_FORM
 	_transforming = false
 	_pending = INVALID_FORM
+	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
 
 
 ## BORROWED_FACE slot: observation, then a transformation due this tick completes, then this
-## tick's request is validated (a request accepted this tick never completes on it).
+## tick's request is validated (a request accepted this tick never completes on it). Survivor
+## Defense (slot 200) flushes first, so a stun on the completion tick has already interrupted (rule 9).
 func server_tick(tick: int) -> void:
 	_observe()
 	if _transforming and tick >= _transform_end_tick:
-		# Rule 13 and Edge Cases: the target was valid at request time; its status now does not matter.
-		_form = _target
-		_transforming = false
+		_complete(tick)
 	var req := _pending
 	_pending = INVALID_FORM
-	if req != INVALID_FORM and _can_change_into(req):
+	if req != INVALID_FORM and tick >= _cooldown_end_tick and _can_change_into(req):
 		_target = req
 		_transforming = true
 		_transform_end_tick = tick + _transform_ticks
 
 
-## Rule 6 and the part of rule 7 this story owns (not already transforming). A request into the
+## Rule 9: switch the form, start the cooldown and emit FormChanged; Scare Events reads it for the
+## reveal (rule 15), after this step's flush and never gating it. Rule 13 and Edge Cases: the target
+## was valid at request time; its status now does not matter.
+func _complete(tick: int) -> void:
+	var e := EvFormChanged.new()
+	e.player = _monster
+	e.previous = _form
+	e.form = _target
+	_form = _target
+	_transforming = false
+	_cooldown_end_tick = tick + _cooldown_ticks
+	_bus.emit(e)
+
+
+## Rule 10: a stun during a transformation keeps the previous form and starts the full cooldown at
+## the interrupt. A stun outside one costs nothing here (the cooldown follows only completed or
+## interrupted transformations, "States and Transitions").
+func _on_monster_stunned(e: ServerEvent) -> void:
+	if _transforming and (e as EvMonsterStunned).monster == _monster:
+		_transforming = false
+		_cooldown_end_tick = e.tick + _cooldown_ticks
+
+
+## Rule 6 and rule 7 except the cooldown (checked in server_tick) and the Lunge/takedown commit
+## (Story 004/005). Stunned or shock-locked rejects with no cooldown cost. A request into the
 ## current form is rejected (inference: no rule names it, and accepting it would only spend the
 ## change; a designer ruling settles it). Disconnected means Match Flow's DISCONNECTED (grace
 ## expired); a survivor inside reconnect grace keeps its last status and stays a valid target
 ## (inference from Match Flow rule 13; a Borrowed Face ruling on in-grace targets settles it).
 func _can_change_into(form: int) -> bool:
 	if _transforming or form == _form:
+		return false
+	if _locked.is_valid() and _locked.call(_monster):
 		return false
 	if form == TRUE_FORM:
 		return true
