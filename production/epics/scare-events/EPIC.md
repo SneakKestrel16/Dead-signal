@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/scare-events.md
 > **Architecture Module**: Scare Events (server half) (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories scare-events`
+> **Stories**: 9 stories, see the Stories table below
 
 ## Overview
 
@@ -47,6 +47,20 @@ This epic is complete when:
 - All acceptance criteria from `design/gdd/scare-events.md` are verified
 - All Logic and Integration stories have passing test files in `tests/`
 - All Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/` — each screen touched for UI, plus a lead sign-off for Visual/Feel
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | Scare catalogue data and the server Scare module | Logic | Ready | ADR-0005 |
+| 002 | Per-recipient scare gating, budgets and repeat block | Logic | Ready | ADR-0015 |
+| 003 | Scoped delivery: shared relevance and single-client hallucinations | Integration | Ready | ADR-0004 |
+| 004 | Monster-source scares: door burst, reveal and Blackout | Integration | Ready | ADR-0005 |
+| 005 | Ambush lunge scare and flinch suppression near a lunge | Integration | Ready | ADR-0015 |
+| 006 | Facility scare state machine and RoundScript anchors | Integration | Ready | ADR-0009 |
+| 007 | Presentation-only guarantees: slammed doors and no fake teammates | Integration | Ready | ADR-0005 |
+| 008 | Scare audio: positional origin, stingers, ducking and volume scales | Visual/Feel | Ready | ADR-0013 |
+| 009 | Scare visuals and flash accessibility | Visual/Feel | Ready | ADR-0015 |
 
 ## Next Step
 

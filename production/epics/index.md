@@ -17,5 +17,5 @@ Engine: Godot 4.7.2
 | [Downing, Rescue & Elimination](downing-and-rescue/EPIC.md) | Feature | Downing, Rescue & Elimination | downing-and-rescue.md | 7 stories | Ready |
 | [Survivor Defense](survivor-defense/EPIC.md) | Feature | Survivor Defense | survivor-defense.md | 12 stories | Ready |
 | [Monster Abilities](monster-abilities/EPIC.md) | Feature | Monster Abilities | monster-abilities.md | 10 stories | Ready |
-| [Pings & Callouts](pings-and-callouts/EPIC.md) | Feature | Pings & Callouts | pings-and-callouts.md | Not yet created | Ready |
-| [Scare Events](scare-events/EPIC.md) | Feature | Scare Events | scare-events.md | Not yet created | Ready |
+| [Pings & Callouts](pings-and-callouts/EPIC.md) | Feature | Pings & Callouts | pings-and-callouts.md | 9 stories | Ready |
+| [Scare Events](scare-events/EPIC.md) | Feature | Scare Events | scare-events.md | 9 stories | Ready |
