@@ -17,6 +17,9 @@ class_name SurvivorObjectives extends RefCounted
 ## fake install raises neither (rule 26).
 ## Story 007 (rules 25-26): every point is `fakeable`, so the shapeshifter's Start is a HoldService fake:
 ## no lock, no state change, no on_start (so no install noise or alert) and a real Start cancels it.
+## Story 010 (rules 10, 27; ADR-0004 §5, §9): every event carries the carrier and a dropped item's
+## position, so each client's ObjectiveDisplay rebuilds the checklist from events alone; catch_up() is
+## the newest event per point, for ServerMovement.catch_up (reconnecting clients).
 ## Not yet here: the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
@@ -24,6 +27,7 @@ class_name SurvivorObjectives extends RefCounted
 ##   obj.survivor_ids.assign(survivors)
 ##   obj.rng = round_rng; obj.emit_sound = server_movement.emit_sound
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
+##   server_movement.catch_up.append(obj.catch_up)
 
 enum DriveState { SECURED, CARRIED, DROPPED, DOCKED, EXTRACTED }
 ## INSTALLING is a fuse box's install alert (story 004), sent at each install start; last so the older
@@ -52,6 +56,8 @@ const DRIVE_ID := 0
 const FUSE_ID := 10
 const FUSE_BOX_ID := 20
 const TERMINAL_ID := 30
+## catch_up key of the one-off POWERED event, so the terminal's own state does not replace it.
+const POWERED_KEY := TERMINAL_ID + 1
 ## Keeps a snapped drop inside its volume: a volume's east and south edges belong to the next one.
 const FLOOR_EPS_M := 1e-3
 
@@ -90,6 +96,8 @@ var _drive_pickups: Array[ObjectivePoint] = []
 var _fuse_pickups: Array[ObjectivePoint] = []
 ## Activating ticks with the zone held (Formulas "Effective activation time"); never reset.
 var _activation_ticks: int = 0
+## Objective id -> its newest event (POWERED under POWERED_KEY); install alerts are never kept.
+var _last: Dictionary[int, EvObjectiveProgressChanged] = {}
 
 
 ## `is_healthy(actor: int) -> bool` is the life-state source (Downing's view once it exists); pass an
@@ -122,6 +130,7 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_fuse_pickups = []
 	_terminal = TerminalState.LOCKED
 	_activation_ticks = 0
+	_last = {}
 	## Named method, not a lambda: the bus must not keep the module alive (no RefCounted cycle).
 	bus.subscribe(&"SurvivorEscaped", _on_escaped)
 	bus.subscribe(&"SurvivorDowned", _on_downed)
@@ -188,6 +197,14 @@ func server_tick(_tick: int) -> void:
 	_activation_ticks += 1
 	if _activation_ticks >= _knobs.ticks(_knobs.objectives.evac_activation_s):
 		_activate()
+
+
+## The round's objective state as the events that set it, newest per point (ADR-0004 §9): a reconnecting
+## client replays them for the checklist it missed. A past install alert is over, so never included.
+func catch_up() -> Array[ServerEvent]:
+	var out: Array[ServerEvent] = []
+	out.assign(_last.values())
+	return out
 
 
 ## Terminal state: LOCKED, ARMED, ACTIVATING or ACTIVATED (never POWERED).
@@ -283,7 +300,7 @@ func _complete(index: int, actor: int, from := DriveState.SECURED) -> void:
 	_states[index] = DriveState.CARRIED
 	_carriers[index] = actor
 	## the extractor was in the room; a carried drive is shown to every survivor (rule 10)
-	_emit(DRIVE_ID + index, DriveState.CARRIED)
+	_emit(DRIVE_ID + index, DriveState.CARRIED, actor)
 
 
 ## Fuse pickup: Healthy, fuse in `from` (UNFOUND at its spawn, or DROPPED where it fell), carrier under
@@ -299,7 +316,7 @@ func _pick_up(index: int, actor: int, from := FuseState.UNFOUND) -> void:
 		return
 	_fuse_states[index] = FuseState.CARRIED
 	_fuse_carriers[index] = actor
-	_emit(FUSE_ID + index, FuseState.CARRIED)
+	_emit(FUSE_ID + index, FuseState.CARRIED, actor)
 
 
 ## Install: Healthy, carrying a fuse, box still empty (each box takes one fuse; rule 15).
@@ -405,7 +422,7 @@ func _activate() -> void:
 		_slots[slot] = -1
 		_states[drive] = DriveState.DROPPED
 		_drive_pickups[drive].point = _terminal_point
-		_emit(DRIVE_ID + drive, DriveState.DROPPED)
+		_emit(DRIVE_ID + drive, DriveState.DROPPED, -1, dropped_at(DRIVE_ID + drive))
 	_emit(TERMINAL_ID, TerminalState.ACTIVATED)
 
 
@@ -451,14 +468,14 @@ func _drop_drive(i: int, at: Vector3) -> void:
 	_states[i] = DriveState.DROPPED
 	_carriers[i] = -1
 	_drive_pickups[i].point = at
-	_emit(DRIVE_ID + i, DriveState.DROPPED) ## marked for all survivors as "Drive dropped" (rule 12)
+	_emit(DRIVE_ID + i, DriveState.DROPPED, -1, dropped_at(DRIVE_ID + i)) ## marked for all survivors as "Drive dropped" (rule 12)
 
 
 func _drop_fuse(i: int, at: Vector3) -> void:
 	_fuse_states[i] = FuseState.DROPPED
 	_fuse_carriers[i] = -1
 	_fuse_pickups[i].point = at
-	_emit(FUSE_ID + i, FuseState.DROPPED)
+	_emit(FUSE_ID + i, FuseState.DROPPED, -1, dropped_at(FUSE_ID + i))
 
 
 func _where(actor: int) -> Vector3:
@@ -486,11 +503,15 @@ func _floor_point(p: Vector3) -> Vector3:
 
 
 ## Every event here is about something carried, installed or always marked, so `discovered` is true.
-func _emit(objective: int, state: int) -> void:
+## `carrier`: who now carries it (CARRIED only); `at`: where a Dropped item lies.
+func _emit(objective: int, state: int, carrier := -1, at := Vector3.INF) -> void:
 	var e := EvObjectiveProgressChanged.new()
 	e.objective = objective
 	e.state = state
 	e.discovered = true
+	e.carrier = carrier
+	e.at = at
+	_last[POWERED_KEY if objective == TERMINAL_ID and state == TerminalState.POWERED else objective] = e
 	_bus.emit(e)
 
 

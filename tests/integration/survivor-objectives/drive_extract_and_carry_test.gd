@@ -246,7 +246,8 @@ func test_a_carried_drive_event_reaches_survivor_clients() -> void:
 	var survivor_peer := 7
 	var monster_peer := 9
 	var d := _events[0].project(survivor_peer, null, monster_peer)
-	assert_dict(d).is_equal({"objective": SurvivorObjectives.DRIVE_ID, "state": SurvivorObjectives.DriveState.CARRIED})
+	assert_dict(d).is_equal({"objective": SurvivorObjectives.DRIVE_ID, "state": SurvivorObjectives.DriveState.CARRIED,
+		"carrier": A})
 
 
 func test_a_carried_drive_cannot_be_extracted_again_and_the_other_can() -> void:

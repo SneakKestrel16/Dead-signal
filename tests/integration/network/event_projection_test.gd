@@ -118,9 +118,9 @@ func test_objective_points_undiscovered_are_omitted_for_survivors_only() -> void
 	e.objective = 5
 	e.state = 1
 	assert_array(_got(S1, _one(e))).is_empty() # fails closed until the owner marks it discovered
-	assert_array(_got(M, _one(e))).is_equal([[&"ObjectiveProgressChanged", {"objective": 5, "state": 1}]])
+	assert_array(_got(M, _one(e))).is_equal([[&"ObjectiveProgressChanged", {"objective": 5, "state": 1, "carrier": -1}]])
 	e.discovered = true
-	assert_array(_got(S1, _one(e))).is_equal([[&"ObjectiveProgressChanged", {"objective": 5, "state": 1}]])
+	assert_array(_got(S1, _one(e))).is_equal([[&"ObjectiveProgressChanged", {"objective": 5, "state": 1, "carrier": -1}]])
 
 
 func test_scare_reaches_its_recipient_with_no_identity() -> void:
