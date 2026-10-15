@@ -1,0 +1,24 @@
+SHOWING Client1 (survivor)
+FIRE at frame 1404
+CUE voice_c0.pain_cry at (2.750253, 0.001, 27.5203) frame 1431
+CUE taser_crackle at (2.750253, 1.101, 27.5203) frame 1431
+arc lit (6.00) at frame 1431
+DRAWN handle 639969231 appearance 4 at (3.595568, 0.001205, 27.63434) visible true stagger 0.00
+DRAWN handle 1830114674 appearance 3 at (1.298339, 0.001, 27.59299) visible true stagger 0.00
+DRAWN handle 4031943790 appearance 5 at (4.80135, 0.001, 27.64838) visible true stagger 0.00
+DRAWN handle 199938081 appearance 0 at (2.750253, 0.001, 27.5203) visible true stagger 1.00
+STAGGER on handle 199938081 at frame 1431
+SHOT <tmp>/r3-trueform/arc.png of frame 1431
+DRAWN handle 639969231 appearance 4 at (3.595568, 0.001205, 27.63434) visible true stagger 0.00
+DRAWN handle 1830114674 appearance 3 at (1.298339, 0.001, 27.59299) visible true stagger 0.00
+DRAWN handle 4031943790 appearance 5 at (4.80135, 0.001, 27.64838) visible true stagger 0.00
+DRAWN handle 199938081 appearance 0 at (2.689142, 0.001, 27.51791) visible true stagger 0.80
+SHOT <tmp>/r3-trueform/stagger.png of frame 1437
+FIRE again at frame 1521
+CUE taser_fizz at (2.689142, 1.101, 27.51791) frame 1547
+spark lit (2.00) at frame 1547
+DRAWN handle 639969231 appearance 4 at (3.595568, 0.001205, 27.63434) visible true stagger 0.00
+DRAWN handle 1830114674 appearance 3 at (1.298339, 0.001, 27.59299) visible true stagger 0.00
+DRAWN handle 4031943790 appearance 5 at (4.80135, 0.001, 27.64838) visible true stagger 0.00
+DRAWN handle 199938081 appearance 0 at (2.689142, 0.001, 27.51791) visible true stagger 0.00
+SHOT <tmp>/r3-trueform/spark.png of frame 1547

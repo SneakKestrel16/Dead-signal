@@ -14,6 +14,9 @@ const NOT_KNOBS: Array = [
 ## 0 and 1 are structural (indexes, increments, identity multipliers): a knob shipping at either is not
 ## told apart by a literal scan, so test_changed_knob_changes_behaviour covers those by behaviour.
 const STRUCTURAL: Array[float] = [0.0, 1.0]
+## Client presentation files (story 011): their literals are greybox look (light energy, colour, NOT
+## SOURCEABLE effect sizes), never DefenseKnobs; the knobs they use (stun_root_s) are read from Knobs.
+const PRESENTATION: Array[String] = ["shock_presenter.gd"]
 
 var _knobs: Knobs
 
@@ -26,7 +29,7 @@ func before_test() -> void:
 func test_no_knob_literals_in_module() -> void:
 	var found: Array[String] = []
 	for f in DirAccess.get_files_at(SRC_DIR):
-		if f.ends_with(".gd"):
+		if f.ends_with(".gd") and f not in PRESENTATION:
 			found.append_array(_knob_literals(f, FileAccess.get_file_as_string(SRC_DIR + f)))
 	assert_array(found).override_failure_message("\n".join(found)).is_empty()
 

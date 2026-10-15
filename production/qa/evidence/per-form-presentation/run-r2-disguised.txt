@@ -1,0 +1,22 @@
+SHOWING Client0 (survivor)
+DISGUISED as appearance 3 at frame 1518
+DRAWN handle 249756163 appearance 3 at (3.595191, 0.001, 27.64006) visible true stagger 0.00
+DRAWN handle 842445172 appearance 5 at (4.800674, 0.001, 27.64828) visible true stagger 0.00
+DRAWN handle 2066714745 appearance 2 at (1.299469, 0.001, 27.57742) visible true stagger 0.00
+DRAWN handle 3070062387 appearance 3 at (2.63713, 0.001, 27.43131) visible true stagger 0.00
+SHOT <tmp>/r2-disguised/disguise.png of frame 1548
+FIRE at frame 1572
+CUE voice_c3.shocked_grunt at (2.526019, 0.001, 27.48381) frame 1599
+CUE taser_crackle at (2.526019, 1.101, 27.48381) frame 1599
+arc lit (6.00) at frame 1599
+DRAWN handle 249756163 appearance 3 at (3.595191, 0.001, 27.64006) visible true stagger 0.00
+DRAWN handle 842445172 appearance 5 at (4.800674, 0.001, 27.64828) visible true stagger 0.00
+DRAWN handle 2066714745 appearance 2 at (1.299469, 0.001, 27.57742) visible true stagger 0.00
+DRAWN handle 3070062387 appearance 3 at (2.526019, 0.001, 27.48381) visible true stagger 1.00
+STAGGER on handle 3070062387 at frame 1599
+SHOT <tmp>/r2-disguised/arc.png of frame 1599
+DRAWN handle 249756163 appearance 3 at (3.595191, 0.001, 27.64006) visible true stagger 0.00
+DRAWN handle 842445172 appearance 5 at (4.800674, 0.001, 27.64828) visible true stagger 0.00
+DRAWN handle 2066714745 appearance 2 at (1.299469, 0.001, 27.57742) visible true stagger 0.00
+DRAWN handle 3070062387 appearance 3 at (2.526019, 0.001, 27.48381) visible true stagger 0.80
+SHOT <tmp>/r2-disguised/stagger.png of frame 1605

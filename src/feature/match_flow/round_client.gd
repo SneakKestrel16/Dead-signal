@@ -44,6 +44,10 @@ var router: ClientEventRouter
 var scares: ScarePresenter
 ## Shock and stun stagger and vocal cue on remote bodies (borrowed-face story 009); null when not rendering.
 var disguise: DisguisePresenter
+## Per-form shock presentation (arc, spark, own jitter, jolt, edge) and the placeholder audio sink
+## (survivor-defense story 011); null when not rendering.
+var shock: ShockPresenter
+var audio: PlaceholderAudio
 ## Zone ambience bed crossfade and its debug overlay (story facility-map/012); null when not rendering.
 var ambience: ZoneAmbience
 ## Map lighting from the server's records (story facility-map/010, ADR-0009 §6); null when not rendering.
@@ -158,8 +162,19 @@ func _on_connected() -> void:
 		router.subscribe(&"ScareTriggered", scares.on_scare)
 		disguise = DisguisePresenter.new(remotes, puppets.state_of, knobs)
 		add_child(disguise)
-		router.subscribe(&"PlayerShocked", disguise.on_shock)
-		router.subscribe(&"MonsterStunned", disguise.on_shock)
+		# Survivor-defense story 011: ShockPresenter routes the shock events per form (it calls the
+		# stagger), and PlaceholderAudio plays every cue and server sound until audio assets exist.
+		# ponytail: its own FlashLimiter; share the scares' one when a settings store wires flash_scale.
+		shock = ShockPresenter.new(disguise, remotes, puppets.state_of, camera_fx,
+				FlashLimiter.new(knobs.facility.max_flashes_per_s), knobs)
+		add_child(shock)
+		router.subscribe(&"PlayerShocked", shock.on_player_shocked)
+		router.subscribe(&"MonsterStunned", shock.on_monster_stunned)
+		audio = PlaceholderAudio.new()
+		add_child(audio)
+		router.subscribe(EventBatch.SOUND, audio.on_sound)
+		disguise.cue.connect(audio.play_at)
+		shock.cue.connect(audio.play_at)
 		lights = LightingPresenter.new(_map, LightingPresets.load_shipped())
 		add_child(lights)
 		camera.environment = lights.presets.environment()

@@ -209,6 +209,27 @@ func test_long_held_beam_has_no_limit_and_no_monster_effect() -> void:
 	assert_int(_def.charges(S1)).is_equal(_knobs.defense.stun_item_charges)
 
 
+## Story 011, rule 6 (Borrowed Face copy table: "Shapeshifter toggles it itself"): a disguised monster's
+## own toggle shows the same cone a survivor's does; the true form shows none, and it never has an effect.
+func test_disguised_monster_toggles_a_cosmetic_cone_hidden_in_true_form() -> void:
+	_start()
+	var form := [BorrowedFace.TRUE_FORM]
+	_def.set_form_source(func() -> int: return form[0])
+	_def.request_intent(MONSTER, SurvivorDefense.light_packet(true))
+	_step()
+	assert_bool(_def.flashlight_on(MONSTER)).is_false() # true form: no cone
+	form[0] = S1 # disguised as S1
+	assert_bool(_def.flashlight_on(MONSTER)).is_true()
+	_def.request_intent(MONSTER, SurvivorDefense.light_packet(false))
+	_step()
+	assert_bool(_def.flashlight_on(MONSTER)).is_false()
+	_def.request_intent(MONSTER, SurvivorDefense.light_packet(true))
+	_step(_knobs.ticks(HOLD_S))
+	assert_bool(_def.flashlight_on(MONSTER)).is_true()
+	assert_array(_monster_events).is_empty()
+	assert_int(_def.charges(MONSTER)).is_less_equal(0) # still no items (rule 13)
+
+
 func test_eliminated_survivor_shows_no_cone_and_cannot_toggle() -> void:
 	_start()
 	_want_light(S1, true)

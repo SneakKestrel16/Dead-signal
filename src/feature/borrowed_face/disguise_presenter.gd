@@ -11,7 +11,7 @@ class_name DisguisePresenter extends Node
 ## child backwards about the feet and eases it upright; the rig's stagger clip replaces it (ADR-0010 §3).
 ## Usage (client):
 ##   var d := DisguisePresenter.new(remotes, puppets.state_of, knobs)
-##   add_child(d); router.subscribe(&"PlayerShocked", d.on_shock); router.subscribe(&"MonsterStunned", d.on_shock)
+##   add_child(d)   # the shock events reach on_shock through ShockPresenter (survivor-defense story 011)
 ##   d.cue.connect(audio.play_at)
 
 ## A vocal cue for the audio layer: catalog sound id and where the body stands.

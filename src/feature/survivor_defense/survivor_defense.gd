@@ -75,8 +75,9 @@ var _resolved: Array[Dictionary] = []
 var _hidden: Dictionary[int, bool] = {}
 ## player -> this tick's intent (the first one received since the last tick).
 var _pending: Dictionary[int, int] = {}
-## Survivor -> flashlight on (rules 2-5, story 009). Absent: no flashlight (the monster; story 011 owns
-## its cosmetic copy) or eliminated. Nothing reads it but the snapshot: it never touches the monster.
+## Player -> flashlight on (rules 2-5, story 009). Absent: no flashlight (eliminated). The monster's entry
+## is its cosmetic copy (rule 6, story 011), shown only while disguised. Nothing reads it but the snapshot:
+## it never touches the monster.
 var _light: Dictionary[int, bool] = {}
 ## player -> this tick's wanted flashlight state (the last one received since the last tick).
 var _light_pending: Dictionary[int, bool] = {}
@@ -214,6 +215,8 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
 		_light[s] = false
+	if _monster >= 0:
+		_light[_monster] = false # rule 6: cosmetic, the shapeshifter toggles it itself
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
 	registry.register_view(StateKeys.SHOCK_STUN_LOCK, &"SurvivorDefense", ShockLockView.new(self))
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
@@ -310,7 +313,12 @@ func charge_entries(viewer: int, full: bool = false) -> Array:
 
 
 ## Whether `player`'s flashlight is on (rule 3: every client sees the cone). ServerMovement.flashlight_of.
+## The monster's shows only while its form is a disguise (rule 6; the true form carries none). Inference:
+## the switch state is kept through a true-form spell, as a survivor's is while hidden; a designer ruling
+## on whether a new disguise starts with the light off would settle it.
 func flashlight_on(player: int) -> bool:
+	if player == _monster and (not _form_of.is_valid() or _form_of.call() == BorrowedFace.TRUE_FORM):
+		return false
 	return _light.get(player, false)
 
 

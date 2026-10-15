@@ -24,6 +24,11 @@ extends Node3D
 ## its own entry shows it (disguise.png 1 s later); with --stun the shown client fires its taser at the
 ## shapeshifter once it stands there (after the disguise when both are given; stagger.png 6 drawn frames
 ## into the stagger). Every DisguisePresenter cue of the shown client is printed.
+## Story survivor-defense/011 adds: --stun=survivor fires at the shapeshifter's target (a real survivor)
+## instead; --stun=me has the first line survivor fire at the shown client (its own jitter and blue edge);
+## (--stun=survivor aims at the last survivor in the line, clear of the shapeshifter.) --twice fires again RESIST_AFTER_S after the first stagger (inside the immunity: the true form's spark);
+## --monster-light turns the shapeshifter's flashlight on once disguised (its cosmetic cone). Shots: arc.png,
+## spark.png and edge.png on the first drawn frame each shows; ShockPresenter cues are printed too.
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -34,6 +39,8 @@ const STAGE_RIGHT_M := 1.0
 const ARRIVE_M := 0.15
 ## Drawn frames between form-change requests while waiting for the observation to complete.
 const REQUEST_EVERY := 15
+## --twice: seconds after the first stagger; past stun_duration_s, inside stun_immunity_s (shipped values).
+const RESIST_AFTER_S := 3.0
 
 
 ## Lighting (story facility-map/010): the map is lit only by each client's LightingPresenter (no sun); only
@@ -67,6 +74,8 @@ var _disguised_frame := -1
 var _aimed := 0
 var _fired := false
 var _stagger_frame := -1
+var _stagger_s := 0.0
+var _refired := false
 ## --bot=walk: waypoint index, and seconds since the border was crossed (-1 before).
 var _leg := 0
 var _since_border := -1.0
@@ -156,6 +165,8 @@ func _pick_view() -> void:
 	for c in _clients:
 		if c.hud != null:
 			c.hud.visible = c == pick
+		if c.shock != null:
+			c.shock.edge().visible = c == pick # every client's edge layer draws in this one window
 	pick.camera.make_current()
 	if not _args.has("bot"):
 		pick.scripted = null
@@ -288,6 +299,8 @@ func _role(c: RoundClient) -> bool:
 func _stage(c0: RoundClient) -> void:
 	if c0.disguise != null and not c0.disguise.cue.is_connected(_on_cue):
 		c0.disguise.cue.connect(_on_cue)
+		c0.shock.cue.connect(_on_cue)
+	_shock_shots(c0)
 	if _home == Vector3.INF:
 		_home = c0.body.global_position
 	var line: Array[RoundClient] = []
@@ -334,6 +347,8 @@ func _stage(c0: RoundClient) -> void:
 		if m.predictor.last_own.get("appearance", -1) == want:
 			_disguised_frame = frame
 			print("DISGUISED as appearance %d at frame %d" % [want, frame])
+			if _args.has("monster-light"):
+				m.toggle_flashlight()
 		elif frame % REQUEST_EVERY == 0:
 			(m.multiplayer as SceneMultiplayer).send_bytes(
 					BorrowedFace.request_packet(target.predictor.last_own.get("id", -1)), 1,
@@ -344,8 +359,16 @@ func _stage(c0: RoundClient) -> void:
 		_shot("disguise")
 	if not _args.has("stun") or (_disguised_frame >= 0 and frame < _disguised_frame + 45):
 		return
+	if _args["stun"] == "me":
+		_aimed += 1
+		if _aimed == 10:
+			(line[0].multiplayer as SceneMultiplayer).send_bytes(SurvivorDefense.fire_packet(), 1,
+					MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+			print("FIRE by %s at the shown client, frame %d" % [line[0].name, frame])
+		return
+	var aim_at := line[-1] if _args["stun"] == "survivor" else m # the end of the line: clear of the aim tolerance
 	var eye := c0.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
-	var chest := m.body.global_position + Vector3.UP * _knobs.controller.capsule_height_m * 0.6
+	var chest := aim_at.body.global_position + Vector3.UP * _knobs.controller.capsule_height_m * 0.6
 	var flat := Vector2(chest.x - eye.x, chest.z - eye.z)
 	c0.scripted.yaw = atan2(-flat.x, -flat.y)
 	c0.scripted.pitch = atan2(chest.y - eye.y, flat.length())
@@ -362,6 +385,24 @@ func _stage(c0: RoundClient) -> void:
 	if _stagger_frame >= 0 and frame == _stagger_frame + 6:
 		_print_drawn(c0)
 		_shot("stagger")
+	if _stagger_frame >= 0:
+		_stagger_s += get_process_delta_time()
+	if _args.has("twice") and not _refired and _stagger_s >= RESIST_AFTER_S:
+		_refired = true
+		(c0.multiplayer as SceneMultiplayer).send_bytes(SurvivorDefense.fire_packet(), 1,
+				MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		print("FIRE again at frame %d" % frame)
+
+
+## Story survivor-defense/011: arc.png, spark.png and edge.png on the first drawn frame each is lit.
+func _shock_shots(c: RoundClient) -> void:
+	for kind: Array in [["arc", c.shock.arc_light().light_energy], ["spark", c.shock.spark_light().light_energy],
+			["edge", c.shock.edge().modulate.a]]:
+		if kind[1] > 0.0 and not has_meta(kind[0]):
+			set_meta(kind[0], true)
+			print("%s lit (%.2f) at frame %d" % [kind[0], kind[1], Engine.get_frames_drawn()])
+			_print_drawn(c)
+			_shot(kind[0])
 
 
 func _on_cue(sound: StringName, at: Vector3) -> void:

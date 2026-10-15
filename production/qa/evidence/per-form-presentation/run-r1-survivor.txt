@@ -1,0 +1,16 @@
+SHOWING Client0 (survivor)
+FIRE at frame 1405
+CUE voice_c5.shocked_grunt at (4.800656, 0.001, 27.64843) frame 1432
+CUE taser_crackle at (4.800656, 1.101, 27.64843) frame 1432
+arc lit (6.00) at frame 1432
+DRAWN handle 282476426 appearance 4 at (3.596256, 0.001, 27.63837) visible true stagger 0.00
+DRAWN handle 882857398 appearance 5 at (4.800656, 0.001, 27.64843) visible true stagger 1.00
+DRAWN handle 2023345001 appearance 3 at (1.305981, 0.001, 27.59419) visible true stagger 0.00
+DRAWN handle 3172323813 appearance 0 at (2.860559, 0.001, 27.52795) visible true stagger 0.00
+STAGGER on handle 882857398 at frame 1432
+SHOT <tmp>/r1-survivor/arc.png of frame 1432
+DRAWN handle 282476426 appearance 4 at (3.596256, 0.001, 27.63837) visible true stagger 0.00
+DRAWN handle 882857398 appearance 5 at (4.800656, 0.001, 27.64843) visible true stagger 0.80
+DRAWN handle 2023345001 appearance 3 at (1.305981, 0.001, 27.59419) visible true stagger 0.00
+DRAWN handle 3172323813 appearance 0 at (2.588551, 0.001, 27.50849) visible true stagger 0.00
+SHOT <tmp>/r1-survivor/stagger.png of frame 1438

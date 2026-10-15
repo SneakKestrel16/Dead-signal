@@ -1,0 +1,9 @@
+SHOWING Client0 (survivor)
+FIRE by Client1 at the shown client, frame 1408
+CUE taser_crackle at (2.0, 1.6, 31.0) frame 1436
+edge lit (1.00) at frame 1436
+DRAWN handle 41811062 appearance 3 at (3.590046, 0.001, 27.64408) visible true stagger 0.00
+DRAWN handle 1409105857 appearance 4 at (4.800742, 0.001, 27.64836) visible true stagger 0.00
+DRAWN handle 4258409037 appearance 2 at (1.304012, 0.001, 27.59422) visible true stagger 0.00
+DRAWN handle 592591054 appearance 0 at (2.821513, 0.001, 27.52765) visible true stagger 0.00
+SHOT <tmp>/r4-own/edge.png of frame 1436
