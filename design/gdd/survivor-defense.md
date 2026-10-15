@@ -437,7 +437,7 @@ keeps the monster permanently stuck.
 | Taser cartridges | Survivor HUD item slot | On change | Survivors |
 | Stun/immunity remaining | Monster HUD | Per tick | Monster while stunned/immune |
 | Hide/barricade/break progress | Centre ring | Per tick | During hold |
-| Stun hits/resists per player | Results screen | End of round | All |
+| Stun hits per player (resists stay in telemetry only, AD-227) | Results screen | End of round | All |
 
 ## Cross-References
 

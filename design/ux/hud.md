@@ -2,7 +2,7 @@
 
 > **Status**: Draft (all sections authored)
 > **Author**: SneakKestrel16 + ux-designer
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-15
 > **Platform Targets**: PC (keyboard/mouse primary, gamepad Partial); 16:9 at 1080p reference, 16:10 and 21:9 supported
 > **Template**: HUD Design
 
@@ -62,12 +62,15 @@ The HUD must never tell a player something their character could not perceive, a
 
 | Category | Items | Why |
 |---|---|---|
-| **Must Show** | I1, I2, I4, I5, I10, I31; shapeshifter: I19, I21 | Pillar 4: "what next" and the clock are never hidden; the shapeshifter's core decisions are its form and cooldowns |
+| **Must Show** | I1, I2, I4, I31; shapeshifter: I19, I21 | Pillar 4: "what next" and the clock are never hidden; the shapeshifter's core decisions are its form and cooldowns |
+| **Should Keep** | I5, I10 (roster) | On by default for rescue decisions; the Show roster setting can hide it, Downed markers remain |
 | **Contextual** | I6, I7, I8, I9, I11, I12, I13, I14, I15, I16, I17, I20, I22, I23, I24, I25, I27, I28, I29, I30, I32, I33 | Appear only when the rule that owns them is active |
 | **On Demand** | Feed scrollback (I26 history), I18 face list (shapeshifter hold), Help in the overlay | Re-reading and planning, never needed mid-chase |
-| **Hidden** | Footsteps, interaction noise, False Signal, hide cue, monster position, other players' roles | Audio-only or deliberately unknown (information parity) |
+| **Hidden** | Footsteps, interaction noise, False Signal, hide cue, monster position, other players' roles, barricade broken | Audio-only or deliberately unknown (information parity) |
 
-I3, I26 and I33 are Contextual feeds (they show only while lines are live). The Must Show list has 6 survivor items, consistent with "minimal but present".
+I3, I26 and I33 are Contextual feeds (they show only while lines are live). The Must Show list has 4 survivor items, consistent with "minimal but present".
+
+A broken barricade is audio and world state only: survivors learn it by hearing the break and seeing the open door.
 
 ---
 
@@ -122,7 +125,7 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 | H1 | Clock | I1 | Must Show | Z2 | mm:ss remaining | Number | 1 Hz, server-corrected | Infiltration–Evacuation | Final 30 s: pulse in scale + ticking layer | P13 style |
 | H2 | Phase label | I2 | Must Show | Z2 | "INFILTRATION" / "INVESTIGATION" / "EVACUATION" | Text | On `RoundPhaseChanged` | Always in round | 150 ms fade on change | — |
 | H3 | Activation countdown | I8 | Contextual | Z2 | 15 s countdown, "Paused" when nobody holds | Number + text | Continuous | Terminal Activating | None | P4 |
-| H4 | Roster | I10, I5 | Must Show | Z1 | Name, life-state icon + word, drive carrier mark | Text list | On change | Survivors, in round | 150 ms fade per row change | P12 |
+| H4 | Roster | I10, I5 | Should Keep | Z1 | Name, life-state icon + word, drive carrier mark | Text list | On change | Survivors, in round | 150 ms fade per row change | P12 |
 | H5 | Objective checklist | I4 | Must Show | Z3 | Drives x/2 with state, fuses x/2, terminal state | Text list | On `ObjectiveProgressChanged` | Survivors and shapeshifter | Changed line highlights 1 s (no flash) | P12 |
 | H6 | Crosshair | I31 | Must Show | Z4 | Dot | Icon | — | Always (hidden while Downed or hidden) | None | — |
 | H7 | Interaction prompt | I29 | Contextual | Z4 | Verb, object, glyph, Hold/Press | Text | Per frame | Valid target | 150 ms fade | P2 |
@@ -130,13 +133,13 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 | H9 | Reject / cause label | I27 + any refusal | Contextual | Z5 | Short reason | Text | On reject | Refused action | 150 ms fade, 1.5 s | P10 |
 | H10 | Callout and event feed | I26, I3 | Contextual | Z6 | `[Name]: [text]` + arrow; escapes, disconnects | Text lines | On event | Lines live | 150 ms fade, ≥ 8 s per line | P9 |
 | H11 | Taser cartridges | I15 | Contextual | Z7 | Icon × count | Icon + number | On change | Survivor holding the item | Count change 150 ms | P13 |
-| H12 | World markers | I6, I11, I24 | Contextual | World / Z8 | Pings, Downed + bleed-out ring, points, dropped items | Icon + label + metres | Per frame | Owning rule | Fade in 150 ms | P7 |
+| H12 | World markers | I6, I11, I24 | Contextual | World / Z8 | Pings, Downed + bleed-out ring, points, dropped items | Icon + label (≥ 20 px at 1080p) + metres | Per frame | Owning rule | Fade in 150 ms | P7 |
 | H13 | World progress bars | I7 | Contextual | World | Server progress, "Paused" | Bar + % | Per tick | Object in progress | Linear | P4 |
 | H14 | Edge cue indicators | I32, I28 | Contextual | Z8 | Lunge chevron, transform arc, flinch-off pulse | Shape | On cue | In audible range | 150 in / 300 out | P8 |
 | H15 | Own state vignette | I14 | Contextual | Full screen | Seized / Downed / shocked + label | Edge treatment + word | On change | Own state | 250 ms | P11 |
 | H16 | Own bleed-out | I12, I13 | Contextual | Z4 (replaces prompt) | Seconds remaining, rescue progress when rescued | Number + ring | Per tick | Own Downed | None | P3/P13 |
 | H18 | Caption line | I33 | Contextual | Z6 | `PA: [text]` or `[Voice]: [text]`, no direction arrow | Text line | On voice line | Captions on, line heard | 150 ms fade, ≥ 8 s | P9 |
-| H17 | Callout wheel | I25 | Contextual | Centre | 8 lines | Radial menu | On open | Wheel input | 100 ms open | P6 |
+| H17 | Callout wheel | I25 | Contextual | Z4 | 8 lines | Radial menu | On open | Wheel input | 100 ms open | P6 |
 | S1 | Face list | I18 | Must Show (shapeshifter) | Z1 | Survivor names, observation progress, available mark | Text + bars | On change | Shapeshifter | None | P12 |
 | S2 | Form and form cooldown | I19 | Must Show (shapeshifter) | Z7 | Current form name, cooldown | Text + sweep | 1 Hz | Shapeshifter | None | P13 |
 | S3 | Ability cooldowns | I21 | Must Show (shapeshifter) | Z7 | Lunge, False Signal, Blackout | Icons + sweep + seconds | 0.1 s | Shapeshifter | Ready: shape change | P13 |
@@ -157,7 +160,7 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 | Downed | Own state Downed | Vignette (H15), own bleed-out (H16) replaces the prompt; crosshair hidden; roster and objectives stay |
 | Seized | Own state Seized | Vignette; prompt and ring hidden |
 | Hidden | In a hiding spot | Crosshair hidden; prompt shows "Leave" only; everything else stays (peek view details: open gap) |
-| Spectating | Eliminated or Escaped | Roster, clock, objectives; "Spectating: [Name]" label in Z2; no prompt, ring or kit (spectator spec: open gap) |
+| Spectating | Eliminated or Escaped | Roster, clock, objectives; "Spectating: [Name]" label in Z2; feed (H10) and markers (H12) of the watched survivor; no wheel, no ping (`pings-and-callouts.md` rule 7); no prompt, ring or kit (spectator spec: open gap) |
 | Dialogue / cutscene | — | N/A: the game has no cutscenes or dialogue; Results is a separate screen |
 | Paused | In-round overlay open (P15) | The round does not pause; HUD stays visible dimmed behind the overlay with "The round continues" |
 | Loading / round start | Match Flow Loading | HUD hidden until Infiltration |
@@ -188,11 +191,12 @@ Alternatives considered: objectives bottom-right (rejected: conflicts with the k
 
 ## Visual Budget
 
-- Exploration: at most **8** HUD elements at once (5 Must Show elements carrying the 6 Must Show items, + 3 contextual) and at most **8%** of the screen area outside world markers.
+- Exploration: at most **8** HUD elements at once (4 Must Show elements carrying the 4 Must Show items, + the Should Keep roster, + 3 contextual) and at most **8%** of the screen area outside world markers.
 - Busiest state (holding during an Evacuation with feed lines and markers): at most **14** elements and **12%** of the screen.
 - At most 6 world markers at once (2 per sender × 3 senders typical, `pings-and-callouts.md`); further markers keep the newest.
 - When over budget, drop in reverse tier order: CAN HIDE first (H11, then H9), then the oldest feed line, then roster rows collapse to icons with names on focus.
-- The centre zone Z4 never holds more than crosshair + one of (prompt, ring, bleed-out, transforming bar) + one label.
+- The centre zone Z4 never holds more than crosshair + one of (prompt, ring, bleed-out, transforming bar, callout wheel) + one label.
+- While the callout wheel is open, the prompt (H7) and the reject label (H9) are suppressed.
 
 ---
 
@@ -233,9 +237,10 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 
 - **Focus order**: the HUD has no focusable elements; the only interactive HUD layers are the wheel (P6, stick/mouse direction) and the overlay (P15, full P17 focus).
 - **Text**: critical HUD text ≥ 20 px, feed ≥ 28 px at 1080p; 4.5:1 contrast via a backing plate; feed 7:1 on an opaque box.
-- **No colour-only state**: roster states carry icon + word ("Wounded", "Downed"); checklist states are words; ping types are shapes; the final-30 s clock pulses in scale and ticks; cooldown ready is a shape change.
+- **No colour-only state**: roster states carry icon + word ("Wounded", "Downed"); checklist states are words; ping types are shapes; the final-30 s clock pulses in scale and ticks; cooldown ready is a shape change. Colour marks identity only.
 - **Reduced motion**: pulses become static, vignette jitter is off, fades become cuts (Animation Standards).
 - **Flash**: no HUD element flashes; highlights are 1 s steady changes.
+- The Emergency strobe is world lighting, governed by the flash intensity scale (`design/accessibility-requirements.md`).
 - **Non-text indicators**: every icon has a word nearby or in the Help page; AccessKit does not cover the in-round HUD (accessibility Open Questions).
 - **Cue indicators**: H14 for the lunge wind-up and transform distortion, inside audible range only.
 
@@ -253,7 +258,7 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 | Marker distance labels | On/Off | On | |
 | Cue indicators (H14) | On/Off | On | Off only removes visuals; audio unchanged |
 | Captions (H18) | On/Off | Off | PA and scare voice lines; callout feed is always on |
-| Colourblind palette | Off / Red-green | Off | Accessibility Visual |
+| Colourblind palette | Off / Red-green | Off | Accessibility Visual. Colour is identity only; every state is carried by shape or word, so no tritanopia palette is needed |
 | Reduced motion | On/Off | Off | Shared with accessibility settings |
 
 ---
@@ -261,15 +266,15 @@ Committed tier: Standard (`design/accessibility-requirements.md`).
 ## Acceptance Criteria
 
 - [ ] At 1920 × 1080, 2560 × 1080 and 1920 × 1200, every HUD element sits at least 48 px from every screen edge (64 px from the 16:9 safe rect at 21:9), verified on retained screenshots in `production/qa/evidence/`.
-- [ ] In exploration a survivor sees exactly: clock, phase label, roster, objective checklist, crosshair, plus any live markers and feed lines; no element appears that the state table does not list.
+- [ ] In exploration a survivor sees exactly: clock, phase label, roster, objective checklist, crosshair, plus any live markers and feed lines; no element appears that the state table does not list. With Show roster Off, the same set appears without the roster, and Downed markers still appear.
 - [ ] Downed: the vignette and the "Downed" word show, the crosshair hides, own bleed-out seconds replace the prompt, and roster and checklist stay visible.
 - [ ] A survivor client never renders any of S1–S7 (shapeshifter elements), checked by inspecting the HUD tree on a survivor client.
 - [ ] In exploration the HUD (excluding world markers) covers at most 8% of the screen; in the busiest state at most 12% (pixel count on screenshots).
-- [ ] With the colourblind simulator (protanopia, deuteranopia, tritanopia) applied to screenshots, every roster state, checklist state and ping type is still distinguishable.
+- [ ] With the colourblind simulator (protanopia, deuteranopia, tritanopia) applied to screenshots, every roster state, checklist state and ping type is still distinguishable by shape or word. Colour is identity only, so no tritanopia palette is needed.
 - [ ] Five callouts arriving within one second all appear in arrival order: four visible, the first in scrollback; none dropped.
 - [ ] The lunge wind-up indicator appears for a player at 19 m from the source and not at 21 m (`lunge_cue_radius_m` 20).
 - [ ] With reduced motion on, no HUD element moves or pulses; the final-30 s clock still ticks audibly.
-- [ ] Critical HUD text measures at least 20 px tall and feed text at least 28 px at 1080p.
+- [ ] Critical HUD text and world marker (H12) labels measure at least 20 px tall, and feed text at least 28 px at 1080p.
 
 ---
 

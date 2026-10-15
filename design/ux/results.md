@@ -2,12 +2,12 @@
 
 > **Status**: Draft (all sections authored)
 > **Author**: SneakKestrel16 + ux-designer
-> **Last Updated**: 2026-10-12
+> **Last Updated**: 2026-10-15
 > **Journey Phase(s)**: Round end, between a round and the next lobby (no player journey map exists; see Open Questions)
 > **Platform Target**: PC; keyboard/mouse primary, gamepad Partial; 16:9 at 1080p reference, 16:10 and 21:9 supported
 > **Template**: UX Spec
 
-Inputs: `match-flow.md` rules 17, 23–27 (Match Flow owns the data, HUD & Results Screen owns presentation), the results rows of `survivor-defense.md`, `downing-and-rescue.md`, `monster-abilities.md`, `borrowed-face.md` and `survivor-objectives.md`, `lobby-role-assignment.md` rules 17 and 19, `design/accessibility-requirements.md` (Standard tier) and `design/ux/interaction-patterns.md` (P16, P17, P19, P23, P28). Decisions made without the designer are logged as AD-29 to AD-33 in `production/auto-decisions.md`.
+Inputs: `match-flow.md` rules 17, 23–27 (Match Flow owns the data, HUD & Results Screen owns presentation), the results rows of `survivor-defense.md`, `downing-and-rescue.md`, `monster-abilities.md`, `borrowed-face.md` and `survivor-objectives.md`, `lobby-role-assignment.md` rules 17 and 19, `design/accessibility-requirements.md` (Standard tier) and `design/ux/interaction-patterns.md` (P16, P17, P19, P23, P28, P29). Decisions made without the designer are logged as AD-29 to AD-33 and AD-227 to AD-229 in `production/auto-decisions.md`.
 
 ---
 
@@ -64,17 +64,17 @@ There is no "skip" or "continue" button: the return is server-timed so every pla
 ├──────────────────────────────────┬────────────────────────────────┤
 │ [Z2 SURVIVORS]                   │ [Z3 OBJECTIVES]                │
 │  Ana   Escaped  (2 drives)       │  Drives recovered  2/2   3:40  │
-│        downs 1 · rescues 2       │  Drives docked     2/2   5:55  │
+│    downs 1 · rescues 2 · stuns 1 │  Drives docked     2/2   5:55  │
 │  Ben   Eliminated (Bled out)     │  Fuses installed   2/2   6:30  │
-│        downs 2 · rescues 0       │  Evacuation active Yes   7:44  │
+│    downs 2 · rescues 0 · stuns 0 │  Evacuation active Yes   7:44  │
 │  Cy    Did not escape            │  Drives extracted  2/2   8:12  │
-│        downs 0 · rescues 1       │                                │
+│    downs 0 · rescues 1 · stuns 1 │                                │
 │  Dee   Disconnected              │                                │
-│        downs 1 · rescues 0       │                                │
+│    downs 1 · rescues 0 · stuns 0 │                                │
 │  Shapeshifter: Eli               │                                │
 ├──────────────────────────────────┴────────────────────────────────┤
 │ [Z4 STATS]  Match 8:12 │ Takedowns 3  Eliminations 1              │
-│  Lunges landed 4  Lunges missed 3                                 │
+│  Lunges landed 4  Lunges missed 3  Lunges interrupted 1           │
 │  Stunned 2  Form changes 5  False Signals 3  Blackouts 1          │
 │  Survivor stuns landed 2  Rescues 3                               │
 ├───────────────────────────────────────────────────────────────────┤
@@ -100,10 +100,10 @@ All zones keep a 48 px safe margin at 1920 × 1080; at 21:9 the content sits in 
 |---|---|---|---|---|
 | R1 | Outcome line | — (large text) | "SURVIVORS WIN" / "SHAPESHIFTER WINS" | rule 23 outcome |
 | R2 | Reason line | — (text) | One of the five reasons in rule 23, plus final round time | rule 23 reason |
-| R3 | Survivor row | P23 List row | Name, fate word, drives carried if Escaped, downs taken, rescues performed | rule 24 |
+| R3 | Survivor row | P23 List row | Name, fate word, drives carried if Escaped, downs taken, rescues performed, stuns landed | rule 24; stuns from `survivor-defense.md` UI Requirements (AD-227) |
 | R4 | Shapeshifter name | — (text) | "Shapeshifter: [name]" | rule 24 |
 | R5 | Objective line | — (text) | Label, x/2 or Yes/No, completion time or "—" | rule 25 |
-| R6 | Stats block | — (text grid) | Rule 26 counts, each with a word label | rule 26 |
+| R6 | Stats block | — (text grid) | Rule 26 counts plus "Lunges interrupted", each with a word label | rule 26; lunges interrupted is an addition (AD-228) |
 | R7 | Countdown | — (text) | "Returning to lobby in N" | `results_duration_s` |
 | R8 | Leave session | P19 secondary button | Opens a P29 confirm ("Leave this session?", Leave / Stay, focus on Stay) | AD-30 |
 | R9 | Back (Last round view) | P19 secondary button | Replaces R7 and R8 in the lobby view | AD-31 |
@@ -129,6 +129,7 @@ All zones keep a 48 px safe margin at 1920 × 1080; at 21:9 the content sits in 
 | Forfeit | Reason "Shapeshifter forfeited" | R1 "SURVIVORS WIN"; R4 reads "Shapeshifter: [name] (disconnected)" |
 | Populated (normal) | Payload complete | As wireframe |
 | Empty fields | Objective never completed | Time column shows "—"; counts show 0, never blank |
+| Stats group missing | A key is listed in the payload's `missing` | Every figure from that owner shows "Results unavailable" in its zone, never 0 (AD-229) |
 | 3 survivors | 4-player round | Z2 shows 3 rows; layout does not stretch |
 | Disconnected survivor | Fate Disconnected | Row shows "Disconnected"; downs and rescues still shown |
 | Payload error | `RoundEnded` arrives with a missing or invalid payload field | R1/R2 still shown if present; the unusable block shows "Results unavailable" in its zone; countdown unaffected; logged client-side (AD-32) |
@@ -161,12 +162,16 @@ Focus stops, in order: the outcome group (R1 + R2, read as one), each R3 row, R4
 |---|---|---|---|---|
 | Outcome, reason, final time | Match Flow `RoundEnded` payload | Match Flow | Once | Payload error state |
 | Survivor fate, drives carried | Match Flow (from Downing, Objectives) | Match Flow | Once | "Results unavailable" in Z2 |
+| Survivor name | Lobby roster via Match Flow | Lobby & Role Assignment | Once | Empty name shows "Unknown player" (AD-229) |
 | Downs taken, rescues performed | Downing & Rescue stats via Match Flow | Downing & Rescue | Once | 0 |
+| Stuns landed per survivor (`stuns_landed`) | Survivor Defense via Match Flow | Survivor Defense | Once | 0 |
 | Shapeshifter name | Lobby roster via Match Flow | Lobby & Role Assignment | Once | "Shapeshifter: unknown" |
 | Objective counts and times | Survivor Objectives via Match Flow | Survivor Objectives | Once | "—" for missing times |
-| Takedowns, eliminations, lunges landed/missed, False Signals, Blackouts | Monster Abilities via Match Flow | Monster Abilities | Once | 0 |
+| Takedowns, eliminations, lunges landed/missed/interrupted, False Signals, Blackouts | Monster Abilities via Match Flow | Monster Abilities | Once | 0 |
 | Form changes | Borrowed Face via Match Flow | Borrowed Face | Once | 0 |
 | Times stunned, survivor stuns landed | Survivor Defense via Match Flow | Survivor Defense | Once | 0 |
+
+The 0 in the null column applies only to an owner that reported. An owner whose key is listed in `missing` shows "Results unavailable", never 0 (AD-229). Stun resists are not in the payload and stay in telemetry only (AD-227).
 | Countdown | `results_duration_s` knob + client tick estimate | Match Flow | 1 Hz | Hidden if knob missing |
 
 The UI owns no game state. The aggregation interface behind the payload is TR-matchflow-008 (Stats/results interface ADR, not yet written).
@@ -221,7 +226,7 @@ Committed tier: Standard.
 - **Contrast**: body ≥ 4.5:1, R1 ≥ 3:1 as large text, verified on retained screenshots.
 - **No colour-only state**: outcome and fates are words; win/lose colour is decoration only.
 - **Reading time**: the screen does not wait for input, but the full results stay readable afterwards through the lobby's Last round view (`accessibility-requirements.md` Reading time row; AD-31).
-- **Screen reader** (constraint taken although not committed at Standard): stock `Control` nodes; every focus stop has an accessible name. Examples: outcome "Survivors win. Evidence escaped at 8 minutes 12"; rows "Ana, escaped with 2 drives, 1 down, 2 rescues", "Ana, escaped, 0 downs, 0 rescues" (no drives: no drive phrase), "Ben, eliminated, bled out, 2 downs, 0 rescues", "Cy, did not escape, 0 downs, 1 rescue", "Dee, disconnected, 1 down, 0 rescues"; R4 "Shapeshifter: Eli" or, on forfeit, "Shapeshifter: Eli, disconnected, forfeited"; Z3 and Z4 read every line. The countdown R7 is not a live region and is never announced; R8 announces "Leave session, returning to lobby in N seconds" when focused.
+- **Screen reader** (constraint taken although not committed at Standard): stock `Control` nodes; every focus stop has an accessible name. Examples: outcome "Survivors win. Evidence escaped at 8 minutes 12"; rows "Ana, escaped with 2 drives, 1 down, 2 rescues, 1 stun landed", "Ana, escaped, 0 downs, 0 rescues, 0 stuns landed" (no drives: no drive phrase), "Ben, eliminated, bled out, 2 downs, 0 rescues, 0 stuns landed", "Cy, did not escape, 0 downs, 1 rescue, 1 stun landed", "Dee, disconnected, 1 down, 0 rescues, 0 stuns landed"; R4 "Shapeshifter: Eli" or, on forfeit, "Shapeshifter: Eli, disconnected, forfeited"; Z3 and Z4 read every line. The countdown R7 is not a live region and is never announced; R8 announces "Leave session, returning to lobby in N seconds" when focused.
 - **Reduced motion**: fades become cuts.
 
 ---
@@ -232,7 +237,9 @@ Committed tier: Standard.
 |---|---|---|
 | R1 outcome | 20 | Plan for 40% expansion; R1 shrinks to 40 px before wrapping |
 | R2 reason | 32 | Longest English: "Evacuation deadline expired" (27) |
-| Fate word | 16 | "Did not escape" (14); row wraps to two lines if needed |
+| Fate word | 16 | "Did not escape" (14); the word alone, never joined to a phrase |
+| Cause and drive phrases | 24 | "(Bled out)", "(2 drives)"; own string, row wraps to two lines if needed |
+| R4 forfeit text | 40 | "Shapeshifter: {name} (disconnected)" with a name placeholder |
 | Objective label | 22 | Column width allows 40% expansion |
 | Stat label | 20 | Grid reflows to more rows rather than truncating |
 | Player names | 16 | Fixed by `lobby-role-assignment.md` (1–16 chars) |
@@ -255,6 +262,8 @@ No string is concatenated from fragments; counts use plural-aware formats.
 - [ ] At 1920 × 1080, 2560 × 1080 and 1920 × 1200 every element keeps the 48 px safe margin (64 px from the 16:9 safe rect at 21:9).
 - [ ] The screen renders its first frame within 100 ms of `RoundEnded` on the reference PC (excluding the 1 s fade).
 - [ ] With a deliberately corrupted payload field, the affected zone shows "Results unavailable" and the countdown still returns the player to the lobby.
+- [ ] With the Survivor Defense view unregistered so its key is listed in `missing`, stun figures show "Results unavailable", never 0.
+- [ ] Each survivor row shows that survivor's stuns landed, matching `stuns_landed` in the payload.
 
 ---
 
