@@ -1,12 +1,12 @@
 # Story 002: Lunge wind-up root and dash
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,10 +34,10 @@ The Lunge moves the monster: a rooted wind-up with a capped turn rate, then a 4 
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] The wind-up begins on accepted activation and the dash begins `lunge_windup_s` (0.6 s) later
-- [ ] During wind-up the monster does not move and its facing changes by no more than 15 deg/s
-- [ ] During the dash its facing changes by no more than 30 deg/s and it travels `lunge_distance_m` (4 m) over `lunge_dash_s` (0.3 s) along its facing at wind-up end
-- [ ] A dash whose path meets a wall, a closed or barricaded door, or the body of a survivor who is not a valid target stops at the obstacle and resolves as a miss
+- [x] The wind-up begins on accepted activation and the dash begins `lunge_windup_s` (0.6 s) later
+- [x] During wind-up the monster does not move and its facing changes by no more than 15 deg/s
+- [x] During the dash its facing changes by no more than 30 deg/s and it travels `lunge_distance_m` (4 m) over `lunge_dash_s` (0.3 s) along its facing at wind-up end
+- [x] A dash whose path meets a wall, a closed or barricaded door, or the body of a survivor who is not a valid target stops at the obstacle and resolves as a miss
 
 ---
 
@@ -93,7 +93,7 @@ The Lunge moves the monster: a rooted wind-up with a capped turn rate, then a 4 
 **Required evidence**:
 - Integration: `tests/integration/monster-abilities/lunge_movement_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/monster-abilities/lunge_movement_test.gd` (13 tests)
 
 ---
 
@@ -101,3 +101,19 @@ The Lunge moves the monster: a rooted wind-up with a capped turn rate, then a 4 
 
 - Depends on: Story 001
 - Unlocks: Stories 003, 004
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-186):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 976/976 after the wave merge, no leak warnings.
+- The step edits the server copy of the frame's yaw, so ViewState reports the capped yaw during a lunge; its doc comment ('no gameplay state turns the view') is now stale.
+- Turn cap and dash are not in snapshots: the monster's own client is corrected, not predicted (inference; a playtest of the monster view settles it).
+- A barricade is assumed to keep the door's DOORS-layer blocker on (SD-7 does this via held-shut doors).
+- The dash has no gravity or sliding, so a ramp or step stops it (ponytail comment).
+- Merge conflict with MA-5 in monster_abilities.gd (both additive) resolved by keeping both. Commit hook flagged possible hardcoded values; the knob-literal scan passes.
+**Test Evidence**: 13 tests. Mutations caught: yaw clamp removed, blocked-dash resolve removed, speed from lunge_dash_s not whole ticks, wind-up root removed.
+**Code Review**: Complete (orchestrator review at merge)

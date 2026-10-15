@@ -1,7 +1,7 @@
 # Story 003: One shock lock, no refresh, post-lock window
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ The single lock both a shocked survivor and a stunned disguised monster get: `st
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] A hit on a survivor roots them for `stun_root_s`, slows them until `stun_duration_s`, and cancels a rescue, objective hold or barricade in progress (rules 11, 14).
-- [ ] For `stun_duration_s` the locked player fails every door, interact, item, ping and callout attempt and succeeds on the first attempt after it ends (rule 14).
-- [ ] Four hits 0.5 s apart lock for exactly `stun_duration_s` from the first hit; four charges spent (no refresh).
-- [ ] Eight hits 2 s apart (0, 2, ..., 14 s) lock only 0 to 2 s and 8 to 10 s; the other hits play and spend a charge but apply no root, slow or lock; a hit inside the post-lock window still cancels a hold (rules 14, 11).
+- [x] A hit on a survivor roots them for `stun_root_s`, slows them until `stun_duration_s`, and cancels a rescue, objective hold or barricade in progress (rules 11, 14).
+- [x] For `stun_duration_s` the locked player fails every door, interact, item, ping and callout attempt and succeeds on the first attempt after it ends (rule 14).
+- [x] Four hits 0.5 s apart lock for exactly `stun_duration_s` from the first hit; four charges spent (no refresh).
+- [x] Eight hits 2 s apart (0, 2, ..., 14 s) lock only 0 to 2 s and 8 to 10 s; the other hits play and spend a charge but apply no root, slow or lock; a hit inside the post-lock window still cancels a hold (rules 14, 11).
 
 ---
 
@@ -95,7 +95,7 @@ The single lock both a shocked survivor and a stunned disguised monster get: `st
 **Story Type**: Logic
 **Required evidence**: Logic: `tests/unit/survivor-defense/shock_lock_test.gd`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-defense/shock_lock_test.gd` (9 tests)
 
 ---
 
@@ -103,3 +103,20 @@ The single lock both a shocked survivor and a stunned disguised monster get: `st
 
 - Depends on: Stories 001, 002
 - Unlocks: Stories 004, 005
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-185):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 976/976 after the wave merge, no leak warnings.
+- One modifier owner `&"taser"` switches ROOT to SLOW instead of the two keys in the engine notes.
+- Door, interact and barricade gating goes through `HoldService.set_barred`; the composer must combine it with Borrowed Face's Transforming bar (one barred Callable).
+- Pings and callouts have no module yet; AC-2 tested through the SHOCK_STUN_LOCK view they are expected to read.
+- AC-1's three hold kinds tested with stub interactables on a real HoldService (shared cancel path; inference).
+- Modules ordered before SURVIVOR_DEFENSE see the modifier change one tick late (they see `locked()` on time).
+- First runs failed on a parse error and an out-of-range test knob, not missing behaviour; mutations stand in for the red run.
+**Test Evidence**: 9 tests. Mutations caught: post-lock window removed, root one tick long, can_fire lock check dropped, hold cancel removed.
+**Code Review**: Complete (orchestrator review at merge)

@@ -56,7 +56,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
 | 001 | [Ability requests and Lunge state machine](story-001-request-validation-and-lunge-states.md) | Logic | Complete | ADR-0002 |
-| 002 | [Lunge wind-up root and dash](story-002-wind-up-and-dash.md) | Integration | Ready | ADR-0007 |
+| 002 | [Lunge wind-up root and dash](story-002-wind-up-and-dash.md) | Integration | Complete | ADR-0007 |
 | 003 | [Lunge hit test with lag compensation](story-003-hit-test-and-survivor-hit.md) | Logic | Ready | ADR-0003 |
 | 004 | [Lunge resolution, cooldown and miss slow](story-004-resolution-cooldown-miss-slow.md) | Logic | Ready | ADR-0007 |
 | 005 | [AbilityUsed emission and Lunge state publishing](story-005-ability-used-and-state.md) | Integration | Complete | ADR-0004 |
