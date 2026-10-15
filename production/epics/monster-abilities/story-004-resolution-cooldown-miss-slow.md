@@ -1,12 +1,12 @@
 # Story 004: Lunge resolution, cooldown and miss slow
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,11 +34,11 @@ A lunge ends in Resolved by one of four paths (commit end, dash end or obstacle,
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] A miss (including blocked by a door) slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution
-- [ ] A transformation request during the miss slow is accepted when Borrowed Face rule 7 holds
-- [ ] After a hit whose takedown commit completes (or is cancelled by a stun) at time T, the next lunge is rejected before T + 10 s and accepted at T + 10 s
-- [ ] A stun during wind-up or the dash produces no `SurvivorHit`; the cooldown starts at the stun and no miss slow is applied
-- [ ] A monster disconnect mid-lunge ends it with no hit
+- [x] A miss (including blocked by a door) slows the monster to 50% for 1.5 s; the next lunge is accepted no earlier than 10 s after resolution
+- [x] A transformation request during the miss slow is accepted when Borrowed Face rule 7 holds
+- [x] After a hit whose takedown commit completes (or is cancelled by a stun) at time T, the next lunge is rejected before T + 10 s and accepted at T + 10 s
+- [x] A stun during wind-up or the dash produces no `SurvivorHit`; the cooldown starts at the stun and no miss slow is applied
+- [x] A monster disconnect mid-lunge ends it with no hit
 
 ---
 
@@ -98,7 +98,7 @@ A lunge ends in Resolved by one of four paths (commit end, dash end or obstacle,
 **Required evidence**:
 - Logic: `tests/unit/monster-abilities/lunge_resolution_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/monster-abilities/lunge_resolution_test.gd` (10 tests)
 
 ---
 
@@ -106,3 +106,18 @@ A lunge ends in Resolved by one of four paths (commit end, dash end or obstacle,
 
 - Depends on: Stories 002, 003
 - Unlocks: Story 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-192):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1050/1050 after the wave merge, no leak warnings.
+- Disconnect on the hit tick: the hit is already sent before the disconnect is processed; the lunge still ends and Downing cancels the commit on the same event (inference; a 'connected' check in the hit test if design wants no hit).
+- Stun on the dash's last tick: cooldown counts from that tick either way; slow skipped or removed depending on order within the tick.
+- AC-2 (transform during the slow) checked as LungeView.is_attacking false through the slow; full check with the real transform system is MA-6.
+- Tests emit SurvivorHit, SurvivorDowned, MonsterStunned and PlayerConnectionChanged directly (QA plan allows).
+**Test Evidence**: 10 tests; 7 failed before the change. Mutations caught: no slow on miss, slow never ends, disconnect ignored, stun not removing the slow.
+**Code Review**: Complete (orchestrator review at merge)
