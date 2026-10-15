@@ -324,3 +324,82 @@ func test_map_loaded_arrives_over_enet_and_host_quitting_in_loading_records_noth
 	await _until(func() -> bool: return left[0], "host_left")
 	assert_array(_over).is_empty() # no result, no Cancelled tag, no rotation advance
 	assert_array(Array(_handoff.queue_order())).is_empty()
+
+
+# --- AC-4: host leaves mid-round and during Results --------------------------------
+
+## Server-side lobby for the host-left tests: always Waiting, so clients can join while the real
+## LobbyState is In Match (the stand-in clients join only to hear the host leave).
+class OpenLobby extends RefCounted:
+	func state() -> StringName:
+		return &"waiting"
+
+	func player_count() -> int:
+		return 0
+
+
+var _seen: Array[StringName] = []
+
+
+func _on_seen(e: ServerEvent) -> void:
+	_seen.append(e.type)
+
+
+func _now() -> int:
+	return _server.tick_runner.current_tick() if _server.tick_runner != null else -1
+
+
+## The round is already at `state`. Hosts, joins two clients, routes drops into the round the way the
+## composition root does (ConnectionRouter on the round bus), then the host quits. Every client must
+## hear host_left; the round must record no result (over never called, rotation not advanced) and see
+## no drop, so no reconnect grace starts and no forfeit can follow.
+func _host_quits_in(state: RoundLifecycle.State) -> void:
+	assert_int(_lc.state()).is_equal(state)
+	var ended_before := _lc.match_flow().is_ended()
+	var queue_before := _handoff.queue_order()
+	_next_port += 1
+	var port := _next_port
+	var server := _net(OpenLobby.new())
+	assert_int(server.host(port)).is_equal(OK)
+	var clients: Array[NetAuthority] = []
+	for i in 2:
+		var c := _net(RefCounted.new())
+		assert_int(c.join("127.0.0.1", port, "C%d" % i)).is_equal(OK)
+		await _until(func() -> bool: return c.local_player_id >= 0 \
+			and server.peer_id_of(c.local_player_id) != -1, "join %d" % i)
+		clients.append(c)
+	var router := ConnectionRouter.new(_knobs, server, _lobby, _now)
+	router.bus = _server.bus
+	for t in [&"PlayerConnectionChanged", &"RoundEnded"]:
+		_server.bus.subscribe(t, _on_seen)
+	var left: Array[int] = []
+	clients[0].host_left.connect(func() -> void: left.append(0))
+	clients[1].host_left.connect(func() -> void: left.append(1))
+	server.close()
+	await _until(func() -> bool: return left.size() == 2, "host_left on both clients")
+	assert_array(left).contains_exactly_in_any_order([0, 1])
+	_server.bus.flush()
+	assert_array(_seen).is_empty() # no drop reached the round: no grace, no forfeit, no new RoundEnded
+	for c in clients:
+		assert_int(router.grace_start_tick(c.local_player_id)).is_equal(-1)
+	assert_array(_over).is_empty() # no result recorded, no Cancelled
+	assert_bool(_lc.match_flow().is_ended()).is_equal(ended_before)
+	assert_str(_lobby.state()).is_equal(LobbyState.IN_MATCH)
+	assert_array(Array(_handoff.queue_order())).is_equal(Array(queue_before)) # rotation not advanced
+
+
+func test_host_quitting_mid_round_closes_every_client_and_records_nothing() -> void:
+	_lock()
+	for id in _ids():
+		_lc.report_loaded(id)
+	_step()
+	_step()
+	await _host_quits_in(RoundLifecycle.State.RUNNING)
+	assert_bool(_lc.match_flow().is_ended()).is_false()
+
+
+func test_host_quitting_during_results_closes_every_client_and_records_nothing() -> void:
+	_lock()
+	_run_to_end()
+	_step()
+	await _host_quits_in(RoundLifecycle.State.RESULTS)
