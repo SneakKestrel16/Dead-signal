@@ -48,6 +48,10 @@ extends Node3D
 ## the other clients ping where they look and call out (Danger, Wait), the shown client pings ahead, then
 ## spams pings past its bucket, then opens the wheel aimed at a line. Shots: pending.png (own pending marker),
 ## markers.png (server markers and feed), toofast.png (rejection tick), wheel.png (wheel open).
+## --bot=warn (story pings-and-callouts/011; --count=5 --view=survivor): the shown client faces the true-form
+## body it draws (else the nearest) and warning-pings it, another survivor warning-pings where it looks, two
+## call out. Shots: warning.png (warning markers), expired.png (feed past its 8 s), scrollback.png (the
+## feed_scrollback action held through Input.action_press: the retained lines again).
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -187,6 +191,8 @@ func _process(delta: float) -> void:
 		_lunge_bot(c0)
 	elif _args.get("bot", "") == "ping":
 		_ping_bot(c0)
+	elif _args.get("bot", "") == "warn":
+		_warn_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -366,6 +372,46 @@ func _ping_bot(c0: RoundClient) -> void:
 		c0.ping_hud.close_wheel(false)
 		print("PING BOT pending=%d rejections=%d callouts=%s" % [c0.pings.pending.size(), c0.pings.rejections,
 			c0.ping_hud.feed_history()])
+		get_tree().quit()
+
+
+func _warn_bot(c0: RoundClient) -> void:
+	if _step_frame < 0:
+		_step_frame = Engine.get_frames_drawn()
+	var f := Engine.get_frames_drawn() - _step_frame
+	var others := _clients.filter(func(c: RoundClient) -> bool: return c != c0 and c.is_spawned() and not _role(c))
+	var target: Node3D = null
+	for h: int in c0.remotes:
+		if c0.remotes[h].visible and c0.puppets.state_of(h).get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID:
+			target = c0.remotes[h]
+	if target == null:
+		_look(c0)
+	else:
+		var d := target.position - c0.body.global_position
+		c0.scripted.yaw = atan2(-d.x, -d.z)
+		c0.scripted.pitch = -0.1
+	if f == 30 and others.size() > 1:
+		others[0].callouts.request(&"danger")
+		others[1].callouts.request(&"wait")
+	elif f == 50:
+		c0.ping_hud.warn()
+		if others.size() > 0:
+			others[0].ping_hud.warn()
+	elif f == 110:
+		_shot("warning")
+		print("WARN BOT own=%s received=%s" % [c0.predictor.last_own.get("appearance"), c0.pings.received])
+		for m in c0.ping_hud.markers_now():
+			print("WARN BOT marker %s warning=%s" % [m["label"], m.get("warning")])
+	elif f == 640:
+		_shot("expired")
+		print("WARN BOT at %d: feed=%d ms=%d" % [f, c0.ping_hud.feed_lines().size(), Time.get_ticks_msec()])
+	elif f == 650:
+		Input.action_press(&"feed_scrollback")
+	elif f == 660:
+		_shot("scrollback")
+		print("WARN BOT scrollback=%s lines=%s" % [c0.ping_hud.scrollback, c0.ping_hud.feed_lines().size()])
+	elif f == 670:
+		Input.action_release(&"feed_scrollback")
 		get_tree().quit()
 
 

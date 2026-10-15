@@ -18,6 +18,12 @@ class_name PingCalloutHud extends Control
 ## PLACEHOLDER look: plain shapes and the fallback font; the HUD art pass replaces the drawing, not the data.
 ## Names: CharacterDef has no display name yet, so the character id (C1..C5) is the name (inference; a name
 ## field in the character data would settle it).
+## Story 011: the warning-ping action sends WARNING_PLAYER (by the drawn body's opaque handle; the server
+## resolves it) when the view ray meets a visible drawn body before the world, else WARNING_POINT at the aimed
+## point. Warning markers draw red (GDD Visual: "Red marker") as a triangle, labelled with the target's
+## displayed identity ("Monster" for true form) or, for a point, the sender's. Holding feed_scrollback shows
+## the last FEED_SCROLLBACK feed lines regardless of age (P9). Bindings (Z, Tab) are inference; a controls
+## pass settles them.
 ## Usage (client, rendering): see RoundClient._on_connected.
 
 ## hud.md H9: the rejection label shows 1.5 s.
@@ -48,9 +54,19 @@ const WHEEL_RADIUS_PX := 170.0
 const WHEEL_DEAD_PX := 40.0
 const MONSTER_COLOUR := Color(0.85, 0.1, 0.1)
 const UNKNOWN_COLOUR := Color(0.6, 0.6, 0.6)
+## GDD Visual/Audio: warning ping is a red marker. PLACEHOLDER shade (inference; the HUD art pass settles it).
+const WARNING_COLOUR := Color(1.0, 0.25, 0.15)
+## Drawn body pick radius: RoundClient's greybox capsule radius (BODY_RADIUS_M).
+const PICK_RADIUS_M := 0.3
+## A world hit on a body's own collision capsule lands short of its axis; this much past the world hit still
+## counts (inference: wider than the step capsule's radius; a shared body-radius knob would settle it).
+const PICK_SLACK_M := 0.5
+const WARNINGS: Array[int] = [PingsCallouts.WARNING_POINT, PingsCallouts.WARNING_PLAYER]
 
 ## Seconds the "Too fast" label still shows.
 var too_fast_s := 0.0
+## True while the scrollback key is held: the feed shows every retained line.
+var scrollback := false
 
 var _knobs: Knobs
 ## The client's input contexts (the wheel pushes WHEEL; LocalInput reads look from it).
@@ -119,6 +135,44 @@ func ping() -> void:
 		_pings.request(PingsCallouts.ITEM, at, item)
 	else:
 		_pings.request(PingsCallouts.LOCATION, at)
+
+
+## Sends a warning ping (rule 5): at the visible drawn body the view ray meets first, else at the aimed point.
+func warn() -> void:
+	var at := _aim_point()
+	var h := 0
+	if _camera.is_inside_tree():
+		var from := _camera.global_position
+		h = pick_body(from, -_camera.global_basis.z, from.distance_to(at), _remotes, PICK_RADIUS_M,
+				_knobs.controller.capsule_height_m)
+	if h != 0:
+		_pings.request(PingsCallouts.WARNING_PLAYER, _remotes[h].position, h)
+	else:
+		_pings.request(PingsCallouts.WARNING_POINT, at)
+
+
+## Handle of the visible body (feet at its position, an upright cylinder of `radius` and `height`) the ray
+## from `from` along unit `dir` meets first within `max_m` (+ PICK_SLACK_M), or 0 (handles are never 0).
+## ponytail: closest approach in the floor plane, not a capsule cast; a straight-down look picks nothing.
+static func pick_body(from: Vector3, dir: Vector3, max_m: float, bodies: Dictionary[int, Node3D], radius: float,
+		height: float) -> int:
+	var flat := Vector2(dir.x, dir.z)
+	var best := 0
+	var best_t := max_m + PICK_SLACK_M
+	if flat.length_squared() < 1e-6:
+		return 0
+	for h: int in bodies:
+		var n := bodies[h]
+		if not is_instance_valid(n) or not n.visible:
+			continue
+		var rel := Vector2(n.position.x - from.x, n.position.z - from.z)
+		var t := rel.dot(flat) / flat.length_squared()
+		var y := from.y + dir.y * t
+		if t > 0.0 and t < best_t and (rel - flat * t).length() <= radius and y >= n.position.y \
+				and y <= n.position.y + height:
+			best = h
+			best_t = t
+	return best
 
 
 ## Opens the callout wheel (P6) and pushes its input context.
@@ -202,26 +256,39 @@ func markers_now() -> Array[Dictionary]:
 	var from := _camera.global_position if _camera.is_inside_tree() else Vector3.ZERO
 	for p: Dictionary in _pings.pending:
 		var own: int = _own.call()
-		out.append({"point": p["at"], "colour": colour_of(own), "alpha": 0.5, "pending": true,
-			"label": "%s  %d m" % [name_of(own), roundi(from.distance_to(p["at"]))]})
+		var warn: bool = p["kind"] in WARNINGS
+		var who := own
+		if p["kind"] == PingsCallouts.WARNING_PLAYER:
+			who = _state_of.call(p["target"]).get("appearance", -1)
+		out.append({"point": p["at"], "colour": WARNING_COLOUR if warn else colour_of(own), "alpha": 0.5,
+			"pending": true, "warning": warn, "label": _label(warn, who, from.distance_to(p["at"]))})
 	var fade := maxf(_knobs.ticks(FADE_S), 1.0)
 	for m: Dictionary in _markers.active(int(now)):
-		var label := "%s  %d m" % [name_of(m["from"]), roundi(from.distance_to(m["point"]))]
+		var warn: bool = m.get("kind") in WARNINGS
+		var who: int = m.get("identity", -1) if m.get("kind") == PingsCallouts.WARNING_PLAYER else m["from"]
+		var label := _label(warn, who, from.distance_to(m["point"]))
 		if m.get("type", &"") != &"":
 			label = "%s  %s" % [tr(String(m["type"])), label]
 		if m.get("not_you", false):
 			label += " " + tr("(not you)")
-		out.append({"point": m["point"], "colour": colour_of(m["from"]), "pending": false, "label": label,
+		out.append({"point": m["point"], "colour": WARNING_COLOUR if warn else colour_of(m["from"]),
+			"pending": false, "warning": warn, "label": label,
 			"alpha": clampf((m["expires"] - now) / fade, 0.0, 1.0)})
 	return out
 
 
-## Feed lines shown now (each for FEED_HOLD_S): {text, angle}; angle is the arrow's screen angle (0 right,
+## Marker label: "[name]  [n] m", prefixed "Warning:" for a warning ping.
+func _label(warn: bool, who: int, dist: float) -> String:
+	var text := "%s  %d m" % [name_of(who), roundi(dist)]
+	return "%s %s" % [tr("Warning:"), text] if warn else text
+
+
+## Feed lines shown now (each for FEED_HOLD_S, every retained line while `scrollback`): {text, angle}; angle is the arrow's screen angle (0 right,
 ## PI/2 down = behind).
 func feed_lines() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for l in _feed:
-		if _clock - l["at"] < FEED_HOLD_S:
+		if scrollback or _clock - l["at"] < FEED_HOLD_S:
 			out.append({"text": l["text"], "angle": _bearing(l["origin"])})
 	return out
 
@@ -261,6 +328,9 @@ func _process(delta: float) -> void:
 	if is_visible_in_tree():
 		if Input.is_action_just_pressed(&"ping") and contexts.allows_actions():
 			ping()
+		if Input.is_action_just_pressed(&"warning_ping") and contexts.allows_actions():
+			warn()
+		scrollback = Input.is_action_pressed(&"feed_scrollback") and contexts.allows_actions()
 		if Input.is_action_just_pressed(&"callout_wheel") and contexts.allows_actions():
 			open_wheel()
 		elif Input.is_action_just_released(&"callout_wheel"):
@@ -350,6 +420,9 @@ func _draw() -> void:
 			c.a = m["alpha"]
 			if pl[1]:
 				_arrow(pl[0], pl[2], 14.0, c)
+			elif m.get("warning", false):
+				draw_colored_polygon(PackedVector2Array([pl[0] + Vector2(0, -12), pl[0] + Vector2(11, 8),
+					pl[0] + Vector2(-11, 8)]), c)
 			else:
 				draw_colored_polygon(PackedVector2Array([pl[0] + Vector2(0, -10), pl[0] + Vector2(8, 0),
 					pl[0] + Vector2(0, 10), pl[0] + Vector2(-8, 0)]), c)

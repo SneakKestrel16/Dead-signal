@@ -106,6 +106,7 @@ var _eye_of: Callable
 var _position_of: Callable
 var _line_clear: Callable
 var _identity_of: Callable
+var _body_of: Callable
 var _is_hidden: Callable
 var _in_play: Callable
 var _monster: int = -1
@@ -145,6 +146,13 @@ func set_sources(eye_of: Callable, position_of: Callable, line_clear: Callable, 
 	_identity_of = identity_of
 	_is_hidden = is_hidden
 	_in_play = in_play
+
+
+## Story 011: `body_of(sender, handle) -> int` names the player whose body the sender's opaque handle shows
+## (-1 for none). A client knows bodies only by handle (ADR-0004 §3), so a warning-player request carries
+## one; unset, the request's target is taken as the player id (unit tests).
+func set_body_resolver(body_of: Callable) -> void:
+	_body_of = body_of
 
 
 ## Story 002: injects the sender-state sources can_send reads. `status_of(player) -> MatchFlow.Status`
@@ -328,9 +336,9 @@ func _validate(sender: int, req: Dictionary, tick: int) -> PingRecord:
 			rec.point = _items[item][0]
 			rec.item_type = _items[item][1]
 		WARNING_PLAYER:
-			var target: int = req["target"]
+			var target: int = _body_of.call(sender, req["target"]) if _body_of.is_valid() else req["target"]
 			# A hidden survivor is never a valid target (rule 7a); one cannot ping itself.
-			if target == sender or _is_hidden.call(target) or (_in_play.is_valid() and not _in_play.call(target)):
+			if target < 0 or target == sender or _is_hidden.call(target) or (_in_play.is_valid() and not _in_play.call(target)):
 				return null
 			rec.target = target
 			rec.point = _position_of.call(target)

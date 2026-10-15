@@ -1,7 +1,7 @@
 # Story 011: Warning pings and feed scrollback key
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: 1 day
@@ -63,7 +63,7 @@ Story 008 shipped location and item pings, the callout wheel and the feed, but n
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/warning-pings-feed-scrollback/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/warning-pings-feed-scrollback-evidence.md (3 png); tests/unit/pings-and-callouts/warning_pings_feed_scrollback_test.gd (7)
 
 ---
 
@@ -71,3 +71,7 @@ Story 008 shipped location and item pings, the callout wheel and the feed, but n
 
 - Depends on: Story 008
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged bed8749+5e78d07. Warning ping action (warning_ping, Z; inference) sends WARNING_PLAYER with the picked body handle or WARNING_POINT at the aimed point; markers draw as red triangles "Warning: [name]  [n] m" ("Monster" for true form, unit-tested only). Hold feed_scrollback (Tab; inference) shows the last 10 lines regardless of age. DEVIATION: server change, PingsCallouts.set_body_resolver resolves a handle to a player through RoundComposer._body_of_handle (clients know only opaque handles, ADR-0004). pick_body accepts a body up to 0.5 m past the world hit (PICK_SLACK_M, inference; a shared body-radius knob settles it). warning.png captured with a local SightTest patch equal to main 34c717e. 7 unit tests; 3 mutations caught. Full suite 1410/1410. Evidence: production/qa/evidence/warning-pings-feed-scrollback/ (warning, expired, scrollback); sign-off unchecked.

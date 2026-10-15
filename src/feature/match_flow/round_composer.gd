@@ -168,6 +168,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	objectives.rng = rng
 	pings.set_sources(_eye, _position, _ping_clear, bf.appearance_of, sd.is_hidden, _ping_in_play)
 	pings.set_map(map, rules.point_height_m)
+	pings.set_body_resolver(_body_of_handle)
 	objectives.emit_sound = sm.emit_sound
 	hs.emit_sound = sm.emit_sound
 	controller = ControllerAuthority.new(sm, holds)
@@ -438,9 +439,15 @@ func _index_holds() -> void:
 
 ## The rescue hold on the body `handle` names for `actor` (Downing.rescue_net_id), or -1.
 func _body_target(actor: int, handle: int) -> int:
+	var b := _body_of_handle(actor, handle)
+	return downing.rescue_net_id(b) if b != -1 else -1
+
+
+## The player whose body `handle` names for `actor`, or -1 (PingsCallouts' warning-player target, story 011).
+func _body_of_handle(actor: int, handle: int) -> int:
 	for b in sm.scope.handles.bodies_of(actor):
 		if sm.scope.handles.handle_for(actor, b) == handle:
-			return downing.rescue_net_id(b)
+			return b
 	return -1
 
 
