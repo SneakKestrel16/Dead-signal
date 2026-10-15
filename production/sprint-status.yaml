@@ -57,11 +57,11 @@ stories:
     name: "Results payload"
     file: "production/epics/match-flow/story-008-results-payload.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-8"
     name: "Ability stats for results"
     file: "production/epics/monster-abilities/story-008-ability-stats.md"
@@ -75,11 +75,11 @@ stories:
     name: "Candidate point selection and placement constraints"
     file: "production/epics/facility-map/story-007-candidate-selection.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "facility-map-8"
     name: "Candidate replication and discovery agreement"
     file: "production/epics/facility-map/story-008-candidate-replication.md"
@@ -111,11 +111,11 @@ stories:
     name: "Per-volume lighting state machine and precedence"
     file: "production/epics/facility-map/story-009-lighting-state-machine.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "controller-interaction-13"
     name: "Flinch view offset and client-only camera effects"
     file: "production/epics/controller-interaction/story-013-view-offset-camera-effects.md"
