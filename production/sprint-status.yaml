@@ -9,23 +9,167 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 7
-goal: "Make a real round run and be seen: a composition root that wires every module into one server round, a client round scene that joins and renders it, and the server-side work the seven newly accepted ADRs unblocked (results, discovery, lighting, flinch, False Signal, Blackout), with presentation stories following the client scene."
-start: "2027-01-05"
-end: "2027-01-18"
+sprint: 8
+goal: "Build the last two Vertical Slice Feature systems, Pings & Callouts and Scare Events, server half first, then their client presentation; carry the 12 sprint-7 In Review stories until the designer signs them off."
+start: "2027-01-19"
+end: "2027-02-01"
 generated: "2026-10-15"
 updated: "2026-10-15"
 
 stories:
-  - id: "match-flow-10"
-    name: "Round composer (server composition root)"
-    file: "production/epics/match-flow/story-010-round-composer.md"
+  - id: "pings-1"
+    name: "Ping module, request validation and token bucket"
+    file: "production/epics/pings-and-callouts/story-001-ping-validation-token-bucket.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
-    estimate_days: 2
+    estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
+    completed: ""
+  - id: "pings-2"
+    name: "Sender-state gating for pings and callouts"
+    file: "production/epics/pings-and-callouts/story-002-sender-state-gating.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "pings-3"
+    name: "Callout acceptance limits and attached item ping"
+    file: "production/epics/pings-and-callouts/story-003-callout-limits-attached-ping.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "pings-4"
+    name: "Ping recipients and per-peer delivery"
+    file: "production/epics/pings-and-callouts/story-004-ping-recipients-delivery.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "pings-5"
+    name: "Marker lifecycle: static position, lifetime and max active"
+    file: "production/epics/pings-and-callouts/story-005-marker-lifecycle.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "pings-6"
+    name: "Callout recipients, range and monster audio-only"
+    file: "production/epics/pings-and-callouts/story-006-callout-recipients-delivery.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "pings-7"
+    name: "Displayed identity, (not you) mark and fake-callout parity"
+    file: "production/epics/pings-and-callouts/story-007-identity-fake-parity.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "pings-8"
+    name: "Ping input, marker display, callout wheel and feed"
+    file: "production/epics/pings-and-callouts/story-008-ping-callout-presentation.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "scare-1"
+    name: "Scare catalogue data and the server Scare module"
+    file: "production/epics/scare-events/story-001-scare-catalogue-module.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-2"
+    name: "Per-recipient scare gating, budgets and repeat block"
+    file: "production/epics/scare-events/story-002-per-recipient-gating.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-3"
+    name: "Scoped delivery: shared relevance and single-client hallucinations"
+    file: "production/epics/scare-events/story-003-scoped-delivery-hallucinations.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-4"
+    name: "Monster-source scares: door burst, reveal and Blackout"
+    file: "production/epics/scare-events/story-004-monster-source-scares.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-5"
+    name: "Ambush lunge scare and flinch suppression near a lunge"
+    file: "production/epics/scare-events/story-005-ambush-lunge-flinch.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-6"
+    name: "Facility scare state machine and RoundScript anchors"
+    file: "production/epics/scare-events/story-006-facility-scare-state-roundscript.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "scare-7"
+    name: "Presentation-only guarantees: slammed doors and no fake teammates"
+    file: "production/epics/scare-events/story-007-presentation-only-scares.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "scare-8"
+    name: "Scare audio: positional origin, stingers, ducking and volume scales"
+    file: "production/epics/scare-events/story-008-scare-audio.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "scare-9"
+    name: "Scare visuals and flash accessibility"
+    file: "production/epics/scare-events/story-009-scare-visuals-accessibility.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
   - id: "match-flow-11"
     name: "Client round scene"
     file: "production/epics/match-flow/story-011-client-round-scene.md"
@@ -35,132 +179,6 @@ stories:
     estimate_days: 2
     blocker: ""
     completed: ""
-  - id: "match-flow-12"
-    name: "Display state catch-up on rejoin"
-    file: "production/epics/match-flow/story-012-display-catch-up-on-rejoin.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-13"
-    name: "Hiding marker facing and eject in front"
-    file: "production/epics/survivor-defense/story-013-hiding-marker-facing.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "match-flow-8"
-    name: "Results payload"
-    file: "production/epics/match-flow/story-008-results-payload.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-8"
-    name: "Ability stats for results"
-    file: "production/epics/monster-abilities/story-008-ability-stats.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "facility-map-7"
-    name: "Candidate point selection and placement constraints"
-    file: "production/epics/facility-map/story-007-candidate-selection.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "facility-map-8"
-    name: "Candidate replication and discovery agreement"
-    file: "production/epics/facility-map/story-008-candidate-replication.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-objectives-8"
-    name: "Active point selection"
-    file: "production/epics/survivor-objectives/story-008-active-point-selection.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-objectives-9"
-    name: "Objective discovery"
-    file: "production/epics/survivor-objectives/story-009-discovery.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "facility-map-9"
-    name: "Per-volume lighting state machine and precedence"
-    file: "production/epics/facility-map/story-009-lighting-state-machine.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "controller-interaction-13"
-    name: "Flinch view offset and client-only camera effects"
-    file: "production/epics/controller-interaction/story-013-view-offset-camera-effects.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: "Server side merged (bc5b9b0); client fold, CameraFx, ScarePresenter, spectator projection, flinch-toggle RPC remain; ADR-0015 epoch deviation AD-210"
-    completed: "2026-10-15"
-  - id: "monster-abilities-9"
-    name: "False Signal (Vertical Slice)"
-    file: "production/epics/monster-abilities/story-009-false-signal.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 2
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-10"
-    name: "Blackout (Vertical Slice)"
-    file: "production/epics/monster-abilities/story-010-blackout.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 2
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-10"
-    name: "Hiding noise and the long-hide cue"
-    file: "production/epics/survivor-defense/story-010-hide-noise-and-long-hide-cue.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 0.5
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "controller-interaction-14"
-    name: "Footstep events from gait and disguise"
-    file: "production/epics/controller-interaction/story-014-footsteps.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
   - id: "borrowed-face-9"
     name: "Disguise and true-form rendering"
     file: "production/epics/borrowed-face/story-009-disguise-rendering.md"
