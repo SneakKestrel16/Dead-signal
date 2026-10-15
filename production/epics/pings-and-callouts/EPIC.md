@@ -50,7 +50,7 @@ This epic is complete when:
 
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
-| 001 | Ping module, request validation and token bucket | Logic | Ready | ADR-0002 |
+| 001 | Ping module, request validation and token bucket | Logic | Complete | ADR-0002 |
 | 002 | Sender-state gating for pings and callouts | Logic | Ready | ADR-0005 |
 | 003 | Callout acceptance limits and attached item ping | Logic | Ready | ADR-0002 |
 | 004 | Ping recipients and per-peer delivery | Integration | Ready | ADR-0004 |

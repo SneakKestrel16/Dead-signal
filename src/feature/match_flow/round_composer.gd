@@ -40,6 +40,7 @@ var hs: HidingSpots
 var bars: Barricades
 var objectives: SurvivorObjectives
 var ma: MonsterAbilities
+var pings: PingsCallouts
 var lifecycle: RoundLifecycle
 var lighting: FacilityLighting
 ## The C1 monitor feeds (facility-map story 011).
@@ -111,6 +112,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	bf = BorrowedFace.new()
 	sd = SurvivorDefense.new()
 	ma = MonsterAbilities.new()
+	pings = PingsCallouts.new()
 	holds.set_barred(_barred)
 	holds.set_ids_at(_ids_of)
 	downing.set_roster(survivors, monster)
@@ -144,6 +146,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	objectives = SurvivorObjectives.new(holds, map, _objective_healthy, sd.is_hidden, _position)
 	objectives.survivor_ids = survivors.duplicate()
 	objectives.rng = rng
+	pings.set_sources(_eye, _position, _ping_clear, bf.appearance_of, sd.is_hidden, _ping_in_play)
+	pings.set_map(map, rules.point_height_m)
 	objectives.emit_sound = sm.emit_sound
 	hs.emit_sound = sm.emit_sound
 	controller = ControllerAuthority.new(sm, holds)
@@ -204,6 +208,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.SURVEILLANCE: cams,
 		TickOrder.FOOTSTEPS: footsteps,
 		TickOrder.SURVIVOR_OBJECTIVES: objectives,
+		TickOrder.PINGS_CALLOUTS: pings,
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
 	}
 	var errs := server.start_round(modules, knobs)
@@ -256,6 +261,7 @@ func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:
 	ma.request_ability(pid, bytes)
 	bf.request_form_change(pid, bytes)
 	sd.request_intent(pid, bytes)
+	pings.request_ping(pid, bytes)
 
 
 # --- RoundLifecycle hooks ---------------------------------------------------------
@@ -397,6 +403,20 @@ func _body_target(actor: int, handle: int) -> int:
 		if sm.scope.handles.handle_for(actor, b) == handle:
 			return downing.rescue_net_id(b)
 	return -1
+
+
+## PingsCallouts' sight ray: the sender's own capsule is skipped; `item` (a map interactable index, or -1)
+## is the door whose own leaf must not block its ping.
+func _ping_clear(sender: int, from: Vector3, to: Vector3, item: int) -> bool:
+	return queries.clear_line(from, to, item, rules, _space(), _rid(sender))
+
+
+## Pings come from the shapeshifter and from survivors still Healthy or Downed.
+func _ping_in_play(id: int) -> bool:
+	if id == monster:
+		return true
+	var s := lifecycle.match_flow().status_of(id)
+	return s == MatchFlow.Status.HEALTHY or s == MatchFlow.Status.DOWNED
 
 
 func _clear_sight(from: Vector3, to: Vector3) -> bool:

@@ -21,11 +21,11 @@ stories:
     name: "Ping module, request validation and token bucket"
     file: "production/epics/pings-and-callouts/story-001-ping-validation-token-bucket.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "pings-2"
     name: "Sender-state gating for pings and callouts"
     file: "production/epics/pings-and-callouts/story-002-sender-state-gating.md"

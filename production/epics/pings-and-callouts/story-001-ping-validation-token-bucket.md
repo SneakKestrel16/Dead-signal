@@ -1,7 +1,7 @@
 # Story 001: Ping module, request validation and token bucket
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ Creates the server-side Pings & Callouts module at TickOrder.PINGS_CALLOUTS (700
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A ping at a point outside the sender's line of sight, or beyond `ping_max_range_m`, is rejected; no other client receives it.
-- [ ] A client with a full bucket (3 tokens) sending 10 pings in 1 s has exactly 3 accepted; a fourth at t=1 is rejected and one at t=2 accepted (Formulas example). A reconnecting player keeps its token and timestamp state.
-- [ ] A warning ping on a survivor inside a hiding spot is rejected; an item ping names only pingable types (drive, fuse, fuse box, terminal, hiding spot, barricadable door, backup switch) and a taser is never a target.
-- [ ] A warning ping on a monster in True Form is accepted and labelled "Monster"; a player warning ping stores the target's position at ping time and its displayed identity.
+- [x] A ping at a point outside the sender's line of sight, or beyond `ping_max_range_m`, is rejected; no other client receives it.
+- [x] A client with a full bucket (3 tokens) sending 10 pings in 1 s has exactly 3 accepted; a fourth at t=1 is rejected and one at t=2 accepted (Formulas example). A reconnecting player keeps its token and timestamp state.
+- [x] A warning ping on a survivor inside a hiding spot is rejected; an item ping names only pingable types (drive, fuse, fuse box, terminal, hiding spot, barricadable door, backup switch) and a taser is never a target.
+- [x] A warning ping on a monster in True Form is accepted and labelled "Monster"; a player warning ping stores the target's position at ping time and its displayed identity.
 
 ---
 
@@ -69,7 +69,7 @@ Creates the server-side Pings & Callouts module at TickOrder.PINGS_CALLOUTS (700
 **Story Type**: Logic
 **Required evidence**: `tests/unit/pings-and-callouts/ping_validation_token_bucket_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/pings-and-callouts/ping_validation_token_bucket_test.gd` (16 cases)
 
 ---
 
@@ -77,3 +77,13 @@ Creates the server-side Pings & Callouts module at TickOrder.PINGS_CALLOUTS (700
 
 - Depends on: None (Foundation, Core and the Feature modules it reads are merged)
 - Unlocks: Stories 002, 003, 004
+
+## Progress Notes (2026-10-15)
+
+Merged from wt-pc1. Full suite 1293/1293, no leak lines. Mutations caught: token threshold, token not spent, hidden-target check removed, sight test skipped. Not caught: the per-tick queue cap (unobservable; the bucket rejects the excess, the cap only bounds memory).
+
+Deviations (inference; each names what settles it):
+- No view cone for pings: `SightTest` runs at 360 degrees, so only range and the ray apply. The GDD names no ping field of view; a cone knob would settle it.
+- A hidden sender validates from the standing eye; the peek view (rule 14a) does not exist yet.
+- Player warning pings target by player id; sight to a player is traced to position plus `point_height_m`.
+- In play: the shapeshifter always; survivors when Healthy or Downed (rule 6 reading). Full state gating is story 002.
