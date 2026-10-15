@@ -60,7 +60,23 @@ A new `Downing` module holds each survivor's life state and `downs_taken`; a val
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Commit outcome
+  - Given: a Healthy survivor, then one with `downs_taken` 1
+  - When: `SurvivorHit`, then 1.5 s
+  - Then: first Downed + `SurvivorDowned`; second Eliminated + `SurvivorEliminated` without Downed
+  - Edge cases: commit timer boundary ±1 tick
+- **AC-2**: Stun cancels
+  - Given: a commit in progress
+  - When: `MonsterStunned` arrives (and on the completion tick)
+  - Then: commit cancelled, `downs_taken` unchanged, both cases
+  - Edge cases: stun one tick after completion → down stands
+- **AC-3**: Invalid hits ignored
+  - Given: a Downed survivor and one in grace
+  - When: `SurvivorHit` for each; monster disconnect mid-commit
+  - Then: no change; disconnect cancels the commit
+  - Edge cases: hit during an active commit
 
 ---
 

@@ -61,7 +61,28 @@ The server-only round clock and the phase machine (Infiltration, Investigation, 
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Phases at 0:00, 2:00, 7:00; deadline at 9:00
+  - Given: default knobs, terminal not armed
+  - When: the clock steps tick by tick to 540 s
+  - Then: phase is Infiltration < 120 s, Investigation 120–420 s, Evacuation >= 420 s; `time_remaining_s` reaches 0 at 540
+  - Edge cases: elapsed exactly 120.0 and 420.0 (boundary ticks)
+- **AC-2**: Terminal armed switches to Evacuation early; deadline unchanged
+  - Given: elapsed 300 s, then separately elapsed 60 s
+  - When: `terminal_armed` becomes true
+  - Then: phase is Evacuation at that tick, deadline stays 540; from 60 s exactly one `RoundPhaseChanged` (Infiltration → Evacuation)
+  - Edge cases: armed on the same tick Investigation would begin
+- **AC-3**: One event per phase change, never backwards
+  - Given: a full round with arming at 300 s
+  - When: all `RoundPhaseChanged` are captured
+  - Then: 3 events in order, none repeated, phase never decreases
+  - Edge cases: disarming input after arming changes nothing
+- **AC-4**: Knobs from data; bad cross-knob config refuses
+  - Given: `infiltration_end_s` 180, `round_duration_s` 420, `evacuation_window_s` 240
+  - When: `MatchFlowKnobs.validate_cross()` runs
+  - Then: one error naming the constraint
+  - Edge cases: equality (`infiltration_end_s == evac_start_s`) also fails
 
 ---
 

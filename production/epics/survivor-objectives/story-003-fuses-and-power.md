@@ -58,7 +58,23 @@ Survivors pick up fuses and install them at the active fuse boxes; two installed
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Pickup and carry limits
+  - Given: a survivor carrying a fuse
+  - When: they try to pick up a second fuse, then a drive
+  - Then: second fuse refused, drive accepted
+  - Edge cases: pickup interrupted at `pickup_s` − 1 tick
+- **AC-2**: Install and refusal
+  - Given: an empty box and a box with a fuse
+  - When: a survivor holds install 8 s at each
+  - Then: empty box Installed; full box refused and the fuse stays carried
+  - Edge cases: two survivors start on one box the same tick
+- **AC-3**: Power restored
+  - Given: one fuse installed
+  - When: the second install completes
+  - Then: one `ObjectiveProgressChanged` (power restored); installed fuses stay
+  - Edge cases: both installs complete the same tick
 
 ---
 

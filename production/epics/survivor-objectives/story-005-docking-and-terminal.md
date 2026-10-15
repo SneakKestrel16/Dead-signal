@@ -58,7 +58,23 @@ Drives are docked at the terminal; with two drives docked and two fuses installe
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Docking and arming
+  - Given: drives and fuses in each combination
+  - When: docks and installs complete
+  - Then: Armed exactly at 2 docked + 2 installed; activation refused before; docked drive not removable
+  - Edge cases: docking before power restored is allowed
+- **AC-2**: Countdown holds the zone
+  - Given: Activating with one Healthy survivor in the zone
+  - When: the survivor leaves for 6 s after 9 s, then returns
+  - Then: activated after 21 s real time; hidden survivor or shapeshifter alone does not run it
+  - Edge cases: last Healthy survivor downed mid-countdown pauses it
+- **AC-3**: Activation
+  - Given: countdown at 0
+  - When: the tick runs
+  - Then: Activated, exit open, both drives Dropped at the terminal
+  - Edge cases: deadline on the same tick (Match Flow decides)
 
 ---
 

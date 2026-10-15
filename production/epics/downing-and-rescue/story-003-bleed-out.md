@@ -60,7 +60,23 @@ A Downed survivor bleeds out unless rescued; the timer pauses during a rescue an
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Bleed-out and rescue pause
+  - Given: a Downed survivor alone
+  - When: 60 s pass; separately a rescue is held 3 s
+  - Then: Eliminated "Bled out" at 60 s ±1 tick; timer paused during the hold, resumes from the same value
+  - Edge cases: rescue completes on the expiry tick → rescue wins
+- **AC-2**: Camping slow
+  - Given: one survivor Healthy, another player at 9 m then 11 m
+  - When: 10 s pass at each
+  - Then: +2.5 s at 9 m, +10 s at 11 m; Eliminated/Escaped/disconnected players never slow
+  - Edge cases: exactly 10.0 m
+- **AC-3**: All Downed
+  - Given: every living survivor Downed, shapeshifter at 5 m
+  - When: time passes
+  - Then: full-rate bleed-out, each Eliminated on its own timer
+  - Edge cases: one survivor Escaped
 
 ---
 

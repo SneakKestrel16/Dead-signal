@@ -57,7 +57,23 @@ A Healthy carrier entering the open exit extracts the drives they carry; the sur
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: One drive extracts
+  - Given: a carrier with 1 drive, exit open
+  - When: `SurvivorEscaped` for them
+  - Then: that drive Extracted; win not reported until the second
+  - Edge cases: carrier with 2 drives
+- **AC-2**: One survivor carries both out
+  - Given: both drives ejected
+  - When: one survivor picks both up and escapes
+  - Then: both Extracted, win reported
+  - Edge cases: cap override 1 prevents this
+- **AC-3**: No-drive escape and non-survivors
+  - Given: a survivor without drives, a Downed survivor, the shapeshifter
+  - When: each enters the open exit
+  - Then: no objective change
+  - Edge cases: shapeshifter disguised
 
 ---
 

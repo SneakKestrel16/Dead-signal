@@ -61,7 +61,28 @@ The module's first slice: a new `SurvivorObjectives` module that owns drive stat
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: 5 s hold gives the drive; release at 4 s resets
+  - Given: a Healthy survivor at the active drive console
+  - When: they hold 5 s; then another releases at 4 s
+  - Then: first gets the drive (Carried) and `ObjectiveProgressChanged`; second gets nothing and progress is 0
+  - Edge cases: release one tick before completion
+- **AC-2**: Healthy only; range rules
+  - Given: a Downed survivor, and a Healthy one at 2.1 m
+  - When: each starts the hold
+  - Then: Downed refused; 2.1 m refused at start but kept while holding up to 2.25 m
+  - Edge cases: 2.25 m exactly
+- **AC-3**: Carry cap
+  - Given: a survivor carrying a drive, cap 2 then cap 1 (data override)
+  - When: they extract a second drive
+  - Then: cap 2 accepts, cap 1 refuses
+  - Edge cases: cap override fails validation outside 1–2
+- **AC-4**: Forged completion ignored
+  - Given: a client
+  - When: sends a fake "complete" message
+  - Then: no state change
+  - Edge cases: message during an active hold
 
 ---
 

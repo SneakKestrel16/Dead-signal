@@ -56,7 +56,23 @@ Clients show the clock and phase the server replicates and never decide anything
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Same phase on all clients
+  - Given: 5 clients on loopback
+  - When: each `RoundPhaseChanged`
+  - Then: every client shows it within 200 ms; same outcome and payload at round end
+  - Edge cases: phase change during a reconnect
+- **AC-2**: Fake messages ignored
+  - Given: a modified client
+  - When: sends raw "round won" / "phase change" bytes
+  - Then: no client state changes
+  - Edge cases: malformed packet
+- **AC-3**: Clock drift corrected
+  - Given: a client with a skewed local clock
+  - When: snapshots arrive
+  - Then: display matches the server value; phase changes only on the event
+  - Edge cases: client clock ahead by 10 s
 
 ---
 

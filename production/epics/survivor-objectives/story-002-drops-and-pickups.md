@@ -58,7 +58,23 @@ Carried drives and fuses drop when their carrier is downed, eliminated or discon
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Down drops, pickup by another
+  - Given: a carrier with a drive
+  - When: `SurvivorDowned`, then another survivor holds pickup
+  - Then: drive Dropped at the position, then Carried by the other; rescue does not return it
+  - Edge cases: carrier with drive and fuse drops both
+- **AC-2**: Elimination and disconnect drops
+  - Given: carriers
+  - When: `SurvivorEliminated` / disconnect
+  - Then: items drop at once at the nearest valid floor point and never despawn
+  - Edge cases: drop point inside geometry
+- **AC-3**: Manual drop
+  - Given: a carrier
+  - When: drops on purpose
+  - Then: item Dropped instantly
+  - Edge cases: drop during a hold
 
 ---
 

@@ -60,7 +60,28 @@ Everything around the clock: the server waits for every client to load, spawns t
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Loading barrier then spawn
+  - Given: a locked roster of 5 on loopback
+  - When: every client reports map loaded
+  - Then: survivors at S1–S5, shapeshifter at M1–M3, `elapsed_s` 0, Infiltration
+  - Edge cases: the last client loads at `load_timeout_s` − 1 tick
+- **AC-2**: Load timeout cancels
+  - Given: one client never reports loaded
+  - When: `load_timeout_s` passes
+  - Then: Cancelled, all back in the lobby, no result, rotation queue unchanged
+  - Edge cases: client loads on the timeout tick
+- **AC-3**: Round end and return
+  - Given: a round ended by the deadline
+  - When: `results_duration_s` passes
+  - Then: input frozen after `RoundEnded`, everyone in the lobby, `end_round(true)`, a second round starts with no state from the first
+  - Edge cases: a hold in progress at `RoundEnded` is cancelled
+- **AC-4**: Host leaves
+  - Given: a running round
+  - When: the host process quits
+  - Then: clients return to the boot scene, no result recorded
+  - Edge cases: host quits during Loading
 
 ---
 

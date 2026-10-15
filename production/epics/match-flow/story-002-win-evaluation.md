@@ -61,7 +61,28 @@ The win check in its fixed priority order, run on relevant events and once at th
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: All eliminated ends at once; only-Downed waits
+  - Given: 4 survivors
+  - When: each is eliminated by `SurvivorEliminated` (one by bleed-out)
+  - Then: `RoundEnded` with "All survivors eliminated" on the tick of the last; with only Downed survivors left no `RoundEnded`
+  - Edge cases: last elimination on the deadline tick
+- **AC-2**: Evidence lost
+  - Given: 1 drive Extracted, others Escaped or Eliminated
+  - When: the last survivor inside is eliminated
+  - Then: `RoundEnded` "Evidence lost" that tick; a survivor in grace keeps the round running
+  - Edge cases: only Downed survivors inside → no Evidence lost
+- **AC-3**: Deadline
+  - Given: nothing done
+  - When: the clock reaches 540 s
+  - Then: "Shapeshifter Wins — Evacuation deadline expired"; activation started at 530 s does not complete
+  - Edge cases: deadline tick with pending events
+- **AC-4**: Same-tick order
+  - Given: second drive Extracted and last elimination in one tick; and Extracted on the deadline tick
+  - When: the resolve step runs
+  - Then: survivor win in both
+  - Edge cases: forfeit and earned result same tick → earned result
 
 ---
 

@@ -59,7 +59,23 @@ A Healthy survivor entering the open exit escapes; the survivors win only when b
 
 ## QA Test Cases
 
-*N/A — no qa-lead specs at this tier (QL-STORY-READY skipped, lean review mode); implement against the Acceptance Criteria above.*
+*From `/qa-plan sprint` (production/qa/qa-plan-sprint-005-2026-10-14.md). Implement against these cases.*
+
+- **AC-1**: Healthy escape only
+  - Given: evacuation activated
+  - When: a Healthy and a Downed survivor enter the exit
+  - Then: Healthy one Escaped and `SurvivorEscaped`; Downed one not
+  - Edge cases: exit entered before activation
+- **AC-2**: Win needs both drives
+  - Given: one drive Extracted
+  - When: a survivor escapes empty-handed
+  - Then: Escaped, round continues; win only when the second is Extracted
+  - Edge cases: both drives on one carrier
+- **AC-3**: Outcome lock and window
+  - Given: both drives Extracted at 480 s
+  - When: every survivor inside is then eliminated
+  - Then: outcome stays survivor win; round ends by 525 s; remaining are "Did not escape"
+  - Edge cases: lock at 530 s → ends at 540 (deadline)
 
 ---
 
