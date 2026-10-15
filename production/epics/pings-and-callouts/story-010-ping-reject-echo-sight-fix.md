@@ -1,7 +1,7 @@
 # Story 010: Rejection echo for over-cap pings and the sight test blind spot
 
 > **Epic**: Pings & Callouts
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 0.5 day
@@ -33,9 +33,9 @@ Two defects found while building stories 004 and 008. First, `PingsCallouts.requ
 
 *From GDD `design/gdd/pings-and-callouts.md`, scoped to this story:*
 
-- [ ] A request over the per-tick cap is answered with `PING_REJECTED` to its sender's peer only; per-tick memory stays bounded (no growth with the number of requests beyond a fixed cap).
-- [ ] A ping at a point exactly behind the sender (+Z at yaw 0), in range and with a clear line, is accepted.
-- [ ] `SightTest` with a 360-degree cone never refuses on angle (fix in `SightTest` itself, so the local workarounds can be removed or left harmless).
+- [x] A request over the per-tick cap is answered with `PING_REJECTED` to its sender's peer only; per-tick memory stays bounded (no growth with the number of requests beyond a fixed cap).
+- [x] A ping at a point exactly behind the sender (+Z at yaw 0), in range and with a clear line, is accepted.
+- [x] `SightTest` with a 360-degree cone never refuses on angle (fix in `SightTest` itself, so the local workarounds can be removed or left harmless).
 
 ---
 
@@ -63,7 +63,7 @@ Two defects found while building stories 004 and 008. First, `PingsCallouts.requ
 **Story Type**: Logic
 **Required evidence**: `tests/unit/pings-and-callouts/ping_reject_echo_sight_fix_test.gd` must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] tests/unit/pings-and-callouts/ping_reject_echo_sight_fix_test.gd (6 cases); full suite 1399/1399
 
 ---
 
@@ -71,3 +71,7 @@ Two defects found while building stories 004 and 008. First, `PingsCallouts.requ
 
 - Depends on: Stories 001, 004
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged c51c8e9. SightTest skips the angle test when fov_deg >= 360; PingsCallouts queue holds up to 2 * ping_bucket_size requests per tick, over-cap requests answered PING_REJECTED to sender only without validation or token spend; monster_sees workaround removed. 6 cases in ping_reject_echo_sight_fix_test.gd; mutations caught (not-full guard, cap = bucket size, cap 1000x). Full suite 1399/1399, no leak lines. ambush_test.gd fov INF workaround left harmless (its comment reason is now outdated).

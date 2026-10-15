@@ -59,7 +59,7 @@ This epic is complete when:
 | 007 | Displayed identity, (not you) mark and fake-callout parity | Integration | Complete | ADR-0004 |
 | 008 | Ping input, marker display, callout wheel and feed | UI | In Review | ADR-0014 |
 | 009 | Optional proximity voice rules | Integration | Blocked | ADR-0013 |
-| 010 | Rejection echo for over-cap pings and the sight test blind spot | Logic | Ready | ADR-0002 |
+| 010 | Rejection echo for over-cap pings and the sight test blind spot | Logic | Complete | ADR-0002 |
 | 011 | Warning pings and feed scrollback key | UI | Ready | ADR-0014 |
 
 ## Next Step

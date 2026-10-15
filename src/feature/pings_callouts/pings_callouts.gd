@@ -252,14 +252,17 @@ static func decode_ping(bytes: PackedByteArray) -> Dictionary:
 
 
 ## Server entry for a client's bytes from `player` (the sender as the network layer identifies it, never a
-## field of the bytes). Non-ping bytes are ignored. At most `ping_bucket_size` requests per player are kept
-## per tick: the bucket could not accept more than that anyway.
+## field of the bytes). Non-ping bytes are ignored. Per player per tick the first `ping_bucket_size` requests
+## are kept for validation (the bucket could not accept more) and the next `ping_bucket_size` are kept only to
+## be echoed as rejections (story 010); anything beyond is dropped, so a flood costs bounded memory.
+## Inference: the echo bound reuses ping_bucket_size; an honest client never exceeds it, a designer knob would
+## settle a different bound.
 func request_ping(player: int, bytes: PackedByteArray) -> void:
 	var req := decode_ping(bytes)
 	if req.is_empty():
 		return
 	var q: Array = _pending.get_or_add(player, [])
-	if q.size() < _bucket_size:
+	if q.size() < 2 * _bucket_size:
 		q.append(req)
 
 
@@ -268,8 +271,10 @@ func server_tick(tick: int) -> void:
 	_accepted = []
 	_rejected = []
 	for player: int in _pending:
-		for req: Dictionary in _pending[player]:
-			var rec := _validate(player, req, tick)
+		var q: Array = _pending[player]
+		for i in q.size():
+			var req: Dictionary = q[i]
+			var rec := _validate(player, req, tick) if i < _bucket_size else null
 			if rec != null and _take_token(player, tick):
 				_accepted.append(rec)
 			else:
@@ -450,7 +455,7 @@ func _on_ability_used(e: ServerEvent) -> void:
 
 
 ## Story 004: the requests rejected on the latest server_tick as [player, {kind, at, target}], arrival order.
-## A request over the per-tick queue cap (request_ping) is dropped unanswered.
+## Includes up to ping_bucket_size requests over the per-tick queue cap (request_ping); beyond that, dropped.
 func rejected() -> Array:
 	return _rejected
 
@@ -462,8 +467,4 @@ func monster_sees(rec: PingRecord) -> bool:
 	if rec.sender == _monster or (rec.kind == WARNING_PLAYER and rec.target == _monster):
 		return true
 	var seen := rec.point + (Vector3.UP * _point_height_m if rec.kind == WARNING_PLAYER else Vector3.ZERO)
-	# Range and ray only, not _sees: SightTest's 360-degree cone can reject a point straight behind yaw 0 when
-	# the float angle lands a hair over pi, and facing must never matter here.
-	var eye: Vector3 = _eye_of.call(_monster)
-	return eye.distance_to(seen) <= _range_m and _line_clear.call(_monster, eye, seen,
-			rec.target if rec.kind == ITEM else -1)
+	return _sees(_monster, _eye_of.call(_monster), seen, rec.target if rec.kind == ITEM else -1)
