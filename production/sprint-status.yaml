@@ -278,3 +278,30 @@ stories:
     estimate_days: 0.5
     blocker: ""
     completed: ""
+  - id: "pings-10"
+    name: "Rejection echo for over-cap pings and the sight test blind spot"
+    file: "production/epics/pings-and-callouts/story-010-ping-reject-echo-sight-fix.md"
+    priority: should-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "pings-11"
+    name: "Warning pings and feed scrollback key"
+    file: "production/epics/pings-and-callouts/story-011-warning-pings-feed-scrollback.md"
+    priority: nice-to-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "scare-10"
+    name: "Server trigger for the impossible surveillance frame"
+    file: "production/epics/scare-events/story-010-monitor-hallucination-trigger.md"
+    priority: should-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""

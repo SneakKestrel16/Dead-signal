@@ -4,7 +4,7 @@
 > **GDD**: design/gdd/scare-events.md
 > **Architecture Module**: Scare Events (server half) (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
-> **Stories**: 9 stories, see the Stories table below
+> **Stories**: 10 stories, see the Stories table below
 
 ## Overview
 
@@ -61,6 +61,7 @@ This epic is complete when:
 | 007 | Presentation-only guarantees: slammed doors and no fake teammates | Integration | Complete | ADR-0005 |
 | 008 | Scare audio: positional origin, stingers, ducking and volume scales | Visual/Feel | In Review | ADR-0013 |
 | 009 | Scare visuals and flash accessibility | Visual/Feel | In Review | ADR-0015 |
+| 010 | Server trigger for the impossible surveillance frame | Integration | Ready | ADR-0004 |
 
 ## Next Step
 
