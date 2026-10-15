@@ -5,7 +5,7 @@
 > **Architecture Module**: Survivor Defense (`docs/architecture/architecture.md` Feature layer)
 > **Status**: Ready
 > **Control Manifest**: 2026-10-13
-> **Stories**: 12 stories, see the Stories table below
+> **Stories**: 13 stories, see the Stories table below
 
 ## Overview
 
@@ -65,6 +65,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 010 | [Hiding noise and the long-hide cue](story-010-hide-noise-and-long-hide-cue.md) | Integration | Ready | ADR-0013 |
 | 011 | [Shock presentation per form and cosmetic flashlight copy](story-011-per-form-presentation.md) | Visual/Feel | Ready | ADR-0010 |
 | 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Complete | ADR-0002 |
+| 013 | [Hiding marker facing and eject in front](story-013-hiding-marker-facing.md) | Logic | Ready | ADR-0008 |
 
 ## Definition of Done
 
