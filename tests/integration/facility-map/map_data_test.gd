@@ -200,7 +200,9 @@ func test_a_missing_map_file_fails_the_load() -> void:
 func test_a_passage_to_an_unknown_room_fails_the_load() -> void:
 	var map := MapData.load_map()
 	map.passages[0].b = &"Z9"
-	assert_array(map.errors()).contains_exactly(["passage %s: unknown room Z9" % map.passages[0].id])
+	## Its visibility door entries fail too (facility-map story 005); every other error is that one.
+	var structural := Array(map.errors()).filter(func(e: String) -> bool: return not e.begins_with("volume "))
+	assert_array(structural).contains_exactly(["passage %s: unknown room Z9" % map.passages[0].id])
 
 
 func test_overlapping_volumes_fail_the_load() -> void:

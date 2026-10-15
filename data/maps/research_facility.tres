@@ -11,6 +11,7 @@ id = &"A1"
 room = &"A1"
 zone = &"A"
 box = AABB(0.0, 0.0, 28.0, 10.0, 3.0, 12.0)
+sees = Dictionary[StringName, StringName]({&"A2-S": &"A1-A2", &"A3": &"A1-A3", &"H-S1": &"", &"H-S2": &""})
 
 [sub_resource type="Resource" id="v_A2_N"]
 script = ExtResource("2")
@@ -18,6 +19,7 @@ id = &"A2-N"
 room = &"A2"
 zone = &"A"
 box = AABB(10.0, 0.0, 4.0, 3.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"A7": &"A2-A7", &"A2-M": &"", &"A2-S": &"", &"H-N1": &"", &"H-N2": &"", &"H-S1": &""})
 
 [sub_resource type="Resource" id="v_A2_M"]
 script = ExtResource("2")
@@ -25,6 +27,7 @@ id = &"A2-M"
 room = &"A2"
 zone = &"A"
 box = AABB(10.0, 0.0, 14.0, 3.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"A3": &"", &"A4": &"", &"A2-N": &"", &"A2-S": &"", &"H-N1": &"", &"H-S1": &""})
 
 [sub_resource type="Resource" id="v_A2_S"]
 script = ExtResource("2")
@@ -32,6 +35,7 @@ id = &"A2-S"
 room = &"A2"
 zone = &"A"
 box = AABB(10.0, 0.0, 24.0, 3.0, 3.0, 12.0)
+sees = Dictionary[StringName, StringName]({&"A1": &"A1-A2", &"A2-N": &"", &"A2-M": &"", &"H-N1": &"", &"H-S1": &"", &"H-S2": &"", &"A3": &""})
 
 [sub_resource type="Resource" id="v_A3"]
 script = ExtResource("2")
@@ -39,6 +43,7 @@ id = &"A3"
 room = &"A3"
 zone = &"A"
 box = AABB(0.0, 0.0, 14.0, 10.0, 3.0, 14.0)
+sees = Dictionary[StringName, StringName]({&"A1": &"A1-A3", &"A2-M": &"", &"A6": &"A3-A6", &"A2-S": &""})
 
 [sub_resource type="Resource" id="v_A4"]
 script = ExtResource("2")
@@ -46,6 +51,7 @@ id = &"A4"
 room = &"A4"
 zone = &"A"
 box = AABB(13.0, 0.0, 14.0, 9.0, 3.0, 12.0)
+sees = Dictionary[StringName, StringName]({&"A2-M": &"", &"A5": &"A4-A5", &"B1": &"A4-B1", &"A7": &""})
 
 [sub_resource type="Resource" id="v_A5"]
 script = ExtResource("2")
@@ -53,6 +59,7 @@ id = &"A5"
 room = &"A5"
 zone = &"A"
 box = AABB(13.0, 0.0, 26.0, 9.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"A4": &"A4-A5", &"H-S1": &"A5-H-S", &"H-S2": &"A5-H-S"})
 
 [sub_resource type="Resource" id="v_A6"]
 script = ExtResource("2")
@@ -60,6 +67,7 @@ id = &"A6"
 room = &"A6"
 zone = &"A"
 box = AABB(0.0, 0.0, 4.0, 10.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"A3": &"A3-A6", &"H-N1": &"A6-H-N", &"H-N2": &"A6-H-N"})
 
 [sub_resource type="Resource" id="v_A7"]
 script = ExtResource("2")
@@ -67,6 +75,7 @@ id = &"A7"
 room = &"A7"
 zone = &"A"
 box = AABB(13.0, 0.0, 4.0, 9.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"A2-N": &"A2-A7", &"H-N1": &"A7-H-N", &"H-N2": &"A7-H-N", &"H-N3": &"A7-H-N", &"A4": &""})
 
 [sub_resource type="Resource" id="v_H_N1"]
 script = ExtResource("2")
@@ -74,6 +83,7 @@ id = &"H-N1"
 room = &"H-N"
 zone = &"link"
 box = AABB(0.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"A6": &"A6-H-N", &"A7": &"A7-H-N", &"H-N2": &"", &"H-N3": &"", &"H-N4": &"", &"A2-N": &"", &"A2-M": &"", &"A2-S": &"", &"H-S1": &""})
 
 [sub_resource type="Resource" id="v_H_N2"]
 script = ExtResource("2")
@@ -81,6 +91,7 @@ id = &"H-N2"
 room = &"H-N"
 zone = &"link"
 box = AABB(12.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"A6": &"A6-H-N", &"A7": &"A7-H-N", &"B2": &"B2-H-N", &"H-N1": &"", &"H-N3": &"", &"H-N4": &"", &"A2-N": &""})
 
 [sub_resource type="Resource" id="v_H_N3"]
 script = ExtResource("2")
@@ -88,6 +99,7 @@ id = &"H-N3"
 room = &"H-N"
 zone = &"link"
 box = AABB(24.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"A7": &"A7-H-N", &"B2": &"B2-H-N", &"C5": &"H-N-C5", &"C1": &"H-N-C1", &"H-N1": &"", &"H-N2": &"", &"H-N4": &""})
 
 [sub_resource type="Resource" id="v_H_N4"]
 script = ExtResource("2")
@@ -95,6 +107,7 @@ id = &"H-N4"
 room = &"H-N"
 zone = &"link"
 box = AABB(36.0, 0.0, 0.0, 12.0, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"B2": &"B2-H-N", &"C5": &"H-N-C5", &"C1": &"H-N-C1", &"H-N1": &"", &"H-N2": &"", &"H-N3": &""})
 
 [sub_resource type="Resource" id="v_H_S1"]
 script = ExtResource("2")
@@ -102,6 +115,7 @@ id = &"H-S1"
 room = &"H-S"
 zone = &"link"
 box = AABB(10.0, 0.0, 36.0, 12.5, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"A5": &"A5-H-S", &"B3": &"B3-H-S", &"H-S2": &"", &"H-S3": &"", &"H-S4": &"", &"A2-N": &"", &"A2-M": &"", &"A2-S": &"", &"H-N1": &"", &"A1": &""})
 
 [sub_resource type="Resource" id="v_H_S2"]
 script = ExtResource("2")
@@ -109,6 +123,7 @@ id = &"H-S2"
 room = &"H-S"
 zone = &"link"
 box = AABB(22.5, 0.0, 36.0, 12.5, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"A5": &"A5-H-S", &"B3": &"B3-H-S", &"H-S1": &"", &"H-S3": &"", &"H-S4": &"", &"A2-S": &"", &"A1": &""})
 
 [sub_resource type="Resource" id="v_H_S3"]
 script = ExtResource("2")
@@ -116,6 +131,7 @@ id = &"H-S3"
 room = &"H-S"
 zone = &"link"
 box = AABB(35.0, 0.0, 36.0, 12.5, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"B3": &"B3-H-S", &"C3": &"C3-H-S", &"H-S1": &"", &"H-S2": &"", &"H-S4": &""})
 
 [sub_resource type="Resource" id="v_H_S4"]
 script = ExtResource("2")
@@ -123,6 +139,7 @@ id = &"H-S4"
 room = &"H-S"
 zone = &"link"
 box = AABB(47.5, 0.0, 36.0, 12.5, 3.0, 4.0)
+sees = Dictionary[StringName, StringName]({&"C3": &"C3-H-S", &"H-S1": &"", &"H-S2": &"", &"H-S3": &""})
 
 [sub_resource type="Resource" id="v_B1"]
 script = ExtResource("2")
@@ -130,6 +147,7 @@ id = &"B1"
 room = &"B1"
 zone = &"B"
 box = AABB(22.0, 0.0, 12.0, 18.0, 6.0, 16.0)
+sees = Dictionary[StringName, StringName]({&"A4": &"A4-B1", &"B2": &"B1-B2", &"B3": &"B1-B3", &"C2": &"B1-C2"})
 
 [sub_resource type="Resource" id="v_B2"]
 script = ExtResource("2")
@@ -137,6 +155,7 @@ id = &"B2"
 room = &"B2"
 zone = &"B"
 box = AABB(22.0, 0.0, 4.0, 18.0, 3.0, 8.0)
+sees = Dictionary[StringName, StringName]({&"B1": &"B1-B2", &"H-N2": &"B2-H-N", &"H-N3": &"B2-H-N", &"H-N4": &"B2-H-N"})
 
 [sub_resource type="Resource" id="v_B3"]
 script = ExtResource("2")
@@ -144,6 +163,7 @@ id = &"B3"
 room = &"B3"
 zone = &"B"
 box = AABB(22.0, 0.0, 28.0, 18.0, 3.0, 8.0)
+sees = Dictionary[StringName, StringName]({&"B1": &"B1-B3", &"H-S1": &"B3-H-S", &"H-S2": &"B3-H-S", &"H-S3": &"B3-H-S"})
 
 [sub_resource type="Resource" id="v_C1"]
 script = ExtResource("2")
@@ -151,6 +171,7 @@ id = &"C1"
 room = &"C1"
 zone = &"C"
 box = AABB(48.0, 0.0, 0.0, 12.0, 3.0, 12.0)
+sees = Dictionary[StringName, StringName]({&"H-N3": &"H-N-C1", &"H-N4": &"H-N-C1", &"C5": &"C5-C1", &"C4": &"C1-C4"})
 
 [sub_resource type="Resource" id="v_C2"]
 script = ExtResource("2")
@@ -158,6 +179,7 @@ id = &"C2"
 room = &"C2"
 zone = &"C"
 box = AABB(40.0, 0.0, 14.0, 10.0, 3.0, 14.0)
+sees = Dictionary[StringName, StringName]({&"B1": &"B1-C2", &"C5": &"C5-C2", &"C3": &"C2-C3", &"C4": &""})
 
 [sub_resource type="Resource" id="v_C3"]
 script = ExtResource("2")
@@ -165,6 +187,7 @@ id = &"C3"
 room = &"C3"
 zone = &"C"
 box = AABB(40.0, 0.0, 28.0, 20.0, 3.0, 8.0)
+sees = Dictionary[StringName, StringName]({&"C2": &"C2-C3", &"C4": &"C3-C4", &"H-S3": &"C3-H-S", &"H-S4": &"C3-H-S"})
 
 [sub_resource type="Resource" id="v_C4"]
 script = ExtResource("2")
@@ -172,6 +195,7 @@ id = &"C4"
 room = &"C4"
 zone = &"C"
 box = AABB(50.0, 0.0, 12.0, 10.0, 3.0, 16.0)
+sees = Dictionary[StringName, StringName]({&"C1": &"C1-C4", &"C3": &"C3-C4", &"C2": &""})
 
 [sub_resource type="Resource" id="v_C5"]
 script = ExtResource("2")
@@ -179,6 +203,7 @@ id = &"C5"
 room = &"C5"
 zone = &"C"
 box = AABB(40.0, 0.0, 4.0, 8.0, 3.0, 10.0)
+sees = Dictionary[StringName, StringName]({&"H-N3": &"H-N-C5", &"H-N4": &"H-N-C5", &"C1": &"C5-C1", &"C2": &"C5-C2"})
 
 [sub_resource type="Resource" id="p_A1_A2"]
 script = ExtResource("3")

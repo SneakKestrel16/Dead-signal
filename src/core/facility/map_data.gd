@@ -61,6 +61,38 @@ func errors() -> PackedStringArray:
 		if not types.has(t):
 			out.append("missing marker type: %s" % t)
 	out.append_array(_connectivity_errors())
+	out.append_array(_visibility_errors())
+	return out
+
+
+## research-facility.md "Visibility sets" (facility-map story 005): every volume sees at least one
+## other, every entry names a known volume other than itself, the table is symmetric with the same
+## door both ways, and a door entry's passage joins the two volumes' rooms.
+func _visibility_errors() -> PackedStringArray:
+	var out := PackedStringArray()
+	var by_id: Dictionary[StringName, MapVolume] = {}
+	for v in volumes:
+		by_id[v.id] = v
+	var by_passage: Dictionary[StringName, MapPassage] = {}
+	for p in passages:
+		by_passage[p.id] = p
+	for v in volumes:
+		if v.sees.is_empty():
+			out.append("volume %s: empty visibility set" % v.id)
+		for seen: StringName in v.sees:
+			var door: StringName = v.sees[seen]
+			var other: MapVolume = by_id.get(seen)
+			if other == null or other == v:
+				out.append("volume %s: sees unknown or itself: %s" % [v.id, seen])
+				continue
+			if not other.sees.has(v.id) or other.sees[v.id] != door:
+				out.append("volume %s: sees %s but not back through the same door" % [v.id, seen])
+			if door == &"":
+				continue
+			var p: MapPassage = by_passage.get(door)
+			var joins := p != null and ((p.a == v.room and p.b == other.room) or (p.b == v.room and p.a == other.room))
+			if not joins or not p.kind in [&"door", &"barricadable"]:
+				out.append("volume %s: door %s does not join %s and %s" % [v.id, door, v.room, other.room])
 	return out
 
 
