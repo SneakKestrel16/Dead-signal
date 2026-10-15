@@ -66,7 +66,7 @@ Starting a fuse install alerts the shapeshifter to the general area: an offset c
 
 **Story Type**: Logic
 **Required evidence**:
-- Logic: `tests/unit/survivor-objectives/install_alert_test.gd` — must exist and pass
+- Logic: `tests/integration/survivor-objectives/install_alert_test.gd` — must exist and pass
 
 **Status**: [x] `tests/integration/survivor-objectives/install_alert_test.gd` (6 tests)
 
