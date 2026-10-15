@@ -1,6 +1,6 @@
 # Story lobby-role-assignment/004: host session setting, proximity voice (lobby-role-assignment.md
 # rule 16, AC-LB-25; TR-lobby-009: a host-only, server-validated action). Server side only: the
-# fan-out to clients (AC-LB-26) needs the lobby replication channel, which does not exist yet.
+# fan-out to clients (AC-LB-26) is in tests/integration/lobby/proximity_voice_replication_test.gd.
 extends GdUnitTestSuite
 
 const HOST := "host-tok"

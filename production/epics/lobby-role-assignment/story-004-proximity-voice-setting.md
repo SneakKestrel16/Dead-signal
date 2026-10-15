@@ -1,7 +1,7 @@
 # Story 004: Host session setting: proximity voice
 
 > **Epic**: Lobby & Role Assignment
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
@@ -33,8 +33,8 @@ The host can switch proximity voice on or off in Waiting only. The server valida
 
 *From `lobby-role-assignment.md` AC-LB-25, AC-LB-26, scoped to this story:*
 
-- [ ] A new session has proximity voice Off; a change from a non-host is rejected, a change from the host in Countdown or In Match is rejected, and a change from the host in Waiting is accepted.
-- [ ] After the host toggles it in Waiting, every client reports the new value.
+- [x] A new session has proximity voice Off; a change from a non-host is rejected, a change from the host in Countdown or In Match is rejected, and a change from the host in Waiting is accepted.
+- [x] After the host toggles it in Waiting, every client reports the new value.
 
 ---
 
@@ -62,9 +62,16 @@ The host can switch proximity voice on or off in Waiting only. The server valida
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/lobby/proximity_voice_setting_test.gd` — must exist and pass
+- Integration: `tests/integration/lobby/proximity_voice_replication_test.gd` (AC-LB-26, real ENet)
+  and `tests/unit/lobby/proximity_voice_setting_test.gd` (AC-LB-25, the lobby's validation)
 
-**Status**: [ ] Not yet created
+**Status**: [x] Both exist and pass. Deviation: the evidence is split across these two files rather
+than the single integration file named originally; the server-side validation needs no sockets.
+
+Replication: the server sends one of two fixed reliable packets (`NetAuthority.send_proximity_voice`)
+on every accepted change and to each joining or rejoining player; the client matches them byte for
+byte (never decodes server packets) and exposes `NetAuthority.proximity_voice`. Wired in
+`ConnectionRouter`.
 
 ---
 

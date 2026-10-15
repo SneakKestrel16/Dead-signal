@@ -51,6 +51,10 @@ const REASON_TOKEN_IN_USE := &"token_in_use"
 const REASON_KICKED := &"kicked"
 ## The kick notice on the wire (a static var: a const cannot call var_to_bytes).
 static var _kick_packet := var_to_bytes({"kicked": String(REASON_KICKED)})
+## The proximity voice notices on the wire (send_proximity_voice()); the client matches them byte for
+## byte, so untrusted bytes are never decoded and anything else leaves proximity_voice unchanged.
+static var _voice_on_packet := var_to_bytes({"proximity_voice": true})
+static var _voice_off_packet := var_to_bytes({"proximity_voice": false})
 
 ## ENet's default throttle measurement interval (ENET_PEER_PACKET_THROTTLE_INTERVAL); protocol constant.
 const THROTTLE_INTERVAL_MS := 5000
@@ -69,6 +73,9 @@ var local_player_id: int = -1
 var local_token: String = ""
 ## Client: the server kicked this session (kicked was raised).
 var was_kicked: bool = false
+## Client: the session's proximity voice setting as the server last sent it (lobby rule 16); off until
+## then, the new-session default.
+var proximity_voice: bool = false
 
 var _knobs: Knobs
 var _version: String
@@ -137,6 +144,7 @@ func join(address: String, port: int, display_name: String, token: String = "") 
 	local_token = ""
 	last_reject_details = {}
 	was_kicked = false
+	proximity_voice = false
 	_attach(peer, _client_auth)
 	_smp.peer_authenticating.connect(_on_authenticating)
 	_smp.connected_to_server.connect(_on_connected_to_server)
@@ -215,6 +223,16 @@ func kick(player_id: int) -> bool:
 	return true
 
 
+## Server: sends the proximity voice setting `on` (lobby rule 16) reliably to `player_id`, or to every
+## bound player when `player_id` is -1. A player with no connected peer is skipped.
+func send_proximity_voice(on: bool, player_id: int = -1) -> void:
+	var packet := _voice_on_packet if on else _voice_off_packet
+	var peers: Array = _peer_by_player.values() if player_id == -1 else [peer_id_of(player_id)]
+	for peer: int in peers:
+		if peer != -1:
+			_smp.send_bytes(packet, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+
+
 ## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
 ## The synchronizer should have public_visibility = false. Callers name players, never peers.
 func set_player_visibility(sync: MultiplayerSynchronizer, player_id: int, visible: bool) -> void:
@@ -276,10 +294,16 @@ func _on_connected_to_server() -> void:
 		_set_timeout(enet.get_peer(1))
 
 
-## The server's kick notice (kick()), matched byte for byte: every snapshot and event batch passes
-## through here too, so nothing is decoded. Other packets belong to other listeners.
+## The server's kick and proximity voice notices, matched byte for byte: every snapshot and event batch
+## passes through here too, so nothing is decoded. Other packets belong to other listeners.
 func _on_client_packet(peer_id: int, data: PackedByteArray) -> void:
-	if peer_id == 1 and not was_kicked and data == _kick_packet:
+	if peer_id != 1:
+		return
+	if data == _voice_on_packet:
+		proximity_voice = true
+	elif data == _voice_off_packet:
+		proximity_voice = false
+	elif not was_kicked and data == _kick_packet:
 		was_kicked = true
 		kicked.emit(REASON_KICKED)
 
