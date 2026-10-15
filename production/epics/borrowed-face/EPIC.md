@@ -54,7 +54,7 @@ TR-borrowedface-005, -006 and -011 rest partly on ADR-0010 (Proposed); stories f
 | 008 | [Stun events projected by the form shown](story-008-stun-projection-by-form.md) | Integration | Complete | ADR-0004, ADR-0005 |
 | 009 | [Disguise and true-form rendering](story-009-disguise-rendering.md) | Visual/Feel | In Review | ADR-0010, ADR-0004 |
 | 010 | [Transformation warp and distortion audio](story-010-transform-warp-audio.md) | Visual/Feel | In Review | ADR-0010 (Proposed), ADR-0013 (Proposed), ADR-0004 |
-| 011 | [Shipped client form picker and transform input](story-011-client-form-picker.md) | UI | Ready | ADR-0014 |
+| 011 | [Shipped client form picker and transform input](story-011-client-form-picker.md) | UI | In Review | ADR-0014 |
 
 Stun, taser, lunge, objective and defense owners are Feature epics; stories 004–006 and 008 test against stubs and re-run when those land.
 

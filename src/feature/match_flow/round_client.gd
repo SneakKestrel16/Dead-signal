@@ -280,6 +280,8 @@ func _on_connected() -> void:
 		interaction = InteractionHud.new(InputGlyphs.new(), ping_hud.contexts, bar, prompt_of)
 		hud.add_child(interaction)
 		hud.add_child(OwnStateHud.new(hud_model, net.local_player_id, interaction)) # H15, H16, states (hud-results/004)
+		hud.add_child(FormPicker.for_client(hud_model, ping_hud.contexts, knobs, smp, interaction.refuse,
+				match_display.server_tick)) # borrowed-face/011
 	else:
 		bar = PredictedHoldBar.new() # not drawn; keeps the same per-tick path as the rendering client
 		add_child(bar)

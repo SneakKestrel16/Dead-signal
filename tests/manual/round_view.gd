@@ -77,6 +77,11 @@ extends Node3D
 ## releases, holds blackout at the floor (bo_preview.png), releases (bo_dark.png). Each release and the
 ## shapeshifter's cooldowns after it are printed (a running cooldown = the server accepted it).
 ## --via-input with --bot=lunge presses the lunge action on the shapeshifter's client instead of raw bytes.
+## --bot=picker (story borrowed-face/011; --count=5 --view=monster): as --bot=shifter, but the change goes through the
+## shown client's FormPicker (the shipped wheel and request): once the watched face is available it opens the
+## picker aimed at that face (picker.png), releases it, waits out the transformation (disguised.png), then
+## opens it again aimed at the true form (picker-disguised.png) and releases inside the form cooldown, so the
+## server refuses and the HUD-3 label shows it (refused.png).
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -233,6 +238,8 @@ func _process(delta: float) -> void:
 		_own_bot(c0)
 	elif _args.get("bot", "") == "aim":
 		_aim_bot(c0)
+	elif _args.get("bot", "") == "picker":
+		_picker_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -1174,3 +1181,74 @@ func _own_bot(c0: RoundClient) -> void:
 						c0.ping_hud.can_act(), c0.interaction.shown()])
 			if has_meta(&"spect_at") and f == get_meta(&"spect_at") + 40:
 				get_tree().quit()
+## --bot=picker state.
+var _picker_step := 0
+var _picker_frame := -1
+
+
+func _picker_bot(c0: RoundClient) -> void:
+	var frame := Engine.get_frames_drawn()
+	if _shifter_face == null:
+		var best := INF
+		for c in _clients:
+			if c != c0 and c.is_spawned() and c.body.global_position.distance_to(c0.body.global_position) < best:
+				best = c.body.global_position.distance_to(c0.body.global_position)
+				_shifter_face = c
+		if _shifter_face == null:
+			return
+	var s := _shifter_face
+	var d := s.body.global_position - c0.body.global_position
+	d.y = 0.0
+	c0.scripted.yaw = atan2(-d.x, -d.z)
+	c0.scripted.move = Vector2(0, 1) if d.length() > 3.0 and _picker_step == 0 else Vector2.ZERO
+	var picker := c0.hud.get_node_or_null(^"FormPicker") as FormPicker
+	if picker == null:
+		return
+	var entries := picker.entries()
+	var at := -1
+	for i in entries.size():
+		if entries[i]["form"] == s.net.local_player_id:
+			at = i
+	if at < 0:
+		return
+	match _picker_step:
+		0:
+			if entries[at]["available"]:
+				picker.open()
+				picker.aim(Vector2.UP.rotated(TAU * at / entries.size()) * FormPicker.WHEEL_RADIUS_PX)
+				_picker_step = 1
+				_picker_frame = frame
+		1:
+			if frame == _picker_frame + 5:
+				_shot("picker")
+				print("PICKER open: %s, selection %d" % [str(entries), picker.selection()])
+			if frame == _picker_frame + 10:
+				print("PICKER sent: %s" % picker.close(true))
+				_picker_step = 2
+		2:
+			if c0.predictor.last_own.get("appearance", -1) == s.predictor.last_own.get("appearance", -2):
+				_picker_step = 3
+				_picker_frame = frame
+		3:
+			if frame == _picker_frame + 30:
+				_shot("disguised")
+				print("PICKER disguised: form cooldown %.1f s" % c0.hud_model.cooldown_remaining_s(&"form"))
+			if frame == _picker_frame + 35: # after disguised.png is drawn
+				picker.open()
+				picker.aim(Vector2.UP * FormPicker.WHEEL_RADIUS_PX) # entry 0: the true form
+				_picker_step = 4
+				_picker_frame = frame
+		4:
+			if frame == _picker_frame + 5:
+				_shot("picker-disguised")
+				print("PICKER open disguised: %s" % str(entries))
+			if frame == _picker_frame + 10:
+				print("PICKER sent true form: %s (cooldown %.1f s)" % [picker.close(true),
+						c0.hud_model.cooldown_remaining_s(&"form")])
+				_picker_step = 5
+		5:
+			if c0.interaction.label_text() != "":
+				_shot("refused")
+				print("PICKER refused: label '%s' at frame %d, transform progress %.2f" % [
+						c0.interaction.label_text(), frame, c0.hud_model.transform_progress()])
+				_picker_step = 6

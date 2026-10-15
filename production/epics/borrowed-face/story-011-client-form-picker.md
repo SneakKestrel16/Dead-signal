@@ -1,7 +1,7 @@
 # Story 011: Shipped client form picker and transform input
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Feature
 > **Type**: UI
 > **Estimate**: 1 day
@@ -13,7 +13,7 @@
 `BorrowedFace.request_packet(form)` exists and the server runs the 2 s transformation, but no shipped client code sends it; only `round_view` does. The shapeshifter cannot disguise in the shipped build. The HUD-6 face list (S1) already shows which survivors are observed and available.
 
 **GDD**: `design/gdd/borrowed-face.md` rules 6-9, 14
-**Requirement**: `TR-bf-001`, `TR-ui-001`
+**Requirement**: `TR-borrowedface-004`, `TR-ui-001` (TR-bf-001 corrected to the registry's transform-request id; TR-ui-001 is not in tr-registry.yaml yet, as for hud-results 006)
 *(Requirement text lives in `docs/architecture/tr-registry.yaml` — read fresh at review time)*
 
 **ADR Governing Implementation**: ADR-0014: UI and input focus; secondary: ADR-0004
@@ -64,7 +64,7 @@
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/client-form-picker/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created: `production/qa/evidence/client-form-picker-evidence.md` (lead sign-off pending)
 
 ---
 
@@ -72,3 +72,7 @@
 
 - Depends on: match-flow 013; hud-results 006
 - Unlocks: None
+
+## Progress Notes (2026-10-15)
+
+Merged 606a777..ec2e346 (conflicts with MA-11 and HUD-4 resolved by the orchestrator keeping both; form_picker moved from R to T because MA-11 bound False Signal to R). FormPicker built for every client via FormPicker.for_client (opens only when HudModel.is_shapeshifter()); hold form_picker pushes a WHEEL context (movement live, look and actions off), mouse or right stick aims via wheel_pick, release sends BorrowedFace.request_packet reliably on channel 1. True form first, then survivors in S1 order; unavailable, Eliminated/Escaped and current form greyed with a text mark and never sent. FIRST MERGE ATTEMPT BACKED OUT: exit leak (376 ObjectDB) in tests/integration/hud-results from a one-shot connection on monster_state_changed that never fires on survivor clients; fixed by building up front and holding the session via WeakRef (gotcha recorded in docs/engine-reference/godot/gotchas.md; mechanism a guess). TR id corrected to TR-borrowedface-004. INFERENCE: refusal inferred when no transformation starts by send + RTT + slack_ticks (no server refusal message, rule 7; a late reliable resend could show a false "Not now"); disconnected survivors not greyed (not in HudModel); hold mode only (no settings store). Evidence via round_host + round_view (same RoundClient); stun and lunge refusals unit-tested only; wheel top segment overlaps the phase line and S1 overlaps the roster (ux pass). 11 unit tests (watched fail first); 3 mutations caught. Full suite 1521/1521, no leak lines.

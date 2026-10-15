@@ -4,7 +4,7 @@ extends GdUnitTestSuite
 const PID := 0
 const ACTIONS: PackedStringArray = ["move_forward", "move_back", "move_left", "move_right", "sprint",
 	"crouch", "interact", "interact_alt", "use_item", "ping", "callout_wheel", "flashlight",
-	"warning_ping", "feed_scrollback", "lunge", "false_signal", "blackout"]
+	"warning_ping", "feed_scrollback", "lunge", "false_signal", "blackout", "form_picker"]
 const EPS := 0.0001
 
 var _knobs: Knobs

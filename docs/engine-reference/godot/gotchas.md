@@ -127,3 +127,10 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** `"\n".join(lines)` written with a real line break inside the quotes. The repo has `core.autocrlf=true` and no `eol` rule for `*.gd`, so main's checkout stores CRLF and the literal becomes `"\r\n"`; a fresh worktree checkout can be LF, so the bug only shows on one side.
 - **Fix:** always write the escape `"\n"`, never a literal line break inside a string. Find offenders with `grep -rnE '(\(|= |return |, )"\r?$' src tests`.
 - **Source:** lobby-role-assignment story 012, 2026-10-15 (`LobbyScreen.queue_text`; the same pattern was in `src/main.gd`).
+
+### A never-fired one-shot connection with bound collaborators leaks the script graph
+
+- **Symptom:** a real-ENet suite passes with 0 orphans but prints "N ObjectDB instances were leaked at exit" and "N resources still in use at exit"; `--verbose` lists only `GDScript` / `GDScriptNativeClass` instances.
+- **Cause:** `model.monster_state_changed.connect(_spawn.bind(layer, model, contexts, knobs, ...), CONNECT_ONE_SHOT)` on a survivor client, where the signal never fires. Removing the widget spawn and the bound Callables did not help; removing the connection did. ShapeshifterHud's identical pattern binding only `(layer, model, camera)` does not leak. Inference on the mechanism (the bound `Knobs` resource or `InputContextStack` kept alive by the connection): not checked against engine source.
+- **Fix:** construct the widget up front and let it gate itself on model state (`FormPicker.for_client`), instead of deferring construction through a bound connection.
+- **Source:** borrowed-face story 011, 2026-10-15. Verified on 4.7.2 by bisecting `tests/integration/hud-results` (leak with the connection, clean without).

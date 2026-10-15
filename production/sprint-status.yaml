@@ -282,10 +282,10 @@ stories:
     name: "Shipped client form picker and transform input"
     file: "production/epics/borrowed-face/story-011-client-form-picker.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "survivor-defense-15"
     name: "Shipped client fires the taser on use_item"
