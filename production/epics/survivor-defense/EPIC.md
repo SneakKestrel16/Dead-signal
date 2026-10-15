@@ -64,7 +64,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 009 | [Flashlight toggle and replicated cone](story-009-flashlight-toggle.md) | Integration | Complete | ADR-0004 |
 | 010 | [Hiding noise and the long-hide cue](story-010-hide-noise-and-long-hide-cue.md) | Integration | Blocked | ADR-0013 |
 | 011 | [Shock presentation per form and cosmetic flashlight copy](story-011-per-form-presentation.md) | Visual/Feel | Blocked | ADR-0010 |
-| 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Ready | ADR-0002 |
+| 012 | [Five-client agreement and retiring the stand-ins](story-012-five-client-agreement-retire-stand-ins.md) | Integration | Complete | ADR-0002 |
 
 ## Definition of Done
 

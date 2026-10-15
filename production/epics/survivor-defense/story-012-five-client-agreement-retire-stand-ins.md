@@ -1,7 +1,7 @@
 # Story 012: Five-client agreement and retiring the stand-ins
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -34,9 +34,9 @@ Closes the epic: with five clients connected, all five agree on stun state (as v
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] With 5 clients, all agree on stun state (as visible to their role), charges, hiding occupancy and barricade state after each event (acceptance 9).
-- [ ] `StubDefense` in `transform_state_machine_test.gd`, `transform_immunity_test.gd` and `stun_projection_test.gd` is replaced by the real module and all three pass; `disguise_gates_test.gd` runs its hide, barricade and search rows against the real interactables.
-- [ ] Every Tuning Knob is loaded from data; a test asserts no hardcoded value (acceptance 20).
+- [x] With 5 clients, all agree on stun state (as visible to their role), charges, hiding occupancy and barricade state after each event (acceptance 9).
+- [x] `StubDefense` in `transform_state_machine_test.gd`, `transform_immunity_test.gd` and `stun_projection_test.gd` is replaced by the real module and all three pass; `disguise_gates_test.gd` runs its hide, barricade and search rows against the real interactables.
+- [x] Every Tuning Knob is loaded from data; a test asserts no hardcoded value (acceptance 20).
 
 ---
 
@@ -88,7 +88,7 @@ Closes the epic: with five clients connected, all five agree on stun state (as v
 **Story Type**: Integration
 **Required evidence**: Integration: `tests/integration/survivor-defense/five_client_agreement_test.gd` plus the re-run list above
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/five_client_agreement_test.gd` (1 test), `tests/unit/survivor-defense/defense_knob_literals_test.gd` (3 tests); Borrowed Face transform_state_machine, transform_immunity, disguise_gates and stun_projection tests on the real module
 
 ---
 
@@ -96,3 +96,21 @@ Closes the epic: with five clients connected, all five agree on stun state (as v
 
 - Depends on: Stories 004, 005, 006, 008
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-195):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1057/1057 after the wave merge, no leak warnings.
+- Replication scope per AD-194 (Pending designer review): charges to owner, occupancy to occupant, barricades to all.
+- No catch-up for reconnecting clients: a client down on the tick a change happens misses it until the next change (Downing's ring has the same gap). Fix: ServerMovement replays provider state on rejoin.
+- Spectators receive the watched survivor's charges and hiding spot (follows ServerMovement's provider call for the watched player).
+- Five-client test drives module entry points (shock, hide_completed, search_completed, complete, break_barricade, fire intent) inside a tick, not holds and input. Disguised-monster stun not covered there (no Borrowed Face wired); SD-5 covers it.
+- Knob scan skips values 0 and 1 (indistinguishable from indexes); four literals allow-listed with reasons. The data-change test covers the rest by behaviour.
+- transform_immunity_test now expects one PlayerShocked on the monster for an immune hit out of true form (SD-5 resisted-hit choice).
+- Tests written after the providers; mutations stand in for the red run.
+**Test Evidence**: Mutations caught: hiding sent to every viewer, charges sent to every viewer, lockout end missing from change check, knob literal 1.5 reintroduced; AC-2 mutations: survivor-only gate true for all, locked always false, search_completed no-op.
+**Code Review**: Complete (orchestrator review at merge)
