@@ -16,6 +16,9 @@ class_name MapVolume extends Resource
 ## passage id that cuts it while closed or barricaded, or &"" when seen through an archway, open
 ## corridor or glass. The volume itself is implied. Facility-map story 005 authors the shipped table.
 @export var sees: Dictionary[StringName, StringName] = {}
+## Multiplier on the server's footstep send radius for steps inside this volume, in (0, 1]: loud machinery
+## masks footsteps (ADR-0013 §7, research-facility.md B3 row). 1.0 everywhere but B3.
+@export var footstep_radius_scale: float = 1.0
 
 
 ## True when `point` (x, z only) is inside the box; the east and south edges belong to the next volume.

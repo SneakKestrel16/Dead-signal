@@ -137,6 +137,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	hs.emit_sound = sm.emit_sound
 	controller = ControllerAuthority.new(sm, holds)
 	footsteps = Footsteps.new(_gait, bf.appearance_of, sm.emit_sound)
+	footsteps.radius_scale_at = queries.footstep_radius_scale_at
 	lighting = FacilityLighting.new(map, _objective_volume)
 	lifecycle = RoundLifecycle.new(roster, map, rng)
 	lifecycle.spawn = _spawn

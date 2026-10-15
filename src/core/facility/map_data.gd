@@ -45,6 +45,8 @@ func errors() -> PackedStringArray:
 		seen[item.id] = true
 	for i in volumes.size():
 		known[volumes[i].room] = true
+		if volumes[i].footstep_radius_scale <= 0.0 or volumes[i].footstep_radius_scale > 1.0:
+			out.append("volume %s: footstep_radius_scale outside (0, 1]" % volumes[i].id)
 		for j in range(i + 1, volumes.size()):
 			if volumes[i].box.intersects(volumes[j].box):
 				out.append("volumes overlap: %s %s" % [volumes[i].id, volumes[j].id])

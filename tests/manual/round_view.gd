@@ -9,6 +9,8 @@ extends Node3D
 ## --bot=hold walks client 0 to the nearest hiding spot, aims at it and holds interact; it prints the drawn
 ## frame of the press and of the first frame the hold bar is visible (the CI-16 AC1 capture).
 ## --bot=look turns the shown client to face the nearest remote body it draws (the screenshots).
+## --bot=walk walks a survivor from the A1 spawn through the A1-H-S archway into H-S1 (zone A -> link) and
+## saves zone_a.png, crossfade.png (half a crossfade after the border) and link.png (FM-12 ambience overlay).
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
 ## --shots=<dir> saves press.png and bar.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
@@ -44,6 +46,9 @@ var _disguised_frame := -1
 var _aimed := 0
 var _fired := false
 var _stagger_frame := -1
+## --bot=walk: waypoint index, and seconds since the border was crossed (-1 before).
+var _leg := 0
+var _since_border := -1.0
 
 
 func _ready() -> void:
@@ -77,7 +82,7 @@ func _ready() -> void:
 	print("ROUND VIEW %d clients -> %s:%d latency %d ms" % [_clients.size(), host, port, latency])
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if _args.has("shot-at") and Engine.get_frames_drawn() == int(_args["shot-at"]):
 		_shot("view")
 	if _link != null:
@@ -97,6 +102,8 @@ func _process(_delta: float) -> void:
 		_look(c0)
 	elif _args.get("bot", "") == "stage":
 		_stage(c0)
+	elif _args.get("bot", "") == "walk":
+		_walk(c0, delta)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -273,3 +280,33 @@ func _print_drawn(c: RoundClient) -> void:
 		var n := c.remotes[h]
 		print("DRAWN handle %d appearance %d at %s visible %s stagger %.2f" % [h,
 				c.puppets.state_of(h).get("appearance", -1), n.position, n.visible, c.disguise.stagger_weight(h)])
+
+
+## A1 spawn -> archway A1-H-S (10, 39) -> H-S1; shots on either side of the border and mid-fade.
+func _walk(c: RoundClient, delta: float) -> void:
+	const ROUTE: Array[Vector3] = [Vector3(8.0, 0.0, 38.8), Vector3(16.0, 0.0, 38.8)]
+	var feet := c.body.global_position
+	if _leg == 0 and not has_meta(&"zone_a") and c.ambience.active_zone == &"A" and Engine.get_frames_drawn() > 120:
+		set_meta(&"zone_a", true)
+		_shot("zone_a")
+	if _leg < ROUTE.size():
+		var d := ROUTE[_leg] - feet
+		c.scripted.yaw = atan2(-d.x, -d.z)
+		c.scripted.move = Vector2(0, 1)
+		if Vector2(d.x, d.z).length() < 0.3:
+			_leg += 1
+	else:
+		c.scripted.move = Vector2.ZERO
+	if c.ambience.active_zone == &"link":
+		if _since_border < 0.0:
+			_since_border = 0.0
+			print("BORDER %s at %s" % [c.ambience.debug_text(), feet])
+		_since_border += delta
+		if _since_border >= ZoneAmbience.CROSSFADE_S / 2.0 and not has_meta(&"crossfade"):
+			set_meta(&"crossfade", true)
+			print("CROSSFADE %s" % c.ambience.debug_text())
+			_shot("crossfade")
+		if _since_border >= ZoneAmbience.CROSSFADE_S + 0.5 and not has_meta(&"link"):
+			set_meta(&"link", true)
+			print("LINK %s" % c.ambience.debug_text())
+			_shot("link")

@@ -165,6 +165,7 @@ room = &"B3"
 zone = &"B"
 box = AABB(22.0, 0.0, 28.0, 18.0, 3.0, 8.0)
 sees = Dictionary[StringName, StringName]({&"B1": &"B1-B3", &"H-S1": &"B3-H-S", &"H-S2": &"B3-H-S", &"H-S3": &"B3-H-S"})
+footstep_radius_scale = 0.5
 
 [sub_resource type="Resource" id="v_C1"]
 script = ExtResource("2")

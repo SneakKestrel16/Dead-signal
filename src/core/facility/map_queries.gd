@@ -178,6 +178,15 @@ func volume_at(point: Vector3) -> StringName:
 	return &""
 
 
+## The footstep send-radius multiplier at `point` (MapVolume.footstep_radius_scale; ADR-0013 §7): 1.0 in no
+## volume. Footsteps.radius_scale_at on the server.
+func footstep_radius_scale_at(point: Vector3) -> float:
+	for v in _map.volumes:
+		if v.contains(point):
+			return v.footstep_radius_scale
+	return 1.0
+
+
 ## The id of the first authored zone (MapData.zones order) containing `point` (x, z only), or &"".
 ## Zones may overlap (T3's terminal zone lies in spawn room C3); in_zone answers for one zone.
 func zone_at(point: Vector3) -> StringName:

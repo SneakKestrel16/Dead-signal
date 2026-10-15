@@ -44,6 +44,8 @@ var router: ClientEventRouter
 var scares: ScarePresenter
 ## Shock and stun stagger and vocal cue on remote bodies (borrowed-face story 009); null when not rendering.
 var disguise: DisguisePresenter
+## Zone ambience bed crossfade and its debug overlay (story facility-map/012); null when not rendering.
+var ambience: ZoneAmbience
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -156,6 +158,9 @@ func _on_connected() -> void:
 		router.subscribe(&"MonsterStunned", disguise.on_shock)
 		hud = CanvasLayer.new()
 		add_child(hud)
+		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
+		add_child(ambience)
+		hud.add_child(ambience.make_overlay())
 		bar = PredictedHoldBar.new()
 		hud.add_child(bar)
 		bar.set_anchors_preset(Control.PRESET_CENTER)

@@ -9,9 +9,11 @@ class_name Footsteps extends RefCounted
 ## the true form's are `c0.*`. Inference: ADR-0010's Appearance.footstep_set resource does not exist yet,
 ## so the set name is derived from the appearance id; a shipped appearances.tres settles it.
 ## Deviation from ADR-0013 §2: the event has no gait field, so the gait rides in the set id.
-## Not here (later stories): ADR-0013 §7 masking (lighting volume footstep_radius_scale; no map data yet).
+## ADR-0013 §7 masking (facility-map story 012): the radius is multiplied by `radius_scale_at(position)`, the
+## step's lighting volume footstep_radius_scale (B3 machinery), so masking changes what is sent.
 ## Usage:
 ##   var steps := Footsteps.new(gait_of, borrowed_face.appearance_of, server_movement.emit_sound)
+##   steps.radius_scale_at = map_queries.footstep_radius_scale_at
 ##   steps.add_player(pid, body)
 ##   server.start_round({TickOrder.FOOTSTEPS: steps}, knobs)
 
@@ -21,6 +23,9 @@ const GAIT_NAMES := {MovementStep.Gait.WALK: "walk", MovementStep.Gait.SPRINT: "
 var _gait_of: Callable
 var _appearance_of: Callable
 var _emit: Callable
+## `(position: Vector3) -> float` send-radius multiplier where the step lands (MapQueries.
+## footstep_radius_scale_at); unset = 1.0 everywhere.
+var radius_scale_at: Callable
 var _knobs: Knobs
 var _dt: float
 var _bodies: Dictionary[int, CharacterBody3D] = {}
@@ -61,8 +66,9 @@ func server_tick(_tick: int) -> void:
 		if covered >= _knobs.controller.footstep_spacing_m:
 			covered = fmod(covered, _knobs.controller.footstep_spacing_m)
 			var g: MovementStep.Gait = _gait_of.call(player)
+			var scale: float = radius_scale_at.call(body.global_position) if radius_scale_at.is_valid() else 1.0
 			_emit.call(body.global_position, StringName("c%d.%s" % [_appearance_of.call(player), GAIT_NAMES[g]]),
-				radius_of(g), player)
+				radius_of(g) * scale, player)
 		_covered[player] = covered
 
 
