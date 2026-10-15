@@ -9,140 +9,155 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 5
-goal: "Give the server a round that runs end to end in production code: Match Flow loads, runs the clock and decides the outcome; survivors extract drives, install fuses, and arm and activate the terminal."
-start: "2026-12-08"
-end: "2026-12-21"
-generated: "2026-10-14"
-updated: "2026-10-14"
+sprint: 6
+goal: "Give the server its two missing combat systems: the Predatory Lunge validated, hit-tested and resolved into Downing's takedown, and Survivor Defense's taser, shock lock, immunity and form-hiding events, hiding spots, barricades and flashlight, retiring the merged stand-ins."
+start: "2026-12-22"
+end: "2027-01-04"
+generated: "2026-10-15"
+updated: "2026-10-15"
 
 stories:
-  - id: "bug-0002"
-    name: "BUG-0002 unranged int and alpha knobs"
-    file: "production/qa/bugs/BUG-0002.md"
+  - id: "monster-abilities-1"
+    name: "Ability requests and Lunge state machine"
+    file: "production/epics/monster-abilities/story-001-request-validation-and-lunge-states.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-2"
+    name: "Lunge wind-up root and dash"
+    file: "production/epics/monster-abilities/story-002-wind-up-and-dash.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-3"
+    name: "Lunge hit test with lag compensation"
+    file: "production/epics/monster-abilities/story-003-hit-test-and-survivor-hit.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-4"
+    name: "Lunge resolution, cooldown and miss slow"
+    file: "production/epics/monster-abilities/story-004-resolution-cooldown-miss-slow.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-14"
-
-  - id: "match-flow-1"
-    name: "Round clock and phase state machine"
-    file: "production/epics/match-flow/story-001-round-clock-phases.md"
+    completed: ""
+  - id: "survivor-defense-1"
+    name: "Defense module, charges and intent validation"
+    file: "production/epics/survivor-defense/story-001-defense-module-charges-intents.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-
-  - id: "match-flow-2"
-    name: "Win evaluation order and immediate endings"
-    file: "production/epics/match-flow/story-002-win-evaluation.md"
+    completed: ""
+  - id: "survivor-defense-2"
+    name: "Taser trace along the view ray with rewind"
+    file: "production/epics/survivor-defense/story-002-taser-trace.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-14"
-
-  - id: "match-flow-4"
-    name: "Loading barrier, spawn, round end and return to lobby"
-    file: "production/epics/match-flow/story-004-round-lifecycle.md"
+    completed: ""
+  - id: "survivor-defense-3"
+    name: "One shock lock, no refresh, post-lock window"
+    file: "production/epics/survivor-defense/story-003-shock-lock-post-lock-window.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "survivor-objectives-1"
-    name: "Drive extract and carry"
-    file: "production/epics/survivor-objectives/story-001-drive-extract-and-carry.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "survivor-objectives-3"
-    name: "Fuses, fuse boxes and power restored"
-    file: "production/epics/survivor-objectives/story-003-fuses-and-power.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "survivor-objectives-5"
-    name: "Docking and the evacuation terminal"
-    file: "production/epics/survivor-objectives/story-005-docking-and-terminal.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1.5
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "match-flow-3"
-    name: "Escape, evidence extraction and outcome lock"
-    file: "production/epics/match-flow/story-003-escape-and-outcome-lock.md"
-    priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "survivor-objectives-6"
-    name: "Drive extraction at the exit"
-    file: "production/epics/survivor-objectives/story-006-extraction.md"
-    priority: should-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-14"
-
-  - id: "downing-and-rescue-1"
-    name: "Life state and takedown commit"
-    file: "production/epics/downing-and-rescue/story-001-takedown-commit.md"
+    completed: ""
+  - id: "survivor-defense-4"
+    name: "Monster stun, immunity and cancels"
+    file: "production/epics/survivor-defense/story-004-monster-stun-immunity-cancels.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-5"
+    name: "Identity-hiding stun and shock events"
+    file: "production/epics/survivor-defense/story-005-identity-hiding-events.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-5"
+    name: "AbilityUsed emission and Lunge state publishing"
+    file: "production/epics/monster-abilities/story-005-ability-used-and-state.md"
     priority: should-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "survivor-objectives-2"
-    name: "Item drops and pickups"
-    file: "production/epics/survivor-objectives/story-002-drops-and-pickups.md"
-    priority: nice-to-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "downing-and-rescue-3"
-    name: "Bleed-out timer and anti-camping slow"
-    file: "production/epics/downing-and-rescue/story-003-bleed-out.md"
-    priority: nice-to-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-14"
-
-  - id: "match-flow-9"
-    name: "Clients display server phase and outcome only"
-    file: "production/epics/match-flow/story-009-client-display-authority.md"
-    priority: nice-to-have
-    status: done
+    status: backlog
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-14"
+    completed: ""
+  - id: "monster-abilities-6"
+    name: "Integrate with Downing and Borrowed Face"
+    file: "production/epics/monster-abilities/story-006-integrate-downing-borrowed-face.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-6"
+    name: "Hiding spots: enter, exit, occupancy, search"
+    file: "production/epics/survivor-defense/story-006-hiding-spots.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-7"
+    name: "Barricade build and remove, closed doors block the dash"
+    file: "production/epics/survivor-defense/story-007-barricade-build-remove-door-block.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-8"
+    name: "Barricade break, persistence and rebarricade lockout"
+    file: "production/epics/survivor-defense/story-008-barricade-break-lockout.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-9"
+    name: "Flashlight toggle and replicated cone"
+    file: "production/epics/survivor-defense/story-009-flashlight-toggle.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 0.5
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-12"
+    name: "Five-client agreement and retiring the stand-ins"
+    file: "production/epics/survivor-defense/story-012-five-client-agreement-retire-stand-ins.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
