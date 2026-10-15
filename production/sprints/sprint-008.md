@@ -1,7 +1,7 @@
 # Sprint 8 — 2027-01-19 to 2027-02-01
 
 > PR-SPRINT skipped (lean mode). This sprint is planned against the story backlog. No milestone after Milestone 1 is defined, and there is no risk register, so risks come from the sprint contents.
-> QA plan: run `/qa-plan sprint` before implementation begins.
+> QA plan: `production/qa/qa-plan-sprint-008-2026-10-15.md`.
 > Inputs:
 > - Sprint 7 QA sign-off: `production/qa/qa-signoff-sprint-007-2026-10-15.md`, NOT ASSESSED (10 Visual/UI stories await the designer's walk and sign-off).
 > - New epics: Pings & Callouts and Scare Events (AD-223), 18 stories (AD-224).
