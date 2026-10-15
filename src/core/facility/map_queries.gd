@@ -1,7 +1,8 @@
 class_name MapQueries extends RefCounted
 ## Lookups over MapData (ADR-0007 §9-10). Analytic: reads the map data, never Area3D. The one physics
 ## query is interactable_on_ray's wall-and-glass ray (ADR-0007 §10); doors are tested analytically.
-## Later stories add in_zone. Match-flow story 003 added in_exit; controller story 012 capsule_overlaps_swing.
+## Facility-map story 004 added zone_at, in_zone and in_exit over the authored zones; controller story 012
+## added capsule_overlaps_swing.
 ## Usage: `var q := MapQueries.new(map); var v := q.volume_at(position)`
 
 ## Door leaf thickness for the analytic door test (the greybox leaf, tools/level/greybox_from_map.gd).
@@ -160,15 +161,26 @@ func volume_at(point: Vector3) -> StringName:
 	return &""
 
 
-## True when `point` (x, z only) is in the exit volume: past the wall (outside every map volume) and
-## within half the exit passage's width_m of its opening centre (match-flow.md rule 10, ADR-0007 §9).
-## Inference: the map authors no exit box, only exit E's opening; an authored exit volume in the map
-## file (Facility Map) would settle the shape. False when the map has no exit passage.
+## The id of the first authored zone (MapData.zones order) containing `point` (x, z only), or &"".
+## Zones may overlap (T3's terminal zone lies in spawn room C3); in_zone answers for one zone.
+func zone_at(point: Vector3) -> StringName:
+	for z in _map.zones:
+		if z.contains(point):
+			return z.id
+	return &""
+
+
+## True when `point` (x, z only) is inside the zone `zone_id`; false for an unknown id.
+func in_zone(zone_id: StringName, point: Vector3) -> bool:
+	for z in _map.zones:
+		if z.id == zone_id and z.contains(point):
+			return true
+	return false
+
+
+## True when `point` (x, z only) is in an authored exit zone (match-flow.md rule 10, ADR-0007 §9).
 func in_exit(point: Vector3) -> bool:
-	if volume_at(point) != &"":
-		return false
-	for p in _map.passages:
-		if p.kind == MapPassage.EXIT \
-				and Vector2(point.x - p.position.x, point.z - p.position.z).length() <= p.width_m / 2.0:
+	for z in _map.zones:
+		if z.kind == MapZone.EXIT and z.contains(point):
 			return true
 	return false

@@ -19,6 +19,9 @@ const INTERACTABLE_TYPES: Array[StringName] = [&"hiding", &"switch", &"monitor",
 @export var volumes: Array[MapVolume] = []
 @export var passages: Array[MapPassage] = []
 @export var markers: Array[MapMarker] = []
+## Exit volume, terminal zones and spawn rooms (facility-map story 004). Order matters where zones
+## overlap: MapQueries.zone_at returns the first, so the file lists the exit and terminal zones first.
+@export var zones: Array[MapZone] = []
 
 
 ## Loads the map file whole, bypassing the resource cache so every round reads the file. CACHE_MODE_IGNORE,
@@ -36,7 +39,7 @@ func errors() -> PackedStringArray:
 	var out := PackedStringArray()
 	var seen := {}
 	var known := {&"Outside": true}
-	for item: Resource in volumes + passages + markers:
+	for item: Resource in volumes + passages + markers + zones:
 		if seen.has(item.id):
 			out.append("duplicate id: %s" % item.id)
 		seen[item.id] = true
@@ -49,8 +52,14 @@ func errors() -> PackedStringArray:
 		for r: StringName in [p.a, p.b]:
 			if not known.has(r):
 				out.append("passage %s: unknown room %s" % [p.id, r])
-	var types := {}
 	var queries := MapQueries.new(self)
+	for z in zones:
+		if not z.kind in MapZone.KINDS:
+			out.append("zone %s: unknown kind %s" % [z.id, z.kind])
+	for p in passages:
+		if p.kind == MapPassage.EXIT and not queries.in_exit(p.position):
+			out.append("passage %s: no exit zone at its opening" % p.id)
+	var types := {}
 	for m in markers:
 		types[m.type] = true
 		if not m.type in MARKER_TYPES:
@@ -170,12 +179,12 @@ func interactables() -> Array[Resource]:
 	return out
 
 
-## SHA-256 over every saved field of every volume, passage and marker, in order: equal digests mean
+## SHA-256 over every saved field of every volume, passage, marker and zone, in order: equal digests mean
 ## an identical layout.
 func digest() -> String:
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)
-	for item: Resource in volumes + passages + markers:
+	for item: Resource in volumes + passages + markers + zones:
 		for prop in item.get_property_list():
 			if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
 				ctx.update(var_to_str([prop.name, item.get(prop.name)]).to_utf8_buffer())

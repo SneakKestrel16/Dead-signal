@@ -12,6 +12,7 @@ const WINDOW_S := 45.0
 const C4_BOX := AABB(Vector3(50.0, 0.0, 12.0), Vector3(10.0, 3.0, 16.0))
 const EXIT_AT := Vector3(60.0, 0.0, 20.0)
 const EXIT_WIDTH_M := 4.0
+const EXIT_ZONE := AABB(Vector3(60.0, 0.0, 18.0), Vector3(2.0, 3.0, 4.0))
 const IN_EXIT := Vector3(61.0, 0.0, 20.0)
 const IN_ROOM := Vector3(55.0, 0.0, 20.0)
 
@@ -37,6 +38,11 @@ func _map() -> MapData:
 	e.position = EXIT_AT
 	e.width_m = EXIT_WIDTH_M
 	map.passages.append(e)
+	var z := MapZone.new() ## exit E's authored zone (facility-map story 004)
+	z.id = &"Z-E"
+	z.kind = MapZone.EXIT
+	z.box = EXIT_ZONE
+	map.zones.append(z)
 	return map
 
 

@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://src/core/facility/map_volume.gd" id="2"]
 [ext_resource type="Script" path="res://src/core/facility/map_passage.gd" id="3"]
 [ext_resource type="Script" path="res://src/core/facility/map_marker.gd" id="4"]
+[ext_resource type="Script" path="res://src/core/facility/map_zone.gd" id="5"]
 
 [sub_resource type="Resource" id="v_A1"]
 script = ExtResource("2")
@@ -859,8 +860,57 @@ type = &"terminal"
 volume = &"C3"
 position = Vector3(43.0, 0.0, 31.0)
 
+[sub_resource type="Resource" id="z_Z_E"]
+script = ExtResource("5")
+id = &"Z-E"
+kind = &"exit"
+box = AABB(60.0, 0.0, 18.0, 2.0, 3.0, 4.0)
+
+[sub_resource type="Resource" id="z_Z_T1"]
+script = ExtResource("5")
+id = &"Z-T1"
+kind = &"terminal"
+box = AABB(50.0, 0.0, 13.0, 7.0, 3.0, 8.0)
+
+[sub_resource type="Resource" id="z_Z_T2"]
+script = ExtResource("5")
+id = &"Z-T2"
+kind = &"terminal"
+box = AABB(40.0, 0.0, 14.0, 6.0, 3.0, 7.0)
+
+[sub_resource type="Resource" id="z_Z_T3"]
+script = ExtResource("5")
+id = &"Z-T3"
+kind = &"terminal"
+box = AABB(40.0, 0.0, 28.0, 7.0, 3.0, 7.0)
+
+[sub_resource type="Resource" id="z_Z_S"]
+script = ExtResource("5")
+id = &"Z-S"
+kind = &"survivor_spawn"
+box = AABB(0.0, 0.0, 28.0, 10.0, 3.0, 12.0)
+
+[sub_resource type="Resource" id="z_Z_M1"]
+script = ExtResource("5")
+id = &"Z-M1"
+kind = &"monster_spawn"
+box = AABB(40.0, 0.0, 28.0, 20.0, 3.0, 8.0)
+
+[sub_resource type="Resource" id="z_Z_M2"]
+script = ExtResource("5")
+id = &"Z-M2"
+kind = &"monster_spawn"
+box = AABB(40.0, 0.0, 4.0, 8.0, 3.0, 10.0)
+
+[sub_resource type="Resource" id="z_Z_M3"]
+script = ExtResource("5")
+id = &"Z-M3"
+kind = &"monster_spawn"
+box = AABB(22.0, 0.0, 4.0, 18.0, 3.0, 8.0)
+
 [resource]
 script = ExtResource("1")
 volumes = Array[ExtResource("2")]([SubResource("v_A1"), SubResource("v_A2_N"), SubResource("v_A2_M"), SubResource("v_A2_S"), SubResource("v_A3"), SubResource("v_A4"), SubResource("v_A5"), SubResource("v_A6"), SubResource("v_A7"), SubResource("v_H_N1"), SubResource("v_H_N2"), SubResource("v_H_N3"), SubResource("v_H_N4"), SubResource("v_H_S1"), SubResource("v_H_S2"), SubResource("v_H_S3"), SubResource("v_H_S4"), SubResource("v_B1"), SubResource("v_B2"), SubResource("v_B3"), SubResource("v_C1"), SubResource("v_C2"), SubResource("v_C3"), SubResource("v_C4"), SubResource("v_C5")])
 passages = Array[ExtResource("3")]([SubResource("p_A1_A2"), SubResource("p_A1_A3"), SubResource("p_A1_H_S"), SubResource("p_A2_H_N"), SubResource("p_A2_H_S"), SubResource("p_A2_A3"), SubResource("p_A2_A4"), SubResource("p_A2_A7"), SubResource("p_A3_A6"), SubResource("p_A6_H_N"), SubResource("p_A7_H_N"), SubResource("p_A4_A5"), SubResource("p_A5_H_S"), SubResource("p_A4_B1"), SubResource("p_B1_B2"), SubResource("p_B1_B3"), SubResource("p_B2_H_N"), SubResource("p_B3_H_S"), SubResource("p_B1_C2"), SubResource("p_H_N_C5"), SubResource("p_H_N_C1"), SubResource("p_C5_C1"), SubResource("p_C5_C2"), SubResource("p_C1_C4"), SubResource("p_C2_C4"), SubResource("p_C2_C3"), SubResource("p_C3_C4"), SubResource("p_C3_H_S"), SubResource("p_C4_Outside")])
 markers = Array[ExtResource("4")]([SubResource("m_S1"), SubResource("m_S2"), SubResource("m_S3"), SubResource("m_S4"), SubResource("m_S5"), SubResource("m_M1"), SubResource("m_M2"), SubResource("m_M3"), SubResource("m_h1"), SubResource("m_h2"), SubResource("m_h3"), SubResource("m_h4"), SubResource("m_h5"), SubResource("m_h6"), SubResource("m_s_A1"), SubResource("m_s_A3"), SubResource("m_s_A4"), SubResource("m_s_A5"), SubResource("m_s_A6"), SubResource("m_s_A7"), SubResource("m_s_B1"), SubResource("m_s_B2"), SubResource("m_s_B3"), SubResource("m_s_C1"), SubResource("m_s_C2"), SubResource("m_s_C3"), SubResource("m_s_C4"), SubResource("m_s_C5"), SubResource("m_c1"), SubResource("m_c2"), SubResource("m_c3"), SubResource("m_c4"), SubResource("m_monitors"), SubResource("m_d1"), SubResource("m_d2"), SubResource("m_d3"), SubResource("m_d4"), SubResource("m_d5"), SubResource("m_d6"), SubResource("m_f1"), SubResource("m_f2"), SubResource("m_f3"), SubResource("m_f4"), SubResource("m_f5"), SubResource("m_f6"), SubResource("m_f7"), SubResource("m_P1"), SubResource("m_P2"), SubResource("m_P3"), SubResource("m_T1"), SubResource("m_T2"), SubResource("m_T3")])
+zones = Array[ExtResource("5")]([SubResource("z_Z_E"), SubResource("z_Z_T1"), SubResource("z_Z_T2"), SubResource("z_Z_T3"), SubResource("z_Z_S"), SubResource("z_Z_M1"), SubResource("z_Z_M2"), SubResource("z_Z_M3")])
