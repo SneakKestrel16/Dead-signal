@@ -1,12 +1,12 @@
 # Story 003: Speed modifier set: lock, root and slow
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -33,9 +33,9 @@ Taser stuns, takedown commits, rescues and transforms all limit movement. Each o
 
 *From `first-person-controller.md` Acceptance Criteria (Modifiers) and Formulas (effective_speed), scoped to this story:*
 
-- [ ] From a true-form sprint (5.75): slow 0.5 gives 2.875; slows 0.5 and 0.7 give 2.875 (not 2.01); a root gives 0; a lock and a slow give 0.
-- [ ] When the last modifier is removed with sprint still held, the next tick moves at 5.75 with no re-press.
-- [ ] With owners A and B each adding a modifier, removing A's leaves B's active.
+- [x] From a true-form sprint (5.75): slow 0.5 gives 2.875; slows 0.5 and 0.7 give 2.875 (not 2.01); a root gives 0; a lock and a slow give 0.
+- [x] When the last modifier is removed with sprint still held, the next tick moves at 5.75 with no re-press.
+- [x] With owners A and B each adding a modifier, removing A's leaves B's active.
 
 ---
 
@@ -78,7 +78,7 @@ Taser stuns, takedown commits, rescues and transforms all limit movement. Each o
 **Required evidence**:
 - Logic: `tests/unit/first-person-controller/speed_modifiers_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created, 14 tests passing (suite 365/365)
 
 ---
 
@@ -86,3 +86,15 @@ Taser stuns, takedown commits, rescues and transforms all limit movement. Each o
 
 - Depends on: Story 002
 - Unlocks: Survivor Defense, Monster Abilities and Downing epics
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 3/3 passing (`tests/unit/first-person-controller/speed_modifiers_test.gd`, 14 tests).
+**Deviations**:
+- The set lives in the existing `MovementModifiers` seam (`src/foundation/network/movement_modifiers.gd`) rather than a new `SpeedModifiers` class. The movement step, `ServerMovement` and `OwnerPredictor` already read it.
+- AC2 is verified as the step's target speed (5.75 on the next tick, no re-press). The body reaches that speed within `accel_time_s`, as `movement_step_test` covers after a root.
+- A repeat `add` by the same owner replaces its entry. The GDD says nothing on this; the rule is recorded in the test.
+**Code review**: two findings fixed, each with a regression test that was watched failing. (1) `set_from_scale` left the set stale, so a later add or remove dropped the snapshot's slow. It now files the snapshot as one entry. (2) A NaN or above-1 snapshot scale reads as full speed. The reviewer's claim that a NaN slow passes through `add` was disproved: a test shows it is ignored on 4.7.2. Deferred to story 006: a snapshot cannot tell lock from root, so the owning client predicts a locked body as rooted.

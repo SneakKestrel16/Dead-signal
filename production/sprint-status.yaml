@@ -31,11 +31,11 @@ stories:
     name: "Speed modifiers"
     file: "production/epics/controller-interaction/story-003-speed-modifiers.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "controller-interaction-8"
     name: "Hold start and complete"

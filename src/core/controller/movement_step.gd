@@ -25,7 +25,7 @@ class MoveState extends RefCounted:
 	var transforming := false
 	## True-form shapeshifter: sprint gets monster_sprint_mult.
 	var true_form := false
-	## Story 003 fills the arbitration; 1.0 and not rooted here.
+	## The per-owner speed modifier set (story 003): lock > root > lowest slow.
 	var modifiers := MovementModifiers.new()
 
 
