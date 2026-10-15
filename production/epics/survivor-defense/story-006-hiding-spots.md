@@ -1,7 +1,7 @@
 # Story 006: Hiding spots: enter, exit, occupancy, search
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1.5 days
@@ -34,10 +34,10 @@ Hiding spots as interactables: a Healthy survivor holds `hide_transition_s` to e
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] Entering takes `hide_transition_s` (1.0 s) rooted, reset on cancel; the survivor stays targetable until hidden; one occupant per spot (rules 18-20, 28a).
-- [ ] A hidden survivor cannot be lunged, shot, use items, do objectives or rescues, and keeps charges and flashlight (rules 20, 23).
-- [ ] Searching an occupied spot for `search_duration_s` ejects the survivor in front of it without a down; an empty spot does nothing; a stun interrupts the search (rules 15, 22).
-- [ ] A search on a spot being entered lets the entry finish first, then ejects (edge case); only Healthy survivors can hide.
+- [x] Entering takes `hide_transition_s` (1.0 s) rooted, reset on cancel; the survivor stays targetable until hidden; one occupant per spot (rules 18-20, 28a).
+- [x] A hidden survivor cannot be lunged, shot, use items, do objectives or rescues, and keeps charges and flashlight (rules 20, 23).
+- [x] Searching an occupied spot for `search_duration_s` ejects the survivor in front of it without a down; an empty spot does nothing; a stun interrupts the search (rules 15, 22).
+- [x] A search on a spot being entered lets the entry finish first, then ejects (edge case); only Healthy survivors can hide.
 
 ---
 
@@ -96,7 +96,7 @@ Hiding spots as interactables: a Healthy survivor holds `hide_transition_s` to e
 **Story Type**: Integration
 **Required evidence**: Integration: `tests/integration/survivor-defense/hiding_spots_test.gd`. Re-run: `tests/integration/borrowed-face/disguise_gates_test.gd` (hiding and search rows).
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/hiding_spots_test.gd` (12 tests)
 
 ---
 
@@ -104,3 +104,19 @@ Hiding spots as interactables: a Healthy survivor holds `hide_transition_s` to e
 
 - Depends on: Stories 001, 004
 - Unlocks: Stories 010, 012
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-190):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1040/1040 after the wave merge, no leak warnings.
+- SurvivorObjectives checks hidden only for the terminal zone; the composer must fold `not sd.is_hidden(a)` into its is_healthy Callable (the test does).
+- Eject places at the marker floor position: markers have no facing (inference; a facing field in the map file settles 'in front of').
+- No hide or search event in the catalog, so nothing is emitted. Flinch re-baseline skipped (no Controller hook yet).
+- Rescue refusal for a hidden survivor relies on Downing's existing set_hidden gate, not re-tested here.
+- Nothing builds HidingSpots in a round yet (composer).
+**Test Evidence**: 12 tests on the real map with real HoldService, SurvivorDefense, Downing, SurvivorObjectives. Mutations caught: search not waiting for entry, one-occupant check removed, cancelled entry keeping its eject.
+**Code Review**: Complete (orchestrator review at merge)

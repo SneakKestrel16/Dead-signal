@@ -1,7 +1,7 @@
 # Story 008: Barricade break, persistence and rebarricade lockout
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ The monster, in any form, holds Break on a barricaded door. The barricade breaks
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] A barricade breaks after exactly 5 s of total break time, with progress kept across interruptions, including a stun (rules 27, 15).
-- [ ] A broken barricade cannot be rebuilt on that door for 30 s and can after (rule 28).
-- [ ] Break works in any form and is a visible monster action; survivors cannot start it (rule 27).
-- [ ] `BarricadeBroken` is emitted once per break.
+- [x] A barricade breaks after exactly 5 s of total break time, with progress kept across interruptions, including a stun (rules 27, 15).
+- [x] A broken barricade cannot be rebuilt on that door for 30 s and can after (rule 28).
+- [x] Break works in any form and is a visible monster action; survivors cannot start it (rule 27).
+- [x] `BarricadeBroken` is emitted once per break.
 
 ---
 
@@ -93,7 +93,7 @@ The monster, in any form, holds Break on a barricaded door. The barricade breaks
 **Story Type**: Logic
 **Required evidence**: Logic: `tests/unit/survivor-defense/barricade_break_test.gd`
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/survivor-defense/barricade_break_test.gd` (8 tests)
 
 ---
 
@@ -101,3 +101,19 @@ The monster, in any form, holds Break on a barricaded door. The barricade breaks
 
 - Depends on: Stories 004, 007
 - Unlocks: Story 012
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-191):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1040/1040 after the wave merge, no leak warnings.
+- Barricades gains an optional `monster` Callable (any form, free to act); composer must fold the stun lock in (not sd.locked(a)). Unset means nobody can break.
+- 'Any form' true by construction: Break never reads the form.
+- The 29.9 s check runs one tick before the lockout ends (stricter).
+- BarricadeView still exposes only is_barricaded; break progress and lockout not published.
+- barricade_doors_test BreakFixture replaced by the real break hold.
+**Test Evidence**: 8 tests. Mutations caught: progress not kept, lockout >= to >, removal not clearing progress.
+**Code Review**: Complete (orchestrator review at merge)

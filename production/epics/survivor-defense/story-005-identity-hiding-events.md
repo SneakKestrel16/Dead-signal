@@ -1,7 +1,7 @@
 # Story 005: Identity-hiding stun and shock events
 
 > **Epic**: Survivor Defense
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
@@ -34,10 +34,10 @@ Chooses and emits the right event for every hit: true form gets `MonsterStunned`
 
 *From GDD `design/gdd/survivor-defense.md` (Detailed Design and Acceptance Criteria), scoped to this story:*
 
-- [ ] While the monster is disguised, a captured survivor-client stream shows one identical `PlayerShocked` for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` (acceptance 15).
-- [ ] A true-form stun reaches every client as `MonsterStunned`; a resisted true-form hit is distinguishable as resisted to all clients (rule 10).
-- [ ] A hit while Transforming follows the body shown that moment: out of a disguise counts as disguised (rule 1).
-- [ ] The shocked player's own client gets `{own: true}`; others get `{body: handle}` only if the body is relevant to them.
+- [x] While the monster is disguised, a captured survivor-client stream shows one identical `PlayerShocked` for a hit on a survivor, a stunned monster and an immune monster, and no `MonsterStunned` (acceptance 15).
+- [x] A true-form stun reaches every client as `MonsterStunned`; a resisted true-form hit is distinguishable as resisted to all clients (rule 10).
+- [x] A hit while Transforming follows the body shown that moment: out of a disguise counts as disguised (rule 1).
+- [x] The shocked player's own client gets `{own: true}`; others get `{body: handle}` only if the body is relevant to them.
 
 ---
 
@@ -95,7 +95,7 @@ Chooses and emits the right event for every hit: true form gets `MonsterStunned`
 **Story Type**: Integration
 **Required evidence**: Integration: `tests/integration/survivor-defense/identity_hiding_events_test.gd`. Re-run: `tests/integration/borrowed-face/stun_projection_test.gd`.
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/survivor-defense/identity_hiding_events_test.gd` (5 tests)
 
 ---
 
@@ -103,3 +103,19 @@ Chooses and emits the right event for every hit: true form gets `MonsterStunned`
 
 - Depends on: Stories 003, 004
 - Unlocks: Stories 011, 012
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-189):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1040/1040 after the wave merge, no leak warnings.
+- Resisted true-form hit sent as PlayerShocked (no resisted event in the catalog); clients tell it from a stun by event type. Leaks nothing: true form is already visible. A designer ruling on a dedicated StunResisted event settles it; story 011 would read that.
+- systems-index.md PlayerShocked row still says survivor or disguised hits only; not updated pending that ruling.
+- AC-1 byte-identity uses a fresh seeded handle table per case so handle values match.
+- tests/integration/borrowed-face/stun_projection_test.gd StubDefense replaced by the real SurvivorDefense plus a Hitter module.
+- Targeted run hit the BUG-0003-class flake in transforming_visibility_test under parallel load; passes alone.
+**Test Evidence**: 5 tests; 4 failed before the change. Mutations caught: no PlayerShocked when resisted, true_form always true, no PlayerShocked on resisted true-form hit.
+**Code Review**: Complete (orchestrator review at merge)

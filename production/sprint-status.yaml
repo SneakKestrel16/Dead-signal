@@ -39,11 +39,11 @@ stories:
     name: "Lunge hit test with lag compensation"
     file: "production/epics/monster-abilities/story-003-hit-test-and-survivor-hit.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-4"
     name: "Lunge resolution, cooldown and miss slow"
     file: "production/epics/monster-abilities/story-004-resolution-cooldown-miss-slow.md"
@@ -93,11 +93,11 @@ stories:
     name: "Identity-hiding stun and shock events"
     file: "production/epics/survivor-defense/story-005-identity-hiding-events.md"
     priority: must-have
-    status: ready-for-dev
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "monster-abilities-5"
     name: "AbilityUsed emission and Lunge state publishing"
     file: "production/epics/monster-abilities/story-005-ability-used-and-state.md"
@@ -120,11 +120,11 @@ stories:
     name: "Hiding spots: enter, exit, occupancy, search"
     file: "production/epics/survivor-defense/story-006-hiding-spots.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-7"
     name: "Barricade build and remove, closed doors block the dash"
     file: "production/epics/survivor-defense/story-007-barricade-build-remove-door-block.md"
@@ -138,11 +138,11 @@ stories:
     name: "Barricade break, persistence and rebarricade lockout"
     file: "production/epics/survivor-defense/story-008-barricade-break-lockout.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-9"
     name: "Flashlight toggle and replicated cone"
     file: "production/epics/survivor-defense/story-009-flashlight-toggle.md"

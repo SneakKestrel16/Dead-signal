@@ -1,12 +1,12 @@
 # Story 003: Lunge hit test with lag compensation
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Logic
 > **Estimate**: 1-2 days
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,12 +34,12 @@ Each Active tick the server tests survivors against positions rewound by `LagCom
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] A survivor is hit only if eligible (Healthy, not hidden, no grace, not Seized), within 1.2 m of the attack point, inside the 60 degree cone, with chest line of sight, and the monster has not been stunned since wind-up
-- [ ] With two valid survivors in the cone, only the closer one gets `SurvivorHit` and the dash ends on that tick
-- [ ] A survivor behind a closed door 1 m from the monster is never hit
-- [ ] A survivor in post-rescue or post-release grace, or hidden, inside cone and radius is not hit
-- [ ] At 80 ms RTT positions are rewound to the viewed tick; at 300 ms RTT exactly 180 ms; a survivor who became hidden or entered grace after the rewound time is not hit
-- [ ] A survivor 3 m ahead (radius 0.3 m) strafing at 4.0 m/s from 0.25 s after the cue, monster at 150 ms RTT, is not hit (smoke check of the first-person-controller dodge AC)
+- [x] A survivor is hit only if eligible (Healthy, not hidden, no grace, not Seized), within 1.2 m of the attack point, inside the 60 degree cone, with chest line of sight, and the monster has not been stunned since wind-up
+- [x] With two valid survivors in the cone, only the closer one gets `SurvivorHit` and the dash ends on that tick
+- [x] A survivor behind a closed door 1 m from the monster is never hit
+- [x] A survivor in post-rescue or post-release grace, or hidden, inside cone and radius is not hit
+- [x] At 80 ms RTT positions are rewound to the viewed tick; at 300 ms RTT exactly 180 ms; a survivor who became hidden or entered grace after the rewound time is not hit
+- [x] A survivor 3 m ahead (radius 0.3 m) strafing at 4.0 m/s from 0.25 s after the cue, monster at 150 ms RTT, is not hit (smoke check of the first-person-controller dodge AC)
 
 ---
 
@@ -108,7 +108,7 @@ Each Active tick the server tests survivors against positions rewound by `LagCom
 - Logic: `tests/unit/monster-abilities/lunge_hit_test_test.gd` — must exist and pass
 - Integration: `tests/integration/monster-abilities/lunge_lag_comp_test.gd` — rewind cases
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/monster-abilities/lunge_hit_test_test.gd` (14 tests), `tests/integration/monster-abilities/lunge_lag_comp_test.gd` (9 tests)
 
 ---
 
@@ -116,3 +116,20 @@ Each Active tick the server tests survivors against positions rewound by `LagCom
 
 - Depends on: Story 002; network-authority story 007 (done)
 - Unlocks: Stories 004, 006
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-188):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1040/1040 after the wave merge, no leak warnings.
+- A stun landing the same tick is only flushed after all modules run, so the hit test also refuses while the injected locked(monster) is true.
+- Cone measured horizontally to the nearest capsule-axis point (inference; a designer ruling on body edge vs centre settles it).
+- SurvivorHit.position carries the hit survivor's rewound feet position (GDD says only 'position'; inference).
+- Cone compared as off + off against the full cone to avoid the 0.5 and 2.0 literals the knob-literal scan flags.
+- Tests stand in for line of sight (door-plane Callable) and eligibility (Downing.is_eligible over test state). Composer must call set_hit_sources(lc, survivors, Downing.eligible, facing, MapQueries.clear_sight).
+- The red run was a parse error (set_hit_sources missing), not observed; mutations stand in for it.
+**Test Evidence**: 23 tests; AC-6 dodge smoke (3 m, 4.0 m/s strafe from 0.25 s, 150 ms RTT) not hit. Mutations caught: eligibility removed, rewind forced 0, tie-break changed, LOS ignored, full cone as half-angle.
+**Code Review**: Complete (orchestrator review at merge)
