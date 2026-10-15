@@ -28,7 +28,7 @@ SD-6 ejects a found survivor onto the hiding marker's floor position, because ma
 
 - [ ] Each hiding marker in the map data has a yaw, and the map loader validates it (a missing yaw is a load problem, not a silent 0).
 - [ ] An eject, whether from a completed Search or from a Search that completes during an entry, places the survivor at the marker floor plus `hide_eject_offset_m` along the marker's facing. The offset is a new knob with a range and a source comment.
-- [ ] If the spot in front is blocked by a wall, the survivor falls back to the marker position (inference; a designer ruling settles any other fallback).
+- [ ] If the spot in front is blocked, the survivor is placed at the nearest free point within 1 m; if there is none, the exit waits (`design/gdd/first-person-controller.md` edge cases, line 245).
 
 ---
 
