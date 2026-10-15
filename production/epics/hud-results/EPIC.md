@@ -75,7 +75,7 @@ This epic is complete when:
 | 005 | Edge cues, flinch-off pulse, taser count and world progress bars | UI | In Review | ADR-0014 |
 | 006 | Shapeshifter HUD and survivor-side absence | UI | In Review | ADR-0014 |
 | 007 | Feed cap, opaque backing, marker cap, shapes and wheel stick steering | UI | In Review | ADR-0014 |
-| 008 | Results screen | UI | Ready | ADR-0014 |
+| 008 | Results screen | UI | In Review | ADR-0014 |
 | 009 | Lobby "Last round" view | UI | Ready | ADR-0014 |
 | 010 | Visual budget and accessibility verification pass | UI | Ready | ADR-0014 |
 | 011 | Server feeds the HUD still lacks: round roster names and hold refusal reasons | Integration | Ready | ADR-0004 |

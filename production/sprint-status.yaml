@@ -219,10 +219,10 @@ stories:
     name: "Results screen"
     file: "production/epics/hud-results/story-008-results-screen.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-5"
     name: "Edge cues, flinch-off pulse, taser count and world progress bars"

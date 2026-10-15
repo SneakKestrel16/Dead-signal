@@ -20,8 +20,8 @@ class_name LobbyScreen extends Control
 ## room on (its HiddenSpawner must exist before the round is composed) and plays the round over the lobby's
 ## own session (RoundClient.adopt; no second ENet session) once the lobby packet says In Match; when the
 ## lobby packet says Waiting again it drops the round scene and shows the room. During a round the screen
-## shows only a greybox line from MatchDisplay (phase and time, then the outcome during Results); the
-## Results screen is hud-results story 009. A host that leaves sends every client back to the boot scene
+## shows only a greybox line from MatchDisplay (phase and time); on RoundEnded it shows the ResultsScreen
+## (hud-results story 008) until the round is dropped, and its Leave session leaves the session. A host that leaves sends every client back to the boot scene
 ## with "Host left" (leave_to, Main.return_with; ADR-0001 §7).
 ## Command-line flags after `--` drive it for evidence captures: --lobby-host, --lobby-join=ADDR,
 ## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle).
@@ -53,6 +53,7 @@ var _seat: Node ## host: the seat RoundClient's multiplayer root
 var _display: MatchDisplay
 var _in_round := false
 var _round_line: Label
+var _results: ResultsScreen ## the Results screen while the round is in Results
 var _rooted := false ## this screen's path carries its session's SceneMultiplayer
 var _shots: Dictionary[String, float] = {} ## --lobby-shots: shot name -> seconds its condition has held
 var _played := false ## --lobby-shots: a round was entered
@@ -366,6 +367,9 @@ func _drop_round() -> void:
 		_seat.queue_free()
 	_seat = null
 	_round_line.hide()
+	if _results != null:
+		_results.queue_free() # pops its MENU on exit; it holds the round's InputContextStack
+	_results = null
 
 
 func _exit_tree() -> void:
@@ -384,6 +388,18 @@ func _process(delta: float) -> void:
 		return
 	_display.advance(delta)
 	_round_line.text = round_line(_display)
+	if _display.is_ended() and _results == null:
+		_show_results()
+
+
+## RoundEnded arrived: the Results screen over the frozen round (results.md Entry; story hud-results/008).
+func _show_results() -> void:
+	var hud := round_client.ping_hud if round_client != null else null
+	_results = ResultsScreen.new(_display.results(), _knobs.match_flow.results_duration_s,
+			hud.contexts if hud != null else null)
+	_results.leave_confirmed.connect(_on_leave)
+	add_child(_results)
+	_round_line.hide()
 
 
 ## --lobby-shots: each step's screenshot once its condition held SHOT_AFTER_S.
@@ -409,12 +425,8 @@ func _shot(tag: String, delta: float, holds: bool) -> bool:
 	return true
 
 
-## The greybox round line (until hud-results 009): the phase clock, then the outcome during Results.
+## The greybox round line: the phase clock (hidden once the Results screen shows).
 static func round_line(d: MatchDisplay) -> String:
-	if d.is_ended():
-		return TranslationServer.translate("Round over: %s (%s). Back to the lobby after Results.") % [
-			TranslationServer.translate(MatchFlow.OUTCOME_TEXT[d.outcome()]),
-			TranslationServer.translate(MatchFlow.REASON_TEXT[d.reason()])]
 	if d.phase() == -1:
 		return TranslationServer.translate("Loading the round...")
 	return TranslationServer.translate("Round: %d s left") % ceili(d.time_remaining_s())
