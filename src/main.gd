@@ -16,8 +16,7 @@ func _ready() -> void:
 	_status.text = "Dead Signal\nknobs: %d sections, %d problems (see log)" % [Knobs.SECTIONS.size(), errs.size()]
 	print("boot ok: knob problems=%d" % errs.size())
 	if notice != "":
-		_status.text += "
-" + notice
+		_status.text += "\n" + notice
 		print("notice: " + notice)
 		notice = ""
 

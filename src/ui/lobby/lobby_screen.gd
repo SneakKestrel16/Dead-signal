@@ -345,8 +345,7 @@ static func queue_text(s: Dictionary, me: int) -> String:
 		if q.id == s.next:
 			line += "  <- " + TranslationServer.translate("next shapeshifter")
 		lines.append(line)
-	return "
-".join(lines)
+	return "\n".join(lines)
 
 
 func _cell(text: String) -> void:

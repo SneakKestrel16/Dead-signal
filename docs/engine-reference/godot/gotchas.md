@@ -120,3 +120,10 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** `class DriveConsole extends Point:` where `Point` is another inner class of the same script. Removing `@abstract` from `Point` did not help; having the inner classes extend the top-level `Interactable` directly did. Inference on the mechanism (a script reference cycle at unload): not checked against engine source.
 - **Fix:** put the shared base in its own top-level `class_name` script (`src/feature/objectives/objective_point.gd`) and let the inner classes extend that.
 - **Source:** survivor-objectives story 003, 2026-10-14. Verified on 4.7.2 by bisecting the merged file: the warnings appear with the inner base and disappear with the top-level one (33/33 pass).
+
+### A string literal spanning a line break picks up `\r` on a CRLF checkout
+
+- **Symptom:** a test comparing text built by the code passes in an agent worktree and fails on main with `'1. Bob (away)<CR>'`.
+- **Cause:** `"\n".join(lines)` written with a real line break inside the quotes. The repo has `core.autocrlf=true` and no `eol` rule for `*.gd`, so main's checkout stores CRLF and the literal becomes `"\r\n"`; a fresh worktree checkout can be LF, so the bug only shows on one side.
+- **Fix:** always write the escape `"\n"`, never a literal line break inside a string. Find offenders with `grep -rnE '(\(|= |return |, )"\r?$' src tests`.
+- **Source:** lobby-role-assignment story 012, 2026-10-15 (`LobbyScreen.queue_text`; the same pattern was in `src/main.gd`).
