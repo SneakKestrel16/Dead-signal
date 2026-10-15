@@ -54,6 +54,8 @@ var ambience: ZoneAmbience
 var lights: LightingPresenter
 ## Lunge cue, coil, stumble and hit-stop (story monster-abilities/007); null when not rendering.
 var lunge_fx: LungePresenter
+## Transformation warp and distortion audio (borrowed-face story 010); null when not rendering.
+var warp: TransformPresenter
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -183,6 +185,9 @@ func _on_connected() -> void:
 			return puppets.state_of(h).get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID)
 		add_child(lunge_fx)
 		router.subscribe(EventBatch.SOUND, lunge_fx.on_sound)
+		warp = TransformPresenter.new(remotes, puppets.state_of, knobs)
+		add_child(warp)
+		router.subscribe(EventBatch.SOUND, warp.on_sound)
 		hud = CanvasLayer.new()
 		add_child(hud)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)

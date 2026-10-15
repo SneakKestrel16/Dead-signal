@@ -1,0 +1,20 @@
+SHOWING Client0 (survivor)
+DISTORTION distortion at (3.122668, 0.001, 27.18806) frame 1277: bearing 0.1 deg, true bearing -8.9 deg, distance 4.28 m
+WARP first drawn at frame 1277
+WARP handle 1348784245 transforming false overlay false warp -
+WARP handle 1996968842 transforming false overlay false warp -
+WARP handle 2082109444 transforming false overlay false warp -
+WARP handle 1909727674 transforming true overlay true warp 0.15
+SHOT <tmp>/warp-early.png of frame 1287
+WARP handle 1348784245 transforming false overlay false warp -
+WARP handle 1996968842 transforming false overlay false warp -
+WARP handle 2082109444 transforming false overlay false warp -
+WARP handle 1909727674 transforming true overlay true warp 0.73333333333333
+SHOT <tmp>/warp-late.png of frame 1322
+WARP handle 1348784245 transforming false overlay false warp -
+WARP handle 1996968842 transforming false overlay false warp -
+WARP handle 2082109444 transforming false overlay false warp -
+WARP handle 1909727674 transforming true overlay true warp 1.0
+SHOT <tmp>/warp-after.png of frame 1367
+DISGUISED as appearance 4 at frame 1517
+SHOT <tmp>/disguise.png of frame 1547

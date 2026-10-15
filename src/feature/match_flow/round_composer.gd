@@ -119,6 +119,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	bf.set_attack_source(lunge_view.is_attacking)
 	bf.set_appearance_source(_appearance)
 	bf.on_form_event = sm.scope.form_changed
+	bf.emit_sound = sm.emit_sound
+	bf.position_of = _position
 	sd.set_roster(survivors, monster)
 	sd.set_trace(lag, _eye, sm.frame_of, _blocked)
 	sd.set_form_source(bf.form)

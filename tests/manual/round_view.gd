@@ -29,6 +29,10 @@ extends Node3D
 ## (--stun=survivor aims at the last survivor in the line, clear of the shapeshifter.) --twice fires again RESIST_AFTER_S after the first stagger (inside the immunity: the true form's spark);
 ## --monster-light turns the shapeshifter's flashlight on once disguised (its cosmetic cone). Shots: arc.png,
 ## spark.png and edge.png on the first drawn frame each shows; ShockPresenter cues are printed too.
+## Borrowed-face story 010: during --bot=stage the shown client's TransformPresenter distortions are printed
+## with their bearing from its camera and the true bearing of the shapeshifter's own body, and warp-early.png
+## warp-late.png are saved WARP_EARLY / WARP_LATE drawn frames after a drawn body first shows Transforming
+## (drawn frames, not seconds: --write-movie renders faster than the host's wall clock).
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -57,6 +61,8 @@ const LUNGE_FROM_M := 3.0
 ## --bot=lunge: drawn movement that counts as the dash having started, and frames into the coil for windup.png.
 const DASH_SEEN_M := 0.3
 const WINDUP_SHOT_FRAMES := 4
+const WARP_EARLY := 10
+const WARP_LATE := 45
 
 var _args: Dictionary = {}
 var _knobs: Knobs
@@ -85,6 +91,8 @@ var _measure: Array[float] = []
 var _lunged := false
 var _coil_at := Vector3.INF
 var _coil_seen := -1
+var _warp_frame := -1
+var _monster_client: RoundClient
 
 
 func _ready() -> void:
@@ -301,6 +309,8 @@ func _stage(c0: RoundClient) -> void:
 		c0.disguise.cue.connect(_on_cue)
 		c0.shock.cue.connect(_on_cue)
 	_shock_shots(c0)
+	if c0.warp != null and not c0.warp.heard.is_connected(_on_distortion):
+		c0.warp.heard.connect(_on_distortion)
 	if _home == Vector3.INF:
 		_home = c0.body.global_position
 	var line: Array[RoundClient] = []
@@ -316,6 +326,8 @@ func _stage(c0: RoundClient) -> void:
 			line.append(c)
 	if m == null or line.is_empty():
 		return
+	_monster_client = m
+	_watch_warp(c0)
 	var mi := mini(1, line.size())
 	line.insert(mi, m)
 	var target: RoundClient = line[mi + 1] if mi + 1 < line.size() else line[mi - 1]
@@ -403,6 +415,33 @@ func _shock_shots(c: RoundClient) -> void:
 			print("%s lit (%.2f) at frame %d" % [kind[0], kind[1], Engine.get_frames_drawn()])
 			_print_drawn(c)
 			_shot(kind[0])
+
+
+## Warp captures: the first drawn frame a remote shows Transforming, then two shots into it.
+func _watch_warp(c0: RoundClient) -> void:
+	var frame := Engine.get_frames_drawn()
+	var on := false
+	for h: int in c0.remotes:
+		on = on or (c0.remotes[h].visible and c0.puppets.state_of(h).get("transforming", false))
+	if on and _warp_frame < 0:
+		_warp_frame = frame
+		print("WARP first drawn at frame %d" % frame)
+	var tags := {_warp_frame + WARP_EARLY: "warp-early", _warp_frame + WARP_LATE: "warp-late"}
+	if _warp_frame >= 0 and tags.has(frame):
+		for h: int in c0.remotes:
+			var mi := c0.remotes[h].get_node(^"Mesh") as GeometryInstance3D
+			var mat := mi.material_overlay as ShaderMaterial
+			print("WARP handle %d transforming %s overlay %s warp %s" % [h, c0.puppets.state_of(h).get("transforming",
+					false), mat != null, mat.get_shader_parameter(&"warp") if mat != null else "-"])
+		_shot(tags[frame])
+
+
+func _on_distortion(sound: StringName, at: Vector3) -> void:
+	var cam := _shown.camera.global_transform
+	var truth := _monster_client.body.global_position if _monster_client != null else at
+	print("DISTORTION %s at %s frame %d: bearing %.1f deg, true bearing %.1f deg, distance %.2f m" % [sound, at,
+			Engine.get_frames_drawn(), TransformPresenter.bearing_deg(cam, at), TransformPresenter.bearing_deg(cam, truth),
+			cam.origin.distance_to(at)])
 
 
 func _on_cue(sound: StringName, at: Vector3) -> void:

@@ -44,6 +44,9 @@ const INVALID_FORM := -2
 const REQUEST_CAP_BYTES := 64
 ## Request packet dictionary key.
 const REQUEST_KEY := "form"
+## Sound set of the transformation distortion (rule 8; ADR-0004 §6). Inference: no audio catalog exists yet
+## (ADR-0013 §2); the catalog's id for it settles the name.
+const DISTORTION_SOUND := &"distortion"
 
 var _survivors: Array[int] = []
 var _monster: int = -1
@@ -79,6 +82,12 @@ var _form_tick: int = 0
 ## change or transformation start on a lingering body retires its handle). The composition root sets it
 ## to ServerMovement.scope.form_changed; unset = nothing.
 var on_form_event: Callable
+## Story 010: `emit_sound(position, sound_set, radius_m, source)`, the positional sound send
+## (ServerMovement.emit_sound). Invalid = no distortion is sent.
+var emit_sound: Callable
+## Story 010: position_of(player) -> Vector3, where the shapeshifter's body stands (the distortion's origin).
+var position_of: Callable
+var _distortion_m: float = 0.0
 
 
 ## Injects the round's roster. Call before RoundServer.start_round (setup resets state from it).
@@ -168,6 +177,7 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_half_fov = deg_to_rad(knobs.borrowed_face.observe_fov_deg / 2.0)
 	_transform_ticks = knobs.ticks(knobs.borrowed_face.transform_duration_s)
 	_cooldown_ticks = knobs.ticks(knobs.borrowed_face.form_change_cooldown_s)
+	_distortion_m = knobs.borrowed_face.distortion_radius_m
 	_cooldown_end_tick = 0
 	_obs = {}
 	for s in _survivors:
@@ -195,6 +205,16 @@ func server_tick(tick: int) -> void:
 		_transforming = true
 		_transform_end_tick = tick + _transform_ticks
 		_form_event()
+		_distortion()
+
+
+## Rule 8: one distortion at the shapeshifter's body when the transformation starts, sent to every client
+## within distortion_radius_m, its own included (no source: it has no local copy to play). Inference: one
+## sound at the start, not one following the body; the GDD names the position, not whether it tracks, and
+## a positional event carries no body (ADR-0004 §6). A designer ruling on a moving transformer settles it.
+func _distortion() -> void:
+	if emit_sound.is_valid() and position_of.is_valid():
+		emit_sound.call(position_of.call(_monster), DISTORTION_SOUND, _distortion_m, -1)
 
 
 ## Rule 9: switch the form, start the cooldown and emit FormChanged; Scare Events reads it for the
