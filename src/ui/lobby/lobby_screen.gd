@@ -1,16 +1,21 @@
 class_name LobbyScreen extends Control
 ## The lobby screen (story lobby-role-assignment/005; lobby-role-assignment.md UI Requirements; ADR-0014
 ## §5, §9): a host/join form, then the player list (name, Ready, preferred character), the countdown,
-## the Ready toggle and the host-only controls (proximity voice, kick). It displays server state only:
-## every peer, the host included, renders the LobbySync packet the server last built, and a client's one
-## request is Ready on or off (LobbySync), which cannot start a countdown by itself.
+## the Ready toggle and the host-only controls (proximity voice, kick); story 012 adds the rotation queue
+## with the next shapeshifter (rule 11, AC-LB-19) and the preferred-character picker, disabled while Ready
+## (rule 12). It displays server state only: every peer, the host included, renders the LobbySync packet
+## the server last built, and a client's requests are Ready on or off and a preference (LobbySync), which
+## cannot start a countdown by themselves.
 ## The host side owns the session pieces until a client composition root exists (ADR-0005): the
-## NetAuthority child, the LobbyState, the ConnectionRouter and the lobby tick clock.
+## NetAuthority child, the LobbyState, the ConnectionRouter, the RosterHandoff (whose RotationQueue the
+## lobby shows) and the lobby tick clock.
 ## Deviations (story 005): no InputContextStack yet (ADR-0014 §1; the lobby is the MENU base, whose
-## cursor is visible, the engine default); no character picker (rule 12 has no request path yet); the
-## round start after the countdown is not wired, the screen shows "Starting".
+## cursor is visible, the engine default); the round start after the countdown is not wired, the screen
+## shows "Starting". The next shapeshifter is marked in text, no colour: no art-direction spec yet.
 ## Command-line flags after `--` drive it for evidence captures: --lobby-host, --lobby-join=ADDR,
-## --lobby-port=N, --lobby-name=NAME, --lobby-ready.
+## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle) and
+## --lobby-cancel-round (stand-in for Match Flow until the round start is wired: a locked round is ended
+## as Cancelled at once, so the lobby returns to Waiting with the queue drawn and not advanced, rule 9).
 ## Usage: add_child(LobbyScreen.new())
 
 const _ROW_COLUMNS := 4
@@ -19,6 +24,8 @@ var _knobs: Knobs
 var _net: NetAuthority
 var _lobby: LobbyState ## host only
 var _router: ConnectionRouter ## host only
+var _handoff: RosterHandoff ## host only
+var _opts: Dictionary = {} ## command-line flags (_autorun)
 var _elapsed_s := 0.0 ## host: seconds the lobby clock has run
 var _last_sent := PackedByteArray()
 var _state: Dictionary = {} ## the lobby packet last received (decoded)
@@ -34,6 +41,8 @@ var _list: GridContainer
 var _countdown: Label
 var _voice: CheckButton
 var _ready_button: Button
+var _pref: OptionButton
+var _queue: Label
 
 
 func _ready() -> void:
@@ -105,6 +114,12 @@ func _build_room(box: VBoxContainer) -> void:
 	_voice.text = tr("Proximity voice")
 	_voice.toggled.connect(_on_voice_toggled)
 	_room.add_child(_voice)
+	_pref = _field(_room, "Character", OptionButton.new()) as OptionButton
+	for cid in CharacterDef.IDS:
+		_pref.add_item(String(cid))
+	_pref.item_selected.connect(_on_pref_selected)
+	_queue = Label.new()
+	_room.add_child(_queue)
 	var buttons := HBoxContainer.new()
 	_room.add_child(buttons)
 	_ready_button = _button(buttons, "Ready", _on_ready_toggled)
@@ -170,6 +185,14 @@ func _on_host() -> void:
 	_router = ConnectionRouter.new(_knobs, _net, _lobby, _tick)
 	_lobby.host_token = _net.local_token
 	_lobby.join(_net.local_token)
+	var rng := RandomNumberGenerator.new()
+	if _opts.has("lobby-seed"):
+		rng.seed = int(_opts["lobby-seed"])
+	else:
+		rng.randomize()
+	_handoff = RosterHandoff.new(_lobby, RosterHandoff.info_from(_net), _knobs, rng, str(rng.randi()))
+	if _opts.has("lobby-cancel-round"):
+		_handoff.handed_off.connect(_on_handed_off_cancel)
 	_elapsed_s = 0.0
 	_last_sent = PackedByteArray()
 	multiplayer.peer_packet.connect(_on_server_packet)
@@ -203,6 +226,7 @@ func _close(message: String) -> void:
 	_net = null
 	_lobby = null
 	_router = null
+	_handoff = null
 	_state = {}
 	_show_form(message)
 
@@ -232,7 +256,8 @@ func _physics_process(delta: float) -> void:
 	_elapsed_s += delta
 	var tick := _tick()
 	_lobby.server_tick(tick)
-	var bytes := LobbySync.encode(_lobby, tick, _net.player_id_of_token, _net.display_name_of)
+	var bytes := LobbySync.encode(_lobby, tick, _net.player_id_of_token, _net.display_name_of,
+			_handoff.queue_order())
 	if bytes != _last_sent:
 		_last_sent = bytes
 		multiplayer.send_bytes(bytes, 0, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
@@ -240,7 +265,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_server_packet(peer_id: int, bytes: PackedByteArray) -> void:
-	LobbySync.apply_ready(_lobby, _net.token_of(_net.player_id_of(peer_id)), bytes)
+	LobbySync.apply_request(_lobby, _net.token_of(_net.player_id_of(peer_id)), bytes)
 
 
 func _on_client_packet(peer_id: int, bytes: PackedByteArray) -> void:
@@ -293,6 +318,35 @@ func _render(s: Dictionary) -> void:
 	_ready_button.button_pressed = _row_ready(s, me)
 	_ready_button.set_block_signals(false)
 	_ready_button.text = tr("Ready") if not _ready_button.button_pressed else tr("Not ready")
+	var my_row := _row(s, me)
+	_pref.set_block_signals(true)
+	_pref.select(CharacterDef.IDS.find(StringName(my_row.get("pref", ""))))
+	_pref.set_block_signals(false)
+	_pref.disabled = my_row.get("ready", false) or s.state != "waiting"
+	_queue.text = queue_text(s, me)
+
+
+## The rotation queue as the lobby shows it (rule 11, AC-LB-19): head first, absent players marked, the
+## server's next shapeshifter named; before the first round, that the order is not drawn yet.
+static func queue_text(s: Dictionary, me: int) -> String:
+	if s.queue.is_empty():
+		return TranslationServer.translate("Shapeshifter queue: drawn when the first round starts")
+	var lines := PackedStringArray([TranslationServer.translate("Shapeshifter queue:")])
+	var present := {}
+	for row: Dictionary in s.players:
+		present[row.id] = true
+	for i in s.queue.size():
+		var q: Dictionary = s.queue[i]
+		var line := "%d. %s" % [i + 1, q.name]
+		if q.id == me:
+			line += " " + TranslationServer.translate("(you)")
+		if not present.has(q.id):
+			line += " " + TranslationServer.translate("(away)")
+		if q.id == s.next:
+			line += "  <- " + TranslationServer.translate("next shapeshifter")
+		lines.append(line)
+	return "
+".join(lines)
 
 
 func _cell(text: String) -> void:
@@ -302,10 +356,14 @@ func _cell(text: String) -> void:
 
 
 static func _row_ready(s: Dictionary, id: int) -> bool:
+	return _row(s, id).get("ready", false)
+
+
+static func _row(s: Dictionary, id: int) -> Dictionary:
 	for row: Dictionary in s.players:
 		if row.id == id:
-			return row.ready
-	return false
+			return row
+	return {}
 
 
 ## Ready is a request: the toggle shows the server's answer once the next lobby packet arrives.
@@ -321,6 +379,24 @@ func _on_ready_toggled() -> void:
 				NetChannels.EVENT)
 
 
+## A preference is a request too: the picker shows the server's answer once the next lobby packet arrives.
+func _on_pref_selected(index: int) -> void:
+	var cid: StringName = CharacterDef.IDS[index]
+	if not _state.is_empty():
+		_pref.set_block_signals(true)
+		_pref.select(CharacterDef.IDS.find(StringName(_row(_state, _net.local_player_id).get("pref", ""))))
+		_pref.set_block_signals(false)
+	if _lobby != null:
+		_lobby.set_preference(_net.local_token, cid)
+	else:
+		multiplayer.send_bytes(LobbySync.preference_packet(cid), 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE,
+				NetChannels.EVENT)
+
+
+func _on_handed_off_cancel(_roster: Roster) -> void:
+	_handoff.end_round.call_deferred(false)
+
+
 func _on_voice_toggled(on: bool) -> void:
 	if _lobby != null:
 		_lobby.set_proximity_voice(_lobby.host_token, on)
@@ -332,7 +408,7 @@ func _on_kick(player_id: int) -> void:
 
 
 func _autorun(args: PackedStringArray) -> void:
-	var opts := {}
+	var opts := _opts
 	for a in args:
 		var kv := a.trim_prefix("--").split("=", true, 1)
 		opts[kv[0]] = kv[1] if kv.size() > 1 else ""
