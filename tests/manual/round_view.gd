@@ -9,6 +9,10 @@ extends Node3D
 ## --bot=hold walks client 0 to the nearest hiding spot, aims at it and holds interact; it prints the drawn
 ## frame of the press, of the first frame the hold bar is visible (the CI-16 AC1 capture) and of the
 ## first frame it is full (the server accepted the Start, AD-217).
+## Story hud-results/003: --target=<marker type> aims --bot=hold at the nearest marker of that type instead of a
+## hiding spot (fuse_box without a fuse: a refused Start). With --shots it waits for the prompt (prompt.png)
+## before pressing, saves ring.png at half the ring, label.png on the first frame a refusal or cancel label
+## shows and cancel.png on the broken ring; --release-at=<0-1> releases interact once the ring passes it.
 ## --bot=look turns the shown client to face the nearest remote body it draws (the screenshots).
 ## --bot=walk walks a survivor from the A1 spawn through the A1-H-S archway into H-S1 (zone A -> link) and
 ## saves zone_a.png, crossfade.png (half a crossfade after the border) and link.png (FM-12 ambience overlay).
@@ -229,7 +233,7 @@ func _bot(c: RoundClient) -> void:
 		var best := INF
 		for t in _map.interactables():
 			var m := t as MapMarker
-			if m != null and m.type == &"hiding" and feet.distance_to(m.position) < best:
+			if m != null and m.type == StringName(_args.get("target", "hiding")) and feet.distance_to(m.position) < best:
 				best = feet.distance_to(m.position)
 				_target = m.position
 		print("BOT target %s from %s" % [_target, feet])
@@ -240,7 +244,28 @@ func _bot(c: RoundClient) -> void:
 	c.scripted.pitch = atan2(point.y - eye.y, flat.length())
 	var near := flat.length() < _knobs.objectives.interact_range_m * 0.6
 	c.scripted.move = Vector2.ZERO if near else Vector2(0, 1)
-	if near and _press_frame < 0 and c.body.velocity.length() < 0.05:
+	var ui := c.interaction
+	if ui != null and _args.has("shots"):
+		# the prompt fades in over InteractionHud.FADE_S: shoot it once it has shown 10 drawn frames
+		set_meta(&"prompt_frames", get_meta(&"prompt_frames", 0) + 1 if ui.shown() == &"prompt" else 0)
+		for tag: String in ["prompt", "cancel"]:
+			if tag == "prompt" and get_meta(&"prompt_frames") < 10:
+				continue
+			if ui.shown() == StringName(tag) and not has_meta(StringName(tag)):
+				set_meta(StringName(tag), true)
+				_shot(tag)
+				print("HUD %s: '%s' label '%s'" % [tag, ui.prompt_text(), ui.label_text()])
+		if ui.shown() == &"ring" and ui.ring_value() >= 0.5 and not has_meta(&"ring"):
+			set_meta(&"ring", true)
+			_shot("ring")
+		if ui.label_text() != "" and not has_meta(&"label"):
+			set_meta(&"label", true)
+			_shot("label")
+			print("HUD label '%s' at frame %d" % [ui.label_text(), Engine.get_frames_drawn()])
+		if _args.has("release-at") and c.bar.visible and c.bar.value >= float(_args["release-at"]):
+			c.scripted.interact = false
+	var waited := ui == null or not _args.has("shots") or has_meta(&"prompt")
+	if near and waited and _press_frame < 0 and c.body.velocity.length() < 0.05:
 		c.scripted.interact = true
 		_press_frame = Engine.get_frames_drawn()
 		_shot("press")

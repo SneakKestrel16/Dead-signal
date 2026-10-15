@@ -11,6 +11,14 @@ class_name PredictedHoldBar extends ProgressBar
 ## Usage, once per physics tick on the owner's client:
 ##   bar.advance(frame, local_target_found, target_duration_s)   # after OwnerPredictor.predict(frame)
 ##   bar.on_snapshot(predictor.last_own)                      # own entry of the newest snapshot
+## Story hud-results/003: InteractionHud draws the ring from value/visible and the `ended` cause; the bar
+## itself is drawn transparent by RoundClient.
+
+## A shown bar ended: &"released" (own input up), &"refused" (the acknowledging snapshot shows no hold),
+## &"completed" (the hold vanished with the predicted elapsed at the duration) or &"cancelled" (any other
+## server end). Inference: the own entry carries no cancel reason (ADR-0008 §8), so the server's cause
+## (hit, shock, range, sight) is not known here; a reason byte in the own entry would settle it.
+signal ended(cause: StringName)
 
 var _ticks_per_s: int
 var _was_down := false
@@ -19,6 +27,7 @@ var _press_seq := 0
 var _last_seq := 0
 var _elapsed := 0
 var _duration := 0
+var _acked := false
 
 
 func _init() -> void:
@@ -39,6 +48,8 @@ func setup(knobs: Knobs) -> void:
 func advance(f: InputFrame, target_found: bool, duration_s: float) -> void:
 	if not f.interact:
 		_was_down = false
+		if _active:
+			ended.emit(&"released")
 		_hide()
 		return
 	if not _was_down:
@@ -50,6 +61,7 @@ func advance(f: InputFrame, target_found: bool, duration_s: float) -> void:
 			_press_seq = f.seq
 			_elapsed = 0
 			_duration = ticks
+			_acked = false
 	if _active:
 		_last_seq = f.seq
 		_elapsed += 1
@@ -62,8 +74,11 @@ func on_snapshot(own: Dictionary) -> void:
 	if not _active or own.is_empty() or own.seq < _press_seq:
 		return
 	if own.get("hold_net_id", -1) < 0:
+		var cause := &"refused" if not _acked else &"completed" if _elapsed >= _duration else &"cancelled"
 		_hide()
+		ended.emit(cause)
 		return
+	_acked = true
 	_elapsed = own.hold_elapsed_ticks + maxi(_last_seq - own.seq, 0)
 	_show()
 

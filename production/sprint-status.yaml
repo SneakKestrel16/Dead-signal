@@ -201,10 +201,10 @@ stories:
     name: "Interaction prompt, hold ring, reject label and input glyphs"
     file: "production/epics/hud-results/story-003-prompt-hold-ring-reject.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-4"
     name: "Own-state vignettes, own bleed-out and the HUD state table"

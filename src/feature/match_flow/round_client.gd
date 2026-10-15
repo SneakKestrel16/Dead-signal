@@ -20,9 +20,6 @@ const BODY_RADIUS_M := 0.3 ## greybox mesh only; collision is the step's capsule
 ## (stun_range_m); 25 degrees is a greybox guess, settled by the HUD/VFX art pass.
 const CONE_ANGLE_DEG := 25.0
 const VERSION_BUILD := "0.1.0"
-## Greybox hold bar layout (the HUD epic owns the final look): size in pixels, placed under the view centre.
-const BAR_SIZE := Vector2(240.0, 16.0)
-const BAR_BELOW_CENTRE_PX := 60.0
 ## Where the own body waits for its first snapshot: far below the map, as RoundComposer parks bodies.
 const PARKED := Vector3(0.0, -1000.0, 0.0)
 
@@ -73,6 +70,8 @@ var hud: CanvasLayer
 ## not rendering.
 var hud_model: HudModel
 var match_display: MatchDisplay
+## Prompt, hold ring and refusal label in Z4/Z5 (hud-results story 003); null when not rendering.
+var interaction: InteractionHud
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
 var flinch_enabled := true
 ## When set, used instead of LocalInput each tick (scripted runs and tests); yaw/pitch come from it.
@@ -238,13 +237,10 @@ func _on_connected() -> void:
 		router.subscribe(&"RoundPhaseChanged", _on_phase_changed)
 		router.subscribe(&"RoundEnded", _on_round_ended)
 		bar = PredictedHoldBar.new()
-		hud.add_child(bar)
-		bar.set_anchors_preset(Control.PRESET_CENTER)
-		bar.set_offsets_preset(Control.PRESET_CENTER, Control.PRESET_MODE_KEEP_SIZE)
-		bar.offset_left = -BAR_SIZE.x / 2.0
-		bar.offset_right = BAR_SIZE.x / 2.0
-		bar.offset_top = BAR_BELOW_CENTRE_PX
-		bar.offset_bottom = BAR_BELOW_CENTRE_PX + BAR_SIZE.y
+		add_child(bar)
+		bar.self_modulate = Color.TRANSPARENT # the predictor only: InteractionHud draws the ring
+		interaction = InteractionHud.new(InputGlyphs.new(), ping_hud.contexts, bar, prompt_of)
+		hud.add_child(interaction)
 	else:
 		bar = PredictedHoldBar.new() # not drawn; keeps the same per-tick path as the rendering client
 		add_child(bar)
@@ -352,6 +348,14 @@ func local_target(yaw: float, pitch: float) -> int:
 	return _queries.interactable_on_ray(feet + Vector3.UP * knobs.controller.eye_height_m, dir,
 			feet + Vector3.UP * knobs.controller.capsule_height_m * 0.5, _rules,
 			body.get_world_3d().direct_space_state, [body.get_rid()])
+
+
+## The prompt for the interactable the view ray picks (hud-results story 003): {text, hold}, or {} for none.
+func prompt_of() -> Dictionary:
+	var t := local_target(head.rotation.y, head.rotation.x)
+	if t < 0:
+		return {}
+	return {"text": InteractionHud.verb_object(_targets[t], is_monster()), "hold": duration_of(t) > 0.0}
 
 
 ## Hold duration of map interactable `index` for this player (0 = instant or none: no bar). Sources: doors
