@@ -6,7 +6,8 @@ class_name Doors extends RefCounted
 ## overlaps the door's swing box (MapQueries.capsule_overlaps_swing); an open never is. A dashing
 ## shapeshifter is one more capsule: it rejects the close only once it is in the swing area, and a door
 ## closed in front of it stops the dash at the blocker.
-## Not here: barricades (Survivor Defense: a barricaded door counts as closed and cannot be opened),
+## A door Survivor Defense holds shut (set_held_shut: barricaded, story survivor-defense/007) stays closed:
+## its open is refused. Not here: barricade state itself (Survivor Defense's Barricades),
 ## replicating door state to clients (the client applies a received copy with DoorBlockers.apply), and
 ## a catalog event for a toggle (the catalog has none; readers use the registry view).
 ## Usage:
@@ -58,6 +59,8 @@ var _map: MapData
 var _queries: MapQueries
 var _capsules: Callable
 var _eligible: Callable
+## net_id -> bool: true while that door may not open (barricaded); unset = never.
+var _held_shut: Callable
 var _radius: float
 ## By map net id (doors come first in MapData.interactables, so a door's net id is its index).
 var _closed: Array[bool] = []
@@ -120,9 +123,16 @@ func can_use(actor: int) -> bool:
 	return not _eligible.is_valid() or _eligible.call(actor)
 
 
-## Opens a closed door, or closes an open one unless a capsule overlaps its swing box (rule 18).
+## Injects `held_shut(net_id) -> bool` (Survivor Defense rule 26: a barricaded door cannot be opened).
+func set_held_shut(source: Callable) -> void:
+	_held_shut = source
+
+
+## Opens a closed door unless it is held shut, or closes an open one unless a capsule overlaps its swing box (rule 18).
 ## Returns true when the door changed.
 func toggle(net_id: int) -> bool:
+	if _closed[net_id] and _held_shut.is_valid() and _held_shut.call(net_id):
+		return false
 	if not _closed[net_id]:
 		for c: Vector4 in _capsules.call():
 			if _queries.capsule_overlaps_swing(_ids[net_id], Vector3(c.x, c.y + c.w / 2.0, c.z), c.w, _radius):
