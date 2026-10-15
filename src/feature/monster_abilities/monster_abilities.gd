@@ -5,8 +5,9 @@ class_name MonsterAbilities extends RefCounted
 ## request and an aim point only, the server validates and owns cooldown and state), ADR-0005 (tick
 ## order slot MONSTER_ABILITIES), ADR-0006 (AbilityKnobs). Story 002 adds the wind-up root and the dash
 ## (rules 5-6, ADR-0007) as the "lunge" entry of the monster's MovementModifiers (set_modifiers). Story
-## 003 adds the hit test (rules 7-8, ADR-0003 §3-6, set_hit_sources). The miss slow (004) and the False
-## Signal and Blackout bodies (009-010) are not here yet.
+## 003 adds the hit test (rules 7-8, ADR-0003 §3-6, set_hit_sources). Story 004 adds the resolution
+## paths (rules 9-12, Edge Cases "Monster disconnects mid-lunge") and the miss slow as the "lunge_miss"
+## modifier entry (ADR-0007). The False Signal and Blackout bodies (009-010) are not here yet.
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time.
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection):
 ##   form() -> int            BorrowedFace.TRUE_FORM or the copied survivor (TransformView.get_form);
@@ -46,6 +47,8 @@ const AIM_KEY := "aim"
 const REQUEST_FIELDS: Array[String] = [ABILITY_KEY, AIM_KEY]
 ## The owner of the Lunge's entry in the monster's MovementModifiers.
 const MOD_OWNER := &"lunge"
+## The owner of the miss slow's entry (rule 10); separate from MOD_OWNER, which every state change clears.
+const MISS_SLOW_OWNER := &"lunge_miss"
 ## Float tolerance of the hit test's inclusive radius and cone bounds (geometry, not a tuning value).
 const HIT_EPS := 1e-6
 
@@ -83,6 +86,11 @@ var _sight: Callable
 ## lunge_hit_radius_m and lunge_cone_deg (full cone, rad), from AbilityKnobs in setup.
 var _hit_radius: float = 0.0
 var _cone: float = 0.0
+## Rule 10: miss_slow_multiplier and miss_slow_s in ticks, from AbilityKnobs in setup.
+var _miss_slow_mult: float = 0.0
+var _miss_slow_ticks: int = 0
+## Tick the running miss slow ends; -1 = none.
+var _miss_slow_end: int = -1
 
 
 ## Injects the shapeshifter's player id. Call before RoundServer.start_round.
@@ -153,7 +161,7 @@ func request_ability(player: int, bytes: PackedByteArray) -> void:
 
 ## Injected by RoundServer. Reads knobs and puts every ability Ready with no cooldown. Subscribes to
 ## SurvivorHit (Active -> Takedown Commit), the commit's end (SurvivorDowned, SurvivorEliminated) and
-## MonsterStunned (interrupt). Publishes the Lunge state as StateKeys.LUNGE_STATE (story 005).
+## MonsterStunned (interrupt) and PlayerConnectionChanged (disconnect). Publishes the Lunge state as StateKeys.LUNGE_STATE (story 005).
 func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
 	_bus = bus
 	registry.register_view(StateKeys.LUNGE_STATE, &"MonsterAbilities", LungeView.new(self))
@@ -164,6 +172,9 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_dash_turn = deg_to_rad(knobs.ability.lunge_dash_turn_deg_s)
 	_hit_radius = knobs.ability.lunge_hit_radius_m
 	_cone = deg_to_rad(knobs.ability.lunge_cone_deg)
+	_miss_slow_mult = knobs.ability.miss_slow_multiplier
+	_miss_slow_ticks = knobs.ticks(knobs.ability.miss_slow_s)
+	_miss_slow_end = -1
 	# Rule 6: lunge_distance_m over exactly the dash's whole ticks, so tick quantisation of lunge_dash_s
 	# changes the speed, never the distance.
 	# A dash of 0 ticks moves nothing.
@@ -177,12 +188,15 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	bus.subscribe(&"SurvivorDowned", _on_commit_end)
 	bus.subscribe(&"SurvivorEliminated", _on_commit_end)
 	bus.subscribe(&"MonsterStunned", _on_monster_stunned)
+	bus.subscribe(&"PlayerConnectionChanged", _on_connection_changed)
 
 
-## MONSTER_ABILITIES slot: timed Lunge transitions due this tick, the hit test on every Active tick
+## MONSTER_ABILITIES slot: the miss slow's end, timed Lunge transitions due this tick, the hit test on every Active tick
 ## (the first and the last included), then this tick's request. A lunge resolving or a cooldown ending
 ## this tick frees the request on the same tick.
 func server_tick(tick: int) -> void:
+	if _miss_slow_end >= 0 and tick >= _miss_slow_end:
+		_end_miss_slow()
 	if _lunge == Lunge.WIND_UP and tick >= _phase_end_tick:
 		_set_lunge(Lunge.ACTIVE, tick)
 		_phase_end_tick = tick + _dash_ticks
@@ -191,6 +205,9 @@ func server_tick(tick: int) -> void:
 	# A hit moves the Lunge to Takedown Commit when SurvivorHit is flushed at the end of this tick.
 	if _lunge == Lunge.ACTIVE and not _try_hit(tick) and (tick >= _phase_end_tick or _dash_blocked()):
 		_resolve(tick) ## dash end with no hit, or stopped by an obstacle (rule 6): a miss
+		# Rule 12: a stun landing this tick (not flushed yet; see _try_hit) interrupts it: no slow.
+		if not (_locked.is_valid() and _locked.call(_monster)):
+			_start_miss_slow(tick)
 	var req := _pending
 	_pending = {}
 	if req.is_empty() or not can_activate(req[ABILITY_KEY], tick):
@@ -302,8 +319,8 @@ func _try_hit(tick: int) -> bool:
 	return true
 
 
-## Resolved, then immediately Cooldown; the cooldown runs from resolution (rule 9). Story 004 adds the
-## miss slow and its tests.
+## Resolved, then immediately Cooldown; the cooldown runs from resolution (rule 9) on every path: miss,
+## commit end, stun, disconnect. Only the miss path adds the slow (server_tick).
 func _resolve(tick: int) -> void:
 	_set_lunge(Lunge.RESOLVED, tick)
 	_ready_tick[Ability.LUNGE] = tick + _lunge_cooldown_ticks
@@ -336,9 +353,40 @@ func _on_commit_end(e: ServerEvent) -> void:
 
 ## Rule 12 and "States and Transitions": a stun in wind-up or Active interrupts the lunge, and in the
 ## takedown commit cancels it (Downing cancels the commit on the same event); either way it resolves.
+## Rule 12 "the stun replaces the miss slow": a stun also ends a running miss slow (a stun landing on
+## the dash's last tick after this module's slot resolved the miss is flushed only now).
 func _on_monster_stunned(e: ServerEvent) -> void:
-	if attacking() and (e as EvMonsterStunned).monster == _monster:
+	if (e as EvMonsterStunned).monster != _monster:
+		return
+	if attacking():
 		_resolve(e.tick)
+	_end_miss_slow()
+
+
+## Edge Cases "Monster disconnects mid-lunge": the wind-up or dash ends with no hit and no slow. A commit
+## also resolves here, as Downing cancels it on the same event. Inference: a hit landing on the disconnect
+## tick is already emitted (the event is flushed after this slot), so it becomes a commit Downing cancels;
+## a connected-state source read in _try_hit would settle it if the GDD wants no SurvivorHit at all.
+func _on_connection_changed(e: ServerEvent) -> void:
+	var c := e as EvPlayerConnectionChanged
+	if c.player == _monster and c.status == EvPlayerConnectionChanged.DISCONNECTED and attacking():
+		_resolve(e.tick)
+
+
+## Rule 10: the monster moves at miss_slow_multiplier for miss_slow_s from the miss's resolution tick.
+func _start_miss_slow(tick: int) -> void:
+	var mods := _monster_mods()
+	if mods == null or _miss_slow_ticks <= 0:
+		return
+	mods.add(MISS_SLOW_OWNER, MovementModifiers.Kind.SLOW, _miss_slow_mult)
+	_miss_slow_end = tick + _miss_slow_ticks
+
+
+func _end_miss_slow() -> void:
+	_miss_slow_end = -1
+	var mods := _monster_mods()
+	if mods != null:
+		mods.remove(MISS_SLOW_OWNER)
 
 
 ## Rule 3a (story 005): one AbilityUsed per accepted activation, at Lunge wind-up start. Server-internal:
