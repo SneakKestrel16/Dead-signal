@@ -22,6 +22,9 @@ class_name Downing extends RefCounted
 ## Story 004 adds the rescue hold (rules 7, 8, Formulas "Rescue progress"): with `set_holds(holds)`
 ## every Downed survivor gets a RescueHold on HoldService; the composer's body_target maps a body to
 ## `rescue_net_id(player)`.
+## Story 006 (disconnects, TR-downing-008): no special path for an absent victim, the commit and
+## bleed-out timers keep running; a disconnect only removes the body (no camping slow, not Healthy,
+## no rescue on or by it). Match Flow owns the reconnect grace.
 
 enum LifeState { HEALTHY, SEIZED, DOWNED, ELIMINATED }
 
@@ -239,10 +242,11 @@ func set_rescuing(player: int, on: bool) -> void:
 
 
 ## Rule 7: `actor` may hold Rescue on `downed`: another survivor in the roster, Healthy, not hidden,
-## and `downed` is Downed. The monster never can (Open Questions: no fake rescue, proposed). Range,
-## line of sight and the one-rescuer lock are HoldService's.
+## and `downed` is Downed; both have a body in the world (not escaped or disconnected; story 006). The
+## monster never can (Open Questions: no fake rescue, proposed). Range, line of sight and the
+## one-rescuer lock are HoldService's.
 func can_rescue(actor: int, downed: int) -> bool:
-	return actor != downed and _survivors.has(actor) and life_state(actor) == LifeState.HEALTHY 		and not (_is_hidden.is_valid() and _is_hidden.call(actor)) and life_state(downed) == LifeState.DOWNED
+	return actor != downed and _survivors.has(actor) and life_state(actor) == LifeState.HEALTHY 		and not (_is_hidden.is_valid() and _is_hidden.call(actor)) and life_state(downed) == LifeState.DOWNED 		and _present(actor) and _present(downed)
 
 
 ## Net id of the RescueHold on Downed `player`, -1 when there is none. The composer's HoldService
@@ -379,6 +383,10 @@ func _on_connection_changed(e: ServerEvent) -> void:
 	# Only the monster's disconnect cancels; a Seized victim's commit runs on (Edge Cases).
 	if c.player == _monster and c.status == EvPlayerConnectionChanged.DISCONNECTED:
 		_cancel_commit()
+	# A Downed body leaving the world ends the hold on it, so bleed-out resumes (Match Flow rule 19:
+	# disconnecting must not stall the round); progress is kept and decays like any interruption.
+	if _disconnected.has(c.player) and _rescues.has(c.player) and _rescues[c.player].rescuer >= 0:
+		_holds.cancel(_rescues[c.player].rescuer, &"disconnected")
 
 
 ## Rule 7: a taser shock on the rescuer interrupts the rescue; progress is kept and decays.
