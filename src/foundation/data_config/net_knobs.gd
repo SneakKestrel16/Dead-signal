@@ -11,40 +11,53 @@ class_name NetKnobs extends Resource
 @export var correction_deadzone_m: float = NAN
 @export var correction_smooth_max_m: float = NAN
 @export var correction_smooth_s: float = NAN
-@export var interp_delay_ms: int = KnobUnset.INT
-@export var max_extrapolation_ms: int = KnobUnset.INT
-@export var history_ticks: int = KnobUnset.INT
+## Range 0..200 ms: inference, ADR-0003 §1 gives only the value 50; a netcode playtest settles it.
+@export_range(0, 200) var interp_delay_ms: int = KnobUnset.INT
+## Range 0..200 ms: inference, ADR-0003 §1 gives only the value 50; a netcode playtest settles it.
+@export_range(0, 200) var max_extrapolation_ms: int = KnobUnset.INT
+## Range 1..120 ticks: inference, ADR-0003 §4 gives only the value 16; the longest max_rewind_ms settles the floor.
+@export_range(1, 120) var history_ticks: int = KnobUnset.INT
 @export var reject_close_delay_s: float = NAN
 ## Join knobs (story network-authority/001): inference, AD-63, no ADR/GDD number.
 ## ENet listen port for a hosted game.
-@export var port: int = KnobUnset.INT
+## Range 1..65535: UDP port numbers (protocol fact; port 0 means "any").
+@export_range(1, 65535) var port: int = KnobUnset.INT
 ## Extra ENet slots above max_players so a reconnect can arrive while its stale peer still exists.
-@export var max_clients_headroom: int = KnobUnset.INT
+## Range 0..8: inference, no ADR/GDD number; a reconnect test with several stale peers settles it.
+@export_range(0, 8) var max_clients_headroom: int = KnobUnset.INT
 ## Seconds a peer may stay unauthenticated before SceneMultiplayer drops it.
 @export var auth_timeout_s: float = NAN
 ## Largest auth payload the server will decode, in bytes; larger is bad_payload.
-@export var auth_payload_cap_bytes: int = KnobUnset.INT
+## Range 64..65535 bytes: inference (floor fits an auth record, ceiling is one UDP datagram); the auth record size settles it.
+@export_range(64, 65535) var auth_payload_cap_bytes: int = KnobUnset.INT
 ## ENet dead-peer timeout (story network-authority/003), ENetPacketPeer.set_timeout(limit, min_ms, max_ms) on
 ## both sides. Values from ADR-0001 verification (1): 32, 1000, 2000 detected a dead peer in 3.0 s on loopback
 ## (the default took 5.8 s). Inference: real-network timing is NOT RUN (NA-V NAV-14 settles it).
-@export var enet_timeout_limit: int = KnobUnset.INT
-@export var enet_timeout_min_ms: int = KnobUnset.INT
-@export var enet_timeout_max_ms: int = KnobUnset.INT
+## Ranges: inference, only the values 32 / 1000 / 2000 are sourced (ADR-0001 verification 1); NAV-14 settles them.
+@export_range(1, 128) var enet_timeout_limit: int = KnobUnset.INT
+@export_range(100, 30000) var enet_timeout_min_ms: int = KnobUnset.INT
+@export_range(100, 60000) var enet_timeout_max_ms: int = KnobUnset.INT
 ## Input queue knobs (story network-authority/005): inference, AD-61, no ADR/GDD number.
 ## Hard cap on queued input frames per player; the oldest is dropped.
-@export var input_queue_cap: int = KnobUnset.INT
+## Range 1..64: inference, ADR-0002 §4 gives no number (about 15 unacked at 250 ms RTT); a lag playtest settles it.
+@export_range(1, 64) var input_queue_cap: int = KnobUnset.INT
 ## A packet whose seq is more than this beyond the last consumed seq is dropped whole.
-@export var max_seq_ahead: int = KnobUnset.INT
+## Range 1..120: inference, ADR-0002 §3 gives no number; a lag playtest settles it.
+@export_range(1, 120) var max_seq_ahead: int = KnobUnset.INT
 ## Starved-tick fraction over starvation_window_s above which the target depth rises to 2.
-@export var starvation_high: float = NAN
+## Range 0..1: a fraction by definition.
+@export_range(0.0, 1.0) var starvation_high: float = NAN
 ## Starved-tick fraction below which the target depth falls back to 1.
-@export var starvation_low: float = NAN
+## Range 0..1: a fraction by definition.
+@export_range(0.0, 1.0) var starvation_low: float = NAN
 ## Story network-authority/006: inference, no ADR/GDD number (ADR-0002 rule 7 gives the method, not the values).
 ## Largest input packet (var_to_bytes) the server decodes, in bytes; larger is dropped before decoding.
-@export var input_packet_cap_bytes: int = KnobUnset.INT
+## Range 64..65535 bytes: inference (floor fits a 3-frame packet, ceiling is one UDP datagram); the InputFrame wire size settles it.
+@export_range(64, 65535) var input_packet_cap_bytes: int = KnobUnset.INT
 ## TickEstimator: fraction of the gap closed per snapshot when a sample is above / below the offset.
-@export var tick_estimate_rise_alpha: float = NAN
-@export var tick_estimate_fall_alpha: float = NAN
+## Range 0..1: an EMA weight by definition.
+@export_range(0.0, 1.0) var tick_estimate_rise_alpha: float = NAN
+@export_range(0.0, 1.0) var tick_estimate_fall_alpha: float = NAN
 ## Story network-authority/008: ADR-0004 §4 numbers.
 ## A body this close to a viewer is relevant whatever the visibility sets say.
 @export var relevance_near_m: float = NAN

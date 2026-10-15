@@ -21,11 +21,11 @@ stories:
     name: "BUG-0002 unranged int and alpha knobs"
     file: "production/qa/bugs/BUG-0002.md"
     priority: must-have
-    status: in-progress
+    status: done
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: ""
+    completed: "2026-10-14"
 
   - id: "match-flow-1"
     name: "Round clock and phase state machine"

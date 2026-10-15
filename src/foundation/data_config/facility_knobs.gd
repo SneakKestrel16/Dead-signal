@@ -6,7 +6,8 @@ class_name FacilityKnobs extends Resource
 ## NOT SOURCEABLE (no number in ADR-0009/0010): light_fade_s, max_shadowed_omni, max_shadowed_spot,
 ## max_shadowed_flashlights, feed_resolution (set by the ADR-0009 spike). Add each when its number is decided.
 
-@export var max_flashes_per_s: int = KnobUnset.INT
+## Range 0..3: scare-events.md rule 25 caps luminance flashes at 3 per second (proposed); 0 disables flashes.
+@export_range(0, 3) var max_flashes_per_s: int = KnobUnset.INT
 
 
 ## Cross-knob rules within this section; [] = valid. None are named in its GDD or ADRs yet.

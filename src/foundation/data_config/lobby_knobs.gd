@@ -9,8 +9,9 @@ class_name LobbyKnobs extends Resource
 @export_range(3.0, 10.0) var lobby_countdown_s: float = NAN
 ## GDD "Display name length 1–16" (rule 3; Tuning Knobs gives no safe range). Field names chosen by
 ## lobby story 003; NetAuthority rejects a join whose sanitized name is outside them (bad_name).
-@export var name_min_chars: int = KnobUnset.INT
-@export var name_max_chars: int = KnobUnset.INT
+## Range 1..16: lobby-role-assignment.md rule 3 and Tuning Knobs, display name length 1-16.
+@export_range(1, 16) var name_min_chars: int = KnobUnset.INT
+@export_range(1, 16) var name_max_chars: int = KnobUnset.INT
 
 
 ## Cross-knob rules within this section; [] = valid.
