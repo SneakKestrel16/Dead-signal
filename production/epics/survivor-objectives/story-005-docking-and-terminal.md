@@ -3,7 +3,7 @@
 > **Epic**: Survivor Objectives
 > **Status**: Complete
 > **Layer**: Feature
-> **Type**: Logic
+> **Type**: Integration
 > **Estimate**: 1.5 days
 > **Manifest Version**: 2026-10-13
 > **Last Updated**: 2026-10-14
@@ -80,7 +80,7 @@ Drives are docked at the terminal; with two drives docked and two fuses installe
 
 ## Test Evidence
 
-**Story Type**: Logic
+**Story Type**: Integration
 **Required evidence**:
 - Logic: `tests/integration/survivor-objectives/docking_and_terminal_test.gd` — must exist and pass
 
