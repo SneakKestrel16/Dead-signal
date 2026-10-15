@@ -100,6 +100,8 @@ var _stamp: Dictionary[int, int] = {}
 ## player id -> requests received since the last tick, oldest first.
 var _pending: Dictionary[int, Array] = {}
 var _accepted: Array[PingRecord] = []
+## Story 004: the latest tick's rejected requests as [player, {kind, at, target}], in arrival order.
+var _rejected: Array = []
 var _eye_of: Callable
 var _position_of: Callable
 var _line_clear: Callable
@@ -217,6 +219,7 @@ func setup(tick_runner: TickRunner, _bus: EventBus, _registry: StateRegistry, kn
 	_pending = {}
 	_accepted = []
 	_setup_callouts(_bus, knobs)
+	_rejected = []
 
 
 ## The bytes a client sends to request a ping of `kind` (`at` for LOCATION and WARNING_POINT, `target` for
@@ -256,11 +259,14 @@ func request_ping(player: int, bytes: PackedByteArray) -> void:
 ## PINGS_CALLOUTS slot: validates this tick's requests. The previous tick's accepted() records are dropped.
 func server_tick(tick: int) -> void:
 	_accepted = []
+	_rejected = []
 	for player: int in _pending:
 		for req: Dictionary in _pending[player]:
 			var rec := _validate(player, req, tick)
 			if rec != null and _take_token(player, tick):
 				_accepted.append(rec)
+			else:
+				_rejected.append([player, req])
 	_pending = {}
 	_tick_callouts(tick)
 
@@ -434,3 +440,23 @@ func _on_ability_used(e: ServerEvent) -> void:
 	rec.origin = a.target
 	rec.fake = true
 	_pending_fakes.append(rec)
+
+
+## Story 004: the requests rejected on the latest server_tick as [player, {kind, at, target}], arrival order.
+## A request over the per-tick queue cap (request_ping) is dropped unanswered.
+func rejected() -> Array:
+	return _rejected
+
+
+## Story 004 (rule 7): whether the monster receives `rec`: it sent it, it is the warning ping's own target, or
+## an unobstructed server ray from its eye reaches the pinged point within ping_max_range_m, facing ignored.
+## A player target is seen at body height, as in validation.
+func monster_sees(rec: PingRecord) -> bool:
+	if rec.sender == _monster or (rec.kind == WARNING_PLAYER and rec.target == _monster):
+		return true
+	var seen := rec.point + (Vector3.UP * _point_height_m if rec.kind == WARNING_PLAYER else Vector3.ZERO)
+	# Range and ray only, not _sees: SightTest's 360-degree cone can reject a point straight behind yaw 0 when
+	# the float angle lands a hair over pi, and facing must never matter here.
+	var eye: Vector3 = _eye_of.call(_monster)
+	return eye.distance_to(seen) <= _range_m and _line_clear.call(_monster, eye, seen,
+			rec.target if rec.kind == ITEM else -1)

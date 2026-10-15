@@ -31,6 +31,12 @@ const CAMERA := &"Camera"
 ## §5): {volume, base, overlays, dark_until} (dark_until the tick its Blackout ends, 0 = not dark). Sent to a
 ## viewer only for volumes in its visibility set, on change.
 const LIGHTING := &"Lighting"
+## Entry type of one accepted ping (PingDelivery.entries, story pings-and-callouts/004, rule 7): {kind, point,
+## item, type, identity, from}, plus own: true on the sender's copy. Sent to its recipients only.
+const PING := &"Ping"
+## Entry type of the sender's own rejected ping request, echoed as {kind, at, target} (rule 2). Sent to the
+## sender's peer only, in its own batch (PingDelivery), never to a spectator or anyone else.
+const PING_REJECTED := &"PingRejected"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

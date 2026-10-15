@@ -41,6 +41,8 @@ var head: Node3D
 var camera_fx: CameraFx
 ## Projected events from the server (ViewOffsetChanged, ScareTriggered); null until joined.
 var router: ClientEventRouter
+## Ping requests and delivered pings (pings-and-callouts story 004).
+var pings: PingReceiver
 var scares: ScarePresenter
 ## Shock and stun stagger and vocal cue on remote bodies (borrowed-face story 009); null when not rendering.
 var disguise: DisguisePresenter
@@ -143,6 +145,7 @@ func _on_connected() -> void:
 	puppets = PuppetMap.new(smp)
 	smp.peer_packet.connect(_on_packet) # after PuppetMap: handle introductions land first
 	router = ClientEventRouter.new(smp)
+	pings = PingReceiver.new(router, smp)
 	if _render:
 		head = Node3D.new()
 		head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF

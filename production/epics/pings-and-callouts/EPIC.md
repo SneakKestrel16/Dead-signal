@@ -53,7 +53,7 @@ This epic is complete when:
 | 001 | Ping module, request validation and token bucket | Logic | Complete | ADR-0002 |
 | 002 | Sender-state gating for pings and callouts | Logic | Complete | ADR-0005 |
 | 003 | Callout acceptance limits and attached item ping | Logic | Complete | ADR-0002 |
-| 004 | Ping recipients and per-peer delivery | Integration | Ready | ADR-0004 |
+| 004 | Ping recipients and per-peer delivery | Integration | Complete | ADR-0004 |
 | 005 | Marker lifecycle: static position, lifetime and max active | Logic | Ready | ADR-0014 |
 | 006 | Callout recipients, range and monster audio-only | Integration | Ready | ADR-0004 |
 | 007 | Displayed identity, (not you) mark and fake-callout parity | Integration | Ready | ADR-0004 |

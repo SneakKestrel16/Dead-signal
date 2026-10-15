@@ -48,6 +48,8 @@ var cams: Surveillance
 var _door_net: Dictionary[StringName, int] = {}
 ## Sends lighting records per viewer (facility-map story 010); kept here, sm holds only its Callable.
 var lighting_rep: LightingReplication
+## Delivers accepted pings per recipient (pings-and-callouts story 004); sm holds only its Callable.
+var ping_delivery: PingDelivery
 ## Runs HoldService in the HOLDS slot and owns the RoundEnded freeze.
 var controller: ControllerAuthority
 var footsteps: Footsteps
@@ -197,6 +199,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	lighting_rep = LightingReplication.new(lighting, map, _position, doors.is_closed, _tick)
 	lighting_rep.extra_volumes = cams.extra_volumes
 	sm.batch_extras.append(lighting_rep.entries)
+	ping_delivery = PingDelivery.new(pings, monster, _ping_in_play, bf.appearance_of, _tick, _send_own)
+	sm.batch_extras.append(ping_delivery.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
 	for id in roster.player_ids():
@@ -576,3 +580,10 @@ func _visible_volumes(volume: StringName) -> PackedStringArray:
 ## Barricades' monster: the monster in any form, unless shock-locked.
 func _monster_free(id: int) -> bool:
 	return id == monster and not sd.locked(id)
+
+
+## PingDelivery's send_own: reliable bytes on the event channel to `player`'s own peer only.
+func _send_own(player: int, bytes: PackedByteArray) -> void:
+	var peer := net.peer_id_of(player)
+	if peer != -1:
+		smp.send_bytes(bytes, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
