@@ -39,6 +39,8 @@ var _own: Dictionary = {}
 var _feed: Array[Dictionary] = []
 var _markers: Array[Dictionary] = [] ## oldest first; "expires" is a server tick
 var _ready_tick: Dictionary[StringName, int] = {} ## ability -> server tick it is ready again
+var _names: Dictionary[int, String] = {} ## survivor player id -> display name (set_survivors)
+var _activation: Dictionary = {} ## {remaining_s, paused} (on_activation); empty = unknown
 
 
 ## `router`: subscribes the event handlers; null = call them by hand (tests).
@@ -88,6 +90,39 @@ func roster() -> Array[Dictionary]:
 ## Life state of `survivor` (LIFE_*), LIFE_UNKNOWN before any event named it.
 func roster_state(survivor: int) -> int:
 	return _roster.get(survivor, LIFE_UNKNOWN)
+
+
+## Display name of survivor `survivor` (set_survivors), "" when unknown.
+func name_of(survivor: int) -> String:
+	return _names.get(survivor, "")
+
+
+## Seeds the round's survivors (player id -> display name) as Healthy, keeping any state already heard
+## (story hud-results/002, H4). No server message carries the round roster to clients yet (lobby-to-round
+## wiring, match-flow story 013, is the inferred producer); until then the roster holds only the survivors
+## an event named.
+func set_survivors(names: Dictionary) -> void:
+	for id: Variant in names:
+		if id is int:
+			_names[id] = str(names[id])
+			if not _roster.has(id):
+				_roster[id] = LIFE_HEALTHY
+	roster_changed.emit()
+
+
+## Evacuation activation countdown (H3): {remaining_s: float, paused: bool}, empty when unknown. A copy.
+func activation() -> Dictionary:
+	return _activation.duplicate()
+
+
+## Handler for the activation countdown: {remaining_s: float, paused: bool}. No server message carries it
+## yet (inference: SurvivorObjectives' _activation_ticks and zone check, sent per change; wired when the
+## objectives epic names the producer), so H3 shows the terminal's Activating state without seconds.
+func on_activation(_tick: int, p: Dictionary) -> void:
+	if not (p.get("remaining_s") is float and p.get("paused") is bool):
+		return
+	_activation = {"remaining_s": p["remaining_s"], "paused": p["paused"]}
+	objectives_changed.emit()
 
 
 ## The own body's snapshot entry (gait, hold echo, ...), a copy; empty before the first snapshot.

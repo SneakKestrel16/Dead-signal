@@ -21,6 +21,13 @@ func _ready() -> void:
 		notice = ""
 
 
+## The status line sits in the HUD's top-centre clock zone (hud.md Z2): hidden while the round view is up
+## (story hud-results/002), shown again in the lobby.
+func _process(_delta: float) -> void:
+	var c: RoundClient = ($Lobby as LobbyScreen).round_client
+	_status.visible = c == null or not c.is_spawned()
+
+
 ## Returns to this scene (the lobby screen's join form; no main menu yet) showing `text`.
 ## Records nothing: a session that ended this way has no result (ADR-0001 §7).
 static func return_with(tree: SceneTree, text: String) -> void:

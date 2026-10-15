@@ -1,7 +1,7 @@
 # Story 002: Clock, phase, roster, objective checklist and crosshair
 
 > **Epic**: HUD & Results Screen
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Presentation
 > **Type**: UI
 > **Estimate**: 1 day
@@ -65,7 +65,7 @@ The always-visible survivor HUD (H1-H6 in `hud.md`): the round clock with the fi
 **Story Type**: UI
 **Required evidence**: retained screenshot of each screen touched in `production/qa/evidence/always-on-hud/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] production/qa/evidence/always-on-hud-evidence.md (4 png); tests/unit/hud-results/always_on_hud_test.gd
 
 ---
 
@@ -73,3 +73,7 @@ The always-visible survivor HUD (H1-H6 in `hud.md`): the round clock with the fi
 
 - Depends on: Story 001
 - Unlocks: Story 010
+
+## Progress Notes (2026-10-15)
+
+Merged 429a4fc+fe363e2+f91e1d8 (round_view.gd conflict with HUD-7 resolved keeping both bots). AlwaysOnHud: clock, phase, activation countdown, roster with icon+word, objective checklist, crosshair dot with dark rim; reads HudModel only; hidden until the first phase. HudModel gains set_survivors, name_of, on_activation, activation. Main hides the boot status line while the round view is spawned. DEVIATIONS: HUD scale, Show roster and Reduced motion are widget properties, not knobs (knobs feed the join version hash, so per-player settings there would split joins). OPEN DATA GAPS: no server message sends the round roster (round_view seeds it; the shipped path shows only survivors an event named until a producer calls set_survivors); no server message carries activation seconds or paused state (label reads "Activating"; handler unit-tested); Wounded state, crosshair hide while hidden and final-30 s tick sound not drawn. Measured: text 60/62 px from edges at 1080p and 16:10; 76/78 px inside the 16:9 rect at 21:9; capitals 21 px at 1080p. 4 mutations caught. Full suite 1451/1451.

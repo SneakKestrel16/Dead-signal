@@ -69,7 +69,7 @@ This epic is complete when:
 | # | Story | Type | Status | ADR |
 |---|-------|------|--------|-----|
 | 001 | HudModel, UiLayers and the full InputContextStack | Logic | Complete | ADR-0014 |
-| 002 | Clock, phase, roster, objective checklist and crosshair | UI | Ready | ADR-0014 |
+| 002 | Clock, phase, roster, objective checklist and crosshair | UI | In Review | ADR-0014 |
 | 003 | Interaction prompt, hold ring, reject label and input glyphs | UI | In Review | ADR-0014 |
 | 004 | Own-state vignettes, own bleed-out and the HUD state table | UI | Ready | ADR-0014 |
 | 005 | Edge cues, flinch-off pulse, taser count and world progress bars | UI | Ready | ADR-0014 |

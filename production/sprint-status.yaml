@@ -192,10 +192,10 @@ stories:
     name: "Clock, phase, roster, objective checklist and crosshair"
     file: "production/epics/hud-results/story-002-always-on-hud.md"
     priority: must-have
-    status: ready-for-dev
+    status: review
     owner: ""
     estimate_days: 1
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "hud-3"
     name: "Interaction prompt, hold ring, reject label and input glyphs"

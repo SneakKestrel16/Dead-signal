@@ -27,6 +27,7 @@ extends Node3D
 ## --shots it saves windup.png (mid wind-up), dash.png (just after it) and hit.png (the hit-stop), as the
 ## shown client's LungePresenter shows them. Use --view=survivor.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
+## --no-roster: the shown client's Show roster off (story hud-results/002; the roster is seeded by _seed_roster).
 ## --shots=<dir> saves press.png, bar.png and full.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
 ## client's spawn, the shapeshifter beside one survivor (its target) in the middle, and turns the shown client
@@ -168,6 +169,7 @@ func _process(delta: float) -> void:
 	if _link != null:
 		_link.pump(Time.get_ticks_msec() / 1000.0)
 	_pick_view()
+	_seed_roster()
 	_lighting()
 	_scare_shots()
 	var c0 := _shown
@@ -486,6 +488,23 @@ func _conform_bot(c0: RoundClient) -> void:
 			print("CONFORM marker kind=%d %s" % [m["kind"], m["label"]])
 	elif f == 150:
 		get_tree().quit()
+
+
+## Story hud-results/002: no message carries the round roster to clients yet, so once every client stands in
+## the map the shown client's HudModel is seeded with the survivors (player id -> "View<i>"). --no-roster turns
+## the shown HUD's Show roster off.
+func _seed_roster() -> void:
+	if _shown == null or has_meta(&"roster"):
+		return
+	var names := {}
+	for i in _clients.size():
+		if not _clients[i].is_spawned():
+			return
+		if not _role(_clients[i]):
+			names[_clients[i].multiplayer.get_unique_id()] = "View%d" % i
+	set_meta(&"roster", true)
+	_shown.hud_model.set_survivors(names)
+	(_shown.hud.get_node(^"AlwaysOnHud") as AlwaysOnHud).show_roster = not _args.has("no-roster")
 
 
 ## Whether `c` is the shapeshifter, fixed at its first spawned answer.
