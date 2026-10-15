@@ -255,7 +255,7 @@ func test_search_ejects_the_occupant_in_front_without_a_down() -> void:
 	assert_bool(_sd.is_hidden(A)).is_false()
 	assert_int(_hs.occupant(0)).is_equal(-1)
 	assert_bool((_mods[A] as MovementModifiers).rooted).is_false()
-	assert_array(_placed).is_equal([[A, _hs.point(0) - Vector3.UP * _knobs.controller.capsule_height_m / 2.0]])
+	assert_array(_placed).is_equal([[A, _placed_front(0)]]) ## SD-13: in front of the spot
 	assert_int(_d.life_state(A)).is_equal(Downing.LifeState.HEALTHY)
 	assert_bool(_d.eligible(A)).is_true()
 
@@ -315,6 +315,7 @@ func test_search_on_a_spot_being_entered_lets_entry_finish_then_ejects() -> void
 	assert_bool(_sd.is_hidden(A)).is_false()
 	assert_int(_hs.occupant(0)).is_equal(-1)
 	assert_int(_placed.size()).is_equal(1)
+	assert_bool(_placed[0][1].is_equal_approx(_placed_front(0))).is_true() ## SD-13: in front after the entry
 	## the pending eject was spent: a later entry stays hidden
 	_release(A)
 	_hold({A: _hs.hide_id(0)}, _t_hide())
@@ -350,3 +351,10 @@ func _marker(type: StringName) -> Vector3:
 		if m.type == type:
 			return m.position
 	return FAR
+
+
+## Spot `spot`'s eject point (SD-13): the hiding marker's floor + hide_eject_offset_m along its yaw.
+func _placed_front(spot: int) -> Vector3:
+	var h: MapMarker = _map.markers.filter(func(m: MapMarker) -> bool: return m.type == &"hiding")[spot]
+	var facing := Basis(Vector3.UP, deg_to_rad(h.yaw_deg)) * Vector3.FORWARD
+	return h.position + facing * _knobs.defense.hide_eject_offset_m

@@ -17,6 +17,9 @@ class_name HidingSpots extends RefCounted
 ##   var spots := HidingSpots.new(holds, map, healthy_survivor, is_monster, sd.set_hidden, movement.modifiers_of, place)
 ##   spots.setup(tick_runner, bus, registry, knobs)
 
+## first-person-controller.md edge case "front is blocked": the farthest a blocked eject may move from the
+## spot's front. A GDD rule, not a tuning value.
+const EJECT_SEARCH_M := 1.0
 ## The MovementModifiers owner that roots a hidden survivor.
 const MOD_OWNER := &"hiding"
 ## HoldService.cancel reason for an occupant's hold ended by an eject.
@@ -29,9 +32,10 @@ var _is_monster: Callable
 var _set_hidden: Callable
 var _modifiers_of: Callable
 var _place: Callable
-## Per spot: interaction point, floor position, Hide and Search net ids.
+## Per spot: interaction point, eject point (null: no free point within EJECT_SEARCH_M, the exit waits),
+## Hide and Search net ids.
 var _points: Array[Vector3] = []
-var _floors: Array[Vector3] = []
+var _exits: Array = []
 var _hide: Array[int] = []
 var _search: Array[int] = []
 ## spot -> occupant; spot -> survivor entering; spots whose search completed during an entry.
@@ -48,7 +52,7 @@ var _out_tick: int = -1
 ## `healthy(actor) -> bool`: a Healthy survivor (rule 19; Downing and the shock lock fold in here).
 ## `is_monster(actor) -> bool`: the shapeshifter, in any form (rule 22). `set_hidden(actor, on)`:
 ## SurvivorDefense.set_hidden. `modifiers_of(actor) -> MovementModifiers` (null or unset: no root).
-## `place(actor, floor_position)`: moves an ejected survivor's body (unset: it stays where it is).
+## `place(actor, floor_position)`: moves an ejected survivor's body to the spot's front (unset: it stays).
 func _init(holds: HoldService, map: MapData, healthy: Callable, is_monster: Callable, set_hidden: Callable,
 		modifiers_of: Callable = Callable(), place: Callable = Callable()) -> void:
 	_holds = holds
@@ -68,7 +72,7 @@ func setup(tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: K
 	_out_tick = -1
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_points = []
-	_floors = []
+	_exits = []
 	_hide = []
 	_search = []
 	_occupant = {}
@@ -79,7 +83,7 @@ func setup(tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: K
 		if m == null or m.type != &"hiding":
 			continue
 		var spot := _points.size()
-		_floors.append(m.position)
+		_exits.append(_exit_point(m, knobs))
 		_points.append(m.position + Vector3.UP * rules.point_height_m)
 		for search: bool in [false, true]:
 			var h := HidingHold.new()
@@ -191,15 +195,35 @@ func search_completed(spot: int) -> void:
 		_eject_due[spot] = true
 
 
-## Rule 22: out in front of the spot, no hit, no down. Ends the occupant's own hold (a leave under way).
-## Inference: "in front of the spot" read as the marker's floor position, where a survivor stands to use
-## it (markers carry no facing); a facing field in the map file would settle it.
+## Rule 22: out in front of the spot (marker floor + hide_eject_offset_m along its yaw, AD-200), no hit,
+## no down. Ends the occupant's own hold (a leave under way). No free point: the exit waits, so the
+## survivor stays hidden and the search is spent.
 func _eject(spot: int) -> void:
+	if _exits[spot] == null:
+		return
 	var actor: int = _occupant[spot]
 	_leave(spot)
 	_holds.cancel(actor, CANCEL_EJECTED)
 	if _place.is_valid():
-		_place.call(actor, _floors[spot])
+		_place.call(actor, _exits[spot])
+
+
+## The marker's front, or the nearest free point within EJECT_SEARCH_M of it, or null (controller GDD edge
+## case). Free = inside the marker's own volume, one capsule radius clear of its walls (x, z).
+## Inference: only the static map blocks; the map has no props or other bodies on the server, so the
+## answer is fixed per round. A server-side body overlap check would make it per eject.
+## ponytail: the "exit waits" case never clears without that body check; add a retry with it.
+func _exit_point(m: MapMarker, knobs: Knobs) -> Variant:
+	var facing := Basis(Vector3.UP, deg_to_rad(m.yaw_deg)) * Vector3.FORWARD
+	var front := m.position + facing * knobs.defense.hide_eject_offset_m
+	for v in _map.volumes:
+		if v.id != m.volume:
+			continue
+		var r := knobs.controller.player_radius_m
+		var free := Vector3(clampf(front.x, v.box.position.x + r, v.box.end.x - r), front.y,
+				clampf(front.z, v.box.position.z + r, v.box.end.z - r))
+		return free if free.distance_to(front) <= EJECT_SEARCH_M else null
+	return null
 
 
 func _leave(spot: int) -> void:

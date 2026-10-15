@@ -18,6 +18,7 @@ hide_noise_radius_m = 8.0
 hide_quiet_s = 20.0
 hide_cue_interval_s = 5.0
 search_duration_s = 1.5
+hide_eject_offset_m = 0.6
 barricade_duration_s = 3.0
 barricade_remove_s = 1.0
 barricade_break_s = 5.0
