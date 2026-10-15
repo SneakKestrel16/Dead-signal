@@ -124,6 +124,13 @@ func appearance_of(player: int) -> int:
 	return _appearance_of.call(who) if _appearance_of.is_valid() else SnapshotCodec.NO_APPEARANCE
 
 
+## Whether clients show `player`'s body as transforming (rule 8: distortion audio, visual warp): true only
+## for the shapeshifter mid-transformation. The GDD makes this cue a tell every client may perceive (Tells
+## T1), so it is replicated on the body like appearance; no role or target travels with it.
+func transforming_of(player: int) -> bool:
+	return player == _monster and _transforming
+
+
 ## The bytes the shapeshifter's client sends to request a change into `form` (a survivor id or TRUE_FORM).
 static func request_packet(form: int) -> PackedByteArray:
 	return var_to_bytes({REQUEST_KEY: form})

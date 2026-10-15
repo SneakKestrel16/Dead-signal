@@ -12,7 +12,7 @@ const TICKS := 30
 ## The only fields a remote body may carry to a client (SnapshotCodec non-own entry). `appearance`
 ## (borrowed-face story 007, ADR-0004 §4) is the rendered character look: a disguised shapeshifter
 ## shows the copied survivor's, so it carries no role, name or player id.
-const REMOTE_FIELDS := ["appearance", "gait", "id", "pos", "yaw"]
+const REMOTE_FIELDS := ["appearance", "gait", "id", "pos", "transforming", "yaw"]
 ## Property names that would put identity on a body node.
 const IDENTITY := ["role", "player", "name", "tag", "character", "identity", "owner", "peer", "monster", "survivor"]
 

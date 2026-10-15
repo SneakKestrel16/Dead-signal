@@ -35,7 +35,7 @@ A disguise is a costume, not a power: the shapeshifter must change to true form 
 
 - [x] A Lunge requested while Disguised is rejected; a transformation requested during a Lunge takedown commit is rejected.
 - [x] While Transforming, the shapeshifter can walk, but sprint, interact and ability requests are rejected.
-- [ ] Every client receives the transforming state within 250 ms of acceptance (simulated 150 ms RTT).
+- [x] Every client receives the transforming state within 250 ms of acceptance (simulated 150 ms RTT).
 
 ---
 
@@ -64,6 +64,7 @@ A disguise is a costume, not a power: the shapeshifter must change to true form 
 **Story Type**: Integration
 **Required evidence**:
 - Integration: `tests/integration/borrowed-face/disguise_restrictions_test.gd` — must exist and pass
+- Integration (AC3): `tests/integration/borrowed-face/transforming_visibility_test.gd`
 
 **Status**: [ ] Not yet created
 
@@ -79,7 +80,7 @@ A disguise is a costume, not a power: the shapeshifter must change to true form 
 ## Completion Notes
 
 **Implemented**: 2026-10-15 (worktree agent, squash-merged as e128b83). Full suite 895/895 after the borrowed-face wave, no leak warnings.
-**Criteria**: AC1 and AC2 passing (automated). AC3 (every client sees the transforming state within 250 ms at 150 ms RTT) **not done**: no transport carries the transforming state to clients. BF-7's snapshot carries only appearance; AC3 needs a presentation bit or field in the snapshot entry (SnapshotCodec VERSION 6). Story stays In Review until that lands.
+**Criteria**: AC1 and AC2 passing (automated). AC3 (every client sees the transforming state within 250 ms at 150 ms RTT) **not done**: no transport carries the transforming state to clients. BF-7's snapshot carried only appearance. **AC3 closed 2026-10-15** (worktree wt-bf5ac3): `SnapshotCodec` VERSION 6 adds flag `F_TRANSFORMING` (bit 2 of the existing flags byte, allowed on non-own entries; entry stays 23 B, decoded key `transforming`), filled by `ServerMovement.transforming_of` = `BorrowedFace.transforming_of(player)` (true only for the shapeshifter mid-transformation). `tests/integration/borrowed-face/transforming_visibility_test.gd`: 5 real-ENet clients behind `UdpLink` (75 ms each way + 30 ms jitter = 150 ms RTT), server paced to the wall clock; all 5 see the flag within 250 ms of acceptance and see it clear within 250 ms of completion; no survivor body ever carries it. Mutations caught: flag never set, decoder drops the flag, flag set on every body. Inference: only the flag is replicated, not the target form or start time GDD rule 8 lists (the cue needs only the flag; the target would show the next disguise early); the flag is sent to every client the body is in scope for, since Tell T1's warp is visual (the 15 m distortion radius is a client audio decision). Settle with game-designer/security-engineer.
 **Deviations** (AD-167):
 - New getter-only `TransformView` registered under `StateKeys.TRANSFORMING` (`get_transforming`, `get_target`, `get_form`); `get_form` on this view is inference until a `SHAPESHIFTER_FORM` view exists.
 - `BorrowedFace.set_attack_source(Callable)` rejects a form change while attacking (rule 11); a rejected request starts no cooldown.
