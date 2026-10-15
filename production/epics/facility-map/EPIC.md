@@ -54,7 +54,7 @@ Lighting, camera-feed, zone-audio and reduced-flash requirements rest on ADR-000
 | 008 | [Candidate replication and discovery agreement](story-008-candidate-replication.md) | Integration | Complete | ADR-0012 (Proposed), ADR-0004 |
 | 009 | [Per-volume lighting state machine and precedence](story-009-lighting-state-machine.md) | Logic | Complete | ADR-0009 (Proposed) |
 | 010 | [Lighting replication, Blackout scope and reduced flash](story-010-lighting-render-blackout.md) | Visual/Feel | In Review | ADR-0009 (Proposed) |
-| 011 | [Surveillance cameras at the C1 monitor](story-011-surveillance-cameras.md) | Visual/Feel | Ready | ADR-0009 (Proposed) |
+| 011 | [Surveillance cameras at the C1 monitor](story-011-surveillance-cameras.md) | Visual/Feel | In Review | ADR-0009 (Proposed) |
 | 012 | [Zone ambience and B3 footstep masking](story-012-zone-ambience.md) | Visual/Feel | In Review | ADR-0013 (Proposed) |
 
 Grouping playtest AC 11 belongs to Match Telemetry.

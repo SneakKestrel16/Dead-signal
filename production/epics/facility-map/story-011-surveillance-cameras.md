@@ -1,7 +1,7 @@
 # Story 011: Surveillance cameras at the C1 monitor
 
 > **Epic**: Facility Map
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]

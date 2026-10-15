@@ -201,7 +201,7 @@ stories:
     name: "Surveillance cameras at the C1 monitor"
     file: "production/epics/facility-map/story-011-surveillance-cameras.md"
     priority: nice-to-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
     blocker: ""
