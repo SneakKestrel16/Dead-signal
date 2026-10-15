@@ -48,7 +48,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 004 | [Rescue hold with persisting progress](story-004-rescue-hold.md) | Integration | Complete | ADR-0008 |
 | 005 | [Downed crawl and action restrictions](story-005-downed-movement-restrictions.md) | Integration | Complete | ADR-0007 |
 | 006 | [Disconnects during a commit or while Downed](story-006-disconnects.md) | Integration | Complete | ADR-0001 |
-| 007 | [Life state replication and information hiding](story-007-life-state-replication.md) | Integration | Ready | ADR-0004 |
+| 007 | [Life state replication and information hiding](story-007-life-state-replication.md) | Integration | Complete | ADR-0004 |
 
 ## Definition of Done
 

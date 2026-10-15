@@ -1,12 +1,12 @@
 # Story 007: Life state replication and information hiding
 
 > **Epic**: Downing, Rescue & Elimination
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,10 +34,10 @@ Every client sees the same life states and down counts; the shapeshifter never l
 
 *From GDD `design/gdd/downing-and-rescue.md` (Acceptance Criteria and Core Rules), scoped to this story:*
 
-- [ ] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
-- [ ] The shapeshifter's client receives no bleed-out timer or ring state for any Downed survivor, in true form or disguised; the ring is identical on survivor clients whether a survivor or the monster slows it.
-- [ ] A client sending a forged "rescue complete" or "survivor downed" message causes no state change.
-- [ ] Every value this story uses is read from `DowningKnobs`, not hardcoded.
+- [x] With 5 clients connected, all 5 show the same life state and down count for every survivor after each hit, commit, rescue and elimination, within 250 ms of the server event.
+- [x] The shapeshifter's client receives no bleed-out timer or ring state for any Downed survivor, in true form or disguised; the ring is identical on survivor clients whether a survivor or the monster slows it.
+- [x] A client sending a forged "rescue complete" or "survivor downed" message causes no state change.
+- [x] Every value this story uses is read from `DowningKnobs`, not hardcoded.
 
 ---
 
@@ -66,9 +66,9 @@ Every client sees the same life states and down counts; the shapeshifter never l
 
 **Story Type**: Integration
 **Required evidence**:
-- Integration: `tests/integration/downing-and-rescue/life-state-replication_test.gd` OR playtest doc
+- Integration: `tests/integration/downing-and-rescue/life_state_replication_test.gd` OR playtest doc
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/downing-and-rescue/life_state_replication_test.gd` (4 tests)
 
 ---
 
@@ -76,3 +76,17 @@ Every client sees the same life states and down counts; the shapeshifter never l
 
 - Depends on: Stories 001, 003, 004
 - Unlocks: None
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-163):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 880/880 after the wave merge, no leak warnings.
+- Real ENet, 5 clients: hit, commit, rescue, elimination reach all displays within 250 ms; monster capture has no ring.
+- Seized not shown on the roster (body presentation in the snapshot, not built). Downing does not feed catch_up yet: a mid-round reconnect misses earlier ring and life-state changes.
+- Forged client batches log `bytes_to_var` ERR_INVALID_DATA twice (expected; counted malformed).
+**Test Evidence**: 4 tests. Mutations caught: ring to every viewer, no down on 'Taken down', ring every tick, batch extras dropped.
+**Code Review**: Complete (orchestrator review at merge)

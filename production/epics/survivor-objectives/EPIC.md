@@ -54,7 +54,7 @@ ADR coverage below is mapped by domain: these ADRs do not list TR-IDs by name (i
 | 007 | [Shapeshifter fake interactions](story-007-shapeshifter-fake-interactions.md) | Integration | Complete | ADR-0008 |
 | 008 | [Active point selection](story-008-active-point-selection.md) | Logic | Blocked | ADR-0012 |
 | 009 | [Objective discovery](story-009-discovery.md) | Integration | Blocked | ADR-0012 |
-| 010 | [Objective state replication to clients](story-010-objective-state-replication.md) | Integration | Ready | ADR-0004 |
+| 010 | [Objective state replication to clients](story-010-objective-state-replication.md) | Integration | Complete | ADR-0004 |
 
 ## Definition of Done
 

@@ -46,8 +46,8 @@ TR-borrowedface-005, -006 and -011 rest partly on ADR-0010 (Proposed); stories f
 |---|-------|------|--------|-----|
 | 001 | [Observation accumulator](story-001-observation-accumulator.md) | Logic | Complete | ADR-0007, ADR-0005, ADR-0006 |
 | 002 | [Form-change request validation and target persistence](story-002-form-change-requests.md) | Logic | Complete | ADR-0005 |
-| 003 | [Transform state machine, cooldown and FormChanged](story-003-transform-state-machine.md) | Logic | Ready | ADR-0005, ADR-0006 |
-| 004 | [Stun immunity during and after transformation](story-004-immunity-interactions.md) | Logic | Ready | ADR-0005 |
+| 003 | [Transform state machine, cooldown and FormChanged](story-003-transform-state-machine.md) | Logic | Complete | ADR-0005, ADR-0006 |
+| 004 | [Stun immunity during and after transformation](story-004-immunity-interactions.md) | Logic | Complete | ADR-0005 |
 | 005 | [Action restrictions while Disguised or Transforming](story-005-action-restrictions.md) | Integration | Ready | ADR-0008, ADR-0005 |
 | 006 | [Disguise gates on objectives, rescue and defense interactions](story-006-interaction-gates.md) | Integration | Ready | ADR-0008 |
 | 007 | [Form replication and reconnect](story-007-form-replication-reconnect.md) | Integration | Ready | ADR-0004, ADR-0005 |

@@ -1,12 +1,12 @@
 # Story 004: Stun immunity during and after transformation
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -32,9 +32,9 @@ Survivor Defense gives the shapeshifter a short immunity after a stun. An immune
 
 *From `borrowed-face.md` Acceptance Criteria (immune hits; cross-review B1, B4), scoped to this story:*
 
-- [ ] An immune taser hit during a transformation (out of a disguise or out of true form) applies no root, slow or lock, and the transformation completes 2 s after acceptance.
-- [ ] A stun item hit on an immune disguised shapeshifter does not interrupt a transformation or change the form, and a transformation request during the following `stun_duration_s` is not rejected on that account.
-- [ ] A shapeshifter stunned in true form that completes a transformation into a disguise during `stun_immunity_s` is no longer immune: the next hit stuns it and applies the rule 14 lock.
+- [x] An immune taser hit during a transformation (out of a disguise or out of true form) applies no root, slow or lock, and the transformation completes 2 s after acceptance.
+- [x] A stun item hit on an immune disguised shapeshifter does not interrupt a transformation or change the form, and a transformation request during the following `stun_duration_s` is not rejected on that account.
+- [x] A shapeshifter stunned in true form that completes a transformation into a disguise during `stun_immunity_s` is no longer immune: the next hit stuns it and applies the rule 14 lock.
 
 ---
 
@@ -64,7 +64,7 @@ Survivor Defense gives the shapeshifter a short immunity after a stun. An immune
 **Required evidence**:
 - Logic: `tests/unit/borrowed-face/transform_immunity_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/borrowed-face/transform_immunity_test.gd` (5 tests)
 
 ---
 
@@ -72,3 +72,16 @@ Survivor Defense gives the shapeshifter a short immunity after a stun. An immune
 
 - Depends on: Story 003
 - Unlocks: Survivor Defense epic
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-160):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 880/880 after the wave merge, no leak warnings.
+- Survivor Defense does not exist yet: the test uses a StubDefense built from the GDD prose (lock for stun_duration_s, then stun_immunity_s immunity ending on a disguise FormChanged). Inference; re-run against the real module when it lands.
+- Tests passed on first run (behaviour already present); stub mutations stand in for the red run.
+**Test Evidence**: 5 tests. Mutations caught: FormChanged carrying previous form, completion one tick late, stub stunning on immune hits, stub ignoring FormChanged.
+**Code Review**: Complete (orchestrator review at merge)
