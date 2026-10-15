@@ -42,7 +42,7 @@ No S1 or S2 bugs are open.
 The qa-lead checked NOT APPROVED first: no S1 or S2 bug is open and no story failed. The precondition holds, because all 13 items have executed automated evidence and the smoke check passed. The verdict is not plain APPROVED because S3 and S4 bugs are open and one story passed with notes. The orchestrator checked the verdict against the same rules and agrees.
 
 **Conditions**:
-1. **match-flow 004 AC4: in progress.** A follow-up test is being added for the host leaving mid-round and during Results (session closes for everyone, no result recorded, no forfeit).
+1. **match-flow 004 AC4: resolved.** Two tests were added for the host leaving mid-round and during Results (`round_lifecycle_test.gd`, now 8 tests). Full suite 900/900. A mutation that has `NetAuthority.close()` emit `player_dropped` fails both tests.
 2. **BUG-0003 and BUG-0004 stay open and triaged.** Both timing tests failed in the two full-suite runs before the passing one, so one pass does not show they are fixed. They are outside this sprint and may be deferred to polish, but CI stays flaky until they are fixed.
 3. **BUG-0001 (S4)** may be deferred to polish.
 
@@ -51,4 +51,4 @@ Resolved during this cycle:
 - **survivor-objectives 005**: the Story Type is corrected from Logic to Integration, to match where its test lives.
 
 ### Next Step
-Resolve conditions before advancing. S3 and S4 bugs may be deferred to polish. Once the match-flow 004 AC4 test is merged, run `/gate-check` to validate advancement.
+Resolve conditions before advancing. S3 and S4 bugs may be deferred to polish. The match-flow 004 AC4 condition is resolved; the remaining conditions are S3 and S4 bugs that can be deferred.

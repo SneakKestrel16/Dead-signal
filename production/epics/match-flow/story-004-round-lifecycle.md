@@ -120,3 +120,5 @@ Everything around the clock: the server waits for every client to load, spawns t
 - Test file `round_lifecycle_test.gd` (snake case), not the story's hyphenated name.
 **Test Evidence**: `tests/integration/match-flow/round_lifecycle_test.gd`, 6 tests (one real ENet loopback); green in 4 consecutive runs. Mutations caught: load timeout `>=` to `>`, results duration `>=` to `>`, roster check dropped, clock left running in Results.
 **Code Review**: Complete (orchestrator review; weak resolve step, untrusted-packet cap, hook wiring gap recorded)
+
+**QA follow-up (2026-10-15, sprint-005 sign-off condition 1)**: AC4 is now also tested for a host leaving mid-round and during Results (`test_host_quitting_mid_round_closes_every_client_and_records_nothing`, `test_host_quitting_during_results_closes_every_client_and_records_nothing`).
