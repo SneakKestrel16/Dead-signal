@@ -221,3 +221,18 @@ func test_s_labels_use_the_hud_text_size() -> void:
 	for l in labels:
 		assert_int(l.get_theme_font_size(&"font_size")).is_equal(AlwaysOnHud.TEXT_FONT)
 
+
+
+## BUG-0013: S1 and S2-S3 sit the HUD's 48 px safe margin from the screen edge (hud.md Layout Zones).
+func test_kit_and_face_list_use_the_hud_edge_margin() -> void:
+	var m := AlwaysOnHud.MARGIN_PX
+	assert_float(m).is_equal(48.0)
+	var kit := ShapeshifterKit.new(_model)
+	assert_float(kit.offset_right).is_equal(-m)
+	assert_float(kit.offset_bottom).is_equal(-m)
+	assert_float(kit.offset_left).is_equal(-m)
+	assert_float(kit.offset_top).is_equal(-m)
+	var faces := ShapeshifterFaceList.new(_model)
+	assert_vector(faces.position).is_equal(Vector2(m, m))
+	kit.free()
+	faces.free()

@@ -4,7 +4,6 @@ class_name ShapeshifterKit extends VBoxContainer
 ## shows Lunge, False Signal and Blackout with tenths of seconds, or "Ready" (P13's shape change on ready is
 ## the word replacing the number). Greybox text; the spec's icons and sweep are the art pass.
 
-const MARGIN_PX := 16.0
 const ABILITIES: Array[StringName] = [&"lunge", &"false_signal", &"blackout"]
 
 var _model: HudModel
@@ -20,10 +19,10 @@ func _init(model: HudModel) -> void:
 	set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	grow_vertical = Control.GROW_DIRECTION_BEGIN
-	offset_left = -MARGIN_PX
-	offset_top = -MARGIN_PX
-	offset_right = -MARGIN_PX
-	offset_bottom = -MARGIN_PX
+	offset_left = -AlwaysOnHud.MARGIN_PX
+	offset_top = -AlwaysOnHud.MARGIN_PX
+	offset_right = -AlwaysOnHud.MARGIN_PX
+	offset_bottom = -AlwaysOnHud.MARGIN_PX
 	_form = Label.new()
 	_form.name = &"S2Form"
 	add_child(_form)

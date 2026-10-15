@@ -3,7 +3,6 @@ class_name ShapeshifterFaceList extends VBoxContainer
 ## progress and the available mark once observe_time_s is reached (borrowed-face.md rule 3). Reads HudModel.
 ## Greybox layout; the art pass owns the final look.
 
-const MARGIN_PX := 16.0
 const BAR_SIZE := Vector2(120.0, 10.0)
 
 var _model: HudModel
@@ -14,7 +13,7 @@ func _init(model: HudModel) -> void:
 	_model = model
 	name = &"S1FaceList"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	position = Vector2(MARGIN_PX, MARGIN_PX)
+	position = Vector2(AlwaysOnHud.MARGIN_PX, AlwaysOnHud.MARGIN_PX)
 	for c in CharacterDef.load_all():
 		if c != null:
 			_names[c.appearance_id] = String(c.id)
