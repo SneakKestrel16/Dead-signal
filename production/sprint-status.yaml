@@ -111,11 +111,11 @@ stories:
     name: "Integrate with Downing and Borrowed Face"
     file: "production/epics/monster-abilities/story-006-integrate-downing-borrowed-face.md"
     priority: should-have
-    status: backlog
+    status: done
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: ""
+    completed: "2026-10-15"
   - id: "survivor-defense-6"
     name: "Hiding spots: enter, exit, occupancy, search"
     file: "production/epics/survivor-defense/story-006-hiding-spots.md"

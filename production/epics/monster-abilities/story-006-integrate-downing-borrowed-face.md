@@ -1,12 +1,12 @@
 # Story 006: Integrate with Downing and Borrowed Face
 
 > **Epic**: Monster Abilities
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Feature
 > **Type**: Integration
 > **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: —
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -34,9 +34,9 @@ Replace the stand-ins. Downing tests drive `SurvivorHit` directly, and Borrowed 
 
 *From GDD `design/gdd/monster-abilities.md`, scoped to this story:*
 
-- [ ] Borrowed Face `set_attack_source` is fed from `MonsterAbilities` state; the Borrowed Face 005 disguise-restriction tests pass with the real module in place of `StubAbilities` (re-checked; stub removed or reduced to a thin adapter)
-- [ ] The existing Downing tests that emit `SurvivorHit` directly still pass; one new test drives a real Lunge into a Downing takedown commit through to `SurvivorDowned`
-- [ ] Multi-client: across 20 lunges with 5 clients (one at 150 ms simulated latency), all clients agree on every hit/miss and the survivor's resulting state; every dispute is logged
+- [x] Borrowed Face `set_attack_source` is fed from `MonsterAbilities` state; the Borrowed Face 005 disguise-restriction tests pass with the real module in place of `StubAbilities` (re-checked; stub removed or reduced to a thin adapter)
+- [x] The existing Downing tests that emit `SurvivorHit` directly still pass; one new test drives a real Lunge into a Downing takedown commit through to `SurvivorDowned`
+- [x] Multi-client: across 20 lunges with 5 clients (one at 150 ms simulated latency), all clients agree on every hit/miss and the survivor's resulting state; every dispute is logged
 
 ---
 
@@ -87,7 +87,7 @@ Replace the stand-ins. Downing tests drive `SurvivorHit` directly, and Borrowed 
 **Required evidence**:
 - Integration: `tests/integration/monster-abilities/lunge_end_to_end_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/monster-abilities/lunge_end_to_end_test.gd` (3 tests)
 
 ---
 
@@ -95,3 +95,18 @@ Replace the stand-ins. Downing tests drive `SurvivorHit` directly, and Borrowed 
 
 - Depends on: Stories 003, 004, 005
 - Unlocks: Story 007
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-193):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 1053/1053 after the wave merge, no leak warnings.
+- Hit/miss agreement compares each client's down count and life state against the server's SurvivorHit, because SurvivorHit is never sent to clients (project() empty).
+- In the 5-client test the monster's view tick is unset, so its rewind clamps to max_rewind_ms; 150 ms latency is on a survivor link. Rewind under latency is covered by lunge_lag_comp_test.
+- Wiring (set_attack_source to LungeView, set_hit_sources) exists only in tests: no composition root yet.
+- Downing tests that emit SurvivorHit directly kept unchanged and passing.
+**Test Evidence**: 3 tests; disguise_restrictions_test 5/5 on the real module. Mutations caught: Downing ignores SurvivorHit, is_attacking always false, Lunge ignores the form check.
+**Code Review**: Complete (orchestrator review at merge)
