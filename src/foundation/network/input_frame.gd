@@ -30,6 +30,9 @@ var ack_snapshot_tick: int = 0
 ## ponytail: offset_tick is a full int32, not the ADR's low 16 bits; pack it if bandwidth matters.
 var record_id: int = 0
 var offset_tick: int = 0
+## ADR-0015 §3: the view epoch the client's yaw and pitch are in (a byte; it changes when the client folds
+## a re-baseline). Untrusted: the server looks it up among its own last epochs.
+var view_epoch: int = 0
 
 
 ## Packs the four booleans into the flags byte, whole. Example: sprint+crouch -> 3.
@@ -56,6 +59,7 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 	var acks := PackedInt32Array()
 	var records: Array[int] = []
 	var offset_ticks := PackedInt32Array()
+	var epochs: Array[int] = []
 	for f in frames:
 		seqs.append(f.seq)
 		moves.append(f.move)
@@ -67,8 +71,10 @@ static func build_packet(frames: Array[InputFrame]) -> Dictionary:
 		acks.append(f.ack_snapshot_tick)
 		records.append(f.record_id)
 		offset_ticks.append(f.offset_tick)
+		epochs.append(f.view_epoch)
 	return {
 		"seq": seqs, "move": moves, "flags": PackedByteArray(flag_bytes),
 		"yaw": yaws, "pitch": pitches, "interact_target": targets, "view_tick": views,
 		"ack_snapshot_tick": acks, "record_id": PackedByteArray(records), "offset_tick": offset_ticks,
+		"view_epoch": PackedByteArray(epochs),
 	}

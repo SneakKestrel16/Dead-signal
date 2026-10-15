@@ -233,6 +233,14 @@ func test_every_module_built_and_every_hook_wired() -> void:
 	# FacilityLighting's objective_volume answers the terminal's volume from the active points.
 	assert_str(_c._objective_volume(SurvivorObjectives.TERMINAL_ID)).is_not_empty()
 	assert_str(_c._objective_volume(-5)).is_empty()
+	# Story controller-interaction/013: the flinch toggle view is registered and a change reaches ViewOffset.
+	var settings := _c.server.registry.view(StateKeys.CAMERA_FLINCH_TOGGLE, PlayerSettingsView) as PlayerSettingsView
+	assert_object(settings).is_not_null()
+	_net.set_flinch_enabled(s, true)
+	assert_bool(settings.is_flinch_enabled(s)).is_true()
+	assert_bool(_c.offset._players[s].enabled).is_true()
+	_net.set_flinch_enabled(s, false)
+	assert_bool(_c.offset._players[s].enabled).is_false()
 
 
 func _step(n: int) -> void:

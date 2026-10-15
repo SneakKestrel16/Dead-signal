@@ -5,7 +5,8 @@ class_name InputQueue extends RefCounted
 ## `move` PackedVector2Array, `flags` PackedByteArray (bits: InputFrame.FLAG_*), `yaw` and `pitch`
 ## PackedFloat32Array in RADIANS; optional `interact_target` PackedInt32Array,
 ## `view_tick` PackedFloat32Array (not finiteness-checked: LagCompensation rejects it) and `ack_snapshot_tick`
-## PackedInt32Array, `record_id` PackedByteArray and `offset_tick` PackedInt32Array (ADR-0015 §2).
+## PackedInt32Array, `record_id` PackedByteArray, `offset_tick` PackedInt32Array (ADR-0015 §2) and
+## `view_epoch` PackedByteArray (ADR-0015 §3).
 ## Any other key (e.g. a position) is never read. Invalid packets are dropped whole and recorded.
 ## No fail_hard: a remote peer must not be able to trip an assert, so violations only count and record.
 ## Tuning comes from Knobs (net.input_queue_cap, max_seq_ahead, starvation_*; controller.intent_timeout_ms).
@@ -79,6 +80,7 @@ func push(packet: Dictionary) -> int:
 	var acks: PackedInt32Array = packet.get("ack_snapshot_tick", PackedInt32Array())
 	var records: PackedByteArray = packet.get("record_id", PackedByteArray())
 	var offset_ticks: PackedInt32Array = packet.get("offset_tick", PackedInt32Array())
+	var epochs: PackedByteArray = packet.get("view_epoch", PackedByteArray())
 	var pitch_limit := deg_to_rad(PITCH_LIMIT_DEG)
 	var added := 0
 	for i in seqs.size():
@@ -96,6 +98,7 @@ func push(packet: Dictionary) -> int:
 		f.ack_snapshot_tick = acks[i] if not acks.is_empty() else 0
 		f.record_id = records[i] if not records.is_empty() else 0
 		f.offset_tick = offset_ticks[i] if not offset_ticks.is_empty() else 0
+		f.view_epoch = epochs[i] if not epochs.is_empty() else 0
 		f.yaw = yaws[i]
 		f.pitch = clampf(pitches[i], -pitch_limit, pitch_limit)
 		_newest_seq = f.seq
@@ -179,6 +182,7 @@ func _released_frame() -> InputFrame:
 		r.ack_snapshot_tick = _last.ack_snapshot_tick
 		r.record_id = _last.record_id
 		r.offset_tick = _last.offset_tick
+		r.view_epoch = _last.view_epoch
 	return r
 
 
@@ -204,7 +208,7 @@ func _validate(packet: Dictionary) -> String:
 		"flags": TYPE_PACKED_BYTE_ARRAY, "yaw": TYPE_PACKED_FLOAT32_ARRAY, "pitch": TYPE_PACKED_FLOAT32_ARRAY}
 	var optional := {"interact_target": TYPE_PACKED_INT32_ARRAY, "view_tick": TYPE_PACKED_FLOAT32_ARRAY,
 		"ack_snapshot_tick": TYPE_PACKED_INT32_ARRAY, "record_id": TYPE_PACKED_BYTE_ARRAY,
-		"offset_tick": TYPE_PACKED_INT32_ARRAY}
+		"offset_tick": TYPE_PACKED_INT32_ARRAY, "view_epoch": TYPE_PACKED_BYTE_ARRAY}
 	for key in types:
 		if typeof(packet.get(key)) != types[key]:
 			return "missing or wrong type: " + key

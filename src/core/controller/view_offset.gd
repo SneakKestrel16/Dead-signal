@@ -6,12 +6,12 @@ class_name ViewOffset extends RefCounted
 ## A frame is evaluated with the record it was rendered with (`InputFrame.record_id`, last HISTORY kept)
 ## at its own `offset_tick`, clamped to the record's start and the current tick (ADR-0015 §2).
 ## Resets (round end, Downed, reconnect, toggle off here; Hidden and Seized through rebaseline(), wired
-## by the round composer) are re-baselines: a zero record with rebaseline = true carrying the held
-## offset, which the owner folds into its yaw and pitch. Frames still on the old record keep their view,
-## so nothing snaps.
-## Deviation from ADR-0015 §3, inference: no separate view epoch or per-epoch base. The record id
-## already tells the server whether a frame was sampled before or after the owner's fold, so the epoch
-## byte would carry nothing more. An ADR-0015 amendment or architecture review would settle it.
+## by the round composer) use the view-epoch handshake (ADR-0015 §3, AD-210): the server keeps the held
+## offset as the old epoch's base, starts a new epoch and sends a zero record with rebaseline = true
+## carrying that held offset as `fold`. The owner folds it into its yaw and pitch and stamps the new
+## epoch. A frame still stamped with an old epoch gets that epoch's held offset (its own record up to the
+## reset tick, the held offset after), so the server never zeroes an offset outside the handshake and
+## nothing snaps. A frame stamped with an epoch the server does not know reads as the current epoch.
 ## Lunge wind-up (rule 7: never during one) comes in as `in_wind_up(player) -> bool`, composed from the
 ## LungeView and lunge_cue_radius_m by the round composer: the Controller does not depend on Monster
 ## Abilities.
@@ -21,14 +21,15 @@ class_name ViewOffset extends RefCounted
 
 ## Records kept per player for frames still in flight (ADR-0015 §2: last four).
 const HISTORY := 4
-## record_id is a byte on the wire.
+## record_id and view_epoch are bytes on the wire.
 const ID_MOD := 256
 
 var _bus: EventBus
 var _ramp_ticks: int
 var _max_angle: float
 var _in_wind_up: Callable
-## player -> {records: Dictionary of int -> FlinchRecord, cur: int, enabled: bool}
+## player -> {records: Dictionary of int -> FlinchRecord, cur: int, enabled: bool, epoch: int,
+## ended: Dictionary of old epoch -> {end: reset tick, held: Vector2}} (last HISTORY old epochs)
 var _players: Dictionary[int, Dictionary] = {}
 
 
@@ -52,33 +53,58 @@ func offset_of(player_id: int) -> Vector2:
 	return FlinchRecord.offset_at(_current(player_id), float(_bus.tick))
 
 
-## The offset to add to this frame's yaw and pitch: the frame's own record at the frame's tick. An
-## unknown record id (evicted or forged) uses the newest record.
+## The offset to add to this frame's yaw and pitch: the frame's epoch base plus its own record at the
+## frame's tick (ADR-0015 §2-3). In the current epoch the base is zero and an unknown record id (evicted
+## or forged, or another epoch's) uses the newest record. In an old epoch the frame's record is evaluated
+## no later than that epoch's reset tick; without it the epoch's held offset is the answer.
 func offset_for(player_id: int, frame: InputFrame) -> Vector2:
 	var p := _state(player_id)
-	var r: FlinchRecord = p.records.get(frame.record_id, p.records[p.cur])
-	var t := clampi(frame.offset_tick, r.start_tick, maxi(_bus.tick, r.start_tick))
+	var r: FlinchRecord = p.records.get(frame.record_id)
+	var end := _bus.tick
+	if frame.view_epoch != p.epoch and p.ended.has(frame.view_epoch):
+		var old: Dictionary = p.ended[frame.view_epoch]
+		if r == null or r.view_epoch != frame.view_epoch:
+			return old.held
+		end = old.end
+	elif r == null or r.view_epoch != p.epoch:
+		r = p.records[p.cur]
+	var t := clampi(frame.offset_tick, r.start_tick, maxi(end, r.start_tick))
 	return FlinchRecord.offset_at(r, float(t))
 
 
-## The player's accessibility flinch toggle (ADR-0015 §4). On until the client says otherwise
-## (inference: the GDD states no default). Off re-baselines a held offset.
+## The player's accessibility flinch toggle (ADR-0015 §4), from NetAuthority.flinch_enabled_changed;
+## the round composer seeds it from NetAuthority at round start (off until the client has sent it). A
+## ViewOffset used alone defaults to on (inference: the GDD states no default). Off re-baselines a held
+## offset.
 func set_flinch_enabled(player_id: int, on: bool) -> void:
 	_state(player_id).enabled = on
 	if not on:
 		rebaseline(player_id)
 
 
-## Resets the offset to 0 without moving the view (Hidden, Seized; the bus resets call it too).
-## Nothing to do when no offset is held or ramping.
+## Resets the offset to 0 without moving the view (Hidden, Seized; the bus resets call it too): ends
+## the epoch with the held offset as its base and starts the next. Nothing to do when no offset is held
+## or ramping in the current epoch.
 func rebaseline(player_id: int) -> void:
 	var cur := _current(player_id)
 	if cur.from == Vector2.ZERO and cur.target == Vector2.ZERO:
 		return
+	var p := _state(player_id)
+	var held := offset_of(player_id)
+	p.ended[p.epoch] = {"end": _bus.tick, "held": held}
+	p.ended.erase(posmod(p.epoch - HISTORY, ID_MOD))
+	p.epoch = (p.epoch + 1) % ID_MOD
 	var r := FlinchRecord.new()
 	r.rebaseline = true
-	r.fold = offset_of(player_id)
+	r.fold = held
 	_write(player_id, r)
+
+
+## Sends the player's current record again, unchanged (a spectator switched onto this player: ADR-0015
+## §2 sends the record to the owner's spectators, and ServerMovement.watch() starts the spectator's stream
+## with nothing). The owner already has it: the same record id is neither folded again nor reset.
+func resend(player_id: int) -> void:
+	_emit(player_id, _current(player_id))
 
 
 ## Holds the current offset where it is (a lunge wind-up cancels a running flinch).
@@ -122,20 +148,40 @@ func _on_round_ended(_e: ServerEvent) -> void:
 		rebaseline(pid)
 
 
-## Reconnect: the server discards the offset and the client starts fresh on record 0, so both agree.
+## Reconnect: the rejoined client starts a fresh LocalInput on epoch 0 and record 0, and ServerMovement
+## gives it a fresh input queue, so no old frame is in flight. The server restarts the player on epoch 0,
+## record 0 too and sends that record as a re-baseline carrying the held offset, so a fresh client agrees
+## on its first frame and a client that kept its LocalInput folds instead of snapping (inference: the
+## client scene is not written yet; a fresh LocalInput per join is what round_client would settle). The
+## flinch toggle is a session setting and survives.
 func _on_connection(e: ServerEvent) -> void:
 	var c := e as EvPlayerConnectionChanged
-	if c.status == EvPlayerConnectionChanged.RECONNECTED:
-		_players.erase(c.player)
+	if c.status != EvPlayerConnectionChanged.RECONNECTED or not _players.has(c.player):
+		return
+	var held := offset_of(c.player)
+	var enabled: bool = _players[c.player].enabled
+	_players.erase(c.player)
+	var p := _state(c.player)
+	p.enabled = enabled
+	var r: FlinchRecord = p.records[0]
+	r.rebaseline = true
+	r.fold = held
+	r.start_tick = _bus.tick
+	_emit(c.player, r)
 
 
 func _write(player_id: int, r: FlinchRecord) -> void:
 	var p := _state(player_id)
 	r.record_id = (p.cur + 1) % ID_MOD
+	r.view_epoch = p.epoch
 	r.start_tick = _bus.tick
 	p.records[r.record_id] = r
 	p.records.erase(posmod(r.record_id - HISTORY, ID_MOD))
 	p.cur = r.record_id
+	_emit(player_id, r)
+
+
+func _emit(player_id: int, r: FlinchRecord) -> void:
 	var e := EvViewOffsetChanged.new()
 	e.player = player_id
 	e.record = r
@@ -149,5 +195,6 @@ func _current(player_id: int) -> FlinchRecord:
 
 func _state(player_id: int) -> Dictionary:
 	if not _players.has(player_id):
-		_players[player_id] = {"records": {0: FlinchRecord.new()}, "cur": 0, "enabled": true}
+		_players[player_id] = {"records": {0: FlinchRecord.new()}, "cur": 0, "enabled": true, "epoch": 0,
+			"ended": {}}
 	return _players[player_id]

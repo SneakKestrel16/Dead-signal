@@ -11,8 +11,9 @@ func type() -> StringName:
 	return &"ViewOffsetChanged"
 
 
-## The owning player's client only. ADR-0015 §2 also sends it to that player's spectators; the
-## projection has no spectator input yet, so they are not reached.
+## The owning player's client, and that player's spectators: ServerMovement builds a spectator's event
+## batch projected as the watched survivor (ADR-0004 §8), so `peer` is the survivor for them too. A
+## spectator that switches mid-hold gets the record again through ViewOffset.resend().
 func project(peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
 	if peer != player:
 		return {}

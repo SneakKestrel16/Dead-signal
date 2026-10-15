@@ -27,6 +27,9 @@ signal player_joined(player_id: int)
 signal player_dropped(player_id: int)
 ## Server: a known token rebound its player to a new peer (after any eviction and visibility re-grant).
 signal player_rejoined(player_id: int, new_peer_id: int)
+## Server: a player's camera flinch toggle changed (ADR-0015 §4; story controller-interaction/013). The
+## round composer forwards it to ViewOffset.set_flinch_enabled, which re-baselines on off.
+signal flinch_enabled_changed(player_id: int, on: bool)
 ## Client: the server refused the join. Reason is one of REASON_*; details in last_reject_details.
 signal join_rejected(reason: StringName)
 ## Server: a join was refused with `reason` (one of REASON_*). The reply is on its way to the client.
@@ -55,6 +58,9 @@ static var _kick_packet := var_to_bytes({"kicked": String(REASON_KICKED)})
 ## byte, so untrusted bytes are never decoded and anything else leaves proximity_voice unchanged.
 static var _voice_on_packet := var_to_bytes({"proximity_voice": true})
 static var _voice_off_packet := var_to_bytes({"proximity_voice": false})
+## The camera flinch toggle requests (ADR-0015 §4), client to server; matched byte for byte like the above.
+static var _flinch_on_packet := var_to_bytes({"flinch_enabled": true})
+static var _flinch_off_packet := var_to_bytes({"flinch_enabled": false})
 
 ## ENet's default throttle measurement interval (ENET_PEER_PACKET_THROTTLE_INTERVAL); protocol constant.
 const THROTTLE_INTERVAL_MS := 5000
@@ -93,6 +99,8 @@ var _pending: Dictionary = {}
 var _tokens: Dictionary = {}
 ## Server: player ID -> sanitized display name, for the roster (LB-2). Public: names are shown.
 var _names: Dictionary[int, String] = {}
+## Server: player ID -> camera flinch toggle, kept in the session like the display name (ADR-0015 §4).
+var _flinch: Dictionary[int, bool] = {}
 ## player_id -> Array of MultiplayerSynchronizer this player may see (set_player_visibility).
 var _visibility: Dictionary = {}
 var _next_player_id: int = 0
@@ -121,6 +129,7 @@ func host(port: int) -> Error:
 		host_failed.emit(err)
 		return err
 	_attach(peer, _server_auth)
+	_smp.peer_packet.connect(_on_server_packet)
 	_smp.peer_connected.connect(_on_peer_connected)
 	_smp.peer_disconnected.connect(_on_peer_disconnected)
 	_smp.peer_authentication_failed.connect(_on_auth_failed)
@@ -171,6 +180,7 @@ func close() -> void:
 	_pending.clear()
 	_tokens.clear()
 	_names.clear()
+	_flinch.clear()
 	_visibility.clear()
 
 
@@ -202,6 +212,35 @@ func player_id_of_token(token: String) -> int:
 ## Server: `player_id`'s sanitized display name (the latest it joined with), or "" when unknown.
 func display_name_of(player_id: int) -> String:
 	return _names.get(player_id, "")
+
+
+## Client: the camera flinch toggle request for `on` (ADR-0015 §4). Send it reliably to the server on
+## join and on every change: `smp.send_bytes(NetAuthority.flinch_packet(on), 1, RELIABLE)`.
+static func flinch_packet(on: bool) -> PackedByteArray:
+	return _flinch_on_packet if on else _flinch_off_packet
+
+
+## Server: 1 for a flinch-on request, 0 for flinch-off, -1 for any other bytes (never decoded).
+static func flinch_request(bytes: PackedByteArray) -> int:
+	if bytes == _flinch_on_packet:
+		return 1
+	if bytes == _flinch_off_packet:
+		return 0
+	return -1
+
+
+## Server: `player_id`'s camera flinch toggle; false for a player that never sent one (ADR-0015 §4).
+func flinch_enabled_of(player_id: int) -> bool:
+	return _flinch.get(player_id, false)
+
+
+## Server: records `player_id`'s camera flinch toggle and raises flinch_enabled_changed when it changed
+## (a first value counts as a change). The host's own player, which has no peer, is set through here.
+func set_flinch_enabled(player_id: int, on: bool) -> void:
+	if _flinch.has(player_id) and _flinch[player_id] == on:
+		return
+	_flinch[player_id] = on
+	flinch_enabled_changed.emit(player_id, on)
 
 
 ## Server: registers the host's own player, which has no peer (ADR-0001: the caller adds it). Mints its
@@ -323,6 +362,14 @@ func _on_client_packet(peer_id: int, data: PackedByteArray) -> void:
 	elif not was_kicked and data == _kick_packet:
 		was_kicked = true
 		kicked.emit(REASON_KICKED)
+
+
+## Server: a bound player's flinch toggle request. Every other packet belongs to another listener.
+func _on_server_packet(peer_id: int, data: PackedByteArray) -> void:
+	var r := flinch_request(data)
+	var player_id := player_id_of(peer_id)
+	if r != -1 and player_id != -1:
+		set_flinch_enabled(player_id, r == 1)
 
 
 func _on_server_disconnected() -> void:

@@ -143,7 +143,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	lifecycle.freeze = _freeze
 	lifecycle.over = _over
 	lifecycle.remove = _remove
-	lifecycle.watch = sm.watch
+	lifecycle.watch = _watch
 	lifecycle.match_flow().set_exit(queries, _position)
 	bf.set_status_source(lifecycle.match_flow().status_of)
 	if hidden != null:
@@ -186,6 +186,10 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	if not errs.is_empty():
 		return errs
 	offset.setup(server.tick_runner, server.bus, server.registry, knobs)
+	server.registry.register_view(StateKeys.CAMERA_FLINCH_TOGGLE, &"NetworkAuthority", PlayerSettingsView.new(net))
+	for id in roster.player_ids():
+		offset.set_flinch_enabled(id, net.flinch_enabled_of(id))
+	net.flinch_enabled_changed.connect(offset.set_flinch_enabled)
 	server.bus.subscribe(&"SurvivorHit", _on_seized)
 	BackupSwitch.register_all(holds, map, lighting, knobs, _survivor_free)
 	_index_holds()
@@ -200,6 +204,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 ## Safe to call twice and from inside a tick.
 func stop() -> void:
 	sm.detach()
+	if net.flinch_enabled_changed.is_connected(offset.set_flinch_enabled):
+		net.flinch_enabled_changed.disconnect(offset.set_flinch_enabled)
 	if candidates != null:
 		candidates.end_round()
 		candidates = null
@@ -420,6 +426,13 @@ func _set_hidden(id: int, on: bool) -> void:
 	sd.set_hidden(id, on)
 	if on:
 		offset.rebaseline(id)
+
+
+## RoundLifecycle's watch: the spectator's stream starts empty, so the watched survivor's current flinch
+## record is sent again (ADR-0015 §2: the record reaches the owner's spectators).
+func _watch(spectator: int, survivor: int) -> void:
+	sm.watch(spectator, survivor)
+	offset.resend(survivor)
 
 
 ## A hit survivor is Seized: ViewOffset re-baselines it (ADR-0015).
