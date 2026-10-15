@@ -9,155 +9,245 @@
 #   done           ↔  Complete
 #   blocked        ↔  Blocked
 
-sprint: 6
-goal: "Give the server its two missing combat systems: the Predatory Lunge validated, hit-tested and resolved into Downing's takedown, and Survivor Defense's taser, shock lock, immunity and form-hiding events, hiding spots, barricades and flashlight, retiring the merged stand-ins."
-start: "2026-12-22"
-end: "2027-01-04"
+sprint: 7
+goal: "Make a real round run and be seen: a composition root that wires every module into one server round, a client round scene that joins and renders it, and the server-side work the seven newly accepted ADRs unblocked (results, discovery, lighting, flinch, False Signal, Blackout), with presentation stories following the client scene."
+start: "2027-01-05"
+end: "2027-01-18"
 generated: "2026-10-15"
 updated: "2026-10-15"
 
 stories:
-  - id: "monster-abilities-1"
-    name: "Ability requests and Lunge state machine"
-    file: "production/epics/monster-abilities/story-001-request-validation-and-lunge-states.md"
+  - id: "match-flow-10"
+    name: "Round composer (server composition root)"
+    file: "production/epics/match-flow/story-010-round-composer.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
-    estimate_days: 1
+    estimate_days: 2
     blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-2"
-    name: "Lunge wind-up root and dash"
-    file: "production/epics/monster-abilities/story-002-wind-up-and-dash.md"
+    completed: ""
+  - id: "match-flow-11"
+    name: "Client round scene"
+    file: "production/epics/match-flow/story-011-client-round-scene.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
-    estimate_days: 1
+    estimate_days: 2
     blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-3"
-    name: "Lunge hit test with lag compensation"
-    file: "production/epics/monster-abilities/story-003-hit-test-and-survivor-hit.md"
+    completed: ""
+  - id: "match-flow-12"
+    name: "Display state catch-up on rejoin"
+    file: "production/epics/match-flow/story-012-display-catch-up-on-rejoin.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-4"
-    name: "Lunge resolution, cooldown and miss slow"
-    file: "production/epics/monster-abilities/story-004-resolution-cooldown-miss-slow.md"
-    priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-1"
-    name: "Defense module, charges and intent validation"
-    file: "production/epics/survivor-defense/story-001-defense-module-charges-intents.md"
+    completed: ""
+  - id: "survivor-defense-13"
+    name: "Hiding marker facing and eject in front"
+    file: "production/epics/survivor-defense/story-013-hiding-marker-facing.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-2"
-    name: "Taser trace along the view ray with rewind"
-    file: "production/epics/survivor-defense/story-002-taser-trace.md"
-    priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-3"
-    name: "One shock lock, no refresh, post-lock window"
-    file: "production/epics/survivor-defense/story-003-shock-lock-post-lock-window.md"
-    priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-4"
-    name: "Monster stun, immunity and cancels"
-    file: "production/epics/survivor-defense/story-004-monster-stun-immunity-cancels.md"
+    completed: ""
+  - id: "match-flow-8"
+    name: "Results payload"
+    file: "production/epics/match-flow/story-008-results-payload.md"
     priority: must-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-5"
-    name: "Identity-hiding stun and shock events"
-    file: "production/epics/survivor-defense/story-005-identity-hiding-events.md"
+    completed: ""
+  - id: "monster-abilities-8"
+    name: "Ability stats for results"
+    file: "production/epics/monster-abilities/story-008-ability-stats.md"
     priority: must-have
-    status: done
-    owner: ""
-    estimate_days: 1
-    blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-5"
-    name: "AbilityUsed emission and Lunge state publishing"
-    file: "production/epics/monster-abilities/story-005-ability-used-and-state.md"
-    priority: should-have
-    status: done
+    status: ready-for-dev
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
-  - id: "monster-abilities-6"
-    name: "Integrate with Downing and Borrowed Face"
-    file: "production/epics/monster-abilities/story-006-integrate-downing-borrowed-face.md"
-    priority: should-have
-    status: done
+    completed: ""
+  - id: "facility-map-7"
+    name: "Candidate point selection and placement constraints"
+    file: "production/epics/facility-map/story-007-candidate-selection.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-6"
-    name: "Hiding spots: enter, exit, occupancy, search"
-    file: "production/epics/survivor-defense/story-006-hiding-spots.md"
-    priority: should-have
-    status: done
+    completed: ""
+  - id: "facility-map-8"
+    name: "Candidate replication and discovery agreement"
+    file: "production/epics/facility-map/story-008-candidate-replication.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-7"
-    name: "Barricade build and remove, closed doors block the dash"
-    file: "production/epics/survivor-defense/story-007-barricade-build-remove-door-block.md"
-    priority: should-have
-    status: done
+    completed: ""
+  - id: "survivor-objectives-8"
+    name: "Active point selection"
+    file: "production/epics/survivor-objectives/story-008-active-point-selection.md"
+    priority: must-have
+    status: ready-for-dev
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-8"
-    name: "Barricade break, persistence and rebarricade lockout"
-    file: "production/epics/survivor-defense/story-008-barricade-break-lockout.md"
+    completed: ""
+  - id: "survivor-objectives-9"
+    name: "Objective discovery"
+    file: "production/epics/survivor-objectives/story-009-discovery.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "facility-map-9"
+    name: "Per-volume lighting state machine and precedence"
+    file: "production/epics/facility-map/story-009-lighting-state-machine.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "controller-interaction-13"
+    name: "Flinch view offset and client-only camera effects"
+    file: "production/epics/controller-interaction/story-013-view-offset-camera-effects.md"
+    priority: must-have
+    status: ready-for-dev
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-9"
+    name: "False Signal (Vertical Slice)"
+    file: "production/epics/monster-abilities/story-009-false-signal.md"
     priority: should-have
-    status: done
+    status: backlog
+    owner: ""
+    estimate_days: 2
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-10"
+    name: "Blackout (Vertical Slice)"
+    file: "production/epics/monster-abilities/story-010-blackout.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 2
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-10"
+    name: "Hiding noise and the long-hide cue"
+    file: "production/epics/survivor-defense/story-010-hide-noise-and-long-hide-cue.md"
+    priority: should-have
+    status: backlog
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-9"
-    name: "Flashlight toggle and replicated cone"
-    file: "production/epics/survivor-defense/story-009-flashlight-toggle.md"
+    completed: ""
+  - id: "controller-interaction-14"
+    name: "Footstep events from gait and disguise"
+    file: "production/epics/controller-interaction/story-014-footsteps.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "borrowed-face-9"
+    name: "Disguise and true-form rendering"
+    file: "production/epics/borrowed-face/story-009-disguise-rendering.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "lobby-role-assignment-5"
+    name: "Lobby screen: player list, Ready and countdown"
+    file: "production/epics/lobby-role-assignment/story-005-lobby-screen.md"
+    priority: should-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "lobby-role-assignment-6"
+    name: "No name tags or role indicators on bodies"
+    file: "production/epics/lobby-role-assignment/story-006-no-role-indicators.md"
     priority: nice-to-have
-    status: done
+    status: backlog
     owner: ""
     estimate_days: 0.5
     blocker: ""
-    completed: "2026-10-15"
-  - id: "survivor-defense-12"
-    name: "Five-client agreement and retiring the stand-ins"
-    file: "production/epics/survivor-defense/story-012-five-client-agreement-retire-stand-ins.md"
+    completed: ""
+  - id: "facility-map-10"
+    name: "Lighting replication, Blackout scope and reduced flash"
+    file: "production/epics/facility-map/story-010-lighting-render-blackout.md"
     priority: nice-to-have
-    status: done
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "facility-map-11"
+    name: "Surveillance cameras at the C1 monitor"
+    file: "production/epics/facility-map/story-011-surveillance-cameras.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "facility-map-12"
+    name: "Zone ambience and B3 footstep masking"
+    file: "production/epics/facility-map/story-012-zone-ambience.md"
+    priority: nice-to-have
+    status: backlog
     owner: ""
     estimate_days: 1
     blocker: ""
-    completed: "2026-10-15"
+    completed: ""
+  - id: "borrowed-face-10"
+    name: "Transformation warp and distortion audio"
+    file: "production/epics/borrowed-face/story-010-transform-warp-audio.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
+  - id: "monster-abilities-7"
+    name: "Lunge cue, coil pose and hit feedback"
+    file: "production/epics/monster-abilities/story-007-lunge-presentation.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "survivor-defense-11"
+    name: "Shock presentation per form and cosmetic flashlight copy"
+    file: "production/epics/survivor-defense/story-011-per-form-presentation.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1.5
+    blocker: ""
+    completed: ""
+  - id: "lobby-role-assignment-12"
+    name: "Lobby queue order and preference display (post-M1)"
+    file: "production/epics/lobby-role-assignment/story-012-queue-order-display.md"
+    priority: nice-to-have
+    status: backlog
+    owner: ""
+    estimate_days: 1
+    blocker: ""
+    completed: ""
