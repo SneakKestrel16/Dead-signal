@@ -4,7 +4,7 @@
 > **GDD**: none. The design record is the two UX specs, `design/ux/hud.md` and `design/ux/results.md` (both reviewed by `/ux-review` 2026-10-15; fixes in AD-227 to AD-232), with patterns from `design/ux/interaction-patterns.md`.
 > **Architecture Module**: HUD & Results (`docs/architecture/architecture.md` Presentation layer)
 > **Status**: Ready
-> **Stories**: Not yet created — run `/create-stories hud-results`
+> **Stories**: 10 stories, see the Stories table below
 
 ## Overview
 
@@ -63,6 +63,21 @@ This epic is complete when:
 - All acceptance criteria from `design/ux/hud.md` and `design/ux/results.md` are verified
 - All Logic and Integration stories have passing test files in `tests/`
 - All Visual/Feel and UI stories have retained screenshots in `production/qa/evidence/` — each screen touched for UI, plus a lead sign-off for Visual/Feel
+
+## Stories
+
+| # | Story | Type | Status | ADR |
+|---|-------|------|--------|-----|
+| 001 | HudModel, UiLayers and the full InputContextStack | Logic | Ready | ADR-0014 |
+| 002 | Clock, phase, roster, objective checklist and crosshair | UI | Ready | ADR-0014 |
+| 003 | Interaction prompt, hold ring, reject label and input glyphs | UI | Ready | ADR-0014 |
+| 004 | Own-state vignettes, own bleed-out and the HUD state table | UI | Ready | ADR-0014 |
+| 005 | Edge cues, flinch-off pulse, taser count and world progress bars | UI | Ready | ADR-0014 |
+| 006 | Shapeshifter HUD and survivor-side absence | UI | Ready | ADR-0014 |
+| 007 | Feed cap, opaque backing, marker cap, shapes and wheel stick steering | UI | Ready | ADR-0014 |
+| 008 | Results screen | UI | Ready | ADR-0014 |
+| 009 | Lobby "Last round" view | UI | Ready | ADR-0014 |
+| 010 | Visual budget and accessibility verification pass | UI | Ready | ADR-0014 |
 
 ## Next Step
 
