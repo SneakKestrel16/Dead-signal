@@ -16,7 +16,7 @@ const CHANGES := 10
 ## Index (into the survivors) of the client that reconnects mid-disguise.
 const REJOINER := 2
 ## Keys a non-own snapshot entry may carry: appearance and presentation, never identity (AC 2).
-const PUPPET_KEYS := ["appearance", "gait", "id", "pos", "transforming", "yaw"]
+const PUPPET_KEYS := ["appearance", "flashlight", "gait", "id", "pos", "transforming", "yaw"]
 
 static var _next_port := 26700
 

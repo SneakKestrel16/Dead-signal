@@ -22,6 +22,10 @@ const SHOT_BLOCKED := "blocked"
 const SHOT_RANGE := "range"
 ## Float slack on the inclusive range and aim boundaries (float32 positions).
 const TRACE_EPS := 1e-4
+## Intent values: set the flashlight on / off (rule 2, story 009). The packet carries the wanted state, not
+## a flip, so a duplicated or resent packet cannot invert it.
+const LIGHT_ON := 2
+const LIGHT_OFF := 3
 ## Intent packet dictionary key.
 const INTENT_KEY := "item"
 ## decode_intent's result for bytes that are not an intent.
@@ -55,6 +59,11 @@ var _resolved: Array[Dictionary] = []
 var _hidden: Dictionary[int, bool] = {}
 ## player -> this tick's intent (the first one received since the last tick).
 var _pending: Dictionary[int, int] = {}
+## Survivor -> flashlight on (rules 2-5, story 009). Absent: no flashlight (the monster; story 011 owns
+## its cosmetic copy) or eliminated. Nothing reads it but the snapshot: it never touches the monster.
+var _light: Dictionary[int, bool] = {}
+## player -> this tick's wanted flashlight state (the last one received since the last tick).
+var _light_pending: Dictionary[int, bool] = {}
 
 
 ## Getter-only view for StateKeys.HIDDEN_ITEM_USE readers. Holds the module weakly; after the module
@@ -123,8 +132,11 @@ func setup(_tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, kno
 	_use_delay_ticks = knobs.ticks(knobs.defense.stun_use_delay_s)
 	_range_m = knobs.defense.stun_range_m
 	_aim_tol_rad = deg_to_rad(knobs.defense.stun_aim_tolerance_deg)
+	_light = {}
+	_light_pending = {}
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
+		_light[s] = false
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
 
@@ -134,13 +146,18 @@ static func fire_packet() -> PackedByteArray:
 	return var_to_bytes({INTENT_KEY: FIRE})
 
 
+## The bytes a survivor's client sends to set its flashlight `on` (FlashlightPredictor.toggle builds them).
+static func light_packet(on: bool) -> PackedByteArray:
+	return var_to_bytes({INTENT_KEY: LIGHT_ON if on else LIGHT_OFF})
+
+
 ## The intent in untrusted `bytes`, or INVALID_INTENT when they are not exactly a known intent. Only
 ## the shape is checked; whether it may run is decided in server_tick.
 static func decode_intent(bytes: PackedByteArray) -> int:
 	if bytes.is_empty() or bytes.size() > REQUEST_CAP_BYTES:
 		return INVALID_INTENT
 	var d: Variant = bytes_to_var(bytes)
-	if not (d is Dictionary and d.size() == 1 and d.get(INTENT_KEY) is int and d[INTENT_KEY] == FIRE):
+	if not (d is Dictionary and d.size() == 1 and d.get(INTENT_KEY) is int and d[INTENT_KEY] in [FIRE, LIGHT_ON, LIGHT_OFF]):
 		return INVALID_INTENT
 	return d[INTENT_KEY]
 
@@ -148,10 +165,14 @@ static func decode_intent(bytes: PackedByteArray) -> int:
 ## Server entry for a client's intent from `player` (the sender as the network layer identifies it,
 ## never a field of the bytes). Only the first intent of a tick is kept; it is validated at the
 ## SURVIVOR_DEFENSE step.
+## Flashlight intents are kept apart, last one wins: the client's final state is the one it predicted.
 func request_intent(player: int, bytes: PackedByteArray) -> void:
+	var intent := decode_intent(bytes)
+	if intent == LIGHT_ON or intent == LIGHT_OFF:
+		_light_pending[player] = intent == LIGHT_ON
+		return
 	if _pending.has(player):
 		return
-	var intent := decode_intent(bytes)
 	if intent != INVALID_INTENT:
 		_pending[player] = intent
 
@@ -159,6 +180,10 @@ func request_intent(player: int, bytes: PackedByteArray) -> void:
 ## SURVIVOR_DEFENSE slot: validates this tick's fire intents (rules 8, 13). A survivor downed on this
 ## tick was Seized until Downing's slot (500) and so is already refused here.
 func server_tick(tick: int) -> void:
+	for p: int in _light_pending: # rule 2: no battery, no gate but holding one (hidden keeps it, rule 23)
+		if _light.has(p):
+			_light[p] = _light_pending[p]
+	_light_pending = {}
 	for p: int in _pending:
 		if can_fire(p, tick):
 			_charges[p] -= 1
@@ -181,6 +206,11 @@ func charges(player: int) -> int:
 	return _charges.get(player, 0)
 
 
+## Whether `player`'s flashlight is on (rule 3: every client sees the cone). ServerMovement.flashlight_of.
+func flashlight_on(player: int) -> bool:
+	return _light.get(player, false)
+
+
 ## Whether `player` is hidden.
 func is_hidden(player: int) -> bool:
 	return _hidden.has(player)
@@ -189,6 +219,7 @@ func is_hidden(player: int) -> bool:
 ## Rule 13: charges are lost on elimination.
 func _on_eliminated(e: ServerEvent) -> void:
 	var s := (e as EvSurvivorEliminated).survivor
+	_light.erase(s) # story 009: an eliminated survivor shows no cone
 	if _charges.has(s):
 		_charges[s] = 0
 

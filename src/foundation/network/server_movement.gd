@@ -56,6 +56,9 @@ var appearance_of: Callable
 ## Every entry's transforming flag (borrowed-face.md rule 8): BorrowedFace.transforming_of, (player) -> bool.
 ## Set by the composition root; unset means no body is transforming.
 var transforming_of: Callable
+## Every entry's flashlight flag (survivor-defense.md rule 3): SurvivorDefense.flashlight_on, (player) -> bool.
+## Set by the composition root; unset means no flashlight is on.
+var flashlight_of: Callable
 ## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
 var _sounds: Array[EventBatch.Sound] = []
 ## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
@@ -353,7 +356,8 @@ func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 	var p: PlayerState = _players[player_id]
 	var e := {"id": id, "pos": p.body.global_position, "yaw": p.frame.yaw, "gait": _gait(p.frame),
 		"appearance": appearance_of.call(player_id) if appearance_of.is_valid() else SnapshotCodec.NO_APPEARANCE,
-		"transforming": transforming_of.is_valid() and transforming_of.call(player_id)}
+		"transforming": transforming_of.is_valid() and transforming_of.call(player_id),
+		"flashlight": flashlight_of.is_valid() and flashlight_of.call(player_id)}
 	if own:
 		e["own"] = true
 		e["seq"] = p.ack_seq
