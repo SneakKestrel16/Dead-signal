@@ -42,6 +42,9 @@ var objectives: SurvivorObjectives
 var ma: MonsterAbilities
 var lifecycle: RoundLifecycle
 var lighting: FacilityLighting
+## The C1 monitor feeds (facility-map story 011).
+var cams: Surveillance
+var _door_net: Dictionary[StringName, int] = {}
 ## Sends lighting records per viewer (facility-map story 010); kept here, sm holds only its Callable.
 var lighting_rep: LightingReplication
 ## Runs HoldService in the HOLDS slot and owns the RoundEnded freeze.
@@ -163,8 +166,17 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.appearance_of = bf.appearance_of
 	sm.transforming_of = bf.transforming_of
 	sm.flashlight_of = sd.flashlight_on
-	sm.batch_extras.assign([downing.ring_entries, sd.charge_entries, hs.hiding_entries, bars.barricade_entries])
+	# Facility-map story 011: relevance reads the authored visibility sets (cut by closed doors) plus a viewed
+	# camera's volumes. Before this the composed round used the near rule only (ServerMovement's documented
+	# default until the root sets these).
+	cams = Surveillance.new(map, knobs, _can_view, _centre, holds.hold_of, _door_closed)
+	sm.scope.relevance.volume_at = queries.volume_at
+	sm.scope.relevance.visible_volumes = _visible_volumes
+	sm.scope.relevance.extra_volumes = cams.extra_volumes
+	sm.batch_extras.assign([downing.ring_entries, sd.charge_entries, hs.hiding_entries, bars.barricade_entries,
+			cams.camera_entries])
 	lighting_rep = LightingReplication.new(lighting, map, _position, doors.is_closed, _tick)
+	lighting_rep.extra_volumes = cams.extra_volumes
 	sm.batch_extras.append(lighting_rep.entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
@@ -187,6 +199,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		TickOrder.DOWNING: downing,
 		TickOrder.HOLDS: controller,
 		TickOrder.HIDING_SPOTS: hs,
+		TickOrder.SURVEILLANCE: cams,
 		TickOrder.FOOTSTEPS: footsteps,
 		TickOrder.SURVIVOR_OBJECTIVES: objectives,
 		TickOrder.MATCH_FLOW_RESOLVE: lifecycle.resolve_step(),
@@ -201,6 +214,7 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	net.flinch_enabled_changed.connect(offset.set_flinch_enabled)
 	server.bus.subscribe(&"SurvivorHit", _on_seized)
 	BackupSwitch.register_all(holds, map, lighting, knobs, _survivor_free)
+	holds.register(cams)
 	_index_holds()
 	if candidates != null:
 		candidates.start_round(objectives.active(), survivors, monster)
@@ -490,6 +504,27 @@ func _objective_healthy(id: int) -> bool:
 func _survivor_free(id: int) -> bool:
 	return id != monster and downing.life_state(id) == Downing.LifeState.HEALTHY \
 			and not downing.action_locked(id) and not sd.locked(id)
+
+
+## Surveillance's viewer rule: any player, the monster included (scare-events.md rule 2a), unless shock-locked,
+## Seized or Downed (ADR-0009 §8 "shocked or downed").
+func _can_view(id: int) -> bool:
+	return not sd.locked(id) and not downing.action_locked(id)
+
+
+## Door passage id -> closed or barricaded, for visibility sets (doors' net ids are their MapData.interactables
+## index), built once.
+func _door_closed(door: StringName) -> bool:
+	if _door_net.is_empty():
+		var targets := map.interactables()
+		for i in targets.size():
+			if targets[i] is MapPassage:
+				_door_net[(targets[i] as MapPassage).id] = i
+	return _door_net.has(door) and doors.is_closed(_door_net[door])
+
+
+func _visible_volumes(volume: StringName) -> PackedStringArray:
+	return queries.visible_set(volume, _door_closed)
 
 
 ## Barricades' monster: the monster in any form, unless shock-locked.

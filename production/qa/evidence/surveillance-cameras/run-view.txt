@@ -1,0 +1,51 @@
+SHOWING Client0 (survivor)
+FEED camera 0 at frame 18 (trueform)
+LIGHTING B1 { "base": 0, "overlays": 0, "dark_until": 0 } H-S3 { "base": 0, "overlays": 0, "dark_until": 0 } (shown client's received records)
+DRAWN handle 47572886 appearance 0 at (28.6, 0.0, 22.8) visible true stagger 0.00
+DRAWN handle 1692914843 appearance 3 at (30.0, 0.0, 23.4) visible true stagger 0.00
+RENDER trueform over 45 frames: feed cpu 0.116 gpu 0.066 ms, main cpu 0.205 gpu 0.318 ms
+SHOT <tmp>/trueform.png of frame 63
+SHOT <tmp>/feed_trueform.png
+FEED camera 0 at frame 618 (disguise)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 0 } H-S3 { "base": 0, "overlays": 0, "dark_until": 0 } (shown client's received records)
+DRAWN handle 47572886 appearance 3 at (28.6, 0.0, 22.8) visible true stagger 0.00
+DRAWN handle 1692914843 appearance 3 at (30.0, 0.0, 23.4) visible true stagger 0.00
+RENDER disguise over 45 frames: feed cpu 0.099 gpu 0.081 ms, main cpu 0.204 gpu 0.299 ms
+SHOT <tmp>/disguise.png of frame 663
+SHOT <tmp>/feed_disguise.png
+FEED camera 1 at frame 679 (cam2)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 0 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+DRAWN handle 47572886 appearance 3 at (28.6, 0.0, 22.8) visible true stagger 0.00
+DRAWN handle 1692914843 appearance 3 at (30.0, 0.0, 23.4) visible true stagger 0.00
+RENDER cam2 over 45 frames: feed cpu 0.071 gpu 0.072 ms, main cpu 0.213 gpu 0.297 ms
+SHOT <tmp>/cam2.png of frame 724
+SHOT <tmp>/feed_cam2.png
+FEED camera 2 at frame 739 (cam3)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 0 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+RENDER cam3 over 45 frames: feed cpu 0.079 gpu 0.079 ms, main cpu 0.192 gpu 0.264 ms
+SHOT <tmp>/cam3.png of frame 784
+SHOT <tmp>/feed_cam3.png
+FEED camera 3 at frame 800 (cam4)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 0 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+RENDER cam4 over 45 frames: feed cpu 0.093 gpu 0.093 ms, main cpu 0.196 gpu 0.294 ms
+SHOT <tmp>/cam4.png of frame 845
+SHOT <tmp>/feed_cam4.png
+FEED camera -1 at frame 858 (off)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 0 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+RENDER off over 45 frames: feed cpu 0.105 gpu 0.066 ms, main cpu 0.217 gpu 0.320 ms
+SHOT <tmp>/off.png of frame 903
+FEED camera 0 at frame 2367 (dark)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 1561 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+DRAWN handle 870522456 appearance 3 at (28.6, 0.0, 22.8) visible true stagger 0.00
+DRAWN handle 1082596147 appearance 3 at (30.0, 0.0, 23.4) visible true stagger 0.00
+RENDER dark over 45 frames: feed cpu 0.088 gpu 0.082 ms, main cpu 0.194 gpu 0.291 ms
+SHOT <tmp>/dark.png of frame 2412
+SHOT <tmp>/feed_dark.png
+FEED camera 1 at frame 2420 (dark_cam2)
+LIGHTING B1 { "base": 1, "overlays": 0, "dark_until": 1561 } H-S3 { "base": 1, "overlays": 0, "dark_until": 0 } (shown client's received records)
+DRAWN handle 870522456 appearance 3 at (28.6, 0.0, 22.8) visible true stagger 0.00
+DRAWN handle 1082596147 appearance 3 at (30.0, 0.0, 23.4) visible true stagger 0.00
+RENDER dark_cam2 over 45 frames: feed cpu 0.071 gpu 0.079 ms, main cpu 0.186 gpu 0.320 ms
+SHOT <tmp>/dark_cam2.png of frame 2465
+SHOT <tmp>/feed_dark_cam2.png
+WARNING: 10 ObjectDB instances were leaked at exit (run with `--verbose` for details).

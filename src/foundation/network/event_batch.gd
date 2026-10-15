@@ -24,6 +24,9 @@ const HIDING := &"Hiding"
 ## Entry type of a barricadable door's state (Barricades.barricade_entries, AD-194): {door, barricaded,
 ## lockout_end} (lockout_end the tick rule 28's lockout ends, -1 when it never broke). Sent to everyone.
 const BARRICADE := &"Barricade"
+## Entry type of the viewer's own monitor feed (Surveillance.camera_entries, facility-map story 011):
+## {camera}, the camera index 0-3 or -1 when off. Not a catalog event; sent to the viewer only, on change.
+const CAMERA := &"Camera"
 ## Entry type of one lighting volume's record (LightingReplication.entries, story facility-map/010, ADR-0009
 ## §5): {volume, base, overlays, dark_until} (dark_until the tick its Blackout ends, 0 = not dark). Sent to a
 ## viewer only for volumes in its visibility set, on change.

@@ -70,6 +70,8 @@ func errors() -> PackedStringArray:
 			out.append("marker %s: position is not in volume %s" % [m.id, m.volume])
 		if m.type == &"hiding" and is_nan(m.yaw_deg):
 			out.append("marker %s: hiding marker has no yaw_deg" % m.id)
+		if m.type == &"camera" and is_nan(m.yaw_deg):
+			out.append("marker %s: camera marker has no yaw_deg" % m.id)
 	for t in MARKER_TYPES:
 		if not types.has(t):
 			out.append("missing marker type: %s" % t)

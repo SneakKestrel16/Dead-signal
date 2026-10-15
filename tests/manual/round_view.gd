@@ -12,6 +12,12 @@ extends Node3D
 ## --bot=look turns the shown client to face the nearest remote body it draws (the screenshots).
 ## --bot=walk walks a survivor from the A1 spawn through the A1-H-S archway into H-S1 (zone A -> link) and
 ## saves zone_a.png, crossfade.png (half a crossfade after the border) and link.png (FM-12 ambience overlay).
+## --bot=monitor (facility-map story 011; run against round_host --place=monitor) shows the client nearest the
+## C1 monitor, aims it at the monitor and presses interact to cycle the feed: trueform.png on camera 1 before
+## the disguise, disguise.png on camera 1 once the shapeshifter wears its B1 neighbour's form, cam2-4.png and
+## off.png after each further press; feed_<tag>.png is the feed viewport alone. The other clients' remote bodies
+## are hidden so only the shown client's drawing (its relevance, its snapshot appearance) is on screen. Prints
+## the feed and main viewports' measured render times. The other clients' LightingPresenters are hidden too.
 ## --bot=lunge (story monster-abilities/007): the shown client faces the shapeshifter's body; the shapeshifter's
 ## client (another --count client) walks at the shown client and requests one Lunge within LUNGE_FROM_M. With
 ## --shots it saves windup.png (mid wind-up), dash.png (just after it) and hit.png (the hit-stop), as the
@@ -85,6 +91,10 @@ var _refired := false
 ## --bot=walk: waypoint index, and seconds since the border was crossed (-1 before).
 var _leg := 0
 var _since_border := -1.0
+## --bot=monitor: the next capture step, the frame the step started, render time samples.
+var _step := 0
+var _step_frame := -1
+var _times: Dictionary[String, Array] = {}
 var _blackout_sent := false
 var _routed: Dictionary[int, bool] = {}
 var _measure: Array[float] = []
@@ -152,6 +162,8 @@ func _process(delta: float) -> void:
 		_stage(c0)
 	elif _args.get("bot", "") == "walk":
 		_walk(c0, delta)
+	elif _args.get("bot", "") == "monitor":
+		_monitor(c0)
 	elif _args.get("bot", "") == "lunge":
 		_lunge_bot(c0)
 
@@ -164,6 +176,9 @@ func _pick_view() -> void:
 		var c := _clients[i]
 		if not c.is_spawned():
 			continue ## the role reads from the own entry once spawned
+		if want == "monitor" and c.body.global_position.distance_to(Vector3(51, 0, 7)) < 3.0:
+			pick = c
+			break
 		if want == str(i) or (want == "monster" and _role(c)) or (want == "survivor" and not _role(c)):
 			pick = c
 			break
@@ -485,6 +500,110 @@ func _walk(c: RoundClient, delta: float) -> void:
 			print("LINK %s" % c.ambience.debug_text())
 			_shot("link")
 
+## Camera captures in order: [tag, camera wanted, wait for the disguise first, wait for B1 dark first]. B1 is
+## dark only when round_host --force=<s>:blackout fires; "dark" and "dark_cam2" wait for it.
+const MONITOR_STEPS := [["trueform", 0, false, false], ["disguise", 0, true, false], ["cam2", 1, false, false],
+	["cam3", 2, false, false], ["cam4", 3, false, false], ["off", -1, false, false], ["dark", 0, false, true],
+	["dark_cam2", 1, false, false]]
+## Drawn frames a step waits once its camera shows (interpolation and the feed settle) before the shot.
+const MONITOR_SETTLE := 45
+
+
+func _monitor(c0: RoundClient) -> void:
+	process_priority = 100 # after the clients' _process, so the hiding below sticks this frame
+	var m: RoundClient = null
+	var target: RoundClient = null
+	for c in _clients:
+		if not c.is_spawned():
+			return
+		if c != c0:
+			for n: Node3D in c.remotes.values():
+				n.visible = false
+			if c.lights != null:
+				c.lights.visible = false # only the shown client's received lighting records light the world
+		if _role(c):
+			m = c
+	for c in _clients:
+		if c != c0 and c != m and (target == null or c.body.global_position.distance_to(m.body.global_position)
+				< target.body.global_position.distance_to(m.body.global_position)):
+			target = c
+	var face := target.body.global_position - m.body.global_position
+	m.scripted.yaw = atan2(-face.x, -face.z)
+	var eye := c0.body.global_position + Vector3.UP * _knobs.controller.eye_height_m
+	var point := Vector3(51.0, _knobs.controller.capsule_height_m * 0.5, 7.0)
+	var flat := Vector2(point.x - eye.x, point.z - eye.z)
+	c0.scripted.yaw = atan2(-flat.x, -flat.y)
+	c0.scripted.pitch = atan2(point.y - eye.y, flat.length())
+	if _step >= MONITOR_STEPS.size():
+		return
+	var frame := Engine.get_frames_drawn()
+	var step: Array = MONITOR_STEPS[_step]
+	if frame % 90 == 0:
+		print("MONITOR step %d feed %d target %d appearance %d/%d" % [_step, c0.feed.current,
+				c0.local_target(c0.scripted.yaw, c0.scripted.pitch), m.predictor.last_own.get("appearance", -1),
+				target.predictor.last_own.get("appearance", -2)])
+	_sample_times(c0, step[0])
+	if step[2] and m.predictor.last_own.get("appearance", -1) != target.predictor.last_own.get("appearance", -2):
+		if frame % REQUEST_EVERY == 0:
+			(m.multiplayer as SceneMultiplayer).send_bytes(
+					BorrowedFace.request_packet(target.predictor.last_own.get("id", -1)), 1,
+					MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+		return
+	if step[3] and c0.feed.current == step[1] and c0.lights.record_of(&"B1").get("dark_until", 0) == 0:
+		return
+	if c0.feed.current != step[1]:
+		_step_frame = -1
+		# A rising edge per press: hold interact for 3 frames out of every 12.
+		c0.scripted.interact = frame % 12 < 3
+		return
+	c0.scripted.interact = false
+	if _step_frame < 0:
+		_step_frame = frame
+		print("FEED camera %d at frame %d (%s)" % [c0.feed.current, frame, step[0]])
+	if frame == _step_frame + MONITOR_SETTLE:
+		print("LIGHTING B1 %s H-S3 %s (shown client's received records)" % [c0.lights.record_of(&"B1"),
+				c0.lights.record_of(&"H-S3")])
+	if frame == _step_frame + MONITOR_SETTLE:
+		_print_drawn(c0)
+		_shot(step[0])
+		_feed_shot(c0, step[0])
+		_print_times(step[0])
+		_step += 1
+		_step_frame = -1
+
+
+## Saves the feed viewport's own image (only while the feed renders).
+func _feed_shot(c: RoundClient, tag: String) -> void:
+	if not _args.has("shots") or c.feed.current == Surveillance.OFF:
+		return
+	await RenderingServer.frame_post_draw
+	var path := "%s/feed_%s.png" % [_args["shots"], tag]
+	c.feed.viewport.get_texture().get_image().save_png(path)
+	print("SHOT %s" % path)
+
+
+## Collects the feed and main viewports' measured CPU and GPU render times (ms) per capture step.
+func _sample_times(c: RoundClient, tag: String) -> void:
+	var feed_rid := c.feed.viewport.get_viewport_rid()
+	var main_rid := get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(feed_rid, true)
+	RenderingServer.viewport_set_measure_render_time(main_rid, true)
+	var row: Array = _times.get_or_add(tag, [])
+	row.append([RenderingServer.viewport_get_measured_render_time_cpu(feed_rid),
+			RenderingServer.viewport_get_measured_render_time_gpu(feed_rid),
+			RenderingServer.viewport_get_measured_render_time_cpu(main_rid),
+			RenderingServer.viewport_get_measured_render_time_gpu(main_rid)])
+
+
+func _print_times(tag: String) -> void:
+	var rows: Array = _times.get(tag, [])
+	var sum := [0.0, 0.0, 0.0, 0.0]
+	for r: Array in rows.slice(maxi(0, rows.size() - MONITOR_SETTLE)):
+		for i in 4:
+			sum[i] += r[i]
+	var n := float(mini(rows.size(), MONITOR_SETTLE))
+	print("RENDER %s over %d frames: feed cpu %.3f gpu %.3f ms, main cpu %.3f gpu %.3f ms" % [tag, n,
+			sum[0] / n, sum[1] / n, sum[2] / n, sum[3] / n])
 
 ## --bot=lunge: see the class doc. Shots are timed from the shown client's coil, so they show what it drew.
 func _lunge_bot(c: RoundClient) -> void:

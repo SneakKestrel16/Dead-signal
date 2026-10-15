@@ -5,3 +5,4 @@
 [resource]
 script = ExtResource("1")
 max_flashes_per_s = 3
+feed_resolution = 360

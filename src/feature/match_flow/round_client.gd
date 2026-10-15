@@ -50,6 +50,8 @@ var shock: ShockPresenter
 var audio: PlaceholderAudio
 ## Zone ambience bed crossfade and its debug overlay (story facility-map/012); null when not rendering.
 var ambience: ZoneAmbience
+## The C1 monitor feed (story facility-map/011); null when not rendering.
+var feed: SurveillanceFeed
 ## Map lighting from the server's records (story facility-map/010, ADR-0009 §6); null when not rendering.
 var lights: LightingPresenter
 ## Lunge cue, coil, stumble and hit-stop (story monster-abilities/007); null when not rendering.
@@ -188,6 +190,9 @@ func _on_connected() -> void:
 		warp = TransformPresenter.new(remotes, puppets.state_of, knobs)
 		add_child(warp)
 		router.subscribe(EventBatch.SOUND, warp.on_sound)
+		feed = SurveillanceFeed.new(_map, knobs)
+		add_child(feed)
+		router.subscribe(EventBatch.CAMERA, feed.on_camera)
 		hud = CanvasLayer.new()
 		add_child(hud)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
@@ -311,7 +316,7 @@ func local_target(yaw: float, pitch: float) -> int:
 ## are instant (Doors), hiding = hide_transition_s / search_duration_s (HidingSpots), switch =
 ## backup_switch_hold_s (BackupSwitch). Inference for objective types (SurvivorObjectives picks the knob per
 ## point role; the marker type alone cannot tell a dock from a pickup): drive = drive_extract_s, fuse =
-## pickup_s, fuse_box = fuse_install_s, terminal and monitor = activation_start_s.
+## pickup_s, fuse_box = fuse_install_s, terminal = activation_start_s. The monitor is instant (Surveillance).
 func duration_of(index: int) -> float:
 	if index < 0 or index >= _targets.size() or _targets[index] is MapPassage:
 		return 0.0
@@ -320,6 +325,8 @@ func duration_of(index: int) -> float:
 			return knobs.defense.search_duration_s if is_monster() else knobs.defense.hide_transition_s
 		&"switch":
 			return knobs.ability.backup_switch_hold_s
+		&"monitor":
+			return 0.0
 		&"drive":
 			return knobs.objectives.drive_extract_s
 		&"fuse":

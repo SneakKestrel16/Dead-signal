@@ -8,7 +8,7 @@ class_name LightingReplication extends RefCounted
 ## visible volume. One change reaches every viewer in the same tick's reliable batch (AC 8, 12).
 ## A spectator's stream is projected as its watched survivor, so the change list is kept per player per
 ## tick and both streams of that tick get it.
-## Not here: the extra camera set while viewing the monitor (ADR-0009 §8, surveillance story).
+## A player watching a monitor camera also gets that camera's volumes (extra_volumes, ADR-0009 §8; story 011).
 ## Usage (composition root; keep a reference, a Callable does not keep this alive):
 ##   rep = LightingReplication.new(lighting, map, position_of, doors.is_closed, runner.current_tick)
 ##   sm.batch_extras.append(rep.entries)
@@ -23,6 +23,9 @@ var _queries: MapQueries
 var _position: Callable
 var _door_closed: Callable
 var _tick: Callable
+## `extra_volumes(player) -> PackedStringArray`: volumes beyond the player's own set it sees this tick (the
+## viewed camera's, Surveillance.extra_volumes). Unset = none.
+var extra_volumes: Callable
 ## Passage id -> door net id (doors are the first map interactables; a door's net id is its index).
 var _door_ids: Dictionary[StringName, int] = {}
 ## Player -> {volume: [base, overlays, dark_until]} last sent.
@@ -76,6 +79,10 @@ func _visible(player: int) -> PackedStringArray:
 		return PackedStringArray()
 	var seen := PackedStringArray([own])
 	seen.append_array(_queries.visible_set(own, _passage_closed))
+	if extra_volumes.is_valid():
+		for v: String in extra_volumes.call(player):
+			if not seen.has(v):
+				seen.append(v)
 	return seen
 
 

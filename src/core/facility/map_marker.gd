@@ -12,5 +12,6 @@ class_name MapMarker extends Resource
 @export var position: Vector3
 ## Hiding markers only (AD-200, survivor-defense story 013): the way the spot faces, in degrees about +Y
 ## with the controller's yaw convention (0 faces -Z, north; 90 faces -X, west). An eject lands in front
-## of the spot along it. Unset (NAN) on a hiding marker fails MapData.errors(); other types ignore it.
+## of the spot along it. Camera markers (facility-map story 011): the way the camera looks, same convention.
+## Unset (NAN) on a hiding or camera marker fails MapData.errors(); other types ignore it.
 @export var yaw_deg: float = NAN

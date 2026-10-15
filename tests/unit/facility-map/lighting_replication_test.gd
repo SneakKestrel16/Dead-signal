@@ -160,3 +160,20 @@ func test_second_stream_as_the_same_player_in_one_tick_gets_the_same_entries() -
 	_step()
 	var first := _rep.entries(IN_A6)
 	assert_array(_rep.entries(IN_A6)).is_equal(first)
+
+
+## Facility-map story 011 (ADR-0009 §8): a viewer watching a camera also gets the camera volumes' records,
+## so a Blackout in B1 reaches the A6 viewer watching c1 and stops reaching it when the feed is off.
+func test_a_viewed_cameras_volumes_are_sent_like_visible_ones() -> void:
+	var watching: Dictionary[int, PackedStringArray] = {}
+	_rep.extra_volumes = func(player: int) -> PackedStringArray: return watching.get(player, PackedStringArray())
+	_rep.entries(IN_A6)
+	_step()
+	_blackout(&"B1")
+	assert_bool(_by_volume(_rep.entries(IN_A6)).has(&"B1")).is_false()
+	_step()
+	watching[IN_A6] = PackedStringArray([&"B1"])
+	var got := _by_volume(_rep.entries(IN_A6))
+	assert_bool(got.has(&"B1")).is_true()
+	assert_int(got[&"B1"].dark_until).is_greater(0)
+	assert_bool(_by_volume(_rep.entries(IN_C4)).has(&"B1")).is_false()

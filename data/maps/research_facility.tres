@@ -705,6 +705,7 @@ id = &"c1"
 type = &"camera"
 volume = &"B1"
 position = Vector3(27.0, 0.0, 17.0)
+yaw_deg = -160.0
 
 [sub_resource type="Resource" id="m_c2"]
 script = ExtResource("4")
@@ -712,6 +713,7 @@ id = &"c2"
 type = &"camera"
 volume = &"H-S3"
 position = Vector3(38.0, 0.0, 39.0)
+yaw_deg = -90.0
 
 [sub_resource type="Resource" id="m_c3"]
 script = ExtResource("4")
@@ -719,6 +721,7 @@ id = &"c3"
 type = &"camera"
 volume = &"C4"
 position = Vector3(56.0, 0.0, 17.0)
+yaw_deg = 180.0
 
 [sub_resource type="Resource" id="m_c4"]
 script = ExtResource("4")
@@ -726,6 +729,7 @@ id = &"c4"
 type = &"camera"
 volume = &"A2-N"
 position = Vector3(12.0, 0.0, 13.0)
+yaw_deg = 180.0
 
 [sub_resource type="Resource" id="m_monitors"]
 script = ExtResource("4")

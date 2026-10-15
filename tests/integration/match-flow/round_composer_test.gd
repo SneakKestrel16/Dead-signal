@@ -203,13 +203,13 @@ func test_every_module_built_and_every_hook_wired() -> void:
 	_roots[0].add_child(_net)
 	_compose()
 	var modules: Array[Object] = [_c.holds, _c.doors, _c.downing, _c.bf, _c.sd, _c.hs, _c.bars, _c.objectives,
-			_c.ma, _c.lifecycle, _c.lifecycle.match_flow(), _c.sm, _c.lighting, _c.offset, _c.view, _c.candidates, _c.controller, _c.footsteps, _c.lighting_rep]
+			_c.ma, _c.lifecycle, _c.lifecycle.match_flow(), _c.sm, _c.lighting, _c.offset, _c.view, _c.candidates, _c.controller, _c.footsteps, _c.lighting_rep, _c.cams]
 	var unset: Array[String] = []
 	for m in modules:
 		assert_object(m).is_not_null()
 		unset.append_array(_unset(m))
 	assert_array(unset).override_failure_message("unset hooks:\n" + "\n".join(unset)).is_empty()
-	assert_int(_c.sm.batch_extras.size()).is_equal(5)
+	assert_int(_c.sm.batch_extras.size()).is_equal(6)
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.lighting_rep, &"entries"))).is_true() ## facility-map story 010
 	assert_int(_c.sm.catch_up.size()).is_equal(3)
 	# Every registered hold is reachable from some map object the aim ray can pick.

@@ -16,6 +16,9 @@ const HOLDS := 550
 ## After HOLDS: a hide completed in the Holds step starts its hide noise on the same tick (SD-10).
 const HIDING_SPOTS := 555
 ## Footsteps (controller story 014): after every speed owner, so it reads this tick's moved bodies.
+## Surveillance (facility-map story 011, ADR-0009 §8): after HOLDS, so a monitor press this tick and a hold
+## started this tick are both seen when it turns feeds off.
+const SURVEILLANCE := 557
 const FOOTSTEPS := 560
 const SURVIVOR_OBJECTIVES := 600
 const PINGS_CALLOUTS := 700

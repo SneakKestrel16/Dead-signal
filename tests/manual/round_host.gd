@@ -11,9 +11,11 @@ extends SceneTree
 ## Bodies are TestMoveStep stand-ins (the controller epic owns the real step) on the MapGreybox floors
 ## (MF-11: the client scene builds the same floors). Self-clients add the session HiddenSpawner at the
 ## server's fixed path, as every real client does (RoundClient), so candidate spawns resolve.
+## --place=monitor (facility-map story 011) spawns the first survivor in front of the C1 monitor and the
+## shapeshifter beside the second survivor in B1, in camera c1's view; everyone else spawns as usual.
 ## --force=<s>:power,<s>:evac (story facility-map/010 screenshots) emits a forced event on the server bus that
 ## many seconds after round start: power = ObjectiveProgressChanged terminal POWERED (Power Restored), evac =
-## RoundPhaseChanged to Evacuation. Forced events skip the objective and timer rules; manual capture only.
+## RoundPhaseChanged to Evacuation, blackout = AbilityUsed Blackout in B1 (story facility-map/011). Forced events skip the objective and timer rules; manual capture only.
 
 const SERVER_VERSION := "0.1.0"
 const EVENTS: Array[StringName] = [&"RoundPhaseChanged", &"SurvivorDowned", &"SurvivorEliminated",
@@ -26,6 +28,11 @@ var _server: RoundServer
 var _c: RoundComposer
 var _joined: Array[int] = []
 var _want := 5
+var _place := ""
+## --place=monitor spots (C1 in front of the monitor marker at 51, 7; B1 in c1's view of the Core).
+const MONITOR_SPOT := Vector3(52.4, 0.0, 6.6)
+const B1_MONSTER_SPOT := Vector3(28.6, 0.0, 22.8)
+const B1_TARGET_SPOT := Vector3(30.0, 0.0, 23.4)
 var _args := {}
 
 
@@ -53,6 +60,7 @@ func _setup() -> void:
 		var kv := a.trim_prefix("--").split("=")
 		args[kv[0]] = kv[1] if kv.size() > 1 else ""
 	_want = int(args.get("players", "5"))
+	_place = args.get("place", "")
 	_knobs = Knobs.load_all()
 	_root = Node3D.new()
 	_root.name = "RoundHost"
@@ -129,6 +137,8 @@ func _start() -> void:
 		return
 	for type in EVENTS:
 		_server.bus.subscribe(type, _on_event)
+	if _place == "monitor":
+		_c.lifecycle.spawn = _placed_spawn
 	print("ROUND STARTED: monster %d, survivors %s" % [_c.monster, _c.survivors])
 	for f in String(_args.get("force", "")).split(",", false):
 		var at_what := f.split(":")
@@ -138,6 +148,16 @@ func _start() -> void:
 				MultiplayerPeer.TRANSFER_MODE_RELIABLE)
 
 
+## --place=monitor: the composer's spawn at the story-011 spots.
+func _placed_spawn(id: int, at: Vector3) -> void:
+	if id == _c.monster:
+		at = B1_MONSTER_SPOT
+	elif id == _c.survivors[0]:
+		at = MONITOR_SPOT
+	elif _c.survivors.size() > 1 and id == _c.survivors[1]:
+		at = B1_TARGET_SPOT
+	print("PLACED %d at %s" % [id, at])
+	_c._spawn(id, at)
 ## Emits one forced lighting trigger (see --force).
 func _force(what: String) -> void:
 	if _server == null or _server.bus == null:
@@ -151,6 +171,11 @@ func _force(what: String) -> void:
 		o.objective = SurvivorObjectives.TERMINAL_ID
 		o.state = SurvivorObjectives.TerminalState.POWERED
 		_server.bus.emit(o)
+	elif what == "blackout": # story facility-map/011: a Blackout in B1, as Monster Abilities emits it
+		var a := EvAbilityUsed.new()
+		a.ability = MonsterAbilities.Ability.BLACKOUT
+		a.target = Vector3(31.0, 0.0, 20.0)
+		_server.bus.emit(a)
 	print("FORCED %s" % what)
 
 

@@ -17,6 +17,9 @@ var volume_at: Callable
 var visible_volumes: Callable
 ## Callable(viewer: int, body: int) -> bool: true while `body` must not reach `viewer` at all.
 var hidden_from: Callable
+## Callable(viewer: int) -> PackedStringArray: volumes the viewer also sees this tick beyond its own set (the
+## monitor feed it watches, Surveillance.extra_volumes; ADR-0009 §8). Unset = none.
+var extra_volumes: Callable
 
 var _near_sq: float
 var _linger_ticks: int
@@ -39,6 +42,8 @@ func update(tick: int, viewer: int, positions: Dictionary) -> Array[int]:
 	var out: Array[int] = []
 	var eye: Vector3 = positions[viewer]
 	var seen := _seen_volumes(eye)
+	if volume_at.is_valid() and extra_volumes.is_valid():
+		seen.append_array(extra_volumes.call(viewer))
 	for body: int in positions:
 		if body == viewer:
 			continue
