@@ -1,12 +1,12 @@
 # Story 015: Chase closing check and controller tick budget
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -32,8 +32,8 @@ The chase numbers in the GDD only hold if the movement step produces them on the
 
 *From `first-person-controller.md` Acceptance Criteria (Chase closing; Performance), scoped to this story:*
 
-- [ ] A survivor sprinting at 5.0 m/s and a true-form shapeshifter at 5.75 m/s 10 m behind on a straight corridor reach a gap ≤ `catch_gap` (1.0 m) at 12 s ± 0.5 s; for a walking survivor (4.0) the gap is 1.9 m and is reached at 4.6 s ± 0.3 s.
-- [ ] With 6 players moving, 2 Holding and 1 slowed, 600 server ticks profiled give the controller's server cost (movement, hold checks, ray casts) ≤ 0.5 ms per tick at p95 (placeholder budget; report the measured number).
+- [x] A survivor sprinting at 5.0 m/s and a true-form shapeshifter at 5.75 m/s 10 m behind on a straight corridor reach a gap ≤ `catch_gap` (1.0 m) at 12 s ± 0.5 s; for a walking survivor (4.0) the gap is 1.9 m and is reached at 4.6 s ± 0.3 s.
+- [x] With 6 players moving, 2 Holding and 1 slowed, 600 server ticks profiled give the controller's server cost (movement, hold checks, ray casts) ≤ 0.5 ms per tick at p95 (placeholder budget; report the measured number).
 
 ---
 
@@ -65,7 +65,7 @@ The chase numbers in the GDD only hold if the movement step produces them on the
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/chase_budget_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/integration/first-person-controller/chase_closing_tick_budget_test.gd` (3 tests)
 
 ---
 
@@ -73,3 +73,15 @@ The chase numbers in the GDD only hold if the movement step produces them on the
 
 - Depends on: Stories 002, 003, 008
 - Unlocks: none
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-156):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 849/849 (prediction_reconcile 9 failures under parallel agent load; 9/9 alone, BUG-0003 class) after the wave merge, no leak warnings.
+- Measured controller server cost p95 about 350 µs per tick against the 0.5 ms placeholder budget (dev machine, headless).
+**Test Evidence**: 3 tests.
+**Code Review**: Complete (orchestrator review at merge)

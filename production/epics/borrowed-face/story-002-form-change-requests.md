@@ -1,12 +1,12 @@
 # Story 002: Form-change request validation and target persistence
 
 > **Epic**: Borrowed Face
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Logic
 > **Estimate**: [fill before sprint planning]
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-15
 
 ## Context
 
@@ -33,10 +33,10 @@ The server accepts a form change only into an observed survivor still in the rou
 
 *From `borrowed-face.md` Acceptance Criteria (requests, targets) and Edge Cases, scoped to this story:*
 
-- [ ] A request into an unobserved, Eliminated, Escaped or disconnected survivor is rejected; one into an observed Downed survivor is accepted.
-- [ ] The first request of a round into an observed survivor is accepted with no cooldown wait.
-- [ ] While disguised as X, X being downed, eliminated, escaping or disconnecting leaves the disguise unchanged on the server.
-- [ ] A target eliminated or disconnected mid-transformation still completes into X.
+- [x] A request into an unobserved, Eliminated, Escaped or disconnected survivor is rejected; one into an observed Downed survivor is accepted.
+- [x] The first request of a round into an observed survivor is accepted with no cooldown wait.
+- [x] While disguised as X, X being downed, eliminated, escaping or disconnecting leaves the disguise unchanged on the server.
+- [x] A target eliminated or disconnected mid-transformation still completes into X.
 
 ---
 
@@ -66,7 +66,7 @@ The server accepts a form change only into an observed survivor still in the rou
 **Required evidence**:
 - Logic: `tests/unit/borrowed-face/form_requests_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] `tests/unit/borrowed-face/form_change_requests_test.gd` (14 tests)
 
 ---
 
@@ -74,3 +74,15 @@ The server accepts a form change only into an observed survivor still in the rou
 
 - Depends on: Story 001
 - Unlocks: Story 003
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-15
+**Criteria**: all passing (automated)
+**Deviations** (AD-154):
+- Implemented by a worktree agent in the parallel wave; squash-merged by the orchestrator. Full suite 849/849 (prediction_reconcile 9 failures under parallel agent load; 9/9 alone, BUG-0003 class) after the wave merge, no leak warnings.
+- Cooldown and stun interplay left to story 003 (the first request of a round has no wait).
+**Test Evidence**: 14 tests.
+**Code Review**: Complete (orchestrator review at merge)

@@ -49,7 +49,7 @@ Lighting, camera-feed, zone-audio and reduced-flash requirements rest on ADR-000
 | 003 | [Connectivity checks: no sealed rooms, no single choke](story-003-connectivity-checks.md) | Logic | Ready | N/A |
 | 004 | [Analytic zones, terminal zone and exit gating](story-004-analytic-zones-exit.md) | Integration | Complete | ADR-0007, ADR-0004 |
 | 005 | [Per-volume visibility table for relevance](story-005-visibility-table.md) | Integration | Ready | ADR-0004 |
-| 006 | [Traversal budget walk-through](story-006-traversal-budget.md) | Integration | Ready | ADR-0007 |
+| 006 | [Traversal budget walk-through](story-006-traversal-budget.md) | Integration | Complete | ADR-0007 |
 | 007 | [Candidate point selection and placement constraints](story-007-candidate-selection.md) | Logic | Blocked | ADR-0012 (Proposed) |
 | 008 | [Candidate replication and discovery agreement](story-008-candidate-replication.md) | Integration | Blocked | ADR-0012 (Proposed), ADR-0004 |
 | 009 | [Per-volume lighting state machine and precedence](story-009-lighting-state-machine.md) | Logic | Blocked | ADR-0009 (Proposed) |

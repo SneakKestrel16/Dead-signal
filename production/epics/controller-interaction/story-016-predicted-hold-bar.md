@@ -1,7 +1,7 @@
 # Story 016: Predicted hold bar responsiveness
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: In Review
 > **Layer**: Core
 > **Type**: Visual/Feel
 > **Estimate**: [fill before sprint planning]
@@ -71,3 +71,12 @@ The hold bar must appear the moment the player presses interact, even at high la
 
 - Depends on: Stories 007, 008; network-authority story 006
 - Unlocks: HUD epic
+
+---
+
+## Completion Notes
+
+**Implemented**: 2026-10-14 (worktree agent, squash-merged as 500fab4)
+**Criteria**: AC2 passing (automated + capture 02); AC1 automated proxy passing (bar drawn on the press tick, at most one 16.7 ms tick), the 240 fps capture measurement not done
+**Test Evidence**: `tests/unit/first-person-controller/predicted_hold_bar_test.gd` (10 tests); captures and write-up in `production/qa/evidence/predicted-hold-bar-evidence.md`
+**Open**: lead sign-off (Visual/Feel gate, BLOCKING) and the AC1 240 fps capture, which needs a two-client build with a client scene that wires the bar. Story stays In Review until both are done.
