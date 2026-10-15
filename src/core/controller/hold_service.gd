@@ -2,8 +2,9 @@ class_name HoldService extends RefCounted
 ## The one hold timer (ADR-0008; first-person-controller.md rules 11-16). Runs as the Holds step
 ## (TickOrder.HOLDS, inside TickRunner's physics phase) for each player in ADR-0007 §6's rotated
 ## order: stop, then Start on a rising edge (eligibility, strict range_m, line of sight, lock), then
-## advance. Owners register Interactables and get direct calls; HoldService emits no events.
-## Story 009 adds the while-holding checks and story 010 fake holds.
+## continue (eligible, range_m + hold_range_tolerance_m, line of sight; story 009), then advance. Owners
+## register Interactables and get direct calls; HoldService emits no events. Story 010 adds fake holds.
+## The view direction is not checked while holding: a hold survives looking away (GDD rule 14).
 ## Collaborators are injected as Callables (ADR-0005 §6 dependency injection; BodyIndex of the ADR
 ## interface does not exist yet):
 ##   players() -> Array[int]                     player IDs in the round
@@ -105,12 +106,18 @@ func server_tick(tick: int) -> void:
 				rising = f ## the target is read on the rising edge only (ADR-0008 §3); the last press wins
 			was = f.interact
 		_down[actor] = was
+		# A rising edge needs a release first, so the old hold ends with any new press, accepted or not;
+		# the reason tells the owner which (rule 16: a new hold cancels the old).
 		if _holds.has(actor) and (not was or rising != null):
-			cancel(actor, &"released" if not was else &"replaced") ## rule 16: a new hold cancels the old
+			cancel(actor, &"released" if not was else &"replaced")
 		if rising != null:
 			_try_start(actor, rising)
 			if not was:
 				cancel(actor, &"released") ## Stop arrived with the Start: accepted, then cancelled at 0
+		else:
+			# Not on the Start tick: Start just checked all three, and an owner's on_start may change its
+			# own eligible() (a drive marked "being held"; code review 2026-10-14).
+			_continue(actor)
 		_advance(actor)
 
 
@@ -155,6 +162,24 @@ func _resolve(actor: int, f: InputFrame) -> Interactable:
 	if id < 0 or id >= _items.size():
 		return null
 	return _items[id]
+
+
+## ADR-0008 §4: the hold ends this tick when the actor is no longer eligible (the owner's state changed:
+## picked up, rescued, Downed), beyond range_m + hold_range_tolerance_m from the point (capsule centre),
+## or without line of sight. Reasons: &"ineligible", &"range", &"sight".
+func _continue(actor: int) -> void:
+	if not _holds.has(actor):
+		return
+	var item: Interactable = _holds[actor].item
+	if not item.eligible(actor):
+		cancel(actor, &"ineligible")
+		return
+	var centre: Vector3 = _centre_of.call(actor)
+	if centre.distance_to(item.point) > item.range_m + _knobs.controller.hold_range_tolerance_m + RANGE_EPS_M:
+		cancel(actor, &"range")
+		return
+	if not _sight.call(actor, item):
+		cancel(actor, &"sight")
 
 
 func _advance(actor: int) -> void:

@@ -1,12 +1,12 @@
 # Story 009: Hold continuation, cancels and movement while Holding
 
 > **Epic**: First-Person Controller & Interaction
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: Core
 > **Type**: Integration
-> **Estimate**: [fill before sprint planning]
+> **Estimate**: 1 day
 > **Manifest Version**: 2026-10-13
-> **Last Updated**: [set by /dev-story when implementation begins]
+> **Last Updated**: 2026-10-14
 
 ## Context
 
@@ -33,10 +33,10 @@ Once accepted, a hold survives looking away and small steps, but cancels on rang
 
 *From `first-person-controller.md` Acceptance Criteria (Hold-to-interact: accepted hold) and rules 14, 16, scoped to this story:*
 
-- [ ] An accepted hold continues when the actor turns 180° and when the actor walks to `range_m` + 0.2.
-- [ ] It cancels on that tick, with the owner's cancel rule applied, when the actor walks beyond `range_m` + 0.25, loses line of sight, releases input, is interrupted by an owner (`holds.cancel`), or starts another hold.
-- [ ] While Holding, sprint input gives 4.0 m/s; with `roots_actor` it gives 0; crouch input leaves posture and capsule height unchanged.
-- [ ] When the hold's target changes owner state mid-hold (picked up, rescued), the owner cancels it and its cancel rule applies.
+- [x] An accepted hold continues when the actor turns 180° and when the actor walks to `range_m` + 0.2.
+- [x] It cancels on that tick, with the owner's cancel rule applied, when the actor walks beyond `range_m` + 0.25, loses line of sight, releases input, is interrupted by an owner (`holds.cancel`), or starts another hold.
+- [x] While Holding, sprint input gives 4.0 m/s; with `roots_actor` it gives 0; crouch input leaves posture and capsule height unchanged.
+- [x] When the hold's target changes owner state mid-hold (picked up, rescued), the owner cancels it and its cancel rule applies.
 
 ---
 
@@ -76,7 +76,7 @@ Once accepted, a hold survives looking away and small steps, but cancels on rang
 **Required evidence**:
 - Integration: `tests/integration/first-person-controller/hold_service_continue_test.gd` — must exist and pass
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created; passes (16 tests)
 
 ---
 
@@ -84,3 +84,19 @@ Once accepted, a hold survives looking away and small steps, but cancels on rang
 
 - Depends on: Stories 003, 008
 - Unlocks: Owner epics with interactions
+
+---
+
+## Completion Notes
+
+**Completed**: 2026-10-14
+**Criteria**: 4/4 passing (automated)
+**Deviations** (AD-112):
+- `HoldService._continue` runs each held tick except the Start tick: eligible, then range_m + hold_range_tolerance_m (capsule centre to point), then line of sight; cancel reasons `&"ineligible"`, `&"range"`, `&"sight"`. Skipping the Start tick keeps an owner whose `on_start` changes its own eligibility from cancelling its own hold.
+- A rising edge needs a release first, so any new press ends the old hold (`&"replaced"`), accepted or not; a second press with no release changes nothing (ADR-0008 §3). Reason names let the owner pick reset, keep or decay.
+- An actor with no frames at all (never sent input; the queue repeats the last frame when starved) skips the step, continuation included.
+- `MovementStep`: `MoveState.hold_roots` stops the actor at once; `MovementStep.wants_low(frame, state, low_now)` ignores crouch while Holding. Sprint while Holding was already walk (story 002).
+- Not wired yet: nothing in production copies `HoldService.hold_of()` into `MoveState` before the movement step, so ADR-0008 §7 "from the next tick" is unenforced until the player-tick caller exists (same caller as story 004's `set_low`).
+- AC4 "picked up, rescued": the owner either calls `holds.cancel(actor, reason)` or stops answering `eligible()`; both are tested. Real interrupts are wired by their owner epics.
+**Test Evidence**: Integration: `tests/integration/first-person-controller/hold_service_continue_test.gd`; 10 mutations each caught. Full suite 471/471.
+**Code Review**: Complete (godot-gdscript-specialist and qa-tester; S2 rule-16 question answered above; S2 wiring gap recorded; S3 Start-tick continuation fixed)

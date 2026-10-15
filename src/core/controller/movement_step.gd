@@ -22,6 +22,8 @@ class MoveState extends RefCounted:
 	var downed := false
 	var crouched := false
 	var holding := false
+	## The hold roots its actor (Interactable.roots_actor, HoldService.hold_of().roots): speed 0.
+	var hold_roots := false
 	var transforming := false
 	## True-form shapeshifter: sprint gets monster_sprint_mult.
 	var true_form := false
@@ -56,19 +58,26 @@ static func gait_speed(g: Gait, state: MoveState, knobs: Knobs) -> float:
 	return c.walk_speed
 
 
+## The posture `body` should take this tick: the crouch input, except while Holding, when crouch is
+## ignored and the posture stays as it is (ADR-0008 §7). The caller passes it to PlayerBody.set_low.
+static func wants_low(frame: InputFrame, state: MoveState, low_now: bool) -> bool:
+	return low_now if state.holding else frame.crouch
+
+
 ## One tick for `body`: sets its velocity and calls move_and_slide().
 static func step(body: CharacterBody3D, frame: InputFrame, state: MoveState, knobs: Knobs) -> void:
 	var dt := 1.0 / Engine.physics_ticks_per_second
 	var move := frame.move.limit_length(1.0) ## move_input is capped at 1: a diagonal is never faster
 	var full := gait_speed(gait(frame, state), state, knobs)
-	var speed := full * move.length() * state.modifiers.effective_scale()
+	var rooted := state.modifiers.rooted or state.modifiers.locked or (state.holding and state.hold_roots)
+	var speed := 0.0 if rooted else full * move.length() * state.modifiers.effective_scale()
 	var dir := Basis(Vector3.UP, frame.yaw) * Vector3(move.x, 0.0, -move.y)
 	var target := dir.normalized() * speed if speed > 0.0 else Vector3.ZERO
 	var h := Vector2(body.velocity.x, body.velocity.z)
 	var to := Vector2(target.x, target.z)
 	var accel := knobs.controller.accel_time_s
-	if accel <= 0.0 or state.modifiers.rooted or state.modifiers.locked:
-		h = to ## rooted or locked "moves at 0" at once (GDD effective_speed example); no ramp
+	if accel <= 0.0 or rooted:
+		h = to ## rooted, locked or a rooting hold "moves at 0" at once (GDD effective_speed example); no ramp
 	else:
 		# A fixed rate per tick: the gait's full speed (or the target, if faster) over accel_time_s, so
 		# full speed is reached in accel_time_s from rest and a stop is linear. A rate taken from the
