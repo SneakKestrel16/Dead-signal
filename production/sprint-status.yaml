@@ -84,10 +84,10 @@ stories:
     name: "Ping input, marker display, callout wheel and feed"
     file: "production/epics/pings-and-callouts/story-008-ping-callout-presentation.md"
     priority: should-have
-    status: backlog
+    status: review
     owner: ""
     estimate_days: 1.5
-    blocker: ""
+    blocker: "designer sign-off"
     completed: ""
   - id: "scare-1"
     name: "Scare catalogue data and the server Scare module"

@@ -65,6 +65,8 @@ var lights: LightingPresenter
 var lunge_fx: LungePresenter
 ## Transformation warp and distortion audio (borrowed-face story 010); null when not rendering.
 var warp: TransformPresenter
+## Ping markers, callout wheel and feed (pings-and-callouts story 008); null when not rendering.
+var ping_hud: PingCalloutHud
 ## The HUD layer holding the hold bar (null when not rendering).
 var hud: CanvasLayer
 ## The camera flinch accessibility toggle sent on join (ADR-0015 §4); set_flinch() changes it later.
@@ -217,6 +219,12 @@ func _on_connected() -> void:
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
 		add_child(ambience)
 		hud.add_child(ambience.make_overlay())
+		ping_hud = PingCalloutHud.new(knobs, pings, PingMarkers.new(router, knobs), callouts, InputContextStack.new(),
+				audio, camera, remotes, puppets.state_of, estimated_tick,
+				func() -> int: return local_target(head.rotation.y, head.rotation.x),
+				func() -> int: return predictor.last_own.get("appearance", -1), _map)
+		hud.add_child(ping_hud)
+		input.contexts = ping_hud.contexts
 		bar = PredictedHoldBar.new()
 		hud.add_child(bar)
 		bar.set_anchors_preset(Control.PRESET_CENTER)

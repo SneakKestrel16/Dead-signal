@@ -44,6 +44,10 @@ extends Node3D
 ## with their bearing from its camera and the true bearing of the shapeshifter's own body, and warp-early.png
 ## warp-late.png are saved WARP_EARLY / WARP_LATE drawn frames after a drawn body first shows Transforming
 ## (drawn frames, not seconds: --write-movie renders faster than the host's wall clock).
+## --bot=ping (story pings-and-callouts/008; use --count=5 --view=survivor): from the shown client's spawn,
+## the other clients ping where they look and call out (Danger, Wait), the shown client pings ahead, then
+## spams pings past its bucket, then opens the wheel aimed at a line. Shots: pending.png (own pending marker),
+## markers.png (server markers and feed), toofast.png (rejection tick), wheel.png (wheel open).
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
@@ -181,6 +185,8 @@ func _process(delta: float) -> void:
 		_monitor(c0)
 	elif _args.get("bot", "") == "lunge":
 		_lunge_bot(c0)
+	elif _args.get("bot", "") == "ping":
+		_ping_bot(c0)
 
 
 ## Shows the chosen client's camera and HUD only.
@@ -325,6 +331,42 @@ func _look(c: RoundClient) -> void:
 			var d := n.position - feet
 			c.scripted.yaw = atan2(-d.x, -d.z)
 			c.scripted.pitch = -0.1
+
+
+func _ping_bot(c0: RoundClient) -> void:
+	if _step_frame < 0:
+		_step_frame = Engine.get_frames_drawn()
+	var f := Engine.get_frames_drawn() - _step_frame
+	c0.scripted.yaw = 0.6
+	c0.scripted.pitch = -0.15
+	var others := _clients.filter(func(c: RoundClient) -> bool: return c != c0 and c.is_spawned() and not _role(c))
+	if f == 30:
+		c0.ping_hud.ping()
+		_shot("pending")
+	elif f == 40:
+		for c: RoundClient in others:
+			c.ping_hud.ping()
+		if others.size() > 0:
+			others[0].callouts.request(&"danger")
+		if others.size() > 1:
+			others[1].callouts.request(&"wait")
+	elif f == 90:
+		_shot("markers")
+	elif f == 100:
+		for i in 8:
+			c0.ping_hud.ping()
+	elif f == 125:
+		_shot("toofast")
+	elif f == 140:
+		c0.ping_hud.open_wheel()
+		c0.ping_hud.aim_wheel(Vector2(120, -120))
+	elif f == 150:
+		_shot("wheel")
+	elif f == 160:
+		c0.ping_hud.close_wheel(false)
+		print("PING BOT pending=%d rejections=%d callouts=%s" % [c0.pings.pending.size(), c0.pings.rejections,
+			c0.ping_hud.feed_history()])
+		get_tree().quit()
 
 
 ## Whether `c` is the shapeshifter, fixed at its first spawned answer.

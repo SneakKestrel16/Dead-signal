@@ -54,8 +54,8 @@ func on_sound(_tick: int, payload: Dictionary) -> void:
 	play_at(sound, at)
 
 
-## Plays `sound` at `at` (global position) once.
-func play_at(sound: StringName, at: Vector3) -> void:
+## Plays `sound` at `at` (global position) once, on audio bus `bus` (callouts use Voice, never a ducked bus).
+func play_at(sound: StringName, at: Vector3, bus: StringName = &"Master") -> void:
 	played.append([sound, at])
 	if played.size() > LOG_CAP:
 		played.pop_front()
@@ -64,6 +64,7 @@ func play_at(sound: StringName, at: Vector3) -> void:
 	p.bus = BUS
 	p.pitch_scale = 0.75 + float(absi(hash(sound)) % 50) / 100.0
 	p.position = at
+	p.bus = bus
 	add_child(p)
 	p.finished.connect(p.queue_free)
 	if p.is_inside_tree():

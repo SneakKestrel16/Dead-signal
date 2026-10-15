@@ -195,18 +195,25 @@ func can_send(player: int, kind: int, line: StringName = &"") -> bool:
 ## Injects the map's pingable interactables, indexed by net id (MapData.interactables order). `point_height_m`
 ## lifts a floor-level object to the point sight is traced to (InteractRules.point_height_m).
 func set_map(map: MapData, point_height_m: float) -> void:
-	_items = {}
 	_point_height_m = point_height_m
+	_items = pingable_items(map, point_height_m)
+
+
+## The map's pingable interactables: net id -> [point lifted by `point_height_m`, type]. The client's ping
+## button uses the same set to choose an item ping over a location ping (story 008).
+static func pingable_items(map: MapData, point_height_m: float) -> Dictionary[int, Array]:
+	var items: Dictionary[int, Array] = {}
 	var all := map.interactables()
 	for i in all.size():
 		var door := all[i] as MapPassage
 		if door != null:
 			if door.kind == MapPassage.BARRICADABLE:
-				_items[i] = [door.position + Vector3.UP * point_height_m, DOOR_TYPE]
+				items[i] = [door.position + Vector3.UP * point_height_m, DOOR_TYPE]
 			continue
 		var m := all[i] as MapMarker
 		if m != null and m.type in PINGABLE_TYPES:
-			_items[i] = [m.position + Vector3.UP * point_height_m, m.type]
+			items[i] = [m.position + Vector3.UP * point_height_m, m.type]
+	return items
 
 
 ## Injected by RoundServer. Every player starts with a full bucket.

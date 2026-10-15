@@ -21,6 +21,9 @@ class_name LocalInput extends Node
 var sensitivity := 0.0025
 var yaw := 0.0
 var pitch := 0.0
+## ADR-0014 §2: mouse look reaches the view only while the top context allows look (the callout wheel
+## steers with it). null = always.
+var contexts: InputContextStack
 
 ## The record the owner renders with: record 0 of epoch 0 (no offset) until the server sends one.
 var _record := FlinchRecord.new()
@@ -33,7 +36,7 @@ func _ready() -> void:
 ## _input, not _unhandled_input: captured motion still carries the window-centre position, so a HUD
 ## Control with a STOP filter would eat it before _unhandled_input (gotchas.md).
 func _input(event: InputEvent) -> void:
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and (contexts == null or contexts.allows_look()):
 		handle(event)
 
 

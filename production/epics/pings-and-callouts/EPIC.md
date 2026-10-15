@@ -57,7 +57,7 @@ This epic is complete when:
 | 005 | Marker lifecycle: static position, lifetime and max active | Logic | Complete | ADR-0014 |
 | 006 | Callout recipients, range and monster audio-only | Integration | Complete | ADR-0004 |
 | 007 | Displayed identity, (not you) mark and fake-callout parity | Integration | Complete | ADR-0004 |
-| 008 | Ping input, marker display, callout wheel and feed | UI | Ready | ADR-0014 |
+| 008 | Ping input, marker display, callout wheel and feed | UI | In Review | ADR-0014 |
 | 009 | Optional proximity voice rules | Integration | Blocked | ADR-0013 |
 
 ## Next Step
