@@ -15,6 +15,15 @@ const SOUND := &"Sound"
 ## Entry type of a Downed survivor's bleed-out ring (Downing.ring_entries, story downing-and-rescue/007):
 ## {survivor, remaining_s, rate}. Not a catalog event; its provider sends it to survivor viewers only.
 const BLEED_RING := &"BleedRing"
+## Entry type of the viewer's own taser cartridges (SurvivorDefense.charge_entries, story
+## survivor-defense/012, AD-194): {charges}. Not a catalog event; sent to the owner only, on change.
+const CHARGES := &"Charges"
+## Entry type of the viewer's own hiding spot (HidingSpots.hiding_entries, AD-194): {spot}, -1 when it
+## left or was ejected. Not a catalog event; sent to the occupant only, on change.
+const HIDING := &"Hiding"
+## Entry type of a barricadable door's state (Barricades.barricade_entries, AD-194): {door, barricaded,
+## lockout_end} (lockout_end the tick rule 28's lockout ends, -1 when it never broke). Sent to everyone.
+const BARRICADE := &"Barricade"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

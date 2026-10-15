@@ -51,6 +51,10 @@ var _lockout_ticks: int
 var _break_s: Dictionary[int, float] = {}
 ## door net id -> tick the barricade broke on (rule 28 lockout).
 var _broken_at: Dictionary[int, int] = {}
+## AD-194 barricade replication: door -> [barricaded, lockout_end] last sent; this tick's entries; tick diffed.
+var _sent: Dictionary[int, Array] = {}
+var _out: Array = []
+var _out_tick: int = -1
 
 
 ## `healthy(actor) -> bool`: a Healthy survivor (rule 25; Downing.action_locked and the shock lock
@@ -77,6 +81,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_break = {}
 	_break_s = {}
 	_broken_at = {}
+	_sent = {}
+	_out = []
+	_out_tick = -1
 	_radius = knobs.controller.player_radius_m
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_barricaded = {}
@@ -149,6 +156,29 @@ func can_build(actor: int, net_id: int) -> bool:
 ## Rule 27: the monster, in any form, on a barricaded door. Survivors never.
 func can_break(actor: int, net_id: int) -> bool:
 	return is_barricaded(net_id) and _monster.is_valid() and _monster.call(actor)
+
+
+## Rule 28: the tick door `net_id`'s rebarricade lockout ends on, -1 when it never broke.
+func lockout_end(net_id: int) -> int:
+	return _broken_at[net_id] + _lockout_ticks if _broken_at.has(net_id) else -1
+
+
+## ServerMovement.batch_extras provider (story 012, AD-194: a barricade is a world object, so everyone):
+## [EventBatch.BARRICADE, {door, barricaded, lockout_end}] for every door whose state changed (built,
+## removed, broken) since the last batch. Diffed once per tick; the same entries for every viewer.
+## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
+func barricade_entries(_viewer: int) -> Array:
+	if _runner == null:
+		return []
+	if _out_tick != _runner.current_tick():
+		_out_tick = _runner.current_tick()
+		_out = []
+		for d: int in _build:
+			var now := [is_barricaded(d), lockout_end(d)]
+			if _sent.get(d, [false, -1]) != now:
+				_sent[d] = now
+				_out.append([EventBatch.BARRICADE, {"door": d, "barricaded": now[0], "lockout_end": now[1]}])
+	return _out
 
 
 ## Rule 27: break time door `net_id` has taken so far, s.

@@ -95,6 +95,10 @@ var _free_tick: Dictionary[int, int] = {}
 ## Story 004: MonsterStunned goes out on this bus; _form_of gives the shapeshifter's form.
 var _bus: EventBus
 var _form_of: Callable
+## AD-194 charge replication: survivor -> cartridges last sent; this tick's changes; the tick diffed.
+var _charges_sent: Dictionary[int, int] = {}
+var _charges_out: Dictionary[int, int] = {}
+var _out_tick: int = -1
 
 
 ## Getter-only view for StateKeys.HIDDEN_ITEM_USE readers. Holds the module weakly; after the module
@@ -204,6 +208,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	_immunity_ticks = knobs.ticks(knobs.defense.stun_immunity_s)
 	_lock_start = {}
 	_free_tick = {}
+	_charges_sent = {}
+	_charges_out = {}
+	_out_tick = -1
 	for s in _survivors:
 		_charges[s] = _stun_item_charges
 		_light[s] = false
@@ -280,6 +287,24 @@ func can_fire(player: int, tick: int) -> bool:
 ## Cartridges `player` has left (0 for the monster or any id not in the roster).
 func charges(player: int) -> int:
 	return _charges.get(player, 0)
+
+
+## ServerMovement.batch_extras provider (story 012, AD-194: charges to their owner only): `viewer`'s own
+## cartridges as [EventBatch.CHARGES, {charges}] in the batch after they change, the round's first count
+## included. Diffed once per tick, so every viewer of a tick sees the same changes (a spectator gets the
+## watched survivor's). Nothing for the monster or any id not in the roster.
+## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
+func charge_entries(viewer: int) -> Array:
+	if _runner == null:
+		return []
+	if _out_tick != _runner.current_tick():
+		_out_tick = _runner.current_tick()
+		_charges_out = {}
+		for s: int in _charges:
+			if _charges_sent.get(s, -1) != _charges[s]:
+				_charges_sent[s] = _charges[s]
+				_charges_out[s] = _charges[s]
+	return [[EventBatch.CHARGES, {"charges": _charges_out[viewer]}]] if _charges_out.has(viewer) else []
 
 
 ## Whether `player`'s flashlight is on (rule 3: every client sees the cone). ServerMovement.flashlight_of.

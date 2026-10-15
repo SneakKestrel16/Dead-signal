@@ -38,6 +38,11 @@ var _search: Array[int] = []
 var _occupant: Dictionary[int, int] = {}
 var _entering: Dictionary[int, int] = {}
 var _eject_due: Dictionary[int, bool] = {}
+var _runner: TickRunner
+## AD-194 occupancy replication: occupant -> spot last sent; this tick's changes (-1 = left); tick diffed.
+var _hide_sent: Dictionary[int, int] = {}
+var _hide_out: Dictionary[int, int] = {}
+var _out_tick: int = -1
 
 
 ## `healthy(actor) -> bool`: a Healthy survivor (rule 19; Downing and the shock lock fold in here).
@@ -56,7 +61,11 @@ func _init(holds: HoldService, map: MapData, healthy: Callable, is_monster: Call
 
 
 ## RoundServer entry: registers Hide and Search on every hiding marker, all spots empty.
-func setup(_tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+func setup(tick_runner: Node, _bus: EventBus, _registry: StateRegistry, knobs: Knobs) -> void:
+	_runner = tick_runner as TickRunner
+	_hide_sent = {}
+	_hide_out = {}
+	_out_tick = -1
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_points = []
 	_floors = []
@@ -108,6 +117,29 @@ func search_id(spot: int) -> int:
 ## The survivor hidden in `spot`, -1 when empty.
 func occupant(spot: int) -> int:
 	return _occupant.get(spot, -1)
+
+
+## ServerMovement.batch_extras provider (story 012, AD-194: occupancy to the occupant only, so no other
+## viewer, survivor or monster, learns who hides where): [EventBatch.HIDING, {spot}] for `viewer` in the
+## batch after it entered (spot) or left or was ejected (-1). Diffed once per tick for every viewer.
+## Not yet: a viewer whose peer is gone that tick misses the change (no batch_extras catch-up on rejoin).
+func hiding_entries(viewer: int) -> Array:
+	if _runner == null:
+		return []
+	if _out_tick != _runner.current_tick():
+		_out_tick = _runner.current_tick()
+		var now: Dictionary[int, int] = {}
+		for spot: int in _occupant:
+			now[_occupant[spot]] = spot
+		_hide_out = {}
+		for actor: int in now:
+			if _hide_sent.get(actor, -1) != now[actor]:
+				_hide_out[actor] = now[actor]
+		for actor: int in _hide_sent:
+			if not now.has(actor):
+				_hide_out[actor] = -1
+		_hide_sent = now
+	return [[EventBatch.HIDING, {"spot": _hide_out[viewer]}]] if _hide_out.has(viewer) else []
 
 
 ## Rules 18, 19: the occupant may leave; a Healthy survivor not hidden anywhere may enter an empty spot.
