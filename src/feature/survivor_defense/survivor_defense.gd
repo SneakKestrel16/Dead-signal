@@ -7,6 +7,11 @@ class_name SurvivorDefense extends RefCounted
 ## cancels the target's hold and, unless the target is under the lock or its post-lock window, locks it
 ## for stun_duration_s (rooted for stun_root_s, then stun_slow_mult) with no doors, interact, items,
 ## pings or callouts. The window is stun_immunity_s from the lock's end. Published as SHOCK_STUN_LOCK.
+## Story 004, the monster's Normal, Stunned, Immune machine (rules 1, 9, 15, 16; ADR-0005): a lock on the
+## monster is its stun and emits MonsterStunned, in any form (true_form flags what survivors may see, rule
+## 1); Borrowed Face, Monster Abilities and Downing cancel on it in their later slots, so a stun beats any
+## same-tick completion. The post-lock window is its immunity, ended early by a Lunge wind-up (AbilityUsed)
+## or a completed change into a disguise (FormChanged).
 ## Server only. Timers count ticks of `net.sim_tick_hz`, never wall time. Clients send a fire intent
 ## and nothing else: the server owns every charge, so a client claim of a hit, a charge or a finished
 ## barricade has no entry point and changes nothing (rule 1).
@@ -15,6 +20,7 @@ class_name SurvivorDefense extends RefCounted
 ##   sd.set_roster([2, 3, 4, 5], 1)        # survivor ids, monster id: BEFORE start_round
 ##   sd.set_locked(downing.action_locked)  # Seized / Downed gate (downing-and-rescue.md rule 4.2)
 ##   sd.set_modifiers(movement.modifiers_of); sd.set_holds(holds)   # story 003
+##   sd.set_form_source(borrowed_face.form)                           # story 004
 ##   holds.set_barred(<sd.locked or any other bar, e.g. Transforming>)  # doors, interact, barricades
 ##   server.start_round({TickOrder.SURVIVOR_DEFENSE: sd}, knobs)
 ##   smp.peer_packet -> sd.request_intent(net.player_id_of(peer), bytes)
@@ -86,6 +92,9 @@ var _immunity_ticks: int = 0
 var _lock_start: Dictionary[int, int] = {}
 ## player -> first tick a hit may lock again (lock end + post-lock window); no refresh before it.
 var _free_tick: Dictionary[int, int] = {}
+## Story 004: MonsterStunned goes out on this bus; _form_of gives the shapeshifter's form.
+var _bus: EventBus
+var _form_of: Callable
 
 
 ## Getter-only view for StateKeys.HIDDEN_ITEM_USE readers. Holds the module weakly; after the module
@@ -138,6 +147,12 @@ func set_trace(lc: LagCompensation, eye_of: Callable, frame_of: Callable, blocke
 	_eye_of = eye_of
 	_frame_of = frame_of
 	_blocked = blocked
+
+
+## Story 004: injects the shapeshifter's form, `source.call() -> int` (BorrowedFace.form), for
+## MonsterStunned's true_form. Unset, the monster is always in true form.
+func set_form_source(source: Callable) -> void:
+	_form_of = source
 
 
 ## Injects the Seized/Downed gate: `source.call(player_id) -> bool` (Downing.action_locked).
@@ -195,6 +210,9 @@ func setup(tick_runner: TickRunner, bus: EventBus, registry: StateRegistry, knob
 	registry.register_view(StateKeys.HIDDEN_ITEM_USE, &"SurvivorDefense", DefenseView.new(self))
 	registry.register_view(StateKeys.SHOCK_STUN_LOCK, &"SurvivorDefense", ShockLockView.new(self))
 	bus.subscribe(&"SurvivorEliminated", _on_eliminated)
+	_bus = bus
+	bus.subscribe(&"AbilityUsed", _on_ability_used)
+	bus.subscribe(&"FormChanged", _on_form_changed)
 
 
 ## The bytes a survivor's client sends to fire its taser.
@@ -278,7 +296,7 @@ func locked(player: int) -> bool:
 ## Story 003, rules 11 and 14: a hit on `player` (survivor or monster, no branch) on `tick`. Always
 ## cancels its hold. Locks and roots it, returning true, only when no lock is running and its post-lock
 ## window is over; otherwise adds nothing (no refresh) and returns false, which story 005 reads to pick
-## the presentation. Story 004 adds the monster's own cancels and early window ends.
+## the presentation. Story 004: a lock on the monster is its stun and emits MonsterStunned (rule 9).
 func shock(player: int, tick: int) -> bool:
 	if _holds != null:
 		_holds.cancel(player, CANCEL_SHOCKED)
@@ -287,7 +305,32 @@ func shock(player: int, tick: int) -> bool:
 	_lock_start[player] = tick
 	_free_tick[player] = tick + _duration_ticks + _immunity_ticks
 	_apply_lock_modifier(player, tick)
+	if player == _monster and _bus != null:
+		var e := EvMonsterStunned.new()
+		e.tick = tick
+		e.monster = player
+		e.true_form = not _form_of.is_valid() or _form_of.call() == BorrowedFace.TRUE_FORM
+		_bus.emit(e)
 	return true
+
+
+## Story 004, rule 16: an accepted Lunge wind-up ends the monster's immunity (a rejected one emits nothing).
+func _on_ability_used(e: ServerEvent) -> void:
+	if (e as EvAbilityUsed).ability == MonsterAbilities.Ability.LUNGE:
+		_end_immunity(_monster, e.tick)
+
+
+## Story 004, rule 16: a completed change into a disguise ends the monster's immunity.
+func _on_form_changed(e: ServerEvent) -> void:
+	var c := e as EvFormChanged
+	if c.player == _monster and c.form != BorrowedFace.TRUE_FORM:
+		_end_immunity(_monster, e.tick)
+
+
+## Drops `player`'s post-lock window unless its lock still runs on `tick` (a stun is never shortened).
+func _end_immunity(player: int, tick: int) -> void:
+	if not _locked_at(player, tick):
+		_free_tick.erase(player)
 
 
 func _locked_at(player: int, tick: int) -> bool:
