@@ -11,15 +11,22 @@ class_name SurvivorObjectives extends RefCounted
 ## Story 002 (rules 11-13, 15): a carrier's drives and fuses drop at the nearest valid floor point under
 ## them on SurvivorDowned, SurvivorEliminated and disconnect (PlayerConnectionChanged), or on purpose
 ## (drop()). Each item has one pickup point, moved to wherever it lies; it never despawns.
-## Not yet here: install noise and the monster alert (004), fake holds (007), the registry view of objective state (no StateKeys row).
+## Story 004 (rule 16): starting a fuse install (the box's on_start) sends the install noise and an
+## alert to the shapeshifter alone: an ObjectiveProgressChanged with state INSTALLING whose projection
+## carries only an offset circle that contains the box. Fake holds never call on_start (ADR-0008), so a
+## fake install raises neither (rule 26).
+## Not yet here: fake holds (007), the registry view of objective state (no StateKeys row).
 ## Usage:
 ##   var obj := SurvivorObjectives.new(holds, MapData.load_map(), is_healthy, is_hidden, position_of)
 ##   obj.drop(actor, SurvivorObjectives.DRIVE_ID + i)   # the carrier's own drop request
 ##   obj.survivor_ids.assign(survivors)
+##   obj.rng = round_rng; obj.emit_sound = server_movement.emit_sound
 ##   server.start_round({TickOrder.SURVIVOR_OBJECTIVES: obj}, knobs)
 
 enum DriveState { SECURED, CARRIED, DROPPED, DOCKED, EXTRACTED }
-enum FuseState { UNFOUND, CARRIED, DROPPED, INSTALLED }
+## INSTALLING is a fuse box's install alert (story 004), sent at each install start; last so the older
+## values keep their numbers. fuse_state_of() never reads it.
+enum FuseState { UNFOUND, CARRIED, DROPPED, INSTALLED, INSTALLING }
 ## Terminal states (GDD States and Transitions); reported with `objective` = TERMINAL_ID. POWERED is
 ## Locked with both fuses installed (rule 17): sent once, when the second fuse goes in; last so the
 ## older values keep their numbers. terminal_state() never reads POWERED: it stays LOCKED until ARMED.
@@ -33,6 +40,8 @@ const ACTIVE_FUSE_BOXES := 2
 ## GDD rule 15: `fuses_required` = 2 and one fuse carried at a time. Rules, not Tuning Knobs rows.
 const FUSES_REQUIRED := 2
 const MAX_FUSES_CARRIED := 1
+## Sound set of the install noise (rule 16); playback is presentation (ADR-0013, Proposed).
+const INSTALL_SOUND := &"fuse_install"
 
 ## `ObjectiveProgressChanged.objective` id ranges, so one int names one point across kinds: drives
 ## DRIVE_ID + index, fuses FUSE_ID + index, fuse boxes FUSE_BOX_ID + index (state is a FuseState:
@@ -47,6 +56,11 @@ const FLOOR_EPS_M := 1e-3
 ## Player ids of this round's survivors; set before setup. Only they hold the terminal zone: the
 ## shapeshifter never counts (rule 19).
 var survivor_ids: Array[int] = []
+## Places the install alert's circle; seed it for reproducible rounds and tests.
+var rng := RandomNumberGenerator.new()
+## `emit_sound(position: Vector3, sound_set: StringName, radius_m: float)`, NA-9's positional sound
+## send (ServerMovement.emit_sound). Invalid = no install noise is sent.
+var emit_sound: Callable = Callable()
 
 var _holds: HoldService
 var _map: MapData
@@ -64,6 +78,7 @@ var _fuse_states: Array[FuseState] = []
 var _fuse_carriers: Array[int] = []
 ## Active fuse box index -> installed fuse index (-1 = empty).
 var _box_fuses: Array[int] = []
+var _box_points: Array[Vector3] = []
 ## Dock slot -> docked drive index (-1 = empty).
 var _slots: Array[int] = []
 var _terminal: TerminalState = TerminalState.LOCKED
@@ -99,6 +114,7 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	_fuse_states = []
 	_fuse_carriers = []
 	_box_fuses = []
+	_box_points = []
 	_slots = []
 	_drive_pickups = []
 	_fuse_pickups = []
@@ -122,6 +138,7 @@ func setup(_tick_runner: Node, bus: EventBus, _registry: StateRegistry, knobs: K
 	for m: MapMarker in _first(&"fuse_box", ACTIVE_FUSE_BOXES):
 		_add(FuseBox.new(), _box_fuses.size(), m, o.fuse_install_s)
 		_box_fuses.append(-1)
+		_box_points.append(m.position)
 	for m: MapMarker in _first(&"terminal", 1):
 		_terminal_point = m.position
 		for i in ACTIVE_DRIVES:
@@ -282,6 +299,32 @@ func _pick_up(index: int, actor: int, from := FuseState.UNFOUND) -> void:
 ## Install: Healthy, carrying a fuse, box still empty (each box takes one fuse; rule 15).
 func _can_install(box: int, actor: int) -> bool:
 	return _box_fuses[box] == -1 and _healthy(actor) and _fuse_carriers.has(actor)
+
+
+## Rule 16 at install start: the install noise to everyone within `install_noise_radius_m` and the
+## shapeshifter-only alert circle. A cancelled and restarted install starts again, so alerts again.
+func _install_started(box: int) -> void:
+	var o := _knobs.objectives
+	var at: Vector3 = _box_points[box]
+	if emit_sound.is_valid():
+		## inference: the installer hears it too (source -1); no install sound is predicted client-side
+		## yet. ADR-0013 (audio, Proposed) settles it.
+		emit_sound.call(at, INSTALL_SOUND, o.install_noise_radius_m)
+	var e := EvObjectiveProgressChanged.new()
+	e.objective = FUSE_BOX_ID + box
+	e.state = FuseState.INSTALLING
+	e.alert_centre = alert_centre(at, o.alert_area_radius_m, rng)
+	e.alert_radius_m = o.alert_area_radius_m
+	e.alert_duration_s = o.alert_duration_s
+	_bus.emit(e)
+
+
+## Formulas "Install alert placement": `box` plus a point uniform in the horizontal disc of `radius_m`,
+## so the circle of `radius_m` round the result always contains the box.
+static func alert_centre(box: Vector3, radius_m: float, random: RandomNumberGenerator) -> Vector3:
+	var r := radius_m * sqrt(random.randf())
+	var a := random.randf() * TAU
+	return box + Vector3(cos(a) * r, 0.0, sin(a) * r)
 
 
 func _install(box: int, actor: int) -> void:
@@ -496,6 +539,13 @@ class FuseBox extends ObjectivePoint:
 		var m: SurvivorObjectives = owner.get_ref()
 		if m != null:
 			m._install(index, actor)
+
+	## Install start (rule 16): noise and the shapeshifter's alert. HoldService calls this only after
+	## eligible() and the lock passed.
+	func on_start(_actor: int) -> void:
+		var m: SurvivorObjectives = owner.get_ref()
+		if m != null:
+			m._install_started(index)
 
 
 ## A terminal drive slot (GDD rule 14, `dock_s` hold). Each slot has its own lock.
