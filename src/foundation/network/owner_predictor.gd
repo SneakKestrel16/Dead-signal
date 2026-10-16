@@ -16,7 +16,7 @@ class_name OwnerPredictor extends RefCounted
 ## survivor's stream, so the entry is that survivor's body. The body is placed there as sent: no replay, no
 ## step, no input sent, unacknowledged frames dropped (the server holds no body for a spectator).
 ## Usage:
-##   var p := OwnerPredictor.new(knobs, body, visual, TestMoveStep.apply, smp)
+##   var p := OwnerPredictor.new(knobs, body, visual, step, smp)
 ##   p.predict(frame)   # each physics tick: applies a buffered snapshot, steps, sends the last 3 frames
 
 ## Memory bound on unacknowledged frames (2 s at 60 Hz); the oldest is dropped beyond it.

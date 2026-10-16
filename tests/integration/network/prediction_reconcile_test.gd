@@ -133,14 +133,14 @@ func _start_server() -> void:
 	_runner = TickRunner.new() ## not in the tree: the test calls step()
 	_runner.fail_hard = false
 	_runner.boot(_knobs)
-	_sm = ServerMovement.new(_knobs, _server_net, _server_api, TestMoveStep.apply, TestMoveStep.WORLD)
+	_sm = ServerMovement.new(_knobs, _server_net, _server_api, RoundMoveStep.step_for(_knobs), PhysicsLayers.WORLD)
 	_sm.attach(_runner)
 	_server_net.set_meta("port", port)
 
 
 func _on_joined(player_id: int) -> void:
 	_joined.append(player_id)
-	_server_bodies[player_id] = TestMoveStep.make_body(_server_root, _spawn(player_id))
+	_server_bodies[player_id] = RoundMoveStep.make_body(_server_root, _spawn(player_id), _knobs)
 	_sm.add_player(player_id, _server_bodies[player_id])
 
 
@@ -167,13 +167,13 @@ func _add_clients(count: int, seed_base: int = 1000) -> void:
 	for i in range(start, start + count):
 		var c: Dictionary = _clients[i]
 		var pid: int = c.net.local_player_id
-		var body := TestMoveStep.make_body(c.root, _spawn(pid))
+		var body := RoundMoveStep.make_body(c.root, _spawn(pid), _knobs)
 		var visual := Node3D.new()
 		body.add_child(visual)
 		c["pid"] = pid
 		c["body"] = body
 		c["visual"] = visual
-		c["predictor"] = OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, c.root.multiplayer as SceneMultiplayer)
+		c["predictor"] = OwnerPredictor.new(_knobs, body, visual, RoundMoveStep.step_for(_knobs), c.root.multiplayer as SceneMultiplayer)
 
 
 func _condition_links(delay_s: float, jitter_s: float, loss: float) -> void:
@@ -318,7 +318,7 @@ func test_host_and_remote_client_end_with_identical_server_positions() -> void:
 	# The host body exists as long as the remote one before the route starts: a body created on the
 	# tick it first moves took a different first step (y 0.0 vs -1.9 mm) and diverged by metres at
 	# the step corner in about 1 run in 3 (2026-10-14).
-	_server_bodies[HOST_ID] = TestMoveStep.make_body(_server_root, _spawn(0))
+	_server_bodies[HOST_ID] = RoundMoveStep.make_body(_server_root, _spawn(0), _knobs)
 	_sm.add_player(HOST_ID, _server_bodies[HOST_ID], true)
 	await _add_clients(1)
 	assert_int(_clients[0].pid).is_equal(0) ## same spawn as the host body
@@ -393,10 +393,10 @@ func test_loss_burst_of_five_packets_recovers_without_a_permanent_offset() -> vo
 
 func test_reconcile_with_an_empty_input_buffer_applies_the_server_state() -> void:
 	await _build_world()
-	var body := TestMoveStep.make_body(_world, _spawn(0))
+	var body := RoundMoveStep.make_body(_world, _spawn(0), _knobs)
 	var visual := Node3D.new()
 	body.add_child(visual)
-	var p := OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, null)
+	var p := OwnerPredictor.new(_knobs, body, visual, RoundMoveStep.step_for(_knobs), null)
 	for i in 3:
 		p.predict(_frame(Vector2(0, 1), 0.0))
 	assert_int(p.unacked_count()).is_equal(3)
@@ -422,10 +422,10 @@ func test_reconcile_with_an_empty_input_buffer_applies_the_server_state() -> voi
 
 func test_snapshot_with_an_older_or_equal_tick_is_ignored() -> void:
 	await _build_world()
-	var body := TestMoveStep.make_body(_world, _spawn(0))
+	var body := RoundMoveStep.make_body(_world, _spawn(0), _knobs)
 	var visual := Node3D.new()
 	body.add_child(visual)
-	var p := OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, null)
+	var p := OwnerPredictor.new(_knobs, body, visual, RoundMoveStep.step_for(_knobs), null)
 	var here := body.global_position
 	_deliver(p, SnapshotCodec.encode(10, [_own_entry(here + Vector3(0.2, 0, 0), 0)] as Array[Dictionary]))
 	var after_first := body.global_position
@@ -461,18 +461,18 @@ func test_snapshot_received_outside_the_physics_frame_replays_with_the_physics_d
 	# The tree polls the multiplayer API in the idle frame; move_and_slide() there would use the frame
 	# delta and replay the wrong distance. The predictor buffers and replays in the physics frame.
 	await _build_world()
-	var body := TestMoveStep.make_body(_world, _spawn(0))
+	var body := RoundMoveStep.make_body(_world, _spawn(0), _knobs)
 	var visual := Node3D.new()
 	body.add_child(visual)
-	var server := TestMoveStep.make_body(_world, _spawn(0) + Vector3(0, 0, -20))
-	var p := OwnerPredictor.new(_knobs, body, visual, TestMoveStep.apply, null)
+	var server := RoundMoveStep.make_body(_world, _spawn(0) + Vector3(0, 0, -20), _knobs)
+	var p := OwnerPredictor.new(_knobs, body, visual, RoundMoveStep.step_for(_knobs), null)
 	var mods := MovementModifiers.new()
 	for i in PROCESS_FRAME_PREDICTED:
 		await get_tree().physics_frame
 		var f := _frame(Vector2(0, 1), 0.0)
 		p.predict(f)
 		if i < PROCESS_FRAME_ACKED:
-			TestMoveStep.apply(server, f, mods)
+			RoundMoveStep.apply(server, f, mods, _knobs)
 	var entry := _own_entry(server.global_position + Vector3(0, 0, 20), PROCESS_FRAME_ACKED)
 	entry["vel"] = server.velocity
 	await get_tree().process_frame

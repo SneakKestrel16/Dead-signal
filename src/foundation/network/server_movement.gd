@@ -14,7 +14,7 @@ class_name ServerMovement extends RefCounted
 ## The gait byte is a stand-in derived from the frame (0 idle, 1 walk, 2 sprint, 3 crouch); the
 ## controller epic owns the real gait.
 ## Usage:
-##   var sm := ServerMovement.new(knobs, net, smp, TestMoveStep.apply, WORLD_LAYER_MASK)
+##   var sm := ServerMovement.new(knobs, net, smp, step, WORLD_LAYER_MASK)
 ##   sm.attach(runner); sm.add_player(pid, body)
 
 const GAIT_IDLE := 0

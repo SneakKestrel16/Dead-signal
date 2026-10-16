@@ -12,8 +12,7 @@ class_name RoundHost extends Node
 ## lobby leave).
 ## Named NODE_NAME: the session HiddenSpawner sits at NODE_NAME/Hidden under the multiplayer root, the path
 ## every client's RoundClient (also named NODE_NAME) uses (ADR-0004 Â§7a).
-## Bodies use TestMoveStep (tests/helpers), as tests/manual/round_host.gd does: the controller epic has not
-## shipped the real step. Swap both sides (here and LobbyScreen's RoundClient) when it does.
+## Bodies move with RoundMoveStep (MovementStep.step), the step LobbyScreen's RoundClient predicts with.
 ## Usage:
 ##   var rh := RoundHost.new(knobs, net, router, handoff, lobby)
 ##   session_root.add_child(rh)
@@ -86,7 +85,7 @@ func _on_handed_off(roster: Roster) -> void:
 	_view.add_child(world)
 	MapGreybox.build(world, _map)
 	composer = RoundComposer.new(_knobs, roster, _map, _net, multiplayer as SceneMultiplayer, world,
-			TestMoveStep.apply, TestMoveStep.WORLD, TestMoveStep.make_body, _look_of.bind(roster))
+			RoundMoveStep.step_for(_knobs), PhysicsLayers.WORLD, RoundMoveStep.body_maker(_knobs), _look_of.bind(roster))
 	composer.hidden = hidden
 	composer.on_over = _on_over
 	server = RoundServer.new()

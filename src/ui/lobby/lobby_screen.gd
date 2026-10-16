@@ -340,7 +340,7 @@ func _on_round_over(ended: bool) -> void:
 ## A RoundClient named RoundHost.NODE_NAME under `parent`, with its round map, not yet playing.
 func _new_round_client(parent: Node) -> RoundClient:
 	var map := MapData.load_map()
-	var c := RoundClient.new(_knobs, TestMoveStep.apply, TestMoveStep.make_body, map, render_round)
+	var c := RoundClient.new(_knobs, RoundMoveStep.step_for(_knobs), RoundMoveStep.body_maker(_knobs), map, render_round)
 	c.name = RoundHost.NODE_NAME
 	parent.add_child(c)
 	var floors := Node3D.new()

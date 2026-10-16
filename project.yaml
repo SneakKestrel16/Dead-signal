@@ -58,9 +58,8 @@ naming:
   scenes: snake_case
 
 commands:
-  # TODO: build needs an export preset; none exists yet. Set via /settings once
-  # export_presets.cfg has one (e.g. "Windows Desktop").
-  build: "[TO BE CONFIGURED]"
+  # Exports the "Dead Signal Windows" preset to build/windows/DeadSignal.exe (BUG-0017 fixed; AD-246).
+  build: '"C:/Users/Ockey/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe" --headless --path . --export-release "Dead Signal Windows" build/windows/DeadSignal.exe'
   test: '"C:/Users/Ockey/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe" --headless -s -d --remote-debug tcp://127.0.0.1:0 res://addons/gdUnit4/bin/GdUnitCmdTool.gd -a res://tests --ignoreHeadlessMode'
   run: '"C:/Users/Ockey/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe" --path . --windowed --resolution 1280x720'
   smoke: '"C:/Users/Ockey/AppData/Local/Microsoft/WinGet/Packages/GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe/Godot_v4.7.2-stable_win64_console.exe" --headless --quit-after 5'
