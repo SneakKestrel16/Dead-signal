@@ -26,3 +26,9 @@ visor, re-unwrapped and baked to new textures; the true form has stretched arm b
 added ribs, claws, teeth and spikes. Kept clips: Idle, Idle_Torch, Walk, Jog_Fwd, Sprint, Crouch_Idle,
 Crouch_Fwd, Interact, PickUp_Table, Fixing_Kneeling, Push, Hit_Chest, Hit_Head, Death01, Punch_Enter,
 Punch_Cross, Sword_Attack. Accessories, stripe mask and all textures are made for this project.
+
+## Props
+
+No third-party sources. Every prop in `assets/art/props/` (ASSET-052..064) is modelled procedurally from
+primitives by `tools/art/build_props.py`; the hiding cabinet, hiding locker and breaker wall bodies use the
+shared `mat_steel_plate_a.tres` (sources above), remapped in their `.glb.import` files.

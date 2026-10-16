@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=27 format=3]
 
 [ext_resource type="Script" path="res://src/core/facility/surface_materials.gd" id="1"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_floor_tile_a.tres" id="2"]
@@ -10,6 +10,19 @@
 [ext_resource type="Material" path="res://assets/art/materials/mat_painted_block_zone_c.tres" id="8"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_painted_block_a.tres" id="9"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_trim_metal.tres" id="10"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_data_drive.glb" id="p_data_drive"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_fuse.glb" id="p_fuse"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_fuse_box.glb" id="p_fuse_box"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_terminal.glb" id="p_terminal"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_exit_door.glb" id="p_exit_door"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_exit_lamp.glb" id="p_exit_lamp"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_hide_cabinet.glb" id="p_hide_cabinet"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_hide_locker.glb" id="p_hide_locker"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_light_switch.glb" id="p_light_switch"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_camera.glb" id="p_camera"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_monitor_wall.glb" id="p_monitor_wall"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_core.glb" id="p_core"]
+[ext_resource type="PackedScene" path="res://assets/art/props/prop_breaker_wall.glb" id="p_breaker_wall"]
 
 [sub_resource type="StandardMaterial3D" id="m13"]
 albedo_color = Color(0.55, 0.8, 0.9, 0.3)
@@ -46,3 +59,20 @@ glass = SubResource("m13")
 fallback = SubResource("m14")
 door = ExtResource("10")
 barricade = SubResource("m15")
+props = Dictionary[StringName, PackedScene]({
+&"drive": ExtResource("p_data_drive"),
+&"fuse": ExtResource("p_fuse"),
+&"fuse_box": ExtResource("p_fuse_box"),
+&"terminal": ExtResource("p_terminal"),
+&"hiding": ExtResource("p_hide_cabinet"),
+&"h4": ExtResource("p_hide_locker"),
+&"h5": ExtResource("p_hide_locker"),
+&"h6": ExtResource("p_hide_locker"),
+&"switch": ExtResource("p_light_switch"),
+&"camera": ExtResource("p_camera"),
+&"monitor": ExtResource("p_monitor_wall"),
+&"exit": ExtResource("p_exit_door"),
+&"exit_lit": ExtResource("p_exit_lamp"),
+&"BlockerCore": ExtResource("p_core"),
+&"BlockerBreakerWall": ExtResource("p_breaker_wall")
+})

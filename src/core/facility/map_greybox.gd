@@ -9,7 +9,10 @@ class_name MapGreybox extends RefCounted
 ##   floor slab under the exit zone past the exit opening;
 ## - each wall drawn as two half-thickness skins, one per side, split per touching volume, so each room shows
 ##   its own zone's wall material (SurfaceMaterials, data/art/surface_materials.tres);
-## - a coloured post at every interactable and door.
+## - a prop (SurfaceMaterials.props, assets/art/props/) at every interactable and camera marker, the exit's
+##   chevron frame with its Exit Green lens (child "Lit" of the exit blocker, shown while open: DoorBlockers),
+##   The Core and the breaker wall over their LOS blockers; a coloured post at every door and at an interactable
+##   with no prop. Props are visual only: no collision, interaction and sight read MapQueries and the scene.
 ## Door blockers keep the scene's start state (doors open, exit closed until Exit Open, research-facility.md
 ## AC 10), each leaf drawn in SurfaceMaterials.door while its blocker is enabled. DoorBlockers drives them from
 ## door state: Doors on the host, the replicated EventBatch.DOORS on a client (BUG-0018).
@@ -48,6 +51,10 @@ static func build(parent: Node, map: MapData) -> Node3D:
 			mesh.free() ## the slabs below draw the floor
 		else: ## LOS blockers (Core, racks, breaker wall)
 			mesh.material_override = mats.wall_of(_zone(map, queries.volume_at(body.position)))
+			var dressing: PackedScene = mats.props.get(body.name)
+			if dressing != null:
+				mesh.visible = false
+				_dress(body, dressing, map, queries)
 	for v in map.volumes:
 		var floor_at := Vector3(v.box.get_center().x, v.box.position.y - SLAB_M / 2.0, v.box.get_center().z)
 		var slab := Vector3(v.box.size.x, SLAB_M, v.box.size.z)
@@ -61,10 +68,89 @@ static func build(parent: Node, map: MapData) -> Node3D:
 		var door := t as MapPassage
 		if door:
 			_box(root, door.position + Vector3.UP * DOOR.y / 2.0, DOOR, _flat(Color(0.55, 0.35, 0.15)), false)
-		else:
+		elif mats.prop_of(t as MapMarker) == null:
 			var m := t as MapMarker
 			_box(root, m.position + Vector3.UP * POST.y / 2.0, POST, _flat(Color(0.2, 0.5, 0.9)), false)
+	for m in map.markers:
+		var scene := mats.prop_of(m)
+		if scene != null:
+			_marker_prop(root, scene, m, map)
+	for p in map.passages:
+		if p.kind == MapPassage.EXIT:
+			_exit_prop(root, level, p, map, mats)
 	return root
+
+
+## Places `scene` at marker `m`, named Prop_<id>, facing MapMarker.yaw_deg, or the middle of its volume when
+## unset (inference: the map has no facing for switches, fuse boxes, terminals or the monitor; a yaw in the map
+## file would settle it). A camera hangs and tilts like the feed camera (SurveillanceFeed), on the feed's hidden
+## layer so the feed never films its own housing.
+static func _marker_prop(root: Node3D, scene: PackedScene, m: MapMarker, map: MapData) -> void:
+	var n := scene.instantiate() as Node3D
+	n.name = "Prop_%s" % m.id
+	root.add_child(n)
+	var box := _volume(map, m.volume).box
+	n.position = m.position
+	n.rotation.y = deg_to_rad(m.yaw_deg) if not is_nan(m.yaw_deg) else _facing(m.position, box.get_center())
+	if m.type == &"camera":
+		n.position.y = box.end.y - SurveillanceFeed.MOUNT_BELOW_CEILING_M
+		n.rotation.x = deg_to_rad(SurveillanceFeed.PITCH_DEG)
+		for mi: VisualInstance3D in n.find_children("*", "VisualInstance3D", true, false):
+			mi.layers = 1 << (SurveillanceFeed.SCREEN_LAYER - 1)
+
+
+## The exit's chevron frame at the exit opening, facing into its room, and the Exit Green lens as child "Lit"
+## of the exit blocker (DoorBlockers shows it while the exit is open), drawn now in the blocker's state.
+static func _exit_prop(root: Node3D, level: Node3D, exit: MapPassage, map: MapData, mats: SurfaceMaterials) -> void:
+	var yaw := _facing(exit.position, _room_centre(map, exit.a))
+	var frame: PackedScene = mats.props.get(MapPassage.EXIT)
+	if frame != null:
+		var n := frame.instantiate() as Node3D
+		n.name = "Prop_%s" % exit.id
+		root.add_child(n)
+		n.position = exit.position
+		n.rotation.y = yaw
+	var lens: PackedScene = mats.props.get(&"exit_lit")
+	var body := level.get_node_or_null(NodePath("Door_%s" % exit.id)) as StaticBody3D
+	if lens != null and body != null:
+		var lit := lens.instantiate() as Node3D
+		lit.name = "Lit"
+		body.add_child(lit)
+		lit.position = exit.position - body.position
+		lit.rotation.y = yaw
+		lit.visible = (body.get_child(0) as CollisionShape3D).disabled
+
+
+## Dresses LOS blocker `body` with `scene`: origin on the floor under the body, front toward its room along the
+## blocker's thinner horizontal axis.
+static func _dress(body: Node3D, scene: PackedScene, map: MapData, queries: MapQueries) -> void:
+	var size := ((body.get_node(^"Shape") as CollisionShape3D).shape as BoxShape3D).size
+	var room := _volume(map, queries.volume_at(body.position))
+	var to := room.box.get_center() - body.position if room != null else Vector3.FORWARD
+	var n := scene.instantiate() as Node3D
+	n.name = "Prop"
+	body.add_child(n)
+	n.position = Vector3.DOWN * size.y / 2.0
+	if size.z <= size.x:
+		n.rotation.y = 0.0 if to.z < 0.0 else PI
+	else:
+		n.rotation.y = PI / 2.0 if to.x < 0.0 else -PI / 2.0
+
+
+## Yaw (radians, controller convention: 0 faces -Z) that faces from `from` toward `to` in the floor plane.
+static func _facing(from: Vector3, to: Vector3) -> float:
+	return atan2(from.x - to.x, from.z - to.z)
+
+
+## Middle of room `room`'s volumes (a room may span several).
+static func _room_centre(map: MapData, room: StringName) -> Vector3:
+	var box := AABB()
+	var first := true
+	for v in map.volumes:
+		if v.room == room:
+			box = v.box if first else box.merge(v.box)
+			first = false
+	return box.get_center()
 
 
 ## Draws scene wall `body` as half-thickness skins: on each side, one per volume whose edge lies on the wall's
@@ -101,10 +187,16 @@ static func _skin(root: Node3D, body: Node3D, map: MapData, mats: SurfaceMateria
 
 ## Zone of volume `id`, or &"" outside every volume.
 static func _zone(map: MapData, id: StringName) -> StringName:
+	var v := _volume(map, id)
+	return v.zone if v != null else &""
+
+
+## Volume `id`, or null.
+static func _volume(map: MapData, id: StringName) -> MapVolume:
 	for v in map.volumes:
 		if v.id == id:
-			return v.zone
-	return &""
+			return v
+	return null
 
 
 ## Marks a surface mesh with its volume and surface kind (floor, wall, ceiling): the texture pass and the

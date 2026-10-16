@@ -15,6 +15,11 @@ class_name SurfaceMaterials extends Resource
 @export var barricade: Material
 ## Used for a zone missing from a table.
 @export var fallback: Material
+## Prop scenes (ASSET-052..064, assets/art/props/, tools/art/build_props.py) MapGreybox draws instead of posts,
+## looked up by MapMarker.id first, then MapMarker.type (so h4..h6 can be lockers while `hiding` is a cabinet).
+## Also &"exit" (frame at the MapPassage.EXIT opening), &"exit_lit" (its lamp lens, shown while the exit is
+## open) and LOS blocker node names of the level scene (&"BlockerCore", &"BlockerBreakerWall"). Visual only.
+@export var props: Dictionary[StringName, PackedScene] = {}
 
 
 ## Floor material of `zone`.
@@ -30,3 +35,8 @@ func wall_of(zone: StringName) -> Material:
 ## Ceiling material of `zone`.
 func ceiling_of(zone: StringName) -> Material:
 	return ceilings.get(zone, fallback)
+
+
+## Prop scene of marker `m`: by its id, else by its type; null when it has none.
+func prop_of(m: MapMarker) -> PackedScene:
+	return props.get(m.id, props.get(m.type))

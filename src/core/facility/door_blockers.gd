@@ -105,6 +105,9 @@ static func _set_closed(body: StaticBody3D, closed: bool) -> void:
 	var leaf := body.get_node_or_null(^"Mesh") as Node3D
 	if leaf != null:
 		leaf.visible = closed
+	var lit := body.get_node_or_null(^"Lit") as Node3D ## the exit's Exit Green lens (MapGreybox)
+	if lit != null:
+		lit.visible = not closed
 
 
 static func _planks(body: StaticBody3D) -> Node3D:
