@@ -10,11 +10,11 @@ framework:
 project:
   stage: Production
 
-# Dead Signal has several interacting systems (deception, combat, objectives,
-# networking), so it runs at `standard`: per-system GDDs before code.
+# Dead Signal ran at `standard` (per-system GDDs before code) through sprint 9; the
+# designer moved it to `minimal` on 2026-10-15 to cut story and sign-off overhead.
 # Change with `/settings modes.rigor=<minimal|standard|full>`.
 modes:
-  rigor: standard
+  rigor: minimal
 
 # NOTE: this template ships with no `modes:` block, and the six knobs below must
 # never be added to one.
