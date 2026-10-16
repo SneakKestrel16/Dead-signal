@@ -82,6 +82,9 @@ var flinch_enabled := true
 ## INFERENCE: no client settings store exists yet, so the initial value is the `--reduced-motion` user flag;
 ## a settings screen/store would replace that one line.
 var reduced_motion := OS.get_cmdline_user_args().has("--reduced-motion")
+## The player's settings (LobbyScreen's); apply_settings() sets it and pushes every value. null = defaults and
+## the `--reduced-motion` flag above (scripted launches and tests).
+var settings: PlayerSettings
 ## FM-12 zone ambience text overlay: a diagnostic, shown only with the `--ambience-debug` user flag (BUG-0011).
 var ambience_debug := OS.get_cmdline_user_args().has("--ambience-debug")
 ## Camera on the watched survivor while spectating (BUG-0005); null when not rendering.
@@ -323,6 +326,8 @@ func _on_connected() -> void:
 		hud.add_child(FormPicker.for_client(hud_model, ping_hud.contexts, knobs, smp, interaction.refuse,
 				match_display.server_tick)) # borrowed-face/011
 		push_reduced_motion(hud, reduced_motion) # BUG-0008: one place for every presenter
+		if settings != null:
+			apply_settings(settings)
 	else:
 		bar = PredictedHoldBar.new() # not drawn; keeps the same per-tick path as the rendering client
 		add_child(bar)
@@ -372,6 +377,33 @@ func set_flinch(on: bool) -> void:
 	if predictor != null:
 		(multiplayer as SceneMultiplayer).send_bytes(NetAuthority.flinch_packet(on), 1,
 				MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+
+
+## Applies every PlayerSettings value to this client's presenters and input, live (scare-events.md rule 29);
+## the flinch toggle reaches the server only when it changes (ADR-0015 §4).
+func apply_settings(s: PlayerSettings) -> void:
+	settings = s
+	set_reduced_motion(s.reduced_motion)
+	if s.camera_flinch != flinch_enabled:
+		set_flinch(s.camera_flinch)
+	if input != null:
+		input.sensitivity = s.mouse_sensitivity
+		input.stick_rate = s.stick_rate
+	var flash := s.effective_flash_scale()
+	for p: Object in [scares, shock]:
+		if p != null:
+			p.set(&"flash_scale", flash)
+	if lights != null:
+		lights.reduced_flash = flash <= 0.0 # ScareVisuals derives the same from scares.flash_scale
+	if objective_props != null:
+		objective_props.reduced_flash = flash <= 0.0
+	if scare_audio != null:
+		scare_audio.stinger_scale = s.stinger_volume
+		scare_audio.scare_scale = s.scare_volume
+	if hud != null:
+		for n in hud.get_children():
+			if &"hud_scale" in n:
+				n.set(&"hud_scale", s.hud_scale)
 
 
 ## The estimated server tick of this moment (fractional), or 0 before the estimator has one.

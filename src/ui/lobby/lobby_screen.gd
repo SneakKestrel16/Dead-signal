@@ -32,6 +32,10 @@ class_name LobbyScreen extends Control
 ## --lobby-shots=DIR (story match-flow/013 evidence) saves lobby.png once the room lists min_players,
 ## round.png SHOT_AFTER_S after the own body spawned, results.png SHOT_AFTER_S into Results and back.png
 ## once the room shows again after the round, then quits.
+## Settings (design/game-brief.md MVP; interaction-patterns.md P15): the form's and room's Settings button opens
+## SettingsScreen under MENU on the lobby's stack; in a round Esc / Start opens it as a non-pausing OVERLAY on
+## the round's stack (only from GAMEPLAY). Each change applies live: bus volumes here, the rest through
+## RoundClient.apply_settings.
 ## Usage: add_child(LobbyScreen.new())
 
 const _ROW_COLUMNS := 4
@@ -46,6 +50,10 @@ var render_round := true
 var leave_to: Callable = Main.return_with
 ## The server role (host only; null on a client).
 var round_host: RoundHost
+## The player's settings; set before add_child (tests), null = PlayerSettings.new() (user://settings.cfg).
+var settings: PlayerSettings
+## The open settings screen (lobby or in-round), null when closed.
+var settings_view: SettingsScreen
 ## The round scene of this player: a client's adopted RoundClient (from the room on), or the host's seat
 ## RoundClient while a round runs.
 var round_client: RoundClient
@@ -91,6 +99,10 @@ var _last_round_button: Button
 func _ready() -> void:
 	_knobs = knobs if knobs != null else Knobs.load_all()
 	_contexts.viewport = get_viewport()
+	if settings == null:
+		settings = PlayerSettings.new()
+	settings.apply_audio()
+	settings.changed.connect(_on_setting_changed)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -141,6 +153,7 @@ func _build_form(box: VBoxContainer) -> void:
 	_form.add_child(buttons)
 	_button(buttons, "Host", _on_host)
 	_button(buttons, "Join", _on_join)
+	_button(buttons, "Settings", open_settings)
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_form.add_child(_status)
@@ -172,6 +185,7 @@ func _build_room(box: VBoxContainer) -> void:
 	_ready_button = _button(buttons, "Ready", _on_ready_toggled)
 	_ready_button.toggle_mode = true
 	_last_round_button = _button(buttons, "Last round", _on_last_round)
+	_button(buttons, "Settings", open_settings)
 	_button(buttons, "Leave", _on_leave)
 
 
@@ -348,6 +362,7 @@ func _new_round_client(parent: Node) -> RoundClient:
 	c.add_child(floors)
 	MapGreybox.build(floors, map)
 	c.level = floors # BUG-0018: its doors follow the server's
+	c.apply_settings(settings)
 	return c
 
 
@@ -360,6 +375,7 @@ func _arm_client() -> void:
 
 func _enter_round() -> void:
 	_close_last_round()
+	close_settings()
 	_in_round = true
 	_display = MatchDisplay.new(_knobs, round_client.multiplayer as SceneMultiplayer)
 	_room.hide()
@@ -369,6 +385,7 @@ func _enter_round() -> void:
 ## Frees the round scene (host seat or client) and the display. Safe outside a round.
 func _drop_round() -> void:
 	_in_round = false
+	close_settings()
 	if _display != null:
 		_display.close()
 	_display = null
@@ -411,6 +428,7 @@ func _process(delta: float) -> void:
 
 ## RoundEnded arrived: the Results screen over the frozen round (results.md Entry; story hud-results/008).
 func _show_results() -> void:
+	close_settings() # its overlay must not sit over Results (the stack was reset to MENU)
 	var hud := round_client.ping_hud if round_client != null else null
 	_last_round = _display.results()
 	_results = ResultsScreen.new(_last_round, _knobs.match_flow.results_duration_s,
@@ -427,6 +445,49 @@ func _on_last_round() -> void:
 	_last_round_view = ResultsScreen.last_round(_last_round, _contexts)
 	_last_round_view.closed.connect(_close_last_round)
 	add_child(_last_round_view)
+
+
+## Opens the settings screen: in a round over the live view as OVERLAY on the round's stack (only from
+## GAMEPLAY), else under MENU on the lobby's own stack. Does nothing when one is open.
+func open_settings() -> void:
+	if settings_view != null:
+		return
+	var hud := round_client.ping_hud if round_client != null and _in_round else null
+	if _in_round and (hud == null or hud.contexts.top() != InputContextStack.Ctx.GAMEPLAY):
+		return
+	if hud != null:
+		var layer := CanvasLayer.new()
+		layer.layer = UiLayers.OVERLAY
+		add_child(layer)
+		settings_view = SettingsScreen.new(settings, hud.contexts, InputContextStack.Ctx.OVERLAY, true)
+		layer.add_child(settings_view)
+	else:
+		settings_view = SettingsScreen.new(settings, _contexts, InputContextStack.Ctx.MENU, false)
+		add_child(settings_view)
+	settings_view.closed.connect(close_settings)
+
+
+## Frees the settings screen (and its overlay layer); its exit saves and pops its context.
+func close_settings() -> void:
+	if settings_view == null:
+		return
+	var host := settings_view.get_parent()
+	(host if host is CanvasLayer else settings_view).queue_free()
+	settings_view = null
+
+
+func _on_setting_changed(_key: StringName) -> void:
+	settings.apply_audio()
+	if round_client != null:
+		round_client.apply_settings(settings)
+
+
+## Esc / Start in a round opens the settings overlay (P15); the screen itself handles the close.
+func _unhandled_input(event: InputEvent) -> void:
+	if _in_round and settings_view == null and event.is_action_pressed(&"menu"):
+		open_settings()
+		if settings_view != null:
+			get_viewport().set_input_as_handled()
 
 
 ## Frees the Last round view; its exit pops MENU, which restores focus to the Last round button.

@@ -128,6 +128,12 @@ func sample(offset_tick: int = 0) -> InputFrame:
 	# SD-14: interact_alt is a second interact key; either one holds interact.
 	f.interact_alt = Input.is_action_pressed(&"interact_alt")
 	f.interact = Input.is_action_pressed(&"interact") or f.interact_alt
+	if contexts != null and not contexts.allows_move(): # P15: an overlay or menu sends no movement or hold
+		f.move = Vector2.ZERO
+		f.sprint = false
+		f.crouch = false
+		f.interact = false
+		f.interact_alt = false
 	f.yaw = yaw
 	f.pitch = pitch
 	f.record_id = _record.record_id
