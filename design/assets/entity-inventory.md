@@ -138,22 +138,22 @@
 
 | # | Name | Type (SFX / Music / Ambient) | Description | Source | Status |
 |---|------|------------------------------|-------------|--------|--------|
-| 1 | Footsteps per survivor | SFX | Per-survivor set, three surface variants (concrete, metal grate, tile); disguise uses target's set | first-person-controller V/A | Specced (characters-assets.md) |
-| 2 | Sprint breathing | SFX | Layer heard only by the sprinting player | first-person-controller V/A | Specced (characters-assets.md) |
-| 3 | Interact loops | SFX | Per-type loop; quiet variant for fake holds | survivor-objectives V/A | Specced (characters-assets.md) |
-| 4 | Fuse install | SFX | Loud spatialized install sound | survivor-objectives V/A | Specced (characters-assets.md) |
-| 5 | Monster install alert cue | SFX | Monster-only | survivor-objectives V/A | Specced (characters-assets.md) |
-| 6 | Drive clatter | SFX | Drive dropped | survivor-objectives V/A | Specced (characters-assets.md) |
-| 7 | Generator spin-up | SFX | Power restored | survivor-objectives V/A | Specced (characters-assets.md) |
-| 8 | Terminal activation tone | SFX | Rising tone, stalls when paused; activation loop | survivor-objectives V/A; level doc Audio | Specced (characters-assets.md) |
-| 9 | Drive eject clunk | SFX | Mechanical eject | survivor-objectives V/A | Specced (characters-assets.md) |
-| 10 | Exit door alarm and cycle | SFX | Alarm on open, door cycle on extraction | survivor-objectives V/A; match-flow V/A | Specced (characters-assets.md) |
-| 11 | Transformation distortion | SFX | Spatial distortion within 15 m | borrowed-face V/A | Specced (characters-assets.md) |
-| 12 | Reveal sting | SFX | True-form reveal stinger | borrowed-face V/A; scare-events V/A | Specced (characters-assets.md) |
-| 13 | Face-unlock tick | SFX | Quiet UI tick, monster only | borrowed-face V/A | Specced (characters-assets.md) |
-| 14 | Takedown struggle | SFX | Loud directional struggle cue | downing-and-rescue V/A | Specced (characters-assets.md) |
-| 15 | Stun crack and release gasp | SFX | Commit cancelled by stun | downing-and-rescue V/A | Specced (characters-assets.md) |
-| 16 | Collapse and heartbeat | SFX | Downed; heartbeat slows toward bleed-out end | downing-and-rescue V/A | Specced (characters-assets.md) |
+| 1 | Footsteps per survivor | SFX | Per-survivor set, three surface variants (concrete, metal grate, tile); disguise uses target's set | first-person-controller V/A | Needed |
+| 2 | Sprint breathing | SFX | Layer heard only by the sprinting player | first-person-controller V/A | Needed |
+| 3 | Interact loops | SFX | Per-type loop; quiet variant for fake holds | survivor-objectives V/A | Needed |
+| 4 | Fuse install | SFX | Loud spatialized install sound | survivor-objectives V/A | Needed |
+| 5 | Monster install alert cue | SFX | Monster-only | survivor-objectives V/A | Needed |
+| 6 | Drive clatter | SFX | Drive dropped | survivor-objectives V/A | Needed |
+| 7 | Generator spin-up | SFX | Power restored | survivor-objectives V/A | Needed |
+| 8 | Terminal activation tone | SFX | Rising tone, stalls when paused; activation loop | survivor-objectives V/A; level doc Audio | Needed |
+| 9 | Drive eject clunk | SFX | Mechanical eject | survivor-objectives V/A | Needed |
+| 10 | Exit door alarm and cycle | SFX | Alarm on open, door cycle on extraction | survivor-objectives V/A; match-flow V/A | Needed |
+| 11 | Transformation distortion | SFX | Spatial distortion within 15 m | borrowed-face V/A | Needed |
+| 12 | Reveal sting | SFX | True-form reveal stinger | borrowed-face V/A; scare-events V/A | Needed |
+| 13 | Face-unlock tick | SFX | Quiet UI tick, monster only | borrowed-face V/A | Needed |
+| 14 | Takedown struggle | SFX | Loud directional struggle cue | downing-and-rescue V/A | Needed |
+| 15 | Stun crack and release gasp | SFX | Commit cancelled by stun | downing-and-rescue V/A | Needed |
+| 16 | Collapse and heartbeat | SFX | Downed; heartbeat slows toward bleed-out end | downing-and-rescue V/A | Needed |
 | 17 | Call for Help cry | SFX | Directional voice cry | downing-and-rescue V/A | Needed |
 | 18 | Rescue effort loop and relief cue | SFX | Quiet effort loop, short relief on rescued | downing-and-rescue V/A | Needed |
 | 19 | Eliminated final sting | SFX | Distinct; respects reduced volume | downing-and-rescue V/A | Needed |
