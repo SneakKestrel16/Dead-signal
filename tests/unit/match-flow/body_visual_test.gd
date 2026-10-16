@@ -86,7 +86,53 @@ func test_gait_and_speed_pick_the_animation() -> void:
 	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.SPRINT, still))).is_equal("Idle")
 	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.CROUCH, still))).is_equal("Crouch_Idle")
 	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.CROUCH, moving))).is_equal("Crouch_Fwd")
-	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.CRAWL, moving))).is_equal("Crouch_Fwd")
+	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.CRAWL, moving))).is_equal("Crawl")
+	assert_str(String(BodyVisual.anim_for(MovementStep.Gait.CRAWL, still))).is_equal("Downed")
+
+
+func test_actions_pick_the_form_clip() -> void:
+	var walk := MovementStep.Gait.WALK
+	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
+	assert_str(String(BodyVisual.clip_for(2, walk, 0.0, BodyVisual.STAGGER))).is_equal("Hit_Chest")
+	assert_str(String(BodyVisual.clip_for(tf, walk, 0.0, BodyVisual.STAGGER))).is_equal("Hit_Head")
+	assert_str(String(BodyVisual.clip_for(tf, walk, 0.0, &"coil"))).is_equal("Lunge_Coil")
+	assert_str(String(BodyVisual.clip_for(tf, walk, 0.0, &"stumble"))).is_equal("Lunge_Stumble")
+	assert_str(String(BodyVisual.clip_for(tf, walk, 0.0, &"hit_stop"))).is_equal("Punch_Cross")
+	assert_str(String(BodyVisual.clip_for(tf, walk, 2.0, &""))).is_equal("Walk")
+
+
+func test_disguise_never_plays_a_true_form_clip() -> void:
+	for appearance in [1, 2, 3, 4, 5, SnapshotCodec.NO_APPEARANCE]:
+		for gait in [0, 1, 2, 3]:
+			for action: StringName in [&"", BodyVisual.STAGGER, &"coil", &"stumble", &"hit_stop", &"dash", &"pin"]:
+				for speed in [0.0, 2.0]:
+					var c := BodyVisual.clip_for(appearance, gait, speed, action)
+					assert_bool(BodyVisual.TRUE_FORM_CLIPS.has(c)) 							.override_failure_message("%d %d %s -> %s" % [appearance, gait, action, c]).is_false()
+
+
+func test_unknown_state_falls_back_to_idle() -> void:
+	assert_str(String(BodyVisual.anim_for(99, 0.0))).is_equal("Idle")
+	assert_str(String(BodyVisual.clip_for(1, 99, 0.0, &"bogus"))).is_equal("Idle")
+	assert_str(String(BodyVisual.clip_for(CharacterDef.TRUE_FORM_APPEARANCE_ID, -1, 0.0, &"bogus"))).is_equal("Idle")
+
+
+func test_leaving_downed_plays_stand_up_and_coil_runs_into_the_dash() -> void:
+	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
+	mesh.mesh = CapsuleMesh.new()
+	_bv.show(4, mesh, 3, MovementStep.Gait.CRAWL, false, Vector3.ZERO, 0.0)
+	var ap := mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_str(String(ap.current_animation)).is_equal("Downed")
+	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, false, Vector3.ZERO, 16.0)
+	assert_str(String(ap.current_animation)).is_equal("Stand_Up")
+	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, false, Vector3.ZERO, 32.0)
+	assert_str(String(ap.current_animation)).is_equal("Stand_Up") # held until it finishes
+	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
+	mesh = auto_free(MeshInstance3D.new())
+	_bv.show(5, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 0.0, &"coil")
+	ap = mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
+	assert_str(String(ap.current_animation)).is_equal("Lunge_Coil")
+	_bv.show(5, mesh, tf, MovementStep.Gait.SPRINT, false, Vector3.ZERO, 16.0)
+	assert_str(String(ap.current_animation)).is_equal("Lunge_Dash")
 
 
 func test_show_rebuilds_on_appearance_change_and_hides_art_while_transforming() -> void:
@@ -106,3 +152,16 @@ func test_show_rebuilds_on_appearance_change_and_hides_art_while_transforming() 
 	assert_object(second.find_child(BodyVisual.TRUE_LOD_NAMES[0], true, false)).is_not_null()
 	assert_bool(second.visible).is_false()
 	assert_object(mesh.mesh).is_same(capsule)
+
+
+func test_a_finished_coil_is_held_not_restarted() -> void:
+	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
+	mesh.mesh = CapsuleMesh.new()
+	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
+	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 0.0, &"coil")
+	var ap := mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
+	ap.advance(ap.get_animation(&"Lunge_Coil").length + 1.0)
+	assert_bool(ap.is_playing()).is_false()
+	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 16.0, &"coil")
+	assert_bool(ap.is_playing()).is_false()
+	assert_str(String(ap.assigned_animation)).is_equal("Lunge_Coil")

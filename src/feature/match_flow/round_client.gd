@@ -589,7 +589,8 @@ func _draw_remotes() -> void:
 		(n.get_node(^"Cone") as SpotLight3D).visible = st.get("flashlight", false)
 		if body_visuals != null: # character art over the greybox capsule (ASSET-001..010)
 			body_visuals.show(h, n.get_node(^"Mesh"), st.get("appearance", SnapshotCodec.NO_APPEARANCE),
-					st.get("gait", 0), st.get("transforming", false), pose[0], _now_ms)
+					st.get("gait", 0), st.get("transforming", false), pose[0], _now_ms,
+					BodyVisual.STAGGER if disguise.stagger_weight(h) > 0.0 else lunge_fx.pose()) # clips over the gait
 			if objective_props != null: # carried objectives in the right hand (rule 10)
 				objective_props.hold_items(n.get_node(^"Mesh"), st.get("drive", false), st.get("fuse", false))
 

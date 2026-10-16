@@ -25,7 +25,11 @@ Modified in `tools/art/build_characters.py`: the mannequin is smoothed and padde
 visor, re-unwrapped and baked to new textures; the true form has stretched arm bones, a narrowed trunk and
 added ribs, claws, teeth and spikes. Kept clips: Idle, Idle_Torch, Walk, Jog_Fwd, Sprint, Crouch_Idle,
 Crouch_Fwd, Interact, PickUp_Table, Fixing_Kneeling, Push, Hit_Chest, Hit_Head, Death01, Punch_Enter,
-Punch_Cross, Sword_Attack. Accessories, stripe mask and all textures are made for this project.
+Punch_Cross, Sword_Attack (reused for ASSET-008/010 rows: Death01 = Eliminated collapse, Hit_Chest = survivor
+shocked stagger, Hit_Head = true-form stun stagger, Fixing_Kneeling = kneel rescue, Push = barricade build, Interact =
+interact, Punch_Cross = lunge hit). Accessories, stripe mask and all textures are made for this project. Clips
+Downed, Crawl, Call_Help, Stand_Up, Seized, Hide_Enter, Hide_Exit, Lunge_Coil, Lunge_Dash, Lunge_Stumble and
+Takedown_Pin are keyed for this project on the same rig by `tools/art/build_anims.py` (poses start from library frames).
 
 ## Props
 

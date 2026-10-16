@@ -29,6 +29,9 @@ import bpy
 import numpy as np
 from mathutils import Vector
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import build_anims  # noqa: E402  (authored clips, ASSET-008/010)
+
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 CACHE = os.path.join(ROOT, "tools", "art", ".cache", "ual")
 SRC_GLTF = os.path.join(CACHE, "glTF", "AnimationLibrary_Godot_Standard.gltf")
@@ -40,6 +43,8 @@ OUT_TRUE = os.path.join(ROOT, "assets", "art", "characters", "shapeshifter")
 KEEP_ANIMS = ["Idle_Loop", "Idle_Torch_Loop", "Walk_Loop", "Jog_Fwd_Loop", "Sprint_Loop", "Crouch_Idle_Loop",
 	"Crouch_Fwd_Loop", "Interact", "PickUp_Table", "Fixing_Kneeling", "Push_Loop", "Hit_Chest", "Hit_Head",
 	"Death01", "Punch_Enter", "Punch_Cross", "Sword_Attack"]
+## Authored on top of these by build_anims.py: survivor Downed, Crawl, Call_Help, Stand_Up, Seized, Hide_Enter,
+## Hide_Exit; true form Lunge_Coil, Lunge_Dash, Lunge_Stumble, Takedown_Pin.
 ## Per-character triangle budgets (art bible §8 engine budgets).
 LOD_TRIS = [15000, 7000, 3000]
 ACCESSORY_MAX_TRIS = 2000
@@ -650,6 +655,7 @@ def accessories(rig, body, dom):
 
 def build_survivor():
 	rig, body = load_source()
+	build_anims.add_survivor_clips(rig)
 	activate(body)
 	bpy.ops.object.mode_set(mode="EDIT")
 	bpy.ops.mesh.select_all(action="SELECT")
@@ -704,6 +710,7 @@ def build_true_form():
 			for fc in fcs:
 				if fc.data_path.endswith("location") and "DEF-hips" not in fc.data_path and '"root"' not in fc.data_path:
 					cb.fcurves.remove(fc)
+	build_anims.add_true_clips(rig)
 	activate(body)
 	bpy.ops.object.mode_set(mode="EDIT")
 	bpy.ops.mesh.select_all(action="SELECT")

@@ -5,9 +5,12 @@ class_name BodyVisual extends RefCounted
 ## untinted survivor body with no accessory or stripe. A look is a function of the id alone and its material
 ## is shared per id, so a disguise draws exactly the survivor it copies (LB-6, art bible §5 copy rule).
 ## Animation: gait from the snapshot, moving or still from the drawn position's speed (inference: the
-## remote entry carries no velocity; the ADR-0004 remote fields would have to grow to settle it).
+## remote entry carries no velocity; the ADR-0004 remote fields would have to grow to settle it). Over the
+## gait, an action the client already knows: a shock or stun stagger (DisguisePresenter) and the lunge's
+## coil, miss stumble and hit (LungePresenter.pose()); clips in tools/art/build_anims.py. True-form clips play
+## only on the true form, so a disguise borrows the survivor set whole (Borrowed Face, ASSET-008).
 ## Client presentation only; decides nothing. Built nodes carry no script, meta or file path (AC-LB-31).
-## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, transforming, pos, now_ms)`
+## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, transforming, pos, now_ms, action)`
 
 const SURVIVOR_SCENE := "res://assets/art/characters/survivors/char_survivor_body.glb"
 const TRUE_FORM_SCENE := "res://assets/art/characters/shapeshifter/char_shapeshifter_true.glb"
@@ -47,11 +50,25 @@ const SPEED_SMOOTHING := 0.25
 const BLEND_S := 0.2
 ## The glb faces +Z (Blender -Y); a body's yaw 0 faces -Z.
 const FACING_FIX := PI
+## Action of a shocked survivor or stunned true form (DisguisePresenter.stagger_weight > 0).
+const STAGGER := &"stagger"
+## LungePresenter.pose() -> true-form clip. Punch_Cross stands in for the lunge hit (CC0 library clip).
+const LUNGE_CLIPS := {&"coil": &"Lunge_Coil", &"stumble": &"Lunge_Stumble", &"hit_stop": &"Punch_Cross"}
+## Clips only the true form plays (char_shapeshifter_true.glb; ASSET-010).
+const TRUE_FORM_CLIPS: Array[StringName] = [&"Lunge_Coil", &"Lunge_Dash", &"Lunge_Stumble", &"Punch_Cross",
+	&"Hit_Head", &"Takedown_Pin"]
+## Plain gait clips (anim_for's results).
+const LOCOMOTION: Array[StringName] = [&"Idle", &"Walk", &"Sprint", &"Crouch_Idle", &"Crouch_Fwd", &"Crawl",
+	&"Downed"]
+## A one-shot that plays when the clip on the left gives way to locomotion: rescued (crawl gait ends) ->
+## stand-up; the coil's end -> the dash (inference: the client sees no dash start; the coil lasts
+## lunge_windup_s and the dash follows it, monster-abilities.md rule 5).
+const FOLLOW := {&"Downed": &"Stand_Up", &"Crawl": &"Stand_Up", &"Lunge_Coil": &"Lunge_Dash"}
 
 var _scenes := {}
 var _materials := {}
 var _acc_material: StandardMaterial3D
-## handle -> [visual Node3D, appearance, last pos, last ms, smoothed speed]
+## handle -> [visual Node3D, appearance, last pos, last ms, smoothed speed, last clip]
 ## ponytail: entries of departed handles stay until the handle is reused (bounded by MAX_BODIES).
 var _shown := {}
 ## handle -> the greybox capsule Mesh detached from its "Mesh" node while the art shows.
@@ -63,16 +80,30 @@ static func look_of(appearance: int) -> Array:
 	return LOOKS.get(appearance, [Color.WHITE, &"", NO_STRIPE])
 
 
-## Animation name for a gait (MovementStep.Gait) at drawn `speed` m/s. Crawl uses the crouch walk until a
-## crawl clip exists (the CC0 library's Standard set has none).
+## Animation name for a gait (MovementStep.Gait) at drawn `speed` m/s. Crawl is the Downed gait
+## (MovementStep.gait): crawling when moving, the Downed pose when still. Unknown gaits walk or idle.
 static func anim_for(gait: int, speed: float) -> StringName:
 	var moving := speed >= MOVING_MPS
 	match gait:
-		MovementStep.Gait.CROUCH, MovementStep.Gait.CRAWL:
-			return &"Crouch_Fwd" if moving or gait == MovementStep.Gait.CRAWL else &"Crouch_Idle"
+		MovementStep.Gait.CRAWL:
+			return &"Crawl" if moving else &"Downed"
+		MovementStep.Gait.CROUCH:
+			return &"Crouch_Fwd" if moving else &"Crouch_Idle"
 		MovementStep.Gait.SPRINT:
 			return &"Sprint" if moving else &"Idle"
 	return &"Walk" if moving else &"Idle"
+
+
+## Clip for a body showing `appearance` with `gait` at `speed` and presentation `action` (STAGGER, a
+## LungePresenter.pose() value or &""). Lunge actions apply to the true form only; unknown actions fall back
+## to the gait clip.
+static func clip_for(appearance: int, gait: int, speed: float, action: StringName) -> StringName:
+	var true_form := appearance == CharacterDef.TRUE_FORM_APPEARANCE_ID
+	if action == STAGGER:
+		return &"Hit_Head" if true_form else &"Hit_Chest"
+	if true_form and LUNGE_CLIPS.has(action):
+		return LUNGE_CLIPS[action]
+	return anim_for(gait, speed)
 
 
 ## Puts `item` (a prop glb: grip at its origin, up +Y, front -Z) in the fist of `skeleton`'s `bone` under a
@@ -124,7 +155,7 @@ func build(appearance: int) -> Node3D:
 ## carries TransformPresenter's warp overlay) and the art hides.
 ## ponytail: capsule stand-in during the warp; move the overlay onto the art meshes when the warp is reworked.
 func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transforming: bool, pos: Vector3,
-		now_ms: float) -> void:
+		now_ms: float, action: StringName = &"") -> void:
 	var e: Array = _shown.get(h, [])
 	if e.is_empty() or not is_instance_valid(e[0]) or (e[0] as Node).get_parent() != mesh or e[1] != appearance:
 		if not e.is_empty() and is_instance_valid(e[0]):
@@ -133,7 +164,7 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transfor
 		var v := build(appearance)
 		mesh.add_child(v)
 		v.position.y = -mesh.position.y # "Mesh" sits at half the capsule height; the art stands on the floor
-		e = [v, appearance, pos, now_ms, 0.0]
+		e = [v, appearance, pos, now_ms, 0.0, &"Idle"]
 		_shown[h] = e
 	var dt := (now_ms - (e[3] as float)) / 1000.0
 	if dt > 0.0:
@@ -150,7 +181,15 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transfor
 	elif not transforming and mesh.mesh != null:
 		_capsules[h] = mesh.mesh
 		mesh.mesh = null
-	_play(node, anim_for(gait, e[4]))
+	var clip := clip_for(appearance, gait, e[4], action)
+	var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if LOCOMOTION.has(clip) and not FOLLOW.has(clip): # leaving Downed or the coil: follow it; let a follow-up finish
+		if FOLLOW.has(e[5]):
+			clip = FOLLOW[e[5]]
+		elif FOLLOW.values().has(e[5]) and ap != null and ap.is_playing() and ap.current_animation == e[5]:
+			clip = e[5]
+	e[5] = clip
+	_play(node, clip)
 	# The remote light cone (RoundClient "Cone", a sibling of "Mesh") starts at the held flashlight's lens; it
 	# keeps the body's yaw (no pitch is replicated). The lens is one pose update behind, a frame at most.
 	var cone := mesh.get_parent().get_node_or_null(^"Cone") as Node3D if mesh.get_parent() != null else null
@@ -161,7 +200,8 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transfor
 
 func _play(n: Node3D, anim: StringName) -> void:
 	var ap := n.find_child("AnimationPlayer", true, false) as AnimationPlayer
-	if ap != null and ap.current_animation != anim and ap.has_animation(anim):
+	# assigned_animation, not current_animation: a finished one-shot (a held coil) must not restart.
+	if ap != null and ap.assigned_animation != anim and ap.has_animation(anim):
 		ap.play(anim, BLEND_S)
 
 
