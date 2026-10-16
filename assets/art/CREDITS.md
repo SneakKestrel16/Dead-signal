@@ -32,3 +32,13 @@ Punch_Cross, Sword_Attack. Accessories, stripe mask and all textures are made fo
 No third-party sources. Every prop in `assets/art/props/` (ASSET-052..064) is modelled procedurally from
 primitives by `tools/art/build_props.py`; the hiding cabinet, hiding locker and breaker wall bodies use the
 shared `mat_steel_plate_a.tres` (sources above), remapped in their `.glb.import` files.
+
+## Viewmodel
+
+| Asset | Source | Licence |
+|-------|--------|---------|
+| First-person arms (`assets/art/characters/viewmodel/char_viewmodel_arms.glb`) | Cut from this project's survivor body (`char_survivor_body.glb`, Quaternius Universal Animation Library base, see "## Characters"); poses made for this project | CC0 1.0 base; modifications are this project's |
+| Flashlight, taser, taser dart (`assets/art/props/prop_flashlight.glb`, `prop_taser.glb`, `prop_taser_dart.glb`) | Procedural, made for this project | Project-owned |
+
+Built by `tools/art/build_viewmodel.py` (arms cut to the forearms, hands and the elbow end of the upper arm,
+decimated to the 8k budget, three poses baked with IK).

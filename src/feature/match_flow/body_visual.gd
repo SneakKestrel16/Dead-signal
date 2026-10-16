@@ -22,6 +22,15 @@ const _GLB_LODS := ["char_survivor_body_lod%d", "char_shapeshifter_true_lod%d"]
 ## LOD0 under 6 m, LOD1 6-15 m, LOD2 beyond (art bible §5 Detail and LOD, inference: profiling settles it).
 const LOD_END_M: Array[float] = [6.0, 15.0]
 const NO_STRIPE := -1
+## Held flashlight (ASSET-012): in every survivor's left hand, a disguised shapeshifter's too (spec row).
+const FLASHLIGHT_SCENE := "res://assets/art/props/prop_flashlight.glb"
+## The flashlight's lens node; the remote light cone starts there.
+const LENS := &"flashlight_lens"
+const HAND_L := &"DEF-hand.L"
+const HAND_R := &"DEF-hand.R"
+## Grip centre in hand-bone space (Y along the hand, Z thumb side, X toward the left palm), inside the fist.
+## Same numbers as tools/art/build_viewmodel.py GRIP, whose finger curl closes around it.
+const GRIP := Vector3(0.035, 0.085, 0.0)
 ## Art bible §5 identity kit, by appearance id: suit hex, accessory mesh, stripe mask row
 ## (tex_survivor_stripe_mask_256.png rows: bar, two bars, chevron, three dots, sleeve band).
 const LOOKS := {
@@ -66,6 +75,19 @@ static func anim_for(gait: int, speed: float) -> StringName:
 	return &"Walk" if moving else &"Idle"
 
 
+## Puts `item` (a prop glb: grip at its origin, up +Y, front -Z) in the fist of `skeleton`'s `bone` under a
+## BoneAttachment3D. The prop's up runs along the thumb side and its front along the hand.
+static func hold(skeleton: Skeleton3D, bone: StringName, item: Node3D) -> BoneAttachment3D:
+	var at := BoneAttachment3D.new()
+	at.bone_name = bone
+	at.name = StringName("held_%s" % bone) # fixed: two builds of one look have the same node paths
+	skeleton.add_child(at)
+	item.scene_file_path = ""
+	item.transform = Transform3D(Basis(Vector3.RIGHT, PI / 2.0), GRIP * Vector3(1.0 if bone == HAND_L else -1.0, 1, 1))
+	at.add_child(item)
+	return at
+
+
 ## A new body node for `appearance` (not in the tree), playing its idle.
 func build(appearance: int) -> Node3D:
 	var true_form := appearance == CharacterDef.TRUE_FORM_APPEARANCE_ID
@@ -80,7 +102,7 @@ func build(appearance: int) -> Node3D:
 		mi.visibility_range_begin = 0.0 if i == 0 else LOD_END_M[i - 1]
 		mi.visibility_range_end = LOD_END_M[i] if i < LOD_END_M.size() else 0.0
 		if not true_form:
-			mi.material_override = _material(appearance)
+			mi.material_override = material(appearance)
 	if not true_form:
 		var keep: StringName = look_of(appearance)[1]
 		for acc: Node in n.find_children("acc_*", "MeshInstance3D", true, false):
@@ -89,6 +111,10 @@ func build(appearance: int) -> Node3D:
 				acc.free()
 			else:
 				(acc as MeshInstance3D).material_override = _accessory_material()
+		var torch := _scene(FLASHLIGHT_SCENE).instantiate() as Node3D
+		for mi: Node in torch.find_children("*", "MeshInstance3D", true, false):
+			(mi as MeshInstance3D).material_override = _accessory_material()
+		hold(n.find_child("Skeleton3D", true, false) as Skeleton3D, HAND_L, torch)
 	_play(n, &"Idle")
 	return n
 
@@ -125,6 +151,12 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transfor
 		_capsules[h] = mesh.mesh
 		mesh.mesh = null
 	_play(node, anim_for(gait, e[4]))
+	# The remote light cone (RoundClient "Cone", a sibling of "Mesh") starts at the held flashlight's lens; it
+	# keeps the body's yaw (no pitch is replicated). The lens is one pose update behind, a frame at most.
+	var cone := mesh.get_parent().get_node_or_null(^"Cone") as Node3D if mesh.get_parent() != null else null
+	var lens := node.find_child(LENS, true, false) as Node3D
+	if cone != null and lens != null and lens.is_inside_tree():
+		cone.global_position = lens.global_position
 
 
 func _play(n: Node3D, anim: StringName) -> void:
@@ -139,7 +171,8 @@ func _scene(path: String) -> PackedScene:
 	return _scenes[path]
 
 
-func _material(appearance: int) -> ShaderMaterial:
+## The body ShaderMaterial of `appearance`'s look (shared per look; the plain one for an unknown id).
+func material(appearance: int) -> ShaderMaterial:
 	var key: int = appearance if LOOKS.has(appearance) else -1
 	if not _materials.has(key):
 		var look := look_of(key)

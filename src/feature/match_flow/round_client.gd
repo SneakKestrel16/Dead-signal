@@ -102,6 +102,8 @@ var remotes: Dictionary[int, Node3D] = {}
 var _render: bool
 ## Remote bodies' character art (rendering clients only; headless clients keep the bare capsule).
 var body_visuals: BodyVisual
+## First-person arms and held items under the camera (ASSET-011..014); null when not rendering.
+var viewmodel: Viewmodel
 var _step: Callable
 var _make_body: Callable
 var _map: MapData
@@ -237,6 +239,9 @@ func _on_connected() -> void:
 		router.subscribe(&"ScareTriggered", scare_audio.on_scare)
 		router.subscribe(EventBatch.SOUND, scare_audio.on_sound)
 		body_visuals = BodyVisual.new()
+		viewmodel = Viewmodel.new(body_visuals)
+		viewmodel.reduced_motion = reduced_motion
+		camera.add_child(viewmodel)
 		disguise = DisguisePresenter.new(remotes, puppets.state_of, knobs)
 		add_child(disguise)
 		# Survivor-defense story 011: ShockPresenter routes the shock events per form (it calls the
@@ -342,6 +347,8 @@ static func push_reduced_motion(layer: Node, on: bool) -> void:
 ## Changes reduced motion for the whole HUD (BUG-0008).
 func set_reduced_motion(on: bool) -> void:
 	reduced_motion = on
+	if viewmodel != null:
+		viewmodel.reduced_motion = on
 	if hud != null:
 		push_reduced_motion(hud, on)
 
@@ -443,6 +450,9 @@ func _process(delta: float) -> void:
 				knobs.net.max_extrapolation_ms)
 	if _own_cone != null:
 		_own_cone.visible = light.is_on()
+	if viewmodel != null: # the own look; none while spectating (the watched body is drawn remotely)
+		viewmodel.update(-1 if predictor.spectating() else predictor.last_own.get("appearance", -1),
+				defense.charges(), bar.visible, delta)
 	_draw_remotes()
 
 
