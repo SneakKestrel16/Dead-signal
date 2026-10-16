@@ -80,3 +80,21 @@ Freesound recordings (CC0 1.0, fetched 2026-10-16 by `tools/audio/fetch.py`; man
 | https://freesound.org/s/864882/ | Oldome | CC0 1.0 |
 | https://freesound.org/s/339322/ | kiefspoon | CC0 1.0 |
 
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/voices.toml`, MP3 previews and decoded WAVs committed). Survivor callouts `voice/callout_c1..c5`, grunts `voice/grunt_c1..c5` and the true-form pain cry, cut, varispeeded and run through the radio chain by `tools/audio/sounds/voices.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/410537/ | balloonhead | CC0 1.0 |
+| https://freesound.org/s/350442/ | bevibeldesign | CC0 1.0 |
+| https://freesound.org/s/546065/ | FunnyVoices | CC0 1.0 |
+| https://freesound.org/s/165348/ | JoyOhJoy | CC0 1.0 |
+| https://freesound.org/s/592595/ | hlprmnky | CC0 1.0 |
+| https://freesound.org/s/394631/ | envirOmaniac2 | CC0 1.0 |
+| https://freesound.org/s/610998/ | unfa | CC0 1.0 |
+| https://freesound.org/s/256603/ | Kodack | CC0 1.0 |
+| https://freesound.org/s/427430/ | ecbhappyinc | CC0 1.0 |
+| https://freesound.org/s/547344/ | Legnalegna55 | CC0 1.0 |
+| https://freesound.org/s/325548/ | Archeos | CC0 1.0 |
+| https://freesound.org/s/243382/ | JohnsonBrandEditing | CC0 1.0 |
+| https://freesound.org/s/439441/ | Asteroiderer | CC0 1.0 |
+| https://freesound.org/s/344972/ | mrmunk | CC0 1.0 |

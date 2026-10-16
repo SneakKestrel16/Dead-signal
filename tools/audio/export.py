@@ -87,7 +87,7 @@ def report_md(takes):
               "|---|---|---|---|---|---|---|"]
     for t in takes:
         s = t.sound
-        target = master.FAMILIES[s.family][0] if s.level is not None else round(t.lufs, 1)
+        target = s.level if s.level is not None else round(t.lufs, 1)
         lines.append("| `%s` | %s | %s | %.1f | %.1f | %.1f | %.2f |" % (
             s.path(), s.family, master.FAMILIES[s.family][1], target, t.lufs, t.peak_db, len(t.x) / 44100))
         if s.level is not None and t.limited:
