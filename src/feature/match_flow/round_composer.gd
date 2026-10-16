@@ -209,6 +209,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.appearance_of = bf.appearance_of
 	sm.transforming_of = bf.transforming_of
 	sm.flashlight_of = sd.flashlight_on
+	sm.drive_of = objectives.carries_drive
+	sm.fuse_of = objectives.carries_fuse
 	# Facility-map story 011: relevance reads the authored visibility sets (cut by closed doors) plus a viewed
 	# camera's volumes. Before this the composed round used the near rule only (ServerMovement's documented
 	# default until the root sets these).
@@ -294,7 +296,8 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	holds.register(cams)
 	_index_holds()
 	if candidates != null:
-		candidates.start_round(objectives.active(), survivors, monster)
+		candidates.start_round(objectives.active(), survivors, monster,
+				SurvivorObjectives.objective_ids(map, objectives.active()))
 	sm.attach(server.tick_runner)
 	smp.peer_packet.connect(_on_packet)
 	return errs

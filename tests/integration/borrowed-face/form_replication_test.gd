@@ -15,8 +15,9 @@ const CLIENTS := 5
 const CHANGES := 10
 ## Index (into the survivors) of the client that reconnects mid-disguise.
 const REJOINER := 2
-## Keys a non-own snapshot entry may carry: appearance and presentation, never identity (AC 2).
-const PUPPET_KEYS := ["appearance", "flashlight", "gait", "id", "pos", "transforming", "yaw"]
+## Keys a non-own snapshot entry may carry: appearance and presentation, never identity (AC 2). `drive` /
+## `fuse`: the visible carried items of ADR-0004 §2, always false on a disguise (borrowed-face.md rule 12).
+const PUPPET_KEYS := ["appearance", "drive", "flashlight", "fuse", "gait", "id", "pos", "transforming", "yaw"]
 
 static var _next_port := 26700
 

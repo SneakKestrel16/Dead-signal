@@ -126,3 +126,10 @@ func test_core_and_breaker_wall_dress_their_blockers() -> void:
 		var half := ((body.get_node(^"Shape") as CollisionShape3D).shape as BoxShape3D).size.y / 2.0
 		assert_float(dressing.global_position.y).is_equal_approx(body.global_position.y - half, EPS)
 		assert_array(dressing.find_children("*", "CollisionObject3D", true, false)).is_empty()
+
+
+func test_no_greybox_post_at_any_door() -> void:
+	var tall := Vector3(0.2, 2.0, 0.2) ## the old orange door post (BUG-0018 drew leaves instead)
+	for c in _root.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh is BoxMesh:
+			assert_bool(((c as MeshInstance3D).mesh as BoxMesh).size.is_equal_approx(tall)) 					.override_failure_message("door post left at %s" % (c as Node3D).position).is_false()

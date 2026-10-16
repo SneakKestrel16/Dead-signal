@@ -15,8 +15,10 @@ const WAIT_S := 5.0
 const TICKS := 30
 ## The only fields a remote body may carry to a client (SnapshotCodec non-own entry). `appearance`
 ## (borrowed-face story 007, ADR-0004 §4) is the rendered character look: a disguised shapeshifter
-## shows the copied survivor's, so it carries no role, name or player id.
-const REMOTE_FIELDS := ["appearance", "flashlight", "gait", "id", "pos", "transforming", "yaw"]
+## shows the copied survivor's, so it carries no role, name or player id. `drive` / `fuse` are the visible
+## carried items ADR-0004 §2 lists on a body entry: the server's carrier state, which a disguise never has
+## (borrowed-face.md rule 12, tell T3), so they name no identity.
+const REMOTE_FIELDS := ["appearance", "drive", "flashlight", "fuse", "gait", "id", "pos", "transforming", "yaw"]
 ## Property names that would put identity on a body node.
 const IDENTITY := ["role", "player", "name", "tag", "character", "identity", "owner", "peer", "monster", "survivor"]
 

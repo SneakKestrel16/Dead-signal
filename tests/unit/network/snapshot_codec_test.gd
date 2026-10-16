@@ -9,7 +9,7 @@ func _bodies(n: int, own_index: int = 0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for i in n:
 		var b := {"id": 10 + i, "gait": i % 4, "pos": Vector3(i, 0.5 * i, -2.0 * i), "yaw": 0.25 * i, "appearance": i,
-			"flashlight": i % 2 == 0}
+			"flashlight": i % 2 == 0, "drive": i == 2, "fuse": i % 2 == 1}
 		if i == own_index:
 			b["own"] = true
 			b["seq"] = 1234
@@ -34,6 +34,8 @@ func test_round_trip_keeps_every_field() -> void:
 		assert_float(snap.bodies[i].yaw).is_equal(bodies[i].yaw)
 		assert_int(snap.bodies[i].appearance).is_equal(bodies[i].appearance)
 		assert_bool(snap.bodies[i].flashlight).is_equal(bodies[i].flashlight) ## survivor-defense 009, any entry
+		assert_bool(snap.bodies[i].drive).is_equal(bodies[i].drive) ## carried objectives, any entry
+		assert_bool(snap.bodies[i].fuse).is_equal(bodies[i].fuse)
 		assert_bool(snap.bodies[i].has("own")).is_equal(i == 1)
 	var own: Dictionary = snap.bodies[1]
 	assert_int(own.seq).is_equal(1234)

@@ -236,6 +236,23 @@ func active() -> PackedInt32Array:
 	return _active
 
 
+## Objective id of each point in `active` (marker index -> id), as setup() numbers them (_first): the
+## n-th active drive DRIVE_ID + n, fuse FUSE_ID + n, fuse box FUSE_BOX_ID + n (n in `active` order), the
+## terminal TERMINAL_ID. CandidateReplication puts it in each point's spawn data, so a client ties
+## ObjectiveProgressChanged to a marker (ObjectiveProps).
+static func objective_ids(map: MapData, active: PackedInt32Array) -> Dictionary[int, int]:
+	var base := {CandidateSelection.DRIVE: DRIVE_ID, CandidateSelection.FUSE: FUSE_ID,
+		CandidateSelection.FUSE_BOX: FUSE_BOX_ID, CandidateSelection.TERMINAL: TERMINAL_ID}
+	var seen := {}
+	var out: Dictionary[int, int] = {}
+	for i in active:
+		var type := map.markers[i].type
+		if base.has(type):
+			out[i] = base[type] + seen.get(type, 0)
+			seen[type] = seen.get(type, 0) + 1
+	return out
+
+
 ## Load-time check of the map against ObjectivesKnobs (Tuning Knobs candidate counts) and rule 6;
 ## [] = valid. The round must be refused otherwise (ADR-0012 §6).
 static func candidate_errors(map: MapData, o: ObjectivesKnobs) -> PackedStringArray:
@@ -376,6 +393,16 @@ func carrier_of(index: int) -> int:
 ## How many drives `actor` carries.
 func carried_by(actor: int) -> int:
 	return _carriers.count(actor)
+
+
+## True while `actor` carries a drive (ServerMovement.drive_of: the snapshot's carried flag).
+func carries_drive(actor: int) -> bool:
+	return _carriers.has(actor)
+
+
+## True while `actor` carries a fuse (ServerMovement.fuse_of).
+func carries_fuse(actor: int) -> bool:
+	return _fuse_carriers.has(actor)
 
 
 ## State of active fuse `index`.

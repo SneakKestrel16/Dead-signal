@@ -1,7 +1,12 @@
 class_name CandidateReplication extends RefCounted
 ## The replication channel for a round's active objective points, facility-map story 008
 ## (research-facility.md AC 4; survivor-objectives.md rules 5 and 7; ADR-0012 §5-6; ADR-0004 §7).
-## Server only. Each active point is a HiddenSpawner entity carrying only its type and marker position.
+## Server only. Each active point is a HiddenSpawner entity carrying only its type, marker position and
+## objective id (`ids`: SurvivorObjectives.objective_ids, passed in; this layer cannot name it), so a
+## client's ObjectiveProps can tie progress events to
+## the prop at that marker. Inference: a drive's or fuse's index follows map order, so a survivor holding
+## one discovered point's id learns which side of it in map order the other lies; a shuffled numbering in
+## SurvivorObjectives would settle it (the event ids already pair with the grant tick).
 ## Fuse boxes and the terminal are granted to every player at round start; a drive room or fuse spawn is
 ## granted to the monster at round start and to the survivors only when discover() is called, so an
 ## undiscovered point never reaches a survivor peer (not its node, not its position).
@@ -29,10 +34,12 @@ func _init(hidden: HiddenSpawner, map: MapData) -> void:
 	_map = map
 
 
-## Spawns `active` (indices into map.markers, from CandidateSelection.pick) before the first snapshot,
+## Spawns `active` (indices into map.markers, from CandidateSelection.pick) before the first snapshot, each
+## with its objective id from `ids` (marker index -> id; absent = none),
 ## granted per the rules above, and logs each point's position. Grants go by player ID, so a reconnect
 ## or a spectator on a survivor's ID keeps them (ADR-0004 §9).
-func start_round(active: PackedInt32Array, survivors: Array[int], monster: int) -> void:
+func start_round(active: PackedInt32Array, survivors: Array[int], monster: int,
+		ids: Dictionary[int, int] = {}) -> void:
 	_survivors = survivors.duplicate()
 	for i in active:
 		var m := _map.markers[i]
@@ -40,7 +47,10 @@ func start_round(active: PackedInt32Array, survivors: Array[int], monster: int) 
 		var known := m.type in ALWAYS_KNOWN
 		if known:
 			to.append_array(_survivors)
-		var e := _hidden.spawn({"kind": m.type, "pos": m.position}, to)
+		var data := {"kind": m.type, "pos": m.position}
+		if ids.has(i):
+			data["objective"] = ids[i]
+		var e := _hidden.spawn(data, to)
 		if not known:
 			_undiscovered[i] = e
 		print("objective point %s (%s) at %s" % [m.id, m.type, m.position])

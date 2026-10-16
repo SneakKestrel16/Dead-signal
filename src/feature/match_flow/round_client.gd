@@ -96,6 +96,9 @@ var version := ""
 var level: Node
 ## This client's DoorBlockers (EventBatch.DOORS, BARRICADE); null without a level.
 var doors: DoorBlockers
+## Objective props over `level`: active points only, carried and dropped items, state glows; null when not
+## rendering or without a level.
+var objective_props: ObjectiveProps
 ## handle -> remote body Node3D (child "Mesh" MeshInstance3D, child "Cone" SpotLight3D).
 var remotes: Dictionary[int, Node3D] = {}
 
@@ -268,6 +271,14 @@ func _on_connected() -> void:
 		warp = TransformPresenter.new(remotes, puppets.state_of, knobs)
 		add_child(warp)
 		router.subscribe(EventBatch.SOUND, warp.on_sound)
+		if level != null:
+			objective_props = ObjectiveProps.new(level, _map)
+			objective_props.reduced_motion = reduced_motion
+			objective_props.reduced_flash = lights.reduced_flash
+			add_child(objective_props)
+			objective_props.watch(hidden)
+			router.subscribe(&"ObjectiveProgressChanged", objective_props.on_objective)
+			router.subscribe(EventBatch.PROGRESS, objective_props.on_progress)
 		feed = SurveillanceFeed.new(_map, knobs)
 		add_child(feed)
 		router.subscribe(EventBatch.CAMERA, feed.on_camera)
@@ -349,6 +360,8 @@ func set_reduced_motion(on: bool) -> void:
 	reduced_motion = on
 	if viewmodel != null:
 		viewmodel.reduced_motion = on
+	if objective_props != null:
+		objective_props.reduced_motion = on
 	if hud != null:
 		push_reduced_motion(hud, on)
 
@@ -577,6 +590,8 @@ func _draw_remotes() -> void:
 		if body_visuals != null: # character art over the greybox capsule (ASSET-001..010)
 			body_visuals.show(h, n.get_node(^"Mesh"), st.get("appearance", SnapshotCodec.NO_APPEARANCE),
 					st.get("gait", 0), st.get("transforming", false), pose[0], _now_ms)
+			if objective_props != null: # carried objectives in the right hand (rule 10)
+				objective_props.hold_items(n.get_node(^"Mesh"), st.get("drive", false), st.get("fuse", false))
 
 
 ## Interpolated [pos, yaw] at `at_ms` from `buf` ([local_ms, pos, yaw], oldest first); past the newest it

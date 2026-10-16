@@ -11,8 +11,8 @@ class_name MapGreybox extends RefCounted
 ##   its own zone's wall material (SurfaceMaterials, data/art/surface_materials.tres);
 ## - a prop (SurfaceMaterials.props, assets/art/props/) at every interactable and camera marker, the exit's
 ##   chevron frame with its Exit Green lens (child "Lit" of the exit blocker, shown while open: DoorBlockers),
-##   The Core and the breaker wall over their LOS blockers; a coloured post at every door and at an interactable
-##   with no prop. Props are visual only: no collision, interaction and sight read MapQueries and the scene.
+##   The Core and the breaker wall over their LOS blockers; a coloured post at an interactable with no prop (doors
+##   draw only their leaves). Props are visual only: no collision, interaction and sight read MapQueries and the scene.
 ## Door blockers keep the scene's start state (doors open, exit closed until Exit Open, research-facility.md
 ## AC 10), each leaf drawn in SurfaceMaterials.door while its blocker is enabled. DoorBlockers drives them from
 ## door state: Doors on the host, the replicated EventBatch.DOORS on a client (BUG-0018).
@@ -24,7 +24,6 @@ const SLAB_M := 0.2 ## floor slab thickness below each volume's floor, and ceili
 const SKIN_T := 0.1 ## half the scene's wall thickness (greybox_from_map.gd WALL_T)
 const EPS := 1e-3
 const POST := Vector3(0.3, 1.2, 0.3)
-const DOOR := Vector3(0.2, 2.0, 0.2)
 
 
 ## Adds the map's level geometry and posts under `parent`; returns the new root node.
@@ -64,12 +63,9 @@ static func build(parent: Node, map: MapData) -> Node3D:
 		if z.kind == MapZone.EXIT:
 			var outside := mats.floor_of(_zone(map, queries.volume_at(z.box.get_center() - Vector3(z.box.size.x, 0.0, 0.0))))
 			_box(root, Vector3(z.box.get_center().x, -SLAB_M / 2.0, z.box.get_center().z), Vector3(z.box.size.x, SLAB_M, z.box.size.z), outside, true)
-	for t in map.interactables():
-		var door := t as MapPassage
-		if door:
-			_box(root, door.position + Vector3.UP * DOOR.y / 2.0, DOOR, _flat(Color(0.55, 0.35, 0.15)), false)
-		elif mats.prop_of(t as MapMarker) == null:
-			var m := t as MapMarker
+	for t in map.interactables(): ## doors draw their leaves (BUG-0018), so no door post
+		var m := t as MapMarker
+		if m != null and mats.prop_of(m) == null:
 			_box(root, m.position + Vector3.UP * POST.y / 2.0, POST, _flat(Color(0.2, 0.5, 0.9)), false)
 	for m in map.markers:
 		var scene := mats.prop_of(m)
