@@ -38,7 +38,7 @@ var _stick := Vector2.ZERO
 
 
 func _ready() -> void:
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Input.mouse_mode = InputContextStack.captured_mode()
 
 
 ## _input, not _unhandled_input: captured motion still carries the window-centre position, so a HUD
@@ -138,4 +138,4 @@ func sample(offset_tick: int = 0) -> InputFrame:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN and contexts == null: # with a stack, the root re-applies it
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = InputContextStack.captured_mode()

@@ -108,7 +108,13 @@ static func wants_cursor(ctx: Ctx) -> bool:
 func reapply_mouse_mode() -> void:
 	_discard_motion = not wants_cursor(top())
 	if DisplayServer.get_name() != "headless":
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if wants_cursor(top()) else Input.MOUSE_MODE_CAPTURED
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if wants_cursor(top()) else captured_mode()
+
+
+## MOUSE_MODE_CAPTURED, except while Movie Maker records (--write-movie): screenshot runs launched beside the
+## designer's desktop must not take their mouse.
+static func captured_mode() -> Input.MouseMode:
+	return Input.MOUSE_MODE_CAPTURED if Engine.get_write_movie_path().is_empty() else Input.MOUSE_MODE_VISIBLE
 
 
 ## True once after each switch to the captured mouse: the caller drops that relative motion, which on
