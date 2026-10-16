@@ -141,3 +141,49 @@ Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `to
 | https://freesound.org/s/678248/ | Pixeliota | CC0 1.0 |
 | https://freesound.org/s/323746/ | Reitanna | CC0 1.0 |
 | https://freesound.org/s/740253/ | JoontheFloof | CC0 1.0 |
+
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/cues.toml`, MP3 previews and decoded WAVs committed). Cues `cue/*` (lunge, taser, hiding, transform distortion, fuse install), cut, timed and finished by `tools/audio/sounds/cues.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/273979/ | superEGsonic | CC0 1.0 |
+| https://freesound.org/s/341751/ | pqr | CC0 1.0 |
+| https://freesound.org/s/574751/ | ericnorcross81 | CC0 1.0 |
+| https://freesound.org/s/574752/ | ericnorcross81 | CC0 1.0 |
+| https://freesound.org/s/414505/ | renspiep | CC0 1.0 |
+| https://freesound.org/s/435896/ | 1urker | CC0 1.0 |
+| https://freesound.org/s/234807/ | SparrowRayne | CC0 1.0 |
+| https://freesound.org/s/578493/ | PostProdDog | CC0 1.0 |
+| https://freesound.org/s/853588/ | Wigglesworth | CC0 1.0 |
+| https://freesound.org/s/74476/ | qubodup | CC0 1.0 |
+| https://freesound.org/s/265247/ | AnthonyChan0 | CC0 1.0 |
+| https://freesound.org/s/264779/ | AnthonyChan0 | CC0 1.0 |
+| https://freesound.org/s/540012/ | birdswkaren | CC0 1.0 |
+| https://freesound.org/s/213613/ | pyr0x | CC0 1.0 |
+| https://freesound.org/s/807671/ | Snoops_Audio1 | CC0 1.0 |
+| https://freesound.org/s/874174/ | Arimer | CC0 1.0 |
+| https://freesound.org/s/386573/ | ShaneF91 | CC0 1.0 |
+| https://freesound.org/s/844287/ | randbsoundbites | CC0 1.0 |
+| https://freesound.org/s/352881/ | PotatokingXII | CC0 1.0 |
+| https://freesound.org/s/188194/ | SpliceSound | CC0 1.0 |
+| https://freesound.org/s/639270/ | DigPro120 | CC0 1.0 |
+| https://freesound.org/s/232548/ | diegoverdoodt | CC0 1.0 |
+| https://freesound.org/s/637481/ | kyles | CC0 1.0 |
+
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/world.toml`, MP3 previews and decoded WAVs committed). World sounds `world/*` (doors, barricades, drive dock, evacuation alarm) by `tools/audio/sounds/world.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/475313/ | wlabarron | CC0 1.0 |
+| https://freesound.org/s/406197/ | kyles | CC0 1.0 |
+| https://freesound.org/s/385192/ | actioncircus | CC0 1.0 |
+| https://freesound.org/s/811941/ | DigPro120 | CC0 1.0 |
+| https://freesound.org/s/707525/ | LiezelDippenaar | CC0 1.0 |
+| https://freesound.org/s/676730/ | obbus | CC0 1.0 |
+| https://freesound.org/s/873248/ | harrisonlace | CC0 1.0 |
+| https://freesound.org/s/400645/ | LampEight | CC0 1.0 |
+| https://freesound.org/s/774268/ | loganzsound | CC0 1.0 |
+| https://freesound.org/s/570611/ | Tairblenn | CC0 1.0 |
+| https://freesound.org/s/551315/ | Firecat_the_potato_YT | CC0 1.0 |
+| https://freesound.org/s/405592/ | JohnLaVine333 | CC0 1.0 |
+| https://freesound.org/s/772971/ | Licorne_En_Fer | CC0 1.0 |

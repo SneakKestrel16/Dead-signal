@@ -50,3 +50,9 @@ Traps hit in this project. The general ones are in [pipeline-handoff.md](pipelin
   pieces; the designer's ear decides.
 - **The export's loudness report used the family default as every sound's target**; a sound with its own `level`
   (pain cry -19.5) then failed `sound_bank_test`. The target column is now the sound's own level.
+- **MP3 previews leave spectral lines at 15-17 kHz** that read as tones once a cut is pitched down: low-pass them
+  (cues/world batch).
+- **Sparks and mains recordings carry a hum** that moves to about 70 Hz when pitched: high-pass or de-line it.
+- **Transient-heavy cuts** (stun gun, body hits, locker slams) come back peak-limited until saturated (`dsp.drive`).
+- **A real siren's own pitch is a lasting line** (objective_alarm B/C at ~382 Hz): left in, de-lining blunts the
+  alarm; the designer's ear decides.
