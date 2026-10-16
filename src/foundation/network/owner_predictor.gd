@@ -100,7 +100,9 @@ func predict(frame: InputFrame) -> void:
 	_unacked.append(frame)
 	if _unacked.size() > MAX_UNACKED:
 		_unacked.pop_front()
-	if _smp != null:
+	# BUG-0001: after server_disconnected / HOST_LEFT the peer is closed; sending would log an engine error per tick.
+	if _smp != null and _smp.has_multiplayer_peer() \
+			and _smp.multiplayer_peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
 		var last: Array[InputFrame] = []
 		for f in _unacked.slice(-InputQueue.MAX_FRAMES_PER_PACKET):
 			last.append(f)
