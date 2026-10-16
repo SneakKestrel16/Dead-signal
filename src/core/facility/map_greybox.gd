@@ -13,6 +13,7 @@ class_name MapGreybox extends RefCounted
 ##   chevron frame with its Exit Green lens (child "Lit" of the exit blocker, shown while open: DoorBlockers),
 ##   The Core and the breaker wall over their LOS blockers; a coloured post at an interactable with no prop (doors
 ##   draw only their leaves). Props are visual only: no collision, interaction and sight read MapQueries and the scene.
+## Signage, stripes, dressing props, decals and light fixture meshes: MapDressing (child "Dressing").
 ## Door blockers keep the scene's start state (doors open, exit closed until Exit Open, research-facility.md
 ## AC 10), each leaf drawn in SurfaceMaterials.door while its blocker is enabled. DoorBlockers drives them from
 ## door state: Doors on the host, the replicated EventBatch.DOORS on a client (BUG-0018).
@@ -74,6 +75,7 @@ static func build(parent: Node, map: MapData) -> Node3D:
 	for p in map.passages:
 		if p.kind == MapPassage.EXIT:
 			_exit_prop(root, level, p, map, mats)
+	MapDressing.build(root, map, queries)
 	return root
 
 

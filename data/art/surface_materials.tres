@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=27 format=3]
+[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=29 format=3]
 
 [ext_resource type="Script" path="res://src/core/facility/surface_materials.gd" id="1"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_floor_tile_a.tres" id="2"]
@@ -23,6 +23,8 @@
 [ext_resource type="PackedScene" path="res://assets/art/props/prop_monitor_wall.glb" id="p_monitor_wall"]
 [ext_resource type="PackedScene" path="res://assets/art/props/prop_core.glb" id="p_core"]
 [ext_resource type="PackedScene" path="res://assets/art/props/prop_breaker_wall.glb" id="p_breaker_wall"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_server_rack_row_w5.glb" id="p_rack_row_w5"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_server_rack_row_w4.glb" id="p_rack_row_w4"]
 
 [sub_resource type="StandardMaterial3D" id="m13"]
 albedo_color = Color(0.55, 0.8, 0.9, 0.3)
@@ -74,5 +76,7 @@ props = Dictionary[StringName, PackedScene]({
 &"exit": ExtResource("p_exit_door"),
 &"exit_lit": ExtResource("p_exit_lamp"),
 &"BlockerCore": ExtResource("p_core"),
-&"BlockerBreakerWall": ExtResource("p_breaker_wall")
+&"BlockerBreakerWall": ExtResource("p_breaker_wall"),
+&"BlockerRackWest": ExtResource("p_rack_row_w5"),
+&"BlockerRackEast": ExtResource("p_rack_row_w4")
 })

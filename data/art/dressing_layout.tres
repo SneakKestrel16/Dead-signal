@@ -1,0 +1,81 @@
+[gd_resource type="Resource" script_class="DressingLayout" format=3]
+
+[ext_resource type="Script" path="res://src/core/facility/dressing_layout.gd" id="1"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_bench.glb" id="bench"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_desk.glb" id="desk"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_chair.glb" id="chair"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_fridge.glb" id="fridge"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_monitor.glb" id="monitor"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_lab_binders.glb" id="binders"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_server_rack.glb" id="rack"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_server_cable_bundle.glb" id="cable"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_cooling_pipes.glb" id="pipes"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_cooling_pump.glb" id="pump"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_cooling_fan.glb" id="fan"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_security_gate_arm.glb" id="gate_arm"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_security_log_screen.glb" id="log_screen"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_security_shelving.glb" id="shelving"]
+[ext_resource type="PackedScene" path="res://assets/art/props/dressing/prop_security_file_boxes.glb" id="file_boxes"]
+
+[resource]
+script = ExtResource("1")
+items = Dictionary[StringName, PackedScene]({
+&"bench": ExtResource("bench"),
+&"desk": ExtResource("desk"),
+&"chair": ExtResource("chair"),
+&"fridge": ExtResource("fridge"),
+&"monitor": ExtResource("monitor"),
+&"binders": ExtResource("binders"),
+&"rack": ExtResource("rack"),
+&"cable": ExtResource("cable"),
+&"pipes": ExtResource("pipes"),
+&"pump": ExtResource("pump"),
+&"fan": ExtResource("fan"),
+&"gate_arm": ExtResource("gate_arm"),
+&"log_screen": ExtResource("log_screen"),
+&"shelving": ExtResource("shelving"),
+&"file_boxes": ExtResource("file_boxes")
+})
+sets = Dictionary[StringName, PackedStringArray]({
+&"bench_set": PackedStringArray("bench 0 0 0", "monitor -0.5 -0.1 0 0.92", "binders 0.2 0.1 0 0.92", "chair -0.4 -0.75 180"),
+&"desk_set": PackedStringArray("desk 0 0 0", "monitor -0.3 -0.05 0 0.75", "binders 0.45 0.15 0 0.75", "chair -0.2 -0.85 160")
+})
+rooms = Dictionary[StringName, PackedStringArray]({
+&"A1": PackedStringArray("bench_set 3.5 39.45 0", "desk_set 6.3 39.5 0", "fridge 1.0 28.6 180", "fridge 2.0 28.6 180", "desk 0.5 37.3 -90", "file_boxes 0.5 37.5 -90 0.75"),
+&"A3": PackedStringArray("bench_set 0.5 22.0 -90", "bench_set 0.5 24.5 -90", "bench_set 3.3 22.5 0", "bench_set 3.3 25.0 0", "bench_set 9.5 26.5 90", "fridge 1.0 27.4 0", "fridge 1.9 27.4 0", "fridge 2.8 27.4 0", "desk_set 1.2 14.5 180", "desk_set 3.0 14.5 180", "fridge 8.0 14.5 180", "fridge 8.9 14.5 180"),
+&"A4": PackedStringArray("bench_set 21.5 15.5 90", "bench_set 21.5 18.2 90", "desk_set 15.0 14.6 180", "fridge 13.6 25.4 0", "fridge 14.5 25.4 0", "bench_set 20.8 25.5 0"),
+&"A5": PackedStringArray("fridge 21.5 27 90", "fridge 21.5 27.85 90", "fridge 21.5 28.7 90", "fridge 21.5 29.55 90", "fridge 21.5 30.4 90", "fridge 21.5 32 90", "fridge 21.5 32.85 90", "fridge 21.5 33.7 90", "fridge 21.5 34.55 90", "fridge 13.5 27 -90", "fridge 13.5 27.85 -90", "fridge 13.5 28.7 -90", "fridge 13.5 29.55 -90", "fridge 13.5 35.4 -90", "desk_set 20.0 35.45 0"),
+&"A6": PackedStringArray("desk_set 8.5 9.0 90", "shelving 9.65 5.5 90", "shelving 9.65 12.5 90", "file_boxes 8.0 13.5 0", "chair 8.0 6.0 30", "desk_set 2.0 4.5 180", "file_boxes 0.5 13.3 90"),
+&"A7": PackedStringArray("bench_set 20.5 13.5 0", "bench_set 14.5 13.5 0", "desk_set 21.4 7.0 90", "file_boxes 21.4 10.5 90", "chair 19.5 10.0 200"),
+&"B1": PackedStringArray("rack 22.4 27.38 0", "rack 23 27.38 0", "rack 23.6 27.38 0", "rack 24.2 27.38 0", "rack 24.8 27.38 0", "rack 25.4 27.38 0", "rack 26 27.38 0", "rack 26.6 27.38 0", "rack 22.65 23 -90", "rack 22.65 23.6 -90", "rack 22.65 24.2 -90", "rack 22.65 24.8 -90", "rack 22.65 25.4 -90", "rack 22.65 26 -90", "rack 35.35 27.38 0", "rack 35.95 27.38 0", "rack 36.55 27.38 0", "rack 37.15 27.38 0", "rack 37.75 27.38 0", "rack 38.35 27.38 0", "rack 38.95 27.38 0", "rack 39.55 27.38 0", "rack 39.35 23 90", "rack 39.35 23.6 90", "rack 39.35 24.2 90", "rack 39.35 24.8 90", "rack 39.35 25.4 90", "rack 39.35 26 90", "cable 23.5 13.0 0", "cable 38.5 13.0 0", "cable 35.5 12.6 0", "cable 27.5 12.6 0"),
+&"B2": PackedStringArray("rack 39.35 6.5 90", "rack 39.35 7.1 90", "rack 39.35 7.7 90", "rack 39.35 8.3 90", "rack 39.35 8.9 90", "rack 39.35 9.5 90", "rack 22.65 4.6 -90", "rack 22.65 5.2 -90", "rack 22.65 5.8 -90", "rack 22.65 6.4 -90", "rack 22.65 7 -90", "rack 22.65 7.6 -90", "rack 22.65 8.2 -90", "rack 22.65 8.8 -90", "rack 22.65 9.4 -90", "rack 22.65 10 -90", "rack 22.65 10.6 -90", "rack 22.65 11.2 -90", "cable 35.5 6.0 0", "cable 35.5 10.5 20", "pipes 36.0 11.88 0", "pipes 26.5 4.12 180", "fan 28.5 11.4 0"),
+&"B3": PackedStringArray("pump 34.5 30.0 0", "pump 34.5 33.5 0", "pump 37.5 30.0 0", "pump 37.5 33.5 0", "fan 39.5 30.0 90", "fan 39.5 33.5 90", "pipes 36.0 28.12 180", "pipes 36.0 35.88 0", "pipes 26.0 35.88 0", "cable 26.5 29.0 0", "fan 22.5 35.0 -90", "pump 27.5 34.5 0", "cable 36.0 31.75 0", "cable 36.0 35.2 0"),
+&"C1": PackedStringArray("log_screen 58.5 6.0 90", "chair 57.6 6.0 -90", "shelving 51.0 0.4 180", "shelving 53.0 0.4 180", "shelving 57.5 0.4 180", "file_boxes 55.0 0.5 0", "desk_set 58.8 10.0 90", "file_boxes 59.5 3.5 90", "file_boxes 50.0 11.6 0", "chair 56.5 8.0 120", "file_boxes 59.5 1.5 90"),
+&"C2": PackedStringArray("gate_arm 40.4 25.5 0", "log_screen 48.5 15.0 90", "chair 47.6 15.0 -90", "file_boxes 49.4 17.0 90", "file_boxes 49.4 18.3 90", "shelving 48.5 27.6 0", "file_boxes 40.6 27.4 0", "desk_set 42.0 27.3 0"),
+&"C3": PackedStringArray("shelving 56 31.2 90", "shelving 56 33.1 90", "shelving 56 34.95 90", "shelving 57.5 31.2 90", "shelving 57.5 33.1 90", "shelving 57.5 34.95 90", "shelving 59 31.2 90", "shelving 59 33.1 90", "shelving 59 34.95 90", "shelving 41.05 33 0", "shelving 41.05 34.3 0", "shelving 41.05 35.6 0", "shelving 42.95 33 0", "shelving 42.95 34.3 0", "shelving 42.95 35.6 0", "file_boxes 41.5 28.6 0", "file_boxes 53.0 35.5 0"),
+&"C4": PackedStringArray("file_boxes 59.4 13.0 90", "file_boxes 59.4 26.5 90", "shelving 50.4 13.5 -90", "file_boxes 51.0 26.8 0", "chair 52.0 14.5 40", "chair 58.5 15.0 200", "file_boxes 58.8 24.2 0"),
+&"C5": PackedStringArray("shelving 41.5 4.4 180", "log_screen 40.5 6.5 -90", "file_boxes 41.5 13.6 0", "cable 46.6 4.4 0", "chair 41.3 6.5 90"),
+&"H-N": PackedStringArray("pipes 9 0.12 180", "pipes 21 0.12 180", "pipes 27 0.12 180", "pipes 39 0.12 180"),
+&"H-S": PackedStringArray("pipes 22 39.88 0", "pipes 28 39.88 0", "pipes 44 39.88 0", "pipes 54 39.88 0")
+})
+clear_lines = Dictionary[StringName, PackedVector3Array]({
+&"B1": PackedVector3Array(22.5, 0, 21, 33.5, 0, 23, 39.5, 0, 21, 33.5, 0, 23, 31.5, 0, 12.5, 33.5, 0, 23, 31.5, 0, 27.5, 33.5, 0, 23)
+})
+decals = Dictionary[StringName, PackedStringArray]({
+&"A1": PackedStringArray("2 6.0 35.5 0 1.4 0", "13 8.0 28.12 180 0.5 1.5"),
+&"A3": PackedStringArray("0 7.5 22.0 0 1.2 0", "4 0.12 18.0 -90 0.8 1.4"),
+&"A4": PackedStringArray("5 16.0 25.88 0 0.8 1.0"),
+&"A5": PackedStringArray("1 17.5 30.0 0 1.5 0"),
+&"A6": PackedStringArray("12 9.88 8.0 90 0.5 1.5"),
+&"A7": PackedStringArray("8 18.0 6.5 0 1.0 0"),
+&"B1": PackedStringArray("3 31.0 20.0 0 2.0 0", "9 27.0 21.0 30 1.2 0"),
+&"B2": PackedStringArray("6 25.0 11.88 0 0.9 1.2"),
+&"B3": PackedStringArray("0 30.0 33.5 0 1.5 0", "14 26.0 28.12 180 0.6 2.0"),
+&"C1": PackedStringArray("10 54.0 6.0 0 1.2 0"),
+&"C2": PackedStringArray("7 49.88 16.0 90 0.8 1.3"),
+&"C3": PackedStringArray("1 50.0 33.0 0 1.3 0"),
+&"C4": PackedStringArray("11 55.0 21.0 0 1.5 0", "15 52.5 12.12 180 0.5 1.5"),
+&"C5": PackedStringArray("4 40.12 10.0 -90 0.8 1.6"),
+&"H-N": PackedStringArray("2 14.0 1.5 0 1.6 0", "5 33.0 0.12 180 0.8 1.0"),
+&"H-S": PackedStringArray("8 30.0 38.5 0 1.2 0", "6 48.0 39.88 0 0.8 1.1")
+})

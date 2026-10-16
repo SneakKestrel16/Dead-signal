@@ -474,4 +474,5 @@ def main():
 	print("BUILT", built)
 
 
-main()
+if __name__ == "__main__":  # build_dressing.py imports the helpers above
+	main()
