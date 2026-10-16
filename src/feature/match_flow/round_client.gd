@@ -94,6 +94,8 @@ var version := ""
 var remotes: Dictionary[int, Node3D] = {}
 
 var _render: bool
+## Remote bodies' character art (rendering clients only; headless clients keep the bare capsule).
+var body_visuals: BodyVisual
 var _step: Callable
 var _make_body: Callable
 var _map: MapData
@@ -224,6 +226,7 @@ func _on_connected() -> void:
 			router.subscribe(t, scare_audio.on_stun)
 		router.subscribe(&"ScareTriggered", scare_audio.on_scare)
 		router.subscribe(EventBatch.SOUND, scare_audio.on_sound)
+		body_visuals = BodyVisual.new()
 		disguise = DisguisePresenter.new(remotes, puppets.state_of, knobs)
 		add_child(disguise)
 		# Survivor-defense story 011: ShockPresenter routes the shock events per form (it calls the
@@ -551,6 +554,9 @@ func _draw_remotes() -> void:
 		var mat := (n.get_node(^"Mesh") as MeshInstance3D).material_override as StandardMaterial3D
 		mat.albedo_color = colour_of(st.get("appearance", SnapshotCodec.NO_APPEARANCE))
 		(n.get_node(^"Cone") as SpotLight3D).visible = st.get("flashlight", false)
+		if body_visuals != null: # character art over the greybox capsule (ASSET-001..010)
+			body_visuals.show(h, n.get_node(^"Mesh"), st.get("appearance", SnapshotCodec.NO_APPEARANCE),
+					st.get("gait", 0), st.get("transforming", false), pose[0], _now_ms)
 
 
 ## Interpolated [pos, yaw] at `at_ms` from `buf` ([local_ms, pos, yaw], oldest first); past the newest it

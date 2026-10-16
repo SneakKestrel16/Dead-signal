@@ -305,17 +305,21 @@ func _colour(n: Node3D) -> Color:
 	return ((n.get_node(^"Mesh") as MeshInstance3D).material_override as StandardMaterial3D).albedo_color
 
 
-## `body` is built from BODY_NODES only, carries no script or meta, and no String or StringName property of
-## any of its nodes contains a needle (case-insensitive).
+## `body` is built from BODY_NODES only (plus, on a rendering client, the BodyVisual art under
+## "Mesh/Visual", a function of the appearance id alone), carries no script or meta, and no String or
+## StringName property of any of its nodes contains a needle (case-insensitive).
 func _assert_plain_body(body: Node3D, needles: Array[String]) -> void:
 	var nodes: Array[Node] = [body]
 	nodes.append_array(body.find_children("*", "", true, false))
-	assert_int(nodes.size()).override_failure_message("remote body node count").is_equal(BODY_NODES.size())
+	var art := body.get_node_or_null(NodePath("Mesh/" + BodyVisual.VISUAL))
+	var own := nodes.filter(func(n: Node) -> bool: return art == null or not (n == art or art.is_ancestor_of(n)))
+	assert_int(own.size()).override_failure_message("remote body node count").is_equal(BODY_NODES.size())
 	for n in nodes:
 		var key := "" if n == body else String(n.name)
 		var where := "%s (%s)" % [body.get_path_to(n), n.get_class()]
-		assert_str(n.get_class()).override_failure_message("unexpected body node " + where) \
-			.is_equal(BODY_NODES.get(key, "?"))
+		if n in own:
+			assert_str(n.get_class()).override_failure_message("unexpected body node " + where) \
+				.is_equal(BODY_NODES.get(key, "?"))
 		assert_bool(n.get_script() == null).override_failure_message("scripted body node " + where).is_true()
 		assert_array(n.get_meta_list()).override_failure_message("meta on body node " + where).is_empty()
 		for prop: Dictionary in n.get_property_list():

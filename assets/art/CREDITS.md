@@ -14,3 +14,15 @@ Everything not listed is procedural from that script.
 | Office Ceiling 006 | ambientCG | https://ambientcg.com/view?id=OfficeCeiling006 | CC0 1.0 | 2026-10-15 | tex_ceiling_panel_a |
 | Diamond Plate 008 A | ambientCG | https://ambientcg.com/view?id=DiamondPlate008A | CC0 1.0 | 2026-10-15 | tex_checker_plate_a |
 | Metal Walkway 010 | ambientCG | https://ambientcg.com/view?id=MetalWalkway010 | CC0 1.0 | 2026-10-15 | tex_metal_grate_a |
+
+## Characters
+
+| Asset | Source | Author | URL | Licence | Retrieved |
+|-------|--------|--------|-----|---------|-----------|
+| Survivor body and true-form base mesh, skeleton, animations (`assets/art/characters/survivors/char_survivor_body.glb`, `assets/art/characters/shapeshifter/char_shapeshifter_true.glb`) | Universal Animation Library (Standard), glTF mirror of the itch.io release of 2025-06-10 | Quaternius | https://quaternius.itch.io/universal-animation-library (licence stated as CC0 on the itch.io page and https://quaternius.com/packs/universalanimationlibrary.html); files fetched from https://github.com/J-Ponzo/gltf-universal-animation-library | CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/) | 2026-10-15 |
+
+Modified in `tools/art/build_characters.py`: the mannequin is smoothed and padded into a jumpsuit, given a
+visor, re-unwrapped and baked to new textures; the true form has stretched arm bones, a narrowed trunk and
+added ribs, claws, teeth and spikes. Kept clips: Idle, Idle_Torch, Walk, Jog_Fwd, Sprint, Crouch_Idle,
+Crouch_Fwd, Interact, PickUp_Table, Fixing_Kneeling, Push, Hit_Chest, Hit_Head, Death01, Punch_Enter,
+Punch_Cross, Sword_Attack. Accessories, stripe mask and all textures are made for this project.

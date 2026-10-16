@@ -134,3 +134,12 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Cause:** `model.monster_state_changed.connect(_spawn.bind(layer, model, contexts, knobs, ...), CONNECT_ONE_SHOT)` on a survivor client, where the signal never fires. Removing the widget spawn and the bound Callables did not help; removing the connection did. ShapeshifterHud's identical pattern binding only `(layer, model, camera)` does not leak. Inference on the mechanism (the bound `Knobs` resource or `InputContextStack` kept alive by the connection): not checked against engine source.
 - **Fix:** construct the widget up front and let it gate itself on model state (`FormPicker.for_client`), instead of deferring construction through a bound connection.
 - **Source:** borrowed-face story 011, 2026-10-15. Verified on 4.7.2 by bisecting `tests/integration/hud-results` (leak with the connection, clean without).
+
+## Rendering
+
+### A lit mesh with render `layers = 0` logs "indexing did not unpair geometries from light" at teardown
+
+- **Symptom:** a windowed round_view run prints 20 lines of `ERROR: BUG, indexing did not unpair geometries from light.` (`renderer_scene_cull.cpp:844`, `instance_set_scenario`) when the scene is freed; no visible fault.
+- **Cause:** `BodyVisual` hid each remote body's greybox capsule with `MeshInstance3D.layers = 0` (the node cannot be hidden: the character art is its child) while flashlight spots lit it. Inference on the mechanism (the light pairing is keyed on the layer mask and the unpair misses it): not checked against engine source.
+- **Fix:** detach the mesh resource instead (`mi.mesh = null`, restored while needed).
+- **Source:** character art (ASSET-001..010), 2026-10-15. Verified on 4.7.2 by A/B: 20 errors with `layers = 0`, none with the mesh detached.
