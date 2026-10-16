@@ -313,6 +313,54 @@ for _c in range(1, 6):
     ALT["grunt_c%d" % _c] = [("short breathy", lambda c=_c: grunt_b(c)), ("lower, strained", lambda c=_c: grunt_c(c))]
 
 
+# What happens in the game when each sound plays (from the GDDs and the code that plays it).
+WHEN = {
+    "step_tile": "Each footstep of a survivor (or a disguise copying one) walking on Zone A lab tile. Pitched per survivor; louder sprinting, quieter crouched/crawling.",
+    "step_concrete": "Footsteps on Zone C and the service corridors (and anywhere off the map). Same per-survivor pitch and gait loudness.",
+    "step_metal": "Footsteps on Zone B server-room metal grating.",
+    "step_rubber": "Footsteps on rubber matting. Built but no zone uses it yet.",
+    "step_true_form": "Footsteps of the shapeshifter in its true (monster) form. Survivors hear these to know the monster is near.",
+    "amb_a": "Looping background bed while you stand in Zone A (labs). Crossfades when you cross into another zone.",
+    "amb_b": "Looping background bed in Zone B (server rooms).",
+    "amb_c": "Looping background bed in Zone C (security).",
+    "amb_link": "Looping background bed in the service corridors that link the zones.",
+    "lunge_cue": "The monster's lunge wind-up: heard from its direction during the coil before it dashes. The survivor's warning to dodge.",
+    "lunge_scrape": "The monster's lunge missed: it scrapes along the floor and stumbles.",
+    "lunge_hit": "The monster's lunge connected: a survivor is grabbed (hit-stop moment).",
+    "taser_crackle": "A survivor fires the taser and it hits: cartridge pop then electric crackle on the target.",
+    "taser_fizz": "The taser hits the true form while it is immune: a dull fizz, no stagger.",
+    "hide_cue": "Breathing heard near a hiding spot (locker) with someone inside.",
+    "distortion": "The shapeshifter is transforming (2 s): a warped drone at its position that survivors nearby can hear.",
+    "fuse_install": "A survivor installs a fuse in a fuse box: the loudest objective noise, can draw the monster.",
+    "hide_enter": "Someone climbs into a hiding spot (locker door creak, latch).",
+    "hide_exit": "Someone climbs out of a hiding spot.",
+    "door_open": "A facility door opens.",
+    "door_close": "A facility door closes.",
+    "barricade_build": "A survivor nails up a barricade on a Zone C door.",
+    "barricade_break": "A barricade is broken down (by the monster or a survivor removing it).",
+    "objective_dock": "A data drive is docked at the terminal: objective progress.",
+    "objective_alarm": "The round enters Evacuation (exit opening): facility-wide alarm, heard everywhere once.",
+    "pain_cry_true_form": "The true-form monster is tased/staggered: its pain cry.",
+    "scare_transformation_reveal": "Scare: a disguised 'teammate' drops the disguise and becomes the monster in front of you. Distortion plus cry.",
+    "scare_door_burst": "Scare: the monster smashes through a barricaded door.",
+    "scare_ambush_lunge": "Scare: the monster lunges from an ambush (you could not see the wind-up). Hit plus cry.",
+    "scare_blackout": "Scare: the monster's Blackout ability kills the lights in an area: power-down thunk.",
+    "scare_slammed_door": "Scare: a door slams by itself (scripted, at door scare points).",
+    "scare_glass_break": "Scare: a glass panel cracks/shatters (scripted, at glass scare points). The panel stays see-through.",
+    "scare_alarm_fuse": "Scare: alarm burst when a fuse install completes.",
+    "scare_alarm_evacuation": "Scare: the evacuation alarm when the round enters Evacuation (with amber beacons).",
+    "scare_recording_room": "Scare: a distorted voice plays from a room speaker.",
+    "scare_recording_script": "Scare: a scripted distorted voice recording (second variant).",
+    "scare_surveillance_image": "Scare: a security monitor shows a hallucinated image: static burst.",
+    "scare_stinger": "Music stinger layered on Major scares (reveal, ambush, door burst, blackout). At most +6 dB over the zone bed.",
+    "ui_click": "Menu and HUD button clicks.",
+    "ping_rejected": "You ping too fast: the local 'too fast' rejection click.",
+}
+for _c in range(1, 6):
+    WHEN["callout_c%d" % _c] = ("Survivor %d uses a callout from the wheel (Drive here, Fuse here, Need rescue, With you, Follow me, Wait, "
+                                "Danger, That wasn't me). A disguise copying survivor %d plays the same. Placeholder until spoken lines exist." % (_c, _c))
+    WHEN["grunt_c%d" % _c] = "Survivor %d gets tased (by a teammate or a disguise's victim): shocked grunt." % _c
+
 # ---------------------------------------------------------------- page
 
 def peaks(x, buckets=600):
@@ -324,7 +372,7 @@ PAGE = r"""<!doctype html><meta charset="utf-8"><title>Dead Signal audio auditio
 <style>
 body{background:#111;color:#ddd;font:14px system-ui,sans-serif;margin:20px;max-width:1100px}
 h1{font-size:20px}.card{background:#1b1b1b;border:1px solid #333;border-radius:6px;padding:12px;margin:14px 0}
-.card h2{font-size:16px;margin:0 0 4px}.meta{color:#888;font-size:12px;margin-bottom:8px}
+.card h2{font-size:16px;margin:0 0 4px}.when{color:#e8d9a8;margin:2px 0 4px}.meta{color:#888;font-size:12px;margin-bottom:8px}
 .opt{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center;margin:6px 0;padding:6px;border-radius:4px}
 .opt.best{background:#16301c;outline:1px solid #3c8}.opt label{cursor:pointer}
 canvas{width:100%;height:60px;background:#0b0b0b;border-radius:3px;cursor:pointer}
@@ -360,7 +408,7 @@ function play(a, cv, pk, btn){ if (cur && cur.a !== a){ cur.a.pause(); cur.a.cur
 const L = document.getElementById('list');
 for (const s of DATA){ const st = S[s.name] = S[s.name] || {best:'', notes:'', opt:{}, final:false};
   const c = document.createElement('div'); c.className = 'card';
-  c.innerHTML = `<h2>${s.name}</h2><div class="meta">${s.cat} · plays as: ${s.ids}</div>`;
+  c.innerHTML = `<h2>${s.name}</h2><div class="when">${s.when}</div><div class="meta">${s.cat} · plays as: ${s.ids}</div>`;
   for (const o of s.opts.concat([{key:'none', label:'None of these is good'}])){
     const row = document.createElement('div'); row.className = 'opt' + (st.best == o.key ? ' best' : '');
     const id = s.name + '_' + o.key;
@@ -412,7 +460,7 @@ def main():
                 print("%-40s %s" % (name, key), flush=True)
             x = read(path)
             opts.append({"key": key, "label": label, "file": os.path.basename(path), "sec": len(x) / SR, "peaks": peaks(x)})
-        data.append({"name": name, "cat": cat, "ids": html.escape(", ".join(i[0] for i in ids)), "opts": opts})
+        data.append({"name": name, "cat": cat, "when": html.escape(WHEN.get(name, "")), "ids": html.escape(", ".join(i[0] for i in ids)), "opts": opts})
     with open(os.path.join(out, "index.html"), "w", newline="\n", encoding="utf-8") as f:
         f.write(PAGE.replace("__DATA__", json.dumps(data)).replace("__ROUND__", str(rnd)))
     print("wrote", os.path.join(out, "index.html"))
