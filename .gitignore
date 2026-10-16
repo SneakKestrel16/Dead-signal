@@ -176,3 +176,6 @@ $RECYCLE.BIN/
 
 # === Art pipeline download cache (tools/art/build_textures.py, build_characters.py) ===
 tools/art/.cache/
+tools/audio/review/
+tools/audio/.cache/
+__pycache__/

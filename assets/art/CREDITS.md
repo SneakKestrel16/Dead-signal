@@ -49,7 +49,8 @@ decimated to the 8k budget, three poses baked with IK).
 
 ## Audio
 
-Built by `tools/audio/build_audio.py` (downloads to the gitignored `tools/audio/.cache/`). Each Kenney pack page
+Built by `tools/audio/export.py` (docs/audio/README.md). The non-ambience sounds are placeholders: the earlier shipped files,
+kept in `tools/audio/sources/legacy/` until their family is rebuilt on recordings. Each Kenney pack page
 states "Creative Commons CC0"; every file below is processed (pitched, filtered, mixed, loudness-normalised).
 
 | Source | Author | URL | Licence | Fetched | Used in (`assets/audio/`) |
@@ -59,8 +60,23 @@ states "Creative Commons CC0"; every file below is processed (pitched, filtered,
 | Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | 2026-10-15 | ui/ui_click, ui/ping_rejected, foot/step_true_form, cue/lunge_scrape (scratch) |
 | Sci-Fi Sounds | Kenney | https://kenney.nl/assets/sci-fi-sounds | CC0 1.0 | 2026-10-15 | cue/distortion (force field layer), scare/door_burst, scare/blackout (low-frequency thunk), scare/surveillance_image |
 
-Synthesised for this project (project-owned, Python stdlib in `build_audio.py`): every zone bed
-(`ambience/amb_*`), the stinger, alarms, the lunge wind-up, taser crackle and fizz, hide breathing, the
+Synthesised for this project (project-owned, Python stdlib, earlier `build_audio.py`, now in `tools/audio/sources/legacy/`): the stinger, alarms, the lunge wind-up, taser crackle and fizz, hide breathing, the
 distortion drone, survivor grunts and the true-form pain cry, the recording babble, and the callout radio blips
 (`voice/callout_c1..c5`: non-verbal, one motif and pitch per voice set; no CC0 source speaks the eight callout
 lines, so spoken lines remain to be recorded).
+
+Freesound recordings (CC0 1.0, fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/ambience.toml`, MP3 previews and decoded WAVs committed). Zone beds `ambience/amb_a`, `amb_b`, `amb_c`, `amb_link`, cut, filtered, de-lined and layered by `tools/audio/sounds/ambience.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/870708/ | CHallSmith | CC0 1.0 |
+| https://freesound.org/s/119910/ | ftpalad | CC0 1.0 |
+| https://freesound.org/s/451918/ | kyles | CC0 1.0 |
+| https://freesound.org/s/776267/ | soundandmelodies | CC0 1.0 |
+| https://freesound.org/s/536529/ | Smice_6 | CC0 1.0 |
+| https://freesound.org/s/637377/ | kyles | CC0 1.0 |
+| https://freesound.org/s/144046/ | gchase | CC0 1.0 |
+| https://freesound.org/s/744447/ | callmethefoo | CC0 1.0 |
+| https://freesound.org/s/864882/ | Oldome | CC0 1.0 |
+| https://freesound.org/s/339322/ | kiefspoon | CC0 1.0 |
+

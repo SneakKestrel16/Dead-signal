@@ -1,6 +1,6 @@
 class_name SoundBank extends Resource
 ## The audio pass's sound map (design/game-brief.md; ADR-0013 §2 catalog ids): event id -> SoundBankEntry.
-## Generated with its files by tools/audio/build_audio.py; values live in res://data/audio/sound_bank.tres.
+## Generated with its files by tools/audio/export.py; values live in res://data/audio/sound_bank.tres.
 ## resolve() falls back from the most to the least specific id, so one entry serves a family of ids:
 ## `c3.walk` on tile tries `c3.walk@tile`, `c3.walk`, `c3@tile`, `c3`; `callout/voice_c2/danger` tries
 ## `callout/voice_c2/danger`, `callout/voice_c2`, `callout`. An id with no entry resolves to null, and the

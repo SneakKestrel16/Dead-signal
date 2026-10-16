@@ -1,0 +1,79 @@
+[[recording]]
+id = 870708
+url = "https://freesound.org/s/870708/"
+author = "CHallSmith"
+licence = "CC0-1.0"
+why = "amb_a: 60 Hz fluorescent hum in a large workspace, 56 s, the lab light buzz"
+sha256 = "ecedc56b06d1d6387790d536b1135cf95e579f19a5b550f4f0f6d964d732faf8"
+
+[[recording]]
+id = 119910
+url = "https://freesound.org/s/119910/"
+author = "ftpalad"
+licence = "CC0-1.0"
+why = "amb_a: a single fluorescent bulb hum/buzz, 31 s, thinner and buzzier than 870708"
+sha256 = "2e625c0867f7ed2c48fb34a014b1c9d633440301b8806d2cd2029fa894af0c92"
+
+[[recording]]
+id = 451918
+url = "https://freesound.org/s/451918/"
+author = "kyles"
+licence = "CC0-1.0"
+why = "amb_a: shop room tone with only a fluorescent light hum, 56 s, the room under the buzz"
+sha256 = "ecea72fb156d549a7f43727db7f76e11c6e86249ddcf4fcd573774f648cfd27b"
+
+[[recording]]
+id = 776267
+url = "https://freesound.org/s/776267/"
+author = "soundandmelodies"
+licence = "CC0-1.0"
+why = "amb_b: server room room tone (phone recording), 84 s; faint clicks from away"
+sha256 = "ee73e6114fa7aa7e44dc8a254a8d93ccef4152051589409415751e488c8cfc4a"
+
+[[recording]]
+id = 536529
+url = "https://freesound.org/s/536529/"
+author = "Smice_6"
+licence = "CC0-1.0"
+why = "amb_b: server room atmos, 62 s"
+sha256 = "02af1530bf31c1a4789b255c8a3e78c8680e1219b8a55c8165527faf1bffb1ce"
+
+[[recording]]
+id = 637377
+url = "https://freesound.org/s/637377/"
+author = "kyles"
+licence = "CC0-1.0"
+why = "amb_b: computer workstation fans in a server room, 29 s, close fan wash"
+sha256 = "64471fb9c608a8c2b3a23b0c065e96534b2c0cf87e9cbb6eab3c5f2b67feca16"
+
+[[recording]]
+id = 144046
+url = "https://freesound.org/s/144046/"
+author = "gchase"
+licence = "CC0-1.0"
+why = "amb_c: control room of a large theatre with machine racks, low hum, 134 s; security room tone"
+sha256 = "ba516ce35091a16e2c8745e3fb02f992e5b31603eeb83ba84f81fde692ccd74e"
+
+[[recording]]
+id = 744447
+url = "https://freesound.org/s/744447/"
+author = "callmethefoo"
+licence = "CC0-1.0"
+why = "amb_c: soft quiet room tone, 97 s, the empty-room bed under the racks"
+sha256 = "0c0e38e634bae6e954c2cc451d331800cfb0b3c97cef5276d596f3e2aca9e1ec"
+
+[[recording]]
+id = 864882
+url = "https://freesound.org/s/864882/"
+author = "Oldome"
+licence = "CC0-1.0"
+why = "amb_link: apartment HVAC unit rumble/hum, 133 s; service corridor air handling (use the steady part)"
+sha256 = "fef81265f88ba0c2604144ae9eddd93131017477f23386322fd7692768d30aaf"
+
+[[recording]]
+id = 339322
+url = "https://freesound.org/s/339322/"
+author = "kiefspoon"
+licence = "CC0-1.0"
+why = "amb_link: gentle air vent in a fireplace, mono, 157 s; moving air in a duct"
+sha256 = "fcc7376d321729c7277d4d125dc0202927e311b32363155fd859d214b143cdbe"

@@ -1,5 +1,5 @@
 # Audio pass (design/game-brief.md "real sounds in place of the placeholders, and a mix"): the SoundBank
-# (data/audio/sound_bank.tres, built by tools/audio/build_audio.py) covers every sound id the code requests,
+# (data/audio/sound_bank.tres, built by tools/audio/export.py) covers every sound id the code requests,
 # every entry plays on a bus of the layout, a disguise sounds exactly like the copied survivor (LB-6,
 # borrowed-face.md rule 8), footsteps take the surface of their zone, an unknown id keeps the tone fallback,
 # and the loudness table meets its targets with the stinger at most +6 dB over every bed (scare-events rule 26).
