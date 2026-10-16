@@ -107,9 +107,12 @@ func test_remote_bodies_drawn_by_handle_in_appearance_colour_and_hidden_not_draw
 	c._process(0.016)
 	assert_bool(a.visible).is_false()
 	assert_bool(b.visible).is_true()
-	# A retired handle loses its node.
+	# A retired handle is hidden at once and loses its node after interp_delay_ms (an elimination cue in the
+	# next batch can still find it: ADR-0004 §2 amendment 2026-10-16).
 	_feed(c, HandleTable.encode(PackedInt64Array([HandleTable.RETIRE, 9])))
 	c._process(0.016)
+	assert_bool(c.remotes.has(9) and not b.visible).is_true()
+	c._process(c.knobs.net.interp_delay_ms / 1000.0)
 	assert_bool(c.remotes.has(9)).is_false()
 
 

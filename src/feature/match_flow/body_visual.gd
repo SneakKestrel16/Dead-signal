@@ -8,9 +8,12 @@ class_name BodyVisual extends RefCounted
 ## remote entry carries no velocity; the ADR-0004 remote fields would have to grow to settle it). Over the
 ## gait, an action the client already knows: a shock or stun stagger (DisguisePresenter) and the lunge's
 ## coil, miss stumble and hit (LungePresenter.pose()); clips in tools/art/build_anims.py. True-form clips play
-## only on the true form, so a disguise borrows the survivor set whole (Borrowed Face, ASSET-008).
+## only on the true form, so a disguise borrows the survivor set whole (Borrowed Face, ASSET-008). Under those,
+## the snapshot's body action (SnapshotCodec.Action, ACTION_CLIPS) and one-shot body cues (cue(), collapse();
+## ADR-0004 §2 amendment 2026-10-16).
 ## Client presentation only; decides nothing. Built nodes carry no script, meta or file path (AC-LB-31).
-## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, pos, now_ms, action)`
+## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, pos, now_ms, action, body_action)`;
+## on a BODY_CUE: `visuals.cue(h, cue)` or, for an elimination, `visuals.collapse(mesh)`.
 
 const SURVIVOR_SCENE := "res://assets/art/characters/survivors/char_survivor_body.glb"
 const TRUE_FORM_SCENE := "res://assets/art/characters/shapeshifter/char_shapeshifter_true.glb"
@@ -63,6 +66,20 @@ const LOCOMOTION: Array[StringName] = [&"Idle", &"Walk", &"Sprint", &"Crouch_Idl
 ## A one-shot that plays when the clip on the left gives way to locomotion: rescued (crawl gait ends) ->
 ## stand-up; the coil's end -> the dash (inference: the client sees no dash start; the coil lasts
 ## lunge_windup_s and the dash follows it, monster-abilities.md rule 5).
+## SnapshotCodec.Action -> clip. Takedown_Pin is true-form only (TRUE_FORM_CLIPS); the rest are the survivor
+## set, which a disguise shares (an absent clip on the true form leaves the gait playing: _play).
+const ACTION_CLIPS := {
+	SnapshotCodec.Action.CALL_HELP: &"Call_Help",
+	SnapshotCodec.Action.SEIZED: &"Seized",
+	SnapshotCodec.Action.PIN: &"Takedown_Pin",
+	SnapshotCodec.Action.KNEEL: &"Fixing_Kneeling",
+	SnapshotCodec.Action.BARRICADE: &"Push",
+	SnapshotCodec.Action.INTERACT: &"Interact",
+	SnapshotCodec.Action.HIDE: &"Hide_Enter",
+}
+## EventBatch body cue -> one-shot clip (the elimination's Death01 plays through collapse()).
+const CUE_CLIPS := {EventBatch.CUE_HIDE_EXIT: &"Hide_Exit"}
+const DEATH := &"Death01"
 const FOLLOW := {&"Downed": &"Stand_Up", &"Crawl": &"Stand_Up", &"Lunge_Coil": &"Lunge_Dash"}
 
 var _scenes := {}
@@ -71,6 +88,8 @@ var _acc_material: StandardMaterial3D
 ## handle -> [visual Node3D, appearance, last pos, last ms, smoothed speed, last clip]
 ## ponytail: entries of departed handles stay until the handle is reused (bounded by MAX_BODIES).
 var _shown := {}
+## handle -> a one-shot cue clip to play over everything until it finishes.
+var _cues := {}
 
 
 ## [tint, accessory node name, stripe row] for `appearance`; the plain fallback for an unknown id.
@@ -92,15 +111,19 @@ static func anim_for(gait: int, speed: float) -> StringName:
 	return &"Walk" if moving else &"Idle"
 
 
-## Clip for a body showing `appearance` with `gait` at `speed` and presentation `action` (STAGGER, a
-## LungePresenter.pose() value or &""). Lunge actions apply to the true form only; unknown actions fall back
-## to the gait clip.
-static func clip_for(appearance: int, gait: int, speed: float, action: StringName) -> StringName:
+## Clip for a body showing `appearance` with `gait` at `speed`, presentation `action` (STAGGER, a
+## LungePresenter.pose() value or &"") and snapshot `body_action` (SnapshotCodec.Action). Lunge actions and
+## PIN apply to the true form only; unknown actions fall back to the gait clip.
+static func clip_for(appearance: int, gait: int, speed: float, action: StringName,
+		body_action: int = SnapshotCodec.Action.NONE) -> StringName:
 	var true_form := appearance == CharacterDef.TRUE_FORM_APPEARANCE_ID
 	if action == STAGGER:
 		return &"Hit_Head" if true_form else &"Hit_Chest"
 	if true_form and LUNGE_CLIPS.has(action):
 		return LUNGE_CLIPS[action]
+	var act: StringName = ACTION_CLIPS.get(body_action, &"")
+	if act != &"" and (true_form or not TRUE_FORM_CLIPS.has(act)):
+		return act
 	return anim_for(gait, speed)
 
 
@@ -152,7 +175,7 @@ func build(appearance: int) -> Node3D:
 ## rebuilt when the appearance changes, animated from gait and drawn speed. The art also shows while
 ## transforming; TransformPresenter lays the warp over its meshes (ASSET-078).
 func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, pos: Vector3, now_ms: float,
-		action: StringName = &"") -> void:
+		action: StringName = &"", body_action: int = SnapshotCodec.Action.NONE) -> void:
 	var e: Array = _shown.get(h, [])
 	if e.is_empty() or not is_instance_valid(e[0]) or (e[0] as Node).get_parent() != mesh or e[1] != appearance:
 		if not e.is_empty() and is_instance_valid(e[0]):
@@ -173,8 +196,13 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, pos: Vec
 	# The capsule mesh is detached rather than hidden (hiding "Mesh" would hide the art under it; a zero
 	# render layer mask made Godot 4.7.2 log "indexing did not unpair geometries from light" at teardown).
 	mesh.mesh = null
-	var clip := clip_for(appearance, gait, e[4], action)
+	var clip := clip_for(appearance, gait, e[4], action, body_action)
 	var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	if _cues.has(h): # a one-shot cue plays to its end, then the state clip resumes
+		if ap == null or not ap.has_animation(_cues[h]) or (ap.assigned_animation == _cues[h] and not ap.is_playing()):
+			_cues.erase(h)
+		else:
+			clip = _cues[h]
 	if LOCOMOTION.has(clip) and not FOLLOW.has(clip): # leaving Downed or the coil: follow it; let a follow-up finish
 		if FOLLOW.has(e[5]):
 			clip = FOLLOW[e[5]]
@@ -188,6 +216,23 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, pos: Vec
 	var lens := node.find_child(LENS, true, false) as Node3D
 	if cone != null and lens != null and lens.is_inside_tree():
 		cone.global_position = lens.global_position
+
+
+## A one-shot body cue (EventBatch.CUE_*) on handle `h`; unknown cues are ignored.
+func cue(h: int, kind: StringName) -> void:
+	if CUE_CLIPS.has(kind):
+		_cues[h] = CUE_CLIPS[kind]
+
+
+## Plays the elimination collapse on the art under `mesh` (a puppet RoundClient keeps as a corpse); false when
+## no art is shown there.
+func collapse(mesh: Node) -> bool:
+	var v := mesh.get_node_or_null(NodePath(VISUAL)) as Node3D
+	if v == null:
+		return false
+	v.visible = true
+	_play(v, DEATH)
+	return true
 
 
 func _play(n: Node3D, anim: StringName) -> void:

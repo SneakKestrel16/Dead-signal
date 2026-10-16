@@ -18,7 +18,8 @@ const TICKS := 30
 ## shows the copied survivor's, so it carries no role, name or player id. `drive` / `fuse` are the visible
 ## carried items ADR-0004 §2 lists on a body entry: the server's carrier state, which a disguise never has
 ## (borrowed-face.md rule 12, tell T3), so they name no identity.
-const REMOTE_FIELDS := ["appearance", "drive", "flashlight", "fuse", "gait", "id", "pos", "transforming", "yaw"]
+## `action`: ADR-0004 §2 amendment 2026-10-16 (body action).
+const REMOTE_FIELDS := ["action", "appearance", "drive", "flashlight", "fuse", "gait", "id", "pos", "transforming", "yaw"]
 ## Property names that would put identity on a body node.
 const IDENTITY := ["role", "player", "name", "tag", "character", "identity", "owner", "peer", "monster", "survivor"]
 

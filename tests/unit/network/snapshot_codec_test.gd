@@ -1,7 +1,7 @@
 # Story network-authority/006: snapshot binary format.
 extends GdUnitTestSuite
 
-const SIX_BODY_BYTES := 171 ## 6 + 6 * 23 + 27 (u32 handles, story 008; hold pair, controller-interaction 016; appearance, borrowed-face 007); ADR verification 6 measured 144 B with u16 ids
+const SIX_BODY_BYTES := 177 ## 6 + 6 * 24 + 27 (u32 handles, story 008; hold pair, controller-interaction 016; appearance, borrowed-face 007; action, ADR-0004 amendment 2026-10-16); ADR verification 6 measured 144 B with u16 ids
 const SINGLE_DATAGRAM_BYTES := 1000
 
 
@@ -9,7 +9,7 @@ func _bodies(n: int, own_index: int = 0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for i in n:
 		var b := {"id": 10 + i, "gait": i % 4, "pos": Vector3(i, 0.5 * i, -2.0 * i), "yaw": 0.25 * i, "appearance": i,
-			"flashlight": i % 2 == 0, "drive": i == 2, "fuse": i % 2 == 1}
+			"flashlight": i % 2 == 0, "drive": i == 2, "fuse": i % 2 == 1, "action": i % (SnapshotCodec.Action.HIDE + 1)}
 		if i == own_index:
 			b["own"] = true
 			b["seq"] = 1234
@@ -36,6 +36,7 @@ func test_round_trip_keeps_every_field() -> void:
 		assert_bool(snap.bodies[i].flashlight).is_equal(bodies[i].flashlight) ## survivor-defense 009, any entry
 		assert_bool(snap.bodies[i].drive).is_equal(bodies[i].drive) ## carried objectives, any entry
 		assert_bool(snap.bodies[i].fuse).is_equal(bodies[i].fuse)
+		assert_int(snap.bodies[i].action).is_equal(bodies[i].action) ## ADR-0004 §2 amendment, any entry
 		assert_bool(snap.bodies[i].has("own")).is_equal(i == 1)
 	var own: Dictionary = snap.bodies[1]
 	assert_int(own.seq).is_equal(1234)
@@ -110,3 +111,17 @@ func test_own_entry_carries_the_hold_and_rejects_a_bad_net_id() -> void:
 	assert_int(own.hold_elapsed_ticks).is_equal(4321)
 	bodies[0]["hold_net_id"] = -2
 	assert_dict(SnapshotCodec.decode(SnapshotCodec.encode(1, bodies))).is_empty()
+
+
+# ADR-0004 §2 amendment (2026-10-16): every entry carries one body action; an unknown value rejects the snapshot.
+func test_action_defaults_to_none_and_an_unknown_action_is_rejected() -> void:
+	var bodies := _bodies(2)
+	bodies[1].erase("action")
+	assert_int(SnapshotCodec.decode(SnapshotCodec.encode(1, bodies)).bodies[1].action).is_equal(SnapshotCodec.Action.NONE)
+	var bad := SnapshotCodec.encode(1, bodies)
+	bad.encode_u8(SnapshotCodec.HEADER_BYTES + SnapshotCodec.ENTRY_BYTES + SnapshotCodec.OWN_EXTRA_BYTES + 23,
+			SnapshotCodec.Action.HIDE + 1) ## the second entry's action byte
+	assert_dict(SnapshotCodec.decode(bad)).is_empty()
+	bad.encode_u8(SnapshotCodec.HEADER_BYTES + SnapshotCodec.ENTRY_BYTES + SnapshotCodec.OWN_EXTRA_BYTES + 23,
+			SnapshotCodec.Action.HIDE)
+	assert_dict(SnapshotCodec.decode(bad)).is_not_empty()

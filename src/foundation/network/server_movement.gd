@@ -63,6 +63,12 @@ var flashlight_of: Callable
 ## carries_fuse, (player) -> bool. Set by the composition root; unset means nobody carries.
 var drive_of: Callable
 var fuse_of: Callable
+## Every entry's body action (ADR-0004 §2 as amended 2026-10-16): BodyActions.action_of, (player) ->
+## SnapshotCodec.Action. Set by the composition root; unset means NONE.
+var action_of: Callable
+## One-shot body cues queued this tick (cue()): body player ID -> EventBatch cue; sent and cleared in the
+## snapshot phase.
+var _cues: Dictionary[int, StringName] = {}
 ## Positional sounds queued this tick (emit_sound); sent and cleared in the snapshot phase.
 var _sounds: Array[EventBatch.Sound] = []
 ## Spectator player ID -> the survivor it watches (ADR-0004 §8). A spectator has no body here.
@@ -314,8 +320,10 @@ func _snapshot_phase(tick: int) -> void:
 		events = _runner.bus.take_tick_events()
 	var sounds := _sounds
 	_sounds = []
+	var cues := _cues
+	_cues = {}
 	for pid: int in _players:
-		_send_stream(tick, pid, pid, positions, positions, events, sounds, scope.handles)
+		_send_stream(tick, pid, pid, positions, positions, events, sounds, scope.handles, cues)
 	for spectator: int in _watching:
 		var watched := _watching[spectator]
 		var mirror := HandleMirror.new(scope.handles, spectator)
@@ -325,25 +333,27 @@ func _snapshot_phase(tick: int) -> void:
 			# projection, ADR-0004), with no sounds and no snapshot: there is no body for the own entry.
 			var none: Array[EventBatch.Sound] = []
 			_send_stream(tick, spectator, watched if watched != -1 else spectator, {}, positions, events, none,
-				mirror)
+				mirror, cues)
 			continue
 		# Relevance from the watched survivor's eye, the spectator as viewer; the survivor is the own entry.
 		var eyes := positions.duplicate()
 		eyes.erase(watched)
 		eyes[spectator] = positions[watched]
-		_send_stream(tick, spectator, watched, eyes, positions, events, sounds, mirror)
+		_send_stream(tick, spectator, watched, eyes, positions, events, sounds, mirror, cues)
 
 
 ## Sends `viewer`'s peer this tick's handle messages, event batch and snapshot, projected for `as_player`
 ## (the viewer itself, or the survivor a spectator watches). `eyes` places the viewer for relevance.
 ## When `as_player` has no body in `positions`, only the handle messages and event batches are sent.
 func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, positions: Dictionary,
-		events: Array[ServerEvent], sounds: Array[EventBatch.Sound], handles: HandleTable) -> void:
+		events: Array[ServerEvent], sounds: Array[EventBatch.Sound], handles: HandleTable, cues: Dictionary = {}) -> void:
 	var peer := _net.peer_id_of(viewer)
 	if peer == -1:
 		return
 	var body := positions.has(as_player)
 	var pos: Vector3 = positions.get(as_player, Vector3.ZERO)
+	var cued := {}
+	var cue_extra := cue_entries(cues, as_player, handles, cued) ## before relevance retires a removed body
 	var seen := scope.bodies_for(tick, viewer, eyes) if body else {}
 	var msgs := scope.handles.take(viewer)
 	if not msgs.is_empty():
@@ -356,7 +366,8 @@ func _send_stream(tick: int, viewer: int, as_player: int, eyes: Dictionary, posi
 				var old := EventBatch.build(e.tick, as_player, one, [], pos, handles, monster)
 				if not old.is_empty():
 					_smp.send_bytes(old, peer, MultiplayerPeer.TRANSFER_MODE_RELIABLE, NetChannels.EVENT)
-	var extra: Array = []
+	cue_extra.append_array(cue_entries(cues, as_player, handles, cued)) ## a body introduced this tick (hide exit)
+	var extra: Array = cue_extra
 	for provider in batch_extras:
 		extra.append_array(provider.call(as_player, full))
 	var batch := EventBatch.build(tick, as_player, events, sounds, pos, handles, monster, extra)
@@ -379,7 +390,8 @@ func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 		"transforming": transforming_of.is_valid() and transforming_of.call(player_id),
 		"flashlight": flashlight_of.is_valid() and flashlight_of.call(player_id),
 		"drive": drive_of.is_valid() and drive_of.call(player_id),
-		"fuse": fuse_of.is_valid() and fuse_of.call(player_id)}
+		"fuse": fuse_of.is_valid() and fuse_of.call(player_id),
+		"action": action_of.call(player_id) if action_of.is_valid() else SnapshotCodec.Action.NONE}
 	if own:
 		e["own"] = true
 		e["seq"] = p.ack_seq
@@ -391,6 +403,26 @@ func _entry(player_id: int, id: int, own: bool) -> Dictionary:
 		e["hold_net_id"] = hold.get("net_id", -1)
 		e["hold_elapsed_ticks"] = hold.get("elapsed_ticks", 0)
 	return e
+
+
+## Queues a one-shot `kind` (EventBatch.CUE_*) on `body` for this tick (ADR-0004 §2 amendment 2026-10-16):
+## each stream that holds a handle for the body gets [BODY_CUE, {handle, cue}] under its own handle, and no
+## other. A handle the viewer held before this tick's retire counts, so a body removed this tick (an
+## elimination) still names the handle the viewer last saw.
+func cue(body: int, kind: StringName) -> void:
+	_cues[body] = kind
+
+
+## [BODY_CUE, {handle, cue}] for each body in `cues` (body -> cue) that `as_player`'s stream holds a handle
+## for in `handles` (a HandleMirror for a spectator), skipping its own body and the bodies in `done`, which
+## gains every body cued. Looks handles up only (has() first), so it issues none.
+static func cue_entries(cues: Dictionary, as_player: int, handles: HandleTable, done: Dictionary) -> Array:
+	var out: Array = []
+	for b: int in cues:
+		if b != as_player and not done.has(b) and handles.has(as_player, b):
+			out.append([EventBatch.BODY_CUE, {"handle": handles.handle_for(as_player, b), "cue": cues[b]}])
+			done[b] = true
+	return out
 
 
 ## The rebound client starts a new puppet map: re-issue every handle and send the catch-up (ADR-0004 §9).

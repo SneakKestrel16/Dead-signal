@@ -1,24 +1,25 @@
 class_name SnapshotCodec extends RefCounted
 ## Binary snapshot format (ADR-0002 rule 5). Static encode/decode; one datagram.
-## Layout, little endian: header = version u8, server_tick u32, count u8 (6 B). Per body (23 B):
+## Layout, little endian: header = version u8, server_tick u32, count u8 (6 B). Per body (24 B):
 ## id u32, flags u8 (F_*; F_TRANSFORMING, F_FLASHLIGHT, F_DRIVE and F_FUSE on any entry, the rest own only), gait u8, position 3 x f32, yaw f32, appearance u8 (CharacterDef appearance id:
-## the body's character, or the true form for the shapeshifter's; NO_APPEARANCE when unknown; ADR-0004 §4). `id` is the receiver's per-peer handle
+## the body's character, or the true form for the shapeshifter's; NO_APPEARANCE when unknown; ADR-0004 §4), action u8
+## (Action; ADR-0004 §2 as amended 2026-10-16). `id` is the receiver's per-peer handle
 ## for the body (ADR-0004 §3), or the receiver's own player ID on its F_OWN entry. A body with F_OWN
 ## adds 27 B: last consumed seq s32, velocity 3 x f32, effective modifier scale f32, restore counter u8,
 ## hold net id s32 (-1 = no hold), hold elapsed ticks u16 (ADR-0008 §8; the receiving player's own entry
-## only). 6 bodies with one own entry = 6 + 6*23 + 27 = 171 B (ADR verification 6 measured 144 B with u16
+## only). 6 bodies with one own entry = 6 + 6*24 + 27 = 177 B (ADR verification 6 measured 144 B with u16
 ## ids; ADR-0004 guardrail about 200 B per peer).
 ## Body Dictionary: {id, pos: Vector3, yaw, gait, appearance (default NO_APPEARANCE), transforming: bool
 ## (default false; borrowed-face story 005), flashlight: bool (default false; survivor-defense story 009), drive, fuse: bool (default false; carried
-## objectives)} plus, when own: {own: true, seq, vel: Vector3,
+## objectives), action: Action (default NONE)} plus, when own: {own: true, seq, vel: Vector3,
 ## on_floor, scale, restores, hold_net_id, hold_elapsed_ticks}; the hold pair defaults to -1 and 0 on encode. `restores` counts the server's inside-geometry restores of that player
 ## (mod 256). Every own entry carries it, so a lost datagram cannot lose a restore (ADR-0002 rule 9).
 ## Which bodies a snapshot carries is replication scope (ReplicationScope, story 008).
 ## Usage: `var snap := SnapshotCodec.decode(SnapshotCodec.encode(tick, bodies))`; {} means rejected.
 
-const VERSION := 8
+const VERSION := 9
 const HEADER_BYTES := 6
-const ENTRY_BYTES := 23
+const ENTRY_BYTES := 24
 const OWN_EXTRA_BYTES := 27
 ## Upper bound on bodies in one snapshot (protocol limit, well above lobby size).
 const MAX_BODIES := 32
@@ -40,6 +41,11 @@ const F_FUSE := 32
 ## Flags any entry may carry; the rest are own only.
 const F_ANY := F_TRANSFORMING | F_FLASHLIGHT | F_DRIVE | F_FUSE
 const F_ALL := F_OWN | F_ON_FLOOR | F_ANY
+## What a body is visibly doing (ADR-0004 §2 as amended 2026-10-16), derived by the server from state every
+## observer could see: a held Call for Help, Seized (victim) / PIN (the committing monster, true form only), a
+## hold by kind (KNEEL rescue, BARRICADE build or break, INTERACT anything else, HIDE entering a hiding spot).
+## Fake holds read as real ones (ADR-0008 §6, §8). Never a role, player or real/fake bit.
+enum Action { NONE, CALL_HELP, SEIZED, PIN, KNEEL, BARRICADE, INTERACT, HIDE }
 
 
 ## Encodes `bodies` (see class doc) stamped with `tick`.
@@ -70,6 +76,7 @@ static func encode(tick: int, bodies: Array[Dictionary]) -> PackedByteArray:
 		_put_vec(out, o + 6, b.pos)
 		out.encode_float(o + 18, b.yaw)
 		out.encode_u8(o + 22, b.get("appearance", NO_APPEARANCE))
+		out.encode_u8(o + 23, b.get("action", Action.NONE))
 		o += ENTRY_BYTES
 		if own:
 			out.encode_s32(o, b.seq)
@@ -102,8 +109,9 @@ static func decode(bytes: PackedByteArray) -> Dictionary:
 		var b := {"id": bytes.decode_u32(o), "gait": bytes.decode_u8(o + 5),
 			"pos": _get_vec(bytes, o + 6), "yaw": bytes.decode_float(o + 18),
 			"appearance": bytes.decode_u8(o + 22), "transforming": flags & F_TRANSFORMING != 0,
-			"flashlight": flags & F_FLASHLIGHT != 0, "drive": flags & F_DRIVE != 0, "fuse": flags & F_FUSE != 0}
-		if not (_finite(b.pos) and is_finite(b.yaw)):
+			"flashlight": flags & F_FLASHLIGHT != 0, "drive": flags & F_DRIVE != 0, "fuse": flags & F_FUSE != 0,
+			"action": bytes.decode_u8(o + 23)}
+		if not (_finite(b.pos) and is_finite(b.yaw)) or b.action > Action.HIDE:
 			return {}
 		o += ENTRY_BYTES
 		if flags & F_OWN != 0:

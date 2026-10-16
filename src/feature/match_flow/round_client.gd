@@ -120,6 +120,9 @@ var _colours: Dictionary[int, Color] = {}
 var _own_cone: SpotLight3D
 ## handle -> Array of [local_ms, pos, yaw]; newest last.
 var _buf: Dictionary[int, Array] = {}
+## Retired handle -> local ms of its retire: the puppet stays (hidden) for interp_delay_ms, so an elimination
+## cue in the batch after the retire can still find it (ADR-0004 §2 amendment 2026-10-16).
+var _retired: Dictionary[int, float] = {}
 ## Handles in the newest applied snapshot.
 var _present: Dictionary[int, bool] = {}
 var _last_tick := -1
@@ -245,6 +248,7 @@ func _on_connected() -> void:
 		router.subscribe(&"ScareTriggered", scare_audio.on_scare)
 		router.subscribe(EventBatch.SOUND, scare_audio.on_sound)
 		body_visuals = BodyVisual.new()
+		router.subscribe(EventBatch.BODY_CUE, _on_body_cue) # ADR-0004 §2 amendment 2026-10-16
 		viewmodel = Viewmodel.new(body_visuals)
 		viewmodel.reduced_motion = reduced_motion
 		camera.add_child(viewmodel)
@@ -608,9 +612,12 @@ func _draw_remotes() -> void:
 		return
 	for h: int in remotes.keys():
 		if not puppets.has(h):
-			remotes[h].queue_free()
-			remotes.erase(h)
-			_buf.erase(h)
+			remotes[h].visible = false
+			if _now_ms - _retired.get_or_add(h, _now_ms) >= knobs.net.interp_delay_ms:
+				remotes[h].queue_free()
+				remotes.erase(h)
+				_buf.erase(h)
+				_retired.erase(h)
 	var at := _now_ms - knobs.net.interp_delay_ms
 	for h: int in puppets.handles():
 		var st := puppets.state_of(h)
@@ -629,9 +636,31 @@ func _draw_remotes() -> void:
 		if body_visuals != null: # character art over the greybox capsule (ASSET-001..010)
 			body_visuals.show(h, n.get_node(^"Mesh"), st.get("appearance", SnapshotCodec.NO_APPEARANCE),
 					st.get("gait", 0), pose[0], _now_ms,
-					BodyVisual.STAGGER if disguise.stagger_weight(h) > 0.0 else lunge_fx.pose()) # clips over the gait
+					BodyVisual.STAGGER if disguise.stagger_weight(h) > 0.0 else lunge_fx.pose(), # clips over the gait
+					st.get("action", SnapshotCodec.Action.NONE))
 			if objective_props != null: # carried objectives in the right hand (rule 10)
 				objective_props.hold_items(n.get_node(^"Mesh"), st.get("drive", false), st.get("fuse", false))
+
+
+## A BODY_CUE {handle, cue}: an elimination keeps the puppet where it stood as a collapsed corpse (no longer a
+## remote; freed with this node), any other cue plays its one-shot clip.
+## ponytail: corpses stay for the round (at most 4); fade them if the designer wants bodies gone.
+func _on_body_cue(_tick: int, payload: Dictionary) -> void:
+	var h: Variant = payload.get("handle")
+	var kind: Variant = payload.get("cue")
+	if not (h is int and kind is StringName) or not remotes.has(h):
+		return
+	if kind != EventBatch.CUE_ELIMINATED:
+		body_visuals.cue(h, kind)
+		return
+	var n := remotes[h]
+	remotes.erase(h)
+	_buf.erase(h)
+	_retired.erase(h)
+	if body_visuals.collapse(n.get_node(^"Mesh")):
+		n.visible = true
+	else:
+		n.queue_free()
 
 
 ## Interpolated [pos, yaw] at `at_ms` from `buf` ([local_ms, pos, yaw], oldest first); past the newest it

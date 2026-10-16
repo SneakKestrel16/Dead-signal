@@ -45,6 +45,8 @@ var lifecycle: RoundLifecycle
 var lighting: FacilityLighting
 ## The C1 monitor feeds (facility-map story 011).
 var cams: Surveillance
+## Every snapshot entry's body action (ADR-0004 §2 amendment 2026-10-16); sm holds only its Callable.
+var body_actions: BodyActions
 var _door_net: Dictionary[StringName, int] = {}
 ## Sends lighting records per viewer (facility-map story 010); kept here, sm holds only its Callable.
 var lighting_rep: LightingReplication
@@ -211,6 +213,9 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.flashlight_of = sd.flashlight_on
 	sm.drive_of = objectives.carries_drive
 	sm.fuse_of = objectives.carries_fuse
+	body_actions = BodyActions.new(knobs, holds.hold_of, holds.item, downing.life_state, _committing_monster,
+			bf.appearance_of, sd.is_hidden, pings.callouts, _tick)
+	sm.action_of = body_actions.action_of
 	# Facility-map story 011: relevance reads the authored visibility sets (cut by closed doors) plus a viewed
 	# camera's volumes. Before this the composed round used the near rule only (ServerMovement's documented
 	# default until the root sets these).
@@ -358,6 +363,8 @@ func _freeze(id: int) -> void:
 func _remove(id: int) -> Vector3:
 	var at := bodies[id].global_position
 	if _in_sm(id):
+		if downing.life_state(id) == Downing.LifeState.ELIMINATED:
+			sm.cue(id, EventBatch.CUE_ELIMINATED) # the collapse, before the handle retires (ADR-0004 amendment)
 		sm.remove_player(id)
 	footsteps.remove_player(id)
 	bodies[id].global_position = Vector3(0.0, -1000.0, 0.0)
@@ -569,6 +576,13 @@ func _set_hidden(id: int, on: bool) -> void:
 	sd.set_hidden(id, on)
 	if on:
 		offset.rebaseline(id)
+	else:
+		sm.cue(id, EventBatch.CUE_HIDE_EXIT)
+
+
+## BodyActions' commit source: `id` is the monster in a takedown commit.
+func _committing_monster(id: int) -> bool:
+	return id == sm.monster and downing.committing()
 
 
 ## RoundLifecycle's watch: the spectator's stream starts empty, so the watched survivor's current flinch

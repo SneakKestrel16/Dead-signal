@@ -65,6 +65,14 @@ const OWN_LIFE := &"OwnLife"
 ## Array[bool] by door net id, exit: bool, true once Exit Open}. Not a catalog event; a door is a world object,
 ## so it is sent to everyone, on change and in full on a rejoin. Clients apply it to their own door blockers.
 const DOORS := &"DoorStates"
+## Entry type of a one-shot body cue (ServerMovement.cue; ADR-0004 §2 amendment 2026-10-16): {handle, cue}, the
+## receiving viewer's own handle and one of CUE_*. Never a player ID or role; sent only to viewers holding a
+## handle for the body.
+const BODY_CUE := &"BodyCue"
+## The body left a hiding spot (Hide_Exit).
+const CUE_HIDE_EXIT := &"hide_exit"
+## The body was eliminated (Death01 collapse).
+const CUE_ELIMINATED := &"eliminated"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

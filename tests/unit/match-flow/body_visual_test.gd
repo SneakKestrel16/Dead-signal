@@ -106,8 +106,9 @@ func test_disguise_never_plays_a_true_form_clip() -> void:
 		for gait in [0, 1, 2, 3]:
 			for action: StringName in [&"", BodyVisual.STAGGER, &"coil", &"stumble", &"hit_stop", &"dash", &"pin"]:
 				for speed in [0.0, 2.0]:
-					var c := BodyVisual.clip_for(appearance, gait, speed, action)
-					assert_bool(BodyVisual.TRUE_FORM_CLIPS.has(c)) 							.override_failure_message("%d %d %s -> %s" % [appearance, gait, action, c]).is_false()
+					for body_action in SnapshotCodec.Action.values():
+						var c := BodyVisual.clip_for(appearance, gait, speed, action, body_action)
+						assert_bool(BodyVisual.TRUE_FORM_CLIPS.has(c)) 								.override_failure_message("%d %d %s -> %s" % [appearance, gait, action, c]).is_false()
 
 
 func test_unknown_state_falls_back_to_idle() -> void:
@@ -166,3 +167,48 @@ func test_a_finished_coil_is_held_not_restarted() -> void:
 	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, Vector3.ZERO, 16.0, &"coil")
 	assert_bool(ap.is_playing()).is_false()
 	assert_str(String(ap.assigned_animation)).is_equal("Lunge_Coil")
+
+
+# ADR-0004 §2 amendment 2026-10-16: the snapshot's body action picks its clip under stagger and lunge.
+func test_body_action_picks_its_clip() -> void:
+	var walk := MovementStep.Gait.WALK
+	var want := {SnapshotCodec.Action.CALL_HELP: "Call_Help", SnapshotCodec.Action.SEIZED: "Seized",
+		SnapshotCodec.Action.KNEEL: "Fixing_Kneeling", SnapshotCodec.Action.BARRICADE: "Push",
+		SnapshotCodec.Action.INTERACT: "Interact", SnapshotCodec.Action.HIDE: "Hide_Enter"}
+	for a: int in want:
+		assert_str(String(BodyVisual.clip_for(3, walk, 0.0, &"", a))).is_equal(want[a])
+	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
+	assert_str(String(BodyVisual.clip_for(tf, walk, 0.0, &"", SnapshotCodec.Action.PIN))).is_equal("Takedown_Pin")
+	assert_str(String(BodyVisual.clip_for(3, walk, 0.0, &"", SnapshotCodec.Action.PIN))).is_equal("Idle") ## never on a disguise
+	assert_str(String(BodyVisual.clip_for(3, walk, 0.0, BodyVisual.STAGGER, SnapshotCodec.Action.INTERACT))) 			.is_equal("Hit_Chest")
+	assert_str(String(BodyVisual.clip_for(3, walk, 0.0, &"", SnapshotCodec.Action.NONE))).is_equal("Idle")
+
+
+func test_every_action_clip_exists_on_the_body_that_plays_it() -> void:
+	var survivor := _bv.build(3)
+	var true_form := _bv.build(CharacterDef.TRUE_FORM_APPEARANCE_ID)
+	var sap := survivor.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	var tap := true_form.find_child("AnimationPlayer", true, false) as AnimationPlayer
+	for clip: StringName in BodyVisual.ACTION_CLIPS.values() + BodyVisual.CUE_CLIPS.values() + [BodyVisual.DEATH]:
+		var ap := tap if BodyVisual.TRUE_FORM_CLIPS.has(clip) else sap
+		assert_bool(ap.has_animation(clip)).override_failure_message(String(clip)).is_true()
+	survivor.free()
+	true_form.free()
+
+
+func test_hide_exit_cue_plays_once_then_the_state_clip_resumes_and_collapse_plays_death() -> void:
+	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
+	mesh.mesh = CapsuleMesh.new()
+	_bv.show(6, mesh, 2, MovementStep.Gait.WALK, Vector3.ZERO, 0.0)
+	var ap := mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_bv.cue(6, EventBatch.CUE_HIDE_EXIT)
+	_bv.cue(6, &"bogus") ## unknown cues are ignored
+	_bv.show(6, mesh, 2, MovementStep.Gait.WALK, Vector3.ZERO, 16.0, &"", SnapshotCodec.Action.INTERACT)
+	assert_str(String(ap.current_animation)).is_equal("Hide_Exit")
+	ap.seek(ap.current_animation_length, true)
+	ap.advance(0.1) ## past the end: the one-shot stops
+	_bv.show(6, mesh, 2, MovementStep.Gait.WALK, Vector3.ZERO, 32.0, &"", SnapshotCodec.Action.INTERACT)
+	assert_str(String(ap.current_animation)).is_equal("Interact")
+	assert_bool(_bv.collapse(mesh)).is_true()
+	assert_str(String(ap.current_animation)).is_equal("Death01")
+	assert_bool(_bv.collapse(auto_free(MeshInstance3D.new()))).is_false()
