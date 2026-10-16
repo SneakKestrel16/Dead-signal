@@ -1,0 +1,17 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_ceiling_panel_a_albedo_1024.png" id="1_xg5al"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_ceiling_panel_a_normal_1024.png" id="2_lv72s"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_ceiling_panel_a_orm_1024.png" id="3_dpfpk"]
+
+[resource]
+albedo_texture = ExtResource("1_xg5al")
+orm_texture = ExtResource("3_dpfpk")
+normal_enabled = true
+normal_texture = ExtResource("2_lv72s")
+ao_enabled = true
+ao_light_affect = 0.4
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

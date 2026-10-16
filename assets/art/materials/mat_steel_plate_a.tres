@@ -1,0 +1,17 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_steel_plate_a_albedo_1024.png" id="1_ljcyi"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_steel_plate_a_normal_1024.png" id="2_nhtsd"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_steel_plate_a_orm_1024.png" id="3_vxlnl"]
+
+[resource]
+albedo_texture = ExtResource("1_ljcyi")
+orm_texture = ExtResource("3_vxlnl")
+normal_enabled = true
+normal_texture = ExtResource("2_nhtsd")
+ao_enabled = true
+ao_light_affect = 0.4
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

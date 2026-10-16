@@ -1,0 +1,17 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_painted_block_zone_a_albedo_1024.png" id="1_yonah"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_painted_block_a_normal_1024.png" id="2_jswxo"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/tileable/tex_painted_block_a_orm_1024.png" id="3_gw3dq"]
+
+[resource]
+albedo_texture = ExtResource("1_yonah")
+orm_texture = ExtResource("3_gw3dq")
+normal_enabled = true
+normal_texture = ExtResource("2_jswxo")
+ao_enabled = true
+ao_light_affect = 0.4
+uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_triplanar = true
+uv1_world_triplanar = true
+texture_filter = 5

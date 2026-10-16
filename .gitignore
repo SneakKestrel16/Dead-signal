@@ -173,3 +173,6 @@ $RECYCLE.BIN/
 # the project root. Anchored so a reports/ folder elsewhere stays tracked.
 /reports/
 /test-results/
+
+# === Art pipeline download cache (tools/art/build_textures.py) ===
+tools/art/.cache/

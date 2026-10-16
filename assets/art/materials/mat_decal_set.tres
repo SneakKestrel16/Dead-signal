@@ -1,0 +1,15 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/decals/tex_decal_set_albedo_1024.png" id="1_753c5"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/decals/tex_decal_set_normal_1024.png" id="2_ojrnh"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/decals/tex_decal_set_orm_1024.png" id="3_vsee2"]
+
+[resource]
+transparency = 1
+albedo_texture = ExtResource("1_753c5")
+orm_texture = ExtResource("3_vsee2")
+normal_enabled = true
+normal_texture = ExtResource("2_ojrnh")
+ao_enabled = true
+ao_light_affect = 0.4
+texture_filter = 5

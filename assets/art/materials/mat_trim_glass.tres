@@ -1,0 +1,15 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_glass_albedo_2048.png" id="1_8prli"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_glass_normal_2048.png" id="2_8s1dm"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_glass_orm_2048.png" id="3_dor8m"]
+
+[resource]
+transparency = 1
+albedo_texture = ExtResource("1_8prli")
+orm_texture = ExtResource("3_dor8m")
+normal_enabled = true
+normal_texture = ExtResource("2_8s1dm")
+ao_enabled = true
+ao_light_affect = 0.4
+texture_filter = 5

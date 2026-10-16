@@ -1,0 +1,14 @@
+[gd_resource type="ORMMaterial3D" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_concrete_albedo_2048.png" id="1_7hi88"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_concrete_normal_2048.png" id="2_42vuc"]
+[ext_resource type="Texture2D" path="res://assets/art/environment/trim/tex_trim_concrete_orm_2048.png" id="3_fs7ou"]
+
+[resource]
+albedo_texture = ExtResource("1_7hi88")
+orm_texture = ExtResource("3_fs7ou")
+normal_enabled = true
+normal_texture = ExtResource("2_42vuc")
+ao_enabled = true
+ao_light_affect = 0.4
+texture_filter = 5
