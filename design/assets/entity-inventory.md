@@ -25,79 +25,79 @@
 | 14 | Flashlight | Item | Held model + world-visible beam to all players; Bone Flashlight `#F2E6C8`, 14 m, ~40 deg cone; click on/off | survivor-defense V/A; art-bible §4; registry items | Specced (characters-assets.md) |
 | 15 | Taser (stun item) | Item | Held model, cartridge count on item, darts and wires; registry `arc_flare` is deprecated, this is its replacement | survivor-defense V/A; registry items | Specced (characters-assets.md) |
 | 16 | Taser darts and wires | Item | Projectile pair + wire to target, retracts after fire | survivor-defense V/A | Specced (characters-assets.md) |
-| 17 | Env trim sheet: concrete / wall base | Environment | 2048 trim sheet | art-bible §6, §8 | Needed |
-| 18 | Env trim sheet: metal / door frames | Environment | 2048 trim sheet | art-bible §6 | Needed |
-| 19 | Env trim sheet: glass / mullion | Environment | 2048 trim sheet; thin frames, blue-green tint, see-through at flashlight angle | art-bible §3, §6 | Needed |
-| 20 | Env trim sheet: floor markings / pipes | Environment | 2048 trim sheet incl. corridor stripe markings | art-bible §6 | Needed |
-| 21 | Tileable: floor tile | Environment | 1024 PBR-lite (albedo/normal/ORM); footstep surface "tile" | art-bible §6; first-person-controller V/A | Needed |
-| 22 | Tileable: concrete | Environment | 1024 PBR-lite; footstep surface "concrete" | art-bible §6; first-person-controller V/A | Needed |
-| 23 | Tileable: painted block | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 24 | Tileable: steel plate | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 25 | Tileable: ceiling panel | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 26 | Tileable: rubber matting | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 27 | Tileable: checker plate | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 28 | Tileable: server rack | Environment | 1024 PBR-lite | art-bible §6 | Needed |
-| 29 | Metal grate floor | Environment | Third footstep surface; not in the art bible's tileable list | first-person-controller V/A | Needed |
-| 30 | Decal set (stains, cracks, signage) | Environment | 256 static decals, placed once in the level, identical every client/round | art-bible §6 | Needed |
-| 31 | Room-name and zone signage | Environment | Short callout-ID signs (A1..C5), evacuation signage; zone colour coding | level doc Zones; art-bible §6 | Needed |
-| 32 | Corridor floor stripes | Environment | Solid blue (H-N) and dashed orange (H-S) emissive stripes | level doc Visual Direction; art-bible §4 | Needed |
-| 33 | A1 Entry / Decon | Environment | 10x12 spawn room, decon arch landmark (curved), three exits. Greybox BoxMesh | level doc Zones | Needed |
-| 34 | A2 Lab Spine | Environment | 3x32 hall, glass walls to A3/A4, three lighting segments. Greybox BoxMesh | level doc Zones | Needed |
-| 35 | A3 Wet Lab | Environment | 10x14, benches, glass wall to spine, hiding cabinet | level doc Zones | Needed |
-| 36 | A4 Specimen Lab | Environment | 9x12, glass on two sides, lab door into B1 | level doc Zones | Needed |
-| 37 | A5 Cold Storage | Environment | 9x10, hiding locker, sealed specimen fridges | level doc Zones; art-bible §6 | Needed |
-| 38 | A6 Director's Office | Environment | 10x10, desk dressing, hiding cabinet, two exits | level doc Zones | Needed |
-| 39 | A7 Observation Gallery | Environment | 9x10, floor-to-ceiling window down into A4 (landmark) | level doc Zones, Visual Direction | Needed |
-| 40 | H-N North Service Corridor | Environment | 48x4, blue stripe, four ~12 m lighting segments | level doc Zones | Needed |
-| 41 | H-S South Service Corridor | Environment | 50x4, orange stripe, four segments, camera c2 | level doc Zones | Needed |
-| 42 | B1 Server Hall | Environment | 18x16, double height, rack lanes 2-3 m, four entrances | level doc Zones; art-bible §6 | Needed |
-| 43 | B2 Power Room | Environment | 18x8, breaker wall | level doc Zones | Needed |
-| 44 | B3 Cooling Plant | Environment | 18x8, loud machinery, locker | level doc Zones | Needed |
-| 45 | C1 Security Office | Environment | 12x12, monitor wall station, barricadable doors | level doc Zones | Needed |
-| 46 | C2 Checkpoint | Environment | 10x14, gate between B and C, archway into C4 | level doc Zones | Needed |
-| 47 | C3 Records Archive | Environment | 20x8 | level doc Zones | Needed |
-| 48 | C4 Evacuation Hall | Environment | 10x16, final exit, beacon, exit sign | level doc Zones | Needed |
-| 49 | C5 Backup Control | Environment | 8x10, backup controls panel, locker | level doc Zones | Needed |
-| 50 | Ordinary door (D) | Environment | Openable/closable, shudders in place for slam scare (no swing), burst variant for door-burst scare | level doc Fixtures; scare-events V/A | Needed |
-| 51 | Barricadable door (B) | Environment | 5 in Zone C; plank/bar barricade build, strain, break states; shakes per strike | level doc Fixtures; survivor-defense V/A | Needed |
-| 52 | Open archway (O) | Environment | Non-door opening (A1~H-S, C2~C4) | level doc Layout | Needed |
-| 53 | Glass partition | Environment | Cracks but stays see-through for glass-break scare (sg1-sg3); A2 walls, A7 window | level doc Fixtures; scare-events V/A; art-bible §3 | Needed |
-| 54 | Hiding spot: lab cabinet | Prop | 3 (h1-h3), openable door, searched by monster | level doc Fixtures; survivor-defense V/A | Needed |
-| 55 | Hiding spot: storage locker | Prop | 3 (h4-h6), same behaviour | level doc Fixtures | Needed |
-| 56 | Data drive | Prop | Flat slab with lit edge bar, cyan; carried, dropped (glowing on floor), docked, ejected from terminal | art-bible §3; survivor-objectives V/A; registry items | Needed |
-| 57 | Fuse | Prop | Cylinder with two rings; carried and installed | art-bible §3; registry items | Needed |
-| 58 | Fuse box | Prop | Tall panel with vertical indicator bar; dark in Low Power, indicator lit on active; install sparks | art-bible §3; level doc Lighting States | Needed |
-| 59 | Evacuation terminal (T1-T3) | Prop | Hero: wide screen with top hood, activation display, countdown/pause state, drive dock slots; unique texture set | art-bible §3, §6; survivor-objectives V/A | Needed |
-| 60 | Exit door E + chevron frame | Prop | Hero: chevron-framed door, Exit Green light, opens with door cycle; unique texture set | art-bible §3, §6; survivor-objectives V/A | Needed |
-| 61 | The Core | Prop | Hero: B1 double-height light column, brightest point on map, pulses on fuse install | level doc Visual Direction; art-bible §6 | Needed |
-| 62 | Breaker wall | Prop | Hero: B2 landmark wall, unique texture set | art-bible §6; level doc | Needed |
-| 63 | Monitor wall + C1 monitor station | Prop | Hero: surveillance monitors, one feed at a time, monitor glow | art-bible §6; level doc Fixtures | Needed |
-| 64 | Backup controls panel | Prop | C5 panel (function open question) | level doc Fixtures | Needed |
-| 65 | Backup light switch | Prop | One per room (not corridors/A2); hold to end Blackout, relay clack | level doc Fixtures; monster-abilities V/A | Needed |
-| 66 | Surveillance camera (c1-c4) | Prop | Wall/ceiling cameras: B1, H-S, C4, A2 | level doc Fixtures | Needed |
-| 67 | Surveillance monitor feed | Prop | Render-to-texture screen; single-client impossible-image frame for scare | level doc Fixtures; scare-events V/A | Needed |
-| 68 | PA speaker with light | Prop | Recording scare: speaker light + distorted voice | scare-events V/A | Needed |
-| 69 | Lab dressing set | Prop | Benches, abandoned desks, sealed specimen fridges, dead monitors; props below 1.0 m | art-bible §6; level doc Narrative | Needed |
-| 70 | Server / power / cooling dressing | Prop | Server racks, cabling, pipes, B3 machinery; cabling is the organic-curve exception | art-bible §3, §6 | Needed |
-| 71 | Security dressing | Prop | Checkpoint gate, security log screen, records shelving | level doc Narrative, Zones | Needed |
-| 72 | Lab panel lights (Zone A) | Light | Cool green-white `#A9C4B8` ~6500K, low intensity | art-bible §4; level doc Lighting | Needed |
-| 73 | Equipment glow (Zone B) | Light | Amber `#D98A2B` ~2700K | art-bible §4 | Needed |
-| 74 | Security lights (Zone C) | Light | Red `#B3342E`, low energy, desaturated | art-bible §4 | Needed |
-| 75 | Emergency floor strips + exit signage | Light | Faint, always on in every volume incl. Blackout | level doc Lighting States | Needed |
-| 76 | Evacuation beacons (amber) | Light | Rotating amber beacons along H-N, H-S, C2 toward C4; steady in reduced-flash | level doc Lighting States; scare-events V/A | Needed |
-| 77 | C4 evac beacon (red) | Light | Rotating red, triangle lens cap, spins red on Terminal Activating | art-bible §4; level doc Lighting States | Needed |
-| 78 | Alarm strobe | Light | Rate-capped strobe for Alarm scare | scare-events V/A | Needed |
-| 79 | Lighting presets (Low Power, Restored, Evacuation, Blackout, Exit Open) | Other | Per-volume states; greybox `lighting_presets.gd` already drives them | level doc Lighting States | Needed |
-| 80 | VFX: transformation warp | VFX | 2 s body warp, spatial distortion; silhouette-first end frame | borrowed-face V/A; art-bible §5 | Needed |
-| 81 | VFX: reveal flare | VFX | True-form reveal, scaled light flare | scare-events V/A; borrowed-face V/A | Needed |
-| 82 | VFX: taser arc | VFX | Short blue arc at target; reduced-flash variant; victim blue edge | survivor-defense V/A | Needed |
-| 83 | VFX: stun resisted spark | VFX | Small spark, no stagger (true form) | survivor-defense V/A | Needed |
-| 84 | VFX: fuse install sparks | VFX | Sparks at fuse box | survivor-objectives V/A | Needed |
-| 85 | VFX: door burst debris and dust | VFX | Door-burst scare | scare-events V/A | Needed |
-| 86 | VFX: glass shards | VFX | Glass-break scare | scare-events V/A | Needed |
-| 87 | VFX: lunge impact | VFX | Hit on survivor; miss scrape dust | monster-abilities V/A | Needed |
-| 88 | VFX: drive/exit glow | VFX | Dropped drive glow, ejected drives, Exit Open green flood | survivor-objectives V/A; level doc Lighting States | Needed |
-| 89 | VFX: world progress ring | VFX | World-space bar/ring over objects, hide/barricade, rescue | survivor-objectives V/A; downing-and-rescue V/A | Needed |
+| 17 | Env trim sheet: concrete / wall base | Environment | 2048 trim sheet | art-bible §6, §8 | Specced (research-facility-assets.md) |
+| 18 | Env trim sheet: metal / door frames | Environment | 2048 trim sheet | art-bible §6 | Specced (research-facility-assets.md) |
+| 19 | Env trim sheet: glass / mullion | Environment | 2048 trim sheet; thin frames, blue-green tint, see-through at flashlight angle | art-bible §3, §6 | Specced (research-facility-assets.md) |
+| 20 | Env trim sheet: floor markings / pipes | Environment | 2048 trim sheet incl. corridor stripe markings | art-bible §6 | Specced (research-facility-assets.md) |
+| 21 | Tileable: floor tile | Environment | 1024 PBR-lite (albedo/normal/ORM); footstep surface "tile" | art-bible §6; first-person-controller V/A | Specced (research-facility-assets.md) |
+| 22 | Tileable: concrete | Environment | 1024 PBR-lite; footstep surface "concrete" | art-bible §6; first-person-controller V/A | Specced (research-facility-assets.md) |
+| 23 | Tileable: painted block | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 24 | Tileable: steel plate | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 25 | Tileable: ceiling panel | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 26 | Tileable: rubber matting | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 27 | Tileable: checker plate | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 28 | Tileable: server rack | Environment | 1024 PBR-lite | art-bible §6 | Specced (research-facility-assets.md) |
+| 29 | Metal grate floor | Environment | Third footstep surface; not in the art bible's tileable list | first-person-controller V/A | Specced (research-facility-assets.md) |
+| 30 | Decal set (stains, cracks, signage) | Environment | 256 static decals, placed once in the level, identical every client/round | art-bible §6 | Specced (research-facility-assets.md) |
+| 31 | Room-name and zone signage | Environment | Short callout-ID signs (A1..C5), evacuation signage; zone colour coding | level doc Zones; art-bible §6 | Specced (research-facility-assets.md) |
+| 32 | Corridor floor stripes | Environment | Solid blue (H-N) and dashed orange (H-S) emissive stripes | level doc Visual Direction; art-bible §4 | Specced (research-facility-assets.md) |
+| 33 | A1 Entry / Decon | Environment | 10x12 spawn room, decon arch landmark (curved), three exits. Greybox BoxMesh | level doc Zones | Specced (research-facility-assets.md) |
+| 34 | A2 Lab Spine | Environment | 3x32 hall, glass walls to A3/A4, three lighting segments. Greybox BoxMesh | level doc Zones | Specced (research-facility-assets.md) |
+| 35 | A3 Wet Lab | Environment | 10x14, benches, glass wall to spine, hiding cabinet | level doc Zones | Specced (research-facility-assets.md) |
+| 36 | A4 Specimen Lab | Environment | 9x12, glass on two sides, lab door into B1 | level doc Zones | Specced (research-facility-assets.md) |
+| 37 | A5 Cold Storage | Environment | 9x10, hiding locker, sealed specimen fridges | level doc Zones; art-bible §6 | Specced (research-facility-assets.md) |
+| 38 | A6 Director's Office | Environment | 10x10, desk dressing, hiding cabinet, two exits | level doc Zones | Specced (research-facility-assets.md) |
+| 39 | A7 Observation Gallery | Environment | 9x10, floor-to-ceiling window down into A4 (landmark) | level doc Zones, Visual Direction | Specced (research-facility-assets.md) |
+| 40 | H-N North Service Corridor | Environment | 48x4, blue stripe, four ~12 m lighting segments | level doc Zones | Specced (research-facility-assets.md) |
+| 41 | H-S South Service Corridor | Environment | 50x4, orange stripe, four segments, camera c2 | level doc Zones | Specced (research-facility-assets.md) |
+| 42 | B1 Server Hall | Environment | 18x16, double height, rack lanes 2-3 m, four entrances | level doc Zones; art-bible §6 | Specced (research-facility-assets.md) |
+| 43 | B2 Power Room | Environment | 18x8, breaker wall | level doc Zones | Specced (research-facility-assets.md) |
+| 44 | B3 Cooling Plant | Environment | 18x8, loud machinery, locker | level doc Zones | Specced (research-facility-assets.md) |
+| 45 | C1 Security Office | Environment | 12x12, monitor wall station, barricadable doors | level doc Zones | Specced (research-facility-assets.md) |
+| 46 | C2 Checkpoint | Environment | 10x14, gate between B and C, archway into C4 | level doc Zones | Specced (research-facility-assets.md) |
+| 47 | C3 Records Archive | Environment | 20x8 | level doc Zones | Specced (research-facility-assets.md) |
+| 48 | C4 Evacuation Hall | Environment | 10x16, final exit, beacon, exit sign | level doc Zones | Specced (research-facility-assets.md) |
+| 49 | C5 Backup Control | Environment | 8x10, backup controls panel, locker | level doc Zones | Specced (research-facility-assets.md) |
+| 50 | Ordinary door (D) | Environment | Openable/closable, shudders in place for slam scare (no swing), burst variant for door-burst scare | level doc Fixtures; scare-events V/A | Specced (research-facility-assets.md) |
+| 51 | Barricadable door (B) | Environment | 5 in Zone C; plank/bar barricade build, strain, break states; shakes per strike | level doc Fixtures; survivor-defense V/A | Specced (research-facility-assets.md) |
+| 52 | Open archway (O) | Environment | Non-door opening (A1~H-S, C2~C4) | level doc Layout | Specced (research-facility-assets.md) |
+| 53 | Glass partition | Environment | Cracks but stays see-through for glass-break scare (sg1-sg3); A2 walls, A7 window | level doc Fixtures; scare-events V/A; art-bible §3 | Specced (research-facility-assets.md) |
+| 54 | Hiding spot: lab cabinet | Prop | 3 (h1-h3), openable door, searched by monster | level doc Fixtures; survivor-defense V/A | Specced (research-facility-assets.md) |
+| 55 | Hiding spot: storage locker | Prop | 3 (h4-h6), same behaviour | level doc Fixtures | Specced (research-facility-assets.md) |
+| 56 | Data drive | Prop | Flat slab with lit edge bar, cyan; carried, dropped (glowing on floor), docked, ejected from terminal | art-bible §3; survivor-objectives V/A; registry items | Specced (research-facility-assets.md) |
+| 57 | Fuse | Prop | Cylinder with two rings; carried and installed | art-bible §3; registry items | Specced (research-facility-assets.md) |
+| 58 | Fuse box | Prop | Tall panel with vertical indicator bar; dark in Low Power, indicator lit on active; install sparks | art-bible §3; level doc Lighting States | Specced (research-facility-assets.md) |
+| 59 | Evacuation terminal (T1-T3) | Prop | Hero: wide screen with top hood, activation display, countdown/pause state, drive dock slots; unique texture set | art-bible §3, §6; survivor-objectives V/A | Specced (research-facility-assets.md) |
+| 60 | Exit door E + chevron frame | Prop | Hero: chevron-framed door, Exit Green light, opens with door cycle; unique texture set | art-bible §3, §6; survivor-objectives V/A | Specced (research-facility-assets.md) |
+| 61 | The Core | Prop | Hero: B1 double-height light column, brightest point on map, pulses on fuse install | level doc Visual Direction; art-bible §6 | Specced (research-facility-assets.md) |
+| 62 | Breaker wall | Prop | Hero: B2 landmark wall, unique texture set | art-bible §6; level doc | Specced (research-facility-assets.md) |
+| 63 | Monitor wall + C1 monitor station | Prop | Hero: surveillance monitors, one feed at a time, monitor glow | art-bible §6; level doc Fixtures | Specced (research-facility-assets.md) |
+| 64 | Backup controls panel | Prop | C5 panel (function open question) | level doc Fixtures | Specced (research-facility-assets.md) |
+| 65 | Backup light switch | Prop | One per room (not corridors/A2); hold to end Blackout, relay clack | level doc Fixtures; monster-abilities V/A | Specced (research-facility-assets.md) |
+| 66 | Surveillance camera (c1-c4) | Prop | Wall/ceiling cameras: B1, H-S, C4, A2 | level doc Fixtures | Specced (research-facility-assets.md) |
+| 67 | Surveillance monitor feed | Prop | Render-to-texture screen; single-client impossible-image frame for scare | level doc Fixtures; scare-events V/A | Specced (research-facility-assets.md) |
+| 68 | PA speaker with light | Prop | Recording scare: speaker light + distorted voice | scare-events V/A | Specced (research-facility-assets.md) |
+| 69 | Lab dressing set | Prop | Benches, abandoned desks, sealed specimen fridges, dead monitors; props below 1.0 m | art-bible §6; level doc Narrative | Specced (research-facility-assets.md) |
+| 70 | Server / power / cooling dressing | Prop | Server racks, cabling, pipes, B3 machinery; cabling is the organic-curve exception | art-bible §3, §6 | Specced (research-facility-assets.md) |
+| 71 | Security dressing | Prop | Checkpoint gate, security log screen, records shelving | level doc Narrative, Zones | Specced (research-facility-assets.md) |
+| 72 | Lab panel lights (Zone A) | Light | Cool green-white `#A9C4B8` ~6500K, low intensity | art-bible §4; level doc Lighting | Specced (research-facility-assets.md) |
+| 73 | Equipment glow (Zone B) | Light | Amber `#D98A2B` ~2700K | art-bible §4 | Specced (research-facility-assets.md) |
+| 74 | Security lights (Zone C) | Light | Red `#B3342E`, low energy, desaturated | art-bible §4 | Specced (research-facility-assets.md) |
+| 75 | Emergency floor strips + exit signage | Light | Faint, always on in every volume incl. Blackout | level doc Lighting States | Specced (research-facility-assets.md) |
+| 76 | Evacuation beacons (amber) | Light | Rotating amber beacons along H-N, H-S, C2 toward C4; steady in reduced-flash | level doc Lighting States; scare-events V/A | Specced (research-facility-assets.md) |
+| 77 | C4 evac beacon (red) | Light | Rotating red, triangle lens cap, spins red on Terminal Activating | art-bible §4; level doc Lighting States | Specced (research-facility-assets.md) |
+| 78 | Alarm strobe | Light | Rate-capped strobe for Alarm scare | scare-events V/A | Specced (research-facility-assets.md) |
+| 79 | Lighting presets (Low Power, Restored, Evacuation, Blackout, Exit Open) | Other | Per-volume states; greybox `lighting_presets.gd` already drives them | level doc Lighting States | Specced (research-facility-assets.md) |
+| 80 | VFX: transformation warp | VFX | 2 s body warp, spatial distortion; silhouette-first end frame | borrowed-face V/A; art-bible §5 | Specced (vfx-assets.md) |
+| 81 | VFX: reveal flare | VFX | True-form reveal, scaled light flare | scare-events V/A; borrowed-face V/A | Specced (vfx-assets.md) |
+| 82 | VFX: taser arc | VFX | Short blue arc at target; reduced-flash variant; victim blue edge | survivor-defense V/A | Specced (vfx-assets.md) |
+| 83 | VFX: stun resisted spark | VFX | Small spark, no stagger (true form) | survivor-defense V/A | Specced (vfx-assets.md) |
+| 84 | VFX: fuse install sparks | VFX | Sparks at fuse box | survivor-objectives V/A | Specced (vfx-assets.md) |
+| 85 | VFX: door burst debris and dust | VFX | Door-burst scare | scare-events V/A | Specced (vfx-assets.md) |
+| 86 | VFX: glass shards | VFX | Glass-break scare | scare-events V/A | Specced (vfx-assets.md) |
+| 87 | VFX: lunge impact | VFX | Hit on survivor; miss scrape dust | monster-abilities V/A | Specced (vfx-assets.md) |
+| 88 | VFX: drive/exit glow | VFX | Dropped drive glow, ejected drives, Exit Open green flood | survivor-objectives V/A; level doc Lighting States | Specced (vfx-assets.md) |
+| 89 | VFX: world progress ring | VFX | World-space bar/ring over objects, hide/barricade, rescue | survivor-objectives V/A; downing-and-rescue V/A | Specced (vfx-assets.md) |
 
 ## UI Screens
 
