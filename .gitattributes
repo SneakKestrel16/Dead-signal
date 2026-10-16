@@ -3,12 +3,10 @@
 # (stray \r corrupts commands and string comparisons). This applies to the
 # .claude/hooks/*.sh hooks and .claude/scripts/*.sh.
 *.sh text eol=lf
-
 # Tabular data is compared byte-for-byte by tooling that diffs it against
 # freshly-generated output (which is always LF). A CRLF checkout would make
 # every line differ, silently breaking any such comparison.
 *.tsv text eol=lf
-
 # Markdown under .claude/ is authored LF. Two concrete reasons, both hit during
 # v1.1 development:
 #   - tooling that flattens SKILL.md files and substring-matches sentences
@@ -19,3 +17,10 @@
 # .gitattributes governs the INDEX. It does not retro-fix a working tree that
 # predates the rule -- run `git add --renormalize .` for that.
 .claude/**/*.md text eol=lf
+assets/**/*.glb filter=lfs diff=lfs merge=lfs -text
+assets/**/*.jpg filter=lfs diff=lfs merge=lfs -text
+assets/**/*.exr filter=lfs diff=lfs merge=lfs -text
+assets/**/*.blend filter=lfs diff=lfs merge=lfs -text
+assets/**/*.wav filter=lfs diff=lfs merge=lfs -text
+assets/**/*.ogg filter=lfs diff=lfs merge=lfs -text
+assets/**/*.png filter=lfs diff=lfs merge=lfs -text
