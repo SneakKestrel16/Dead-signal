@@ -26,6 +26,9 @@ const PATH := "res://data/lighting/lighting_presets.tres"
 ## Volumes holding an Evacuation beacon (H-N, H-S, C2 toward C4, and C4).
 @export var beacon_volumes: PackedStringArray = PackedStringArray()
 @export var beacon_colour: Color = Color.ORANGE
+## Volume id -> beacon colour where it is not beacon_colour (C4: red with the triangle cap, art bible §4 and
+## research-facility.md Lighting States "C4 beacon spins red").
+@export var beacon_colour_by_volume: Dictionary[StringName, Color] = {}
 @export var beacon_energy: float = 4.0
 @export var beacon_spin_deg_s: float = 180.0
 ## The reduced-flash beacon: a steady light of this energy instead of the rotating one.

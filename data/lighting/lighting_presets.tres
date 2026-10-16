@@ -23,6 +23,9 @@ emergency_energy = 0.6
 emergency_range_m = 2.0
 beacon_volumes = PackedStringArray("H-N1", "H-N2", "H-N3", "H-N4", "H-S1", "H-S2", "H-S3", "H-S4", "C2", "C4")
 beacon_colour = Color(1, 0.55, 0.05, 1)
+beacon_colour_by_volume = Dictionary[StringName, Color]({
+&"C4": Color(1, 0.1, 0.1, 1)
+})
 beacon_energy = 6.0
 beacon_spin_deg_s = 180.0
 beacon_steady_energy = 1.5

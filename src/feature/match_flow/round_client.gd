@@ -280,6 +280,7 @@ func _on_connected() -> void:
 		add_child(warp)
 		router.subscribe(EventBatch.SOUND, warp.on_sound)
 		if level != null:
+			lights.spin_fixtures(level) # C4 and corridor beacon meshes turn with their lights
 			objective_props = ObjectiveProps.new(level, _map)
 			objective_props.reduced_motion = reduced_motion
 			objective_props.reduced_flash = lights.reduced_flash

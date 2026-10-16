@@ -557,13 +557,53 @@ def bake_body(body):
 	me.color_attributes.remove(me.color_attributes["region"])
 
 
-# Accessory palette (linear). Placeholder neutrals pending art-director review: dark plastics, canvas.
-P_HAT = (lin(214), lin(205), lin(178))
-P_DARK = (lin(48), lin(48), lin(52))
-P_CANVAS = (lin(96), lin(90), lin(70))
-P_METAL = (lin(120), lin(122), lin(126))
-P_CLOTH = (lin(70), lin(72), lin(80))
-P_PAPER = (lin(210), lin(206), lin(196))
+# Accessory palette, sRGB 0-255 (art bible §5 "Accessory palette" table records it). Rules, art bible §4/§5:
+# never objective cyan or exit green (nor red, which is beacon-only), albedo 32-225 and at most ~35% saturation
+# like the world, and the main colour at least ACC_VALUE_SEP away from its own suit in luma so the silhouette
+# separates from the body under the flashlight and in amber/red zone light. Inference: the 60 threshold is not
+# sourced; a capture of each look under the flashlight in Zone B and C light settles it.
+ACC_VALUE_SEP = 60
+P_DARK = (48, 48, 52)  # straps, radio body
+P_METAL = (120, 122, 126)  # lamp, clip
+P_PAPER = (210, 206, 196)
+## accessory -> (suit hex of its look, main colour, other colours).
+ACCESSORY_PALETTE = {
+	"acc_c1_hardhat": ("E6E1D3", (90, 96, 102), [P_METAL]),  # slate hat on the lightest suit
+	"acc_c2_backpack": ("E3B31C", (78, 74, 60), [P_DARK]),  # dark olive canvas on safety yellow
+	"acc_c3_hood": ("2E63B8", (201, 193, 170), [(216, 208, 188)]),  # oatmeal hood, paler scarf on cobalt
+	"acc_c4_radio": ("C8581E", (196, 189, 168), [P_DARK]),  # pale canvas strap, dark radio on rust
+	"acc_c5_clipboard": ("7B4FA0", (180, 182, 178), [(185, 164, 126), P_PAPER, P_METAL]),  # grey pad, tan board
+}
+RESERVED_HEX = ("3FA9D6", "4FD18B", "B3342E")  # Signal Cyan, Exit Green, Security Red (art bible §4)
+
+
+def luma(c):
+	"""Rec. 709 luma of an sRGB 0-255 triple."""
+	return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+
+def check_accessory_palette():
+	"""Fails the build when an accessory colour breaks the art bible §4/§5 rules above."""
+	for name, (suit_hex, main, others) in ACCESSORY_PALETTE.items():
+		suit = tuple(int(suit_hex[i:i + 2], 16) for i in (0, 2, 4))
+		assert abs(luma(main) - luma(suit)) >= ACC_VALUE_SEP, (name, "main colour too close in value to its suit")
+		for c in [main] + others:
+			assert 32 <= min(c) and max(c) <= 225, (name, c, "albedo outside 32-225")
+			assert (max(c) - min(c)) / max(c) <= 0.35, (name, c, "saturation over 35%")
+			for h in RESERVED_HEX:
+				r = tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
+				assert sum((a - b) ** 2 for a, b in zip(c, r)) ** 0.5 > 60, (name, c, "near reserved", h)
+
+
+def P(c):
+	"""sRGB triple -> linear vertex colour."""
+	return tuple(lin(x) for x in c)
+
+
+def _acc(name, i):
+	"""Colour i of accessory `name`: 0 the main colour, then its others."""
+	_suit, main, others = ACCESSORY_PALETTE[name]
+	return P(([main] + others)[i])
 
 
 def accessories(rig, body, dom):
@@ -581,7 +621,7 @@ def accessories(rig, body, dom):
 	bm_box(bm, (hc.x, hc.y, top + 0.04), (0.035, hr * 2.2, 0.03), tag=0)
 	bm_cyl(bm, (hc.x, lo_h.y - 0.03, top - 0.03), 0.028, 0.034, 0.05, segs=12, axis="Y", tag=2)
 	o = new_mesh_obj("acc_c1_hardhat", bm)
-	set_colours(o, lambda p: [P_HAT, P_HAT, P_METAL][p.material_index])
+	set_colours(o, lambda p: _acc(o.name, [0, 0, 1][p.material_index]))
 	skin_to(o, rig, [("DEF-head", list(range(len(o.data.vertices))))])
 	out.append(o)
 
@@ -596,7 +636,7 @@ def accessories(rig, body, dom):
 		bm_box(bm, (sx, lo_t.y - 0.02, 1.30), (0.05, 0.02, 0.32), tag=1)
 		bm_box(bm, (sx, (lo_t.y + back) / 2, 1.47), (0.05, back - lo_t.y + 0.04, 0.03), tag=1)
 	o = new_mesh_obj("acc_c2_backpack", bm)
-	set_colours(o, lambda p: [P_CANVAS, P_DARK][p.material_index])
+	set_colours(o, lambda p: _acc(o.name, p.material_index))
 	skin_to(o, rig, [("DEF-spine.003", list(range(len(o.data.vertices))))])
 	out.append(o)
 
@@ -610,7 +650,7 @@ def accessories(rig, body, dom):
 	bm_box(bm, (0.06, 0.13, 1.30), (0.09, 0.02, 0.36), rot_y=0.15, tag=1)
 	claim(bm, 3)
 	o = new_mesh_obj("acc_c3_hood", bm)
-	set_colours(o, lambda p: [P_CLOTH, P_CANVAS][p.material_index])
+	set_colours(o, lambda p: _acc(o.name, p.material_index))
 	skin_to(o, rig, part_groups(o, ["DEF-head", "DEF-neck", "DEF-spine.003"]))
 	out.append(o)
 
@@ -626,7 +666,7 @@ def accessories(rig, body, dom):
 	bm_cyl(bm, (0.22, front - 0.02, 1.185), 0.008, 0.005, 0.18, segs=8, tag=2)
 	bm_cyl(bm, (0.22, front - 0.02, 1.28), 0.014, 0.014, 0.02, segs=8, tag=2)
 	o = new_mesh_obj("acc_c4_radio", bm)
-	set_colours(o, lambda p: [P_DARK, P_CANVAS, P_DARK][p.material_index])
+	set_colours(o, lambda p: _acc(o.name, [0, 1, 1][p.material_index]))
 	skin_to(o, rig, [("DEF-spine.003", list(range(len(o.data.vertices))))])
 	out.append(o)
 
@@ -639,7 +679,7 @@ def accessories(rig, body, dom):
 	bm_box(bm, (0.83, 0.03, 1.50), (0.07, 0.03, 0.03), tag=3)
 	claim(bm, 2)
 	o = new_mesh_obj("acc_c5_clipboard", bm)
-	set_colours(o, lambda p: [P_DARK, P_CANVAS, P_PAPER, P_METAL][p.material_index])
+	set_colours(o, lambda p: _acc(o.name, [0, 1, 2, 3][p.material_index]))
 	skin_to(o, rig, part_groups(o, ["DEF-upper_arm.R", "DEF-hand.L"]))
 	out.append(o)
 
@@ -847,6 +887,7 @@ def build_true_form():
 
 
 def main():
+	check_accessory_palette()
 	fetch()
 	a = build_survivor()
 	b = build_true_form()

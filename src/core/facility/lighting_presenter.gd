@@ -38,6 +38,8 @@ var reduced_flash := false:
 var _records: Dictionary[StringName, Dictionary] = {}
 var _zone: Dictionary[StringName, StringName] = {}
 var _time := 0.0
+## volume -> dressing beacon mesh turned with its light (spin_fixtures).
+var _spin: Dictionary[StringName, Node3D] = {}
 
 
 func _init(map: MapData, presets_: LightingPresets) -> void:
@@ -70,6 +72,15 @@ func record_of(volume: StringName) -> Dictionary:
 	return _records.get(volume, {})
 
 
+## Turns each MapDressing beacon mesh under `level` (Beacon_<volume id>) with its volume's beacon light; under
+## reduced flash it holds still like the light.
+func spin_fixtures(level: Node) -> void:
+	for f: Node in level.find_children("Beacon_*", "Node3D", true, false):
+		var v := StringName(String(f.name).trim_prefix("Beacon_"))
+		if _records.has(v):
+			_spin[v] = f as Node3D
+
+
 ## Spins visible beacons and pulses visible alarms; both hold still under reduced flash.
 func _process(delta: float) -> void:
 	_time += delta
@@ -81,6 +92,8 @@ func _process(delta: float) -> void:
 		var beacon := vol.get_node(^"beacon") as Node3D
 		if beacon.visible:
 			beacon.rotation.y = deg_to_rad(presets.beacon_spin_deg_s) * _time
+			if _spin.has(v):
+				_spin[v].rotation.y = beacon.rotation.y
 		var alarm := vol.get_node(^"terminal_alarm") as Node3D
 		if alarm.visible:
 			(alarm.get_child(0) as Light3D).light_energy = presets.overlay_energy * pulse
@@ -144,15 +157,16 @@ func _build(v: MapVolume) -> void:
 	var reach := minf(presets.overlay_range_m, minf(v.box.size.x, v.box.size.z) / 2.0)
 	var centre := Vector3.UP * top
 	if String(v.id) in presets.beacon_volumes:
+		var beacon_colour: Color = presets.beacon_colour_by_volume.get(v.id, presets.beacon_colour)
 		var spot := SpotLight3D.new()
-		spot.light_color = presets.beacon_colour
+		spot.light_color = beacon_colour
 		spot.light_energy = presets.beacon_energy
 		spot.spot_range = reach
 		spot.spot_angle = BEACON_ANGLE_DEG
 		spot.rotation_degrees.x = BEACON_TILT_DEG
 		groups[&"beacon"].position = centre
 		groups[&"beacon"].add_child(spot)
-		groups[&"beacon_steady"].add_child(_omni(presets.beacon_colour, presets.beacon_steady_energy, reach, centre))
+		groups[&"beacon_steady"].add_child(_omni(beacon_colour, presets.beacon_steady_energy, reach, centre))
 	groups[&"fuse_indicator"].add_child(_omni(presets.fuse_colour, presets.overlay_energy, reach, centre))
 	groups[&"terminal_alarm"].add_child(_omni(presets.alarm_colour, presets.overlay_energy, reach, centre))
 	groups[&"exit_light"].add_child(_omni(presets.exit_colour, presets.overlay_energy, reach, centre))

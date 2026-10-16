@@ -110,3 +110,31 @@ func test_malformed_records_are_ignored() -> void:
 	_p.on_lighting(10, {"volume": DARK})
 	assert_bool(_shown(DARK, "beacon")).is_false()
 	assert_float(_energy(DARK, "overhead")).is_equal(before)
+
+
+# Art bible §4 and research-facility.md Lighting States: the C4 beacon is red (triangle cap), the rest amber.
+func test_c4_beacon_light_is_red_the_others_amber() -> void:
+	for group in ["beacon", "beacon_steady"]:
+		var c4 := (_p.get_node(NodePath("C4/%s" % group)).get_child(0) as Light3D).light_color
+		var c2 := (_p.get_node(NodePath("C2/%s" % group)).get_child(0) as Light3D).light_color
+		assert_float(c4.r).is_greater(c4.g * 3.0)
+		assert_object(c2).is_equal(_presets.beacon_colour)
+		assert_float(c2.g).is_greater(c4.g * 2.0)
+
+
+# The dressing beacon mesh (MapDressing Beacon_<volume>) turns with its light and holds still under reduced flash.
+func test_beacon_fixture_spins_with_its_light_and_holds_under_reduced_flash() -> void:
+	var level: Node3D = auto_free(Node3D.new())
+	var fixture := Node3D.new()
+	fixture.name = "Beacon_C2"
+	level.add_child(fixture)
+	_p.spin_fixtures(level)
+	_p.on_lighting(10, _record(NEIGHBOUR, FacilityLighting.Base.EVACUATION))
+	_p._process(0.25)
+	var light := _p.get_node(NodePath("%s/beacon" % NEIGHBOUR)) as Node3D
+	assert_float(fixture.rotation.y).is_not_equal(0.0)
+	assert_float(fixture.rotation.y).is_equal_approx(light.rotation.y, 1e-5)
+	_p.reduced_flash = true
+	var held := fixture.rotation.y
+	_p._process(0.25)
+	assert_float(fixture.rotation.y).is_equal(held)

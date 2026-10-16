@@ -18,6 +18,9 @@ class_name MapDressing extends RefCounted
 ##   lights stay the presenter's and ScareVisuals', so counts and energies are unchanged; the strips glow faintly
 ##   as they are always on. Zone A and corridors take the panel, B and C the cage (inference: the spec names
 ##   no fixture for B or the corridors).
+## - Arrows: evacuation arrow plates from the layout's `arrows` along H-N, H-S and C2 toward C4 (research-facility.md
+##   Lighting States, Evacuation), signage atlas cells `<` `>`, above the doorway signs. Positions are inference:
+##   the level doc names the rooms, not the spots; playtest settles them.
 ## Visual only: no collision, nothing gameplay reads.
 ## Usage: `MapDressing.build(greybox_root, map, MapQueries.new(map))`
 
@@ -47,6 +50,8 @@ const SIGN_SIZE := Vector2(0.5, 0.25)
 const SIGN_Y := 1.7
 const SIGN_OFF_WALL := 0.12 ## clears the wall skin (MapGreybox.SKIN_T) plus a few mm
 const SIGN_OFF_EDGE := 0.45
+## Evacuation arrow atlas cells (row 5): `<` and `>`; `^` and `v` (22, 23) are unused on walls.
+const ARROW_CELLS: Dictionary[String, int] = {"<": 20, ">": 21}
 ## Stripe width and height above the floor, m (inference: no source gives a width).
 const STRIPE_W := 0.2
 const STRIPE_Y := 0.005
@@ -60,6 +65,7 @@ static func build(root: Node3D, map: MapData, queries: MapQueries) -> Node3D:
 	var layout := load(LAYOUT) as DressingLayout
 	_props(_child(out, &"Props"), layout)
 	_decals(_child(out, &"Decals"), layout)
+	_arrows(_child(out, &"Arrows"), layout)
 	_fixtures(_child(out, &"Fixtures"), map, LightingPresets.load_shipped())
 	return out
 
@@ -201,6 +207,36 @@ static func _decals(parent: Node3D, layout: DressingLayout) -> void:
 				mi.rotation.y = yaw + PI
 			else: ## on the floor, face up, turned by yaw
 				mi.rotation = Vector3(-PI / 2.0, yaw, 0.0)
+
+
+static func _arrows(parent: Node3D, layout: DressingLayout) -> void:
+	var base := load(SIGNAGE) as BaseMaterial3D
+	var mats := {}
+	var mesh := QuadMesh.new()
+	mesh.size = SIGN_SIZE
+	for room: StringName in layout.arrows:
+		var i := 0
+		for line in layout.arrows[room]:
+			var f := line.split(" ", false)
+			if f.size() < 5 or not ARROW_CELLS.has(f[0]):
+				push_error("DressingLayout: bad arrow line '%s' in %s" % [line, room])
+				continue
+			var cell: int = ARROW_CELLS[f[0]]
+			if not mats.has(cell):
+				var m := base.duplicate() as BaseMaterial3D
+				m.uv1_scale = Vector3(0.25, 0.125, 1.0)
+				m.uv1_offset = Vector3((cell % 4) * 0.25, (cell / 4) * 0.125, 0.0)
+				mats[cell] = m
+			var mi := MeshInstance3D.new()
+			mi.mesh = mesh
+			mi.material_override = mats[cell]
+			i += 1
+			mi.name = "Arrow_%s_%d" % [room, i]
+			mi.set_meta(&"room", room)
+			mi.set_meta(&"cell", cell)
+			parent.add_child(mi)
+			mi.position = Vector3(f[1].to_float(), f[4].to_float(), f[2].to_float())
+			mi.rotation.y = deg_to_rad(f[3].to_float()) + PI ## QuadMesh faces +Z; yaw 0 faces -Z
 
 
 ## Same grid as LightingPresenter._build (map_dressing_test checks the two agree).

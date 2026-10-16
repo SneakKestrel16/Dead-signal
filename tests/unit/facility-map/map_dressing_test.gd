@@ -355,3 +355,56 @@ func test_each_beacon_volume_has_a_beacon_and_strobe_red_in_c4() -> void:
 	for b in beacons:
 		var want := "prop_beacon_red" if b.name == &"Beacon_C4" else "prop_beacon"
 		assert_str(String(b.get_meta(&"fixture"))).is_equal(want)
+
+
+# Art bible §6 wayfinding, research-facility.md Evacuation "along H-N, H-S and C2 toward C4": evacuation arrow
+# plates (signage atlas row 5) on the walls of those rooms, each pointing at its room's way on toward C4.
+const ARROW_TARGET: Dictionary[StringName, StringName] = {&"H-N": &"H-N-C1", &"H-S": &"C3-H-S", &"C2": &"C2-C4"}
+
+
+func test_evacuation_arrows_in_h_n_h_s_and_c2_point_toward_c4() -> void:
+	var per_room := {}
+	for a: Node3D in _root.get_node(^"Arrows").get_children():
+		var room: StringName = a.get_meta(&"room")
+		var cell: int = a.get_meta(&"cell")
+		per_room[room] = per_room.get(room, 0) + 1
+		assert_bool(ARROW_TARGET.has(room)).override_failure_message("arrow in %s" % room).is_true()
+		assert_int(cell).is_between(20, 21) ## left or right: plates on walls point along them
+		var mat := (a as MeshInstance3D).material_override as BaseMaterial3D
+		assert_vector(mat.uv1_offset).is_equal_approx(Vector3((cell % 4) * 0.25, (cell / 4) * 0.125, 0.0), Vector3.ONE * EPS)
+		## the QuadMesh shows +X to the right of a viewer facing it, so `>` points along basis.x
+		var dir := a.basis.x * (1.0 if cell == 21 else -1.0)
+		var target := Vector3.ZERO
+		for p in _map.passages:
+			if p.id == ARROW_TARGET[room]:
+				target = p.position
+		assert_float(dir.dot(target - a.position)).override_failure_message("%s points away from C4" % a.name).is_greater(0.0)
+		## on a wall of its room, facing into it, under the ceiling and above the doorway signs (SIGN_Y)
+		var box := _room_box(room)
+		assert_bool(box.grow(0.01).has_point(a.position)).override_failure_message("%s outside %s" % [a.name, room]).is_true()
+		assert_bool(box.has_point(a.position + a.basis.z * 0.3)).override_failure_message("%s faces out" % a.name).is_true()
+		assert_float(a.position.y).is_between(2.2, box.end.y - 0.2)
+	for room in ARROW_TARGET:
+		assert_int(per_room.get(room, 0)).override_failure_message("arrows in %s" % room).is_greater_equal(2)
+
+
+# ASSET-062 backup controls panel (C5, research-facility.md Rooms; dressing until its function is decided) and
+# ASSET-066 PA speakers (Recording scare speakers, scare-events.md rule 16) high on the walls of H-N, H-S and C2.
+func test_c5_has_the_backup_panel_and_pa_speakers_hang_high_facing_into_their_rooms() -> void:
+	var panels: Array[StringName] = []
+	var speakers: Array[StringName] = []
+	for n in _props():
+		var item: StringName = n.get_meta(&"item")
+		var room: StringName = n.get_meta(&"room")
+		if item == &"backup_panel":
+			panels.append(room)
+		elif item == &"pa_speaker":
+			speakers.append(room)
+			assert_float(n.position.y).is_greater(2.0)
+		else:
+			continue
+		## front (-Z of the prop, MapMarker yaw convention) faces into the room
+		assert_bool(_room_box(room).has_point(n.position - n.basis.z * 1.0 + Vector3.UP * 0.1)) \
+				.override_failure_message("%s faces out of %s" % [n.name, room]).is_true()
+	assert_array(panels).contains_exactly([&"C5"])
+	assert_array(speakers).contains_exactly_in_any_order([&"H-N", &"H-S", &"C2"])

@@ -1,4 +1,4 @@
-"""Builds the interactable and hero props (ASSET-052..064, design/assets/specs/research-facility-assets.md) in Blender.
+"""Builds the interactable and hero props (ASSET-052..066, design/assets/specs/research-facility-assets.md) in Blender.
 
 Re-runnable, no manual steps, no downloads (every prop is procedural from primitives):
   "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup \
@@ -46,6 +46,7 @@ MATS = {
 	"exit_paint": (EXIT_GREEN, 0.5, 0.0, 0.0),
 	"exit_lit": (EXIT_GREEN, 0.3, 0.0, 4.0),
 	"core_glow": ("E0D6BA", 0.3, 0.0, 8.0),  # Bone Flashlight warm white, value-clamped albedo
+	"lamp_off": ("8A6A3A", 0.3, 0.0, 0.0),  # PA lamp lens, unlit: nothing fires the Recording scare yet
 }
 ## Material -> props allowed to use it (§6: the objective colours stay on objectives).
 RESERVED = {"cyan_lit": {"prop_data_drive", "prop_fuse", "prop_terminal"}, "cyan_dim": {"prop_fuse_box"},
@@ -54,7 +55,7 @@ RESERVED = {"cyan_lit": {"prop_data_drive", "prop_fuse", "prop_terminal"}, "cyan
 BUDGET = {"prop_data_drive": 800, "prop_fuse": 600, "prop_fuse_box": 1500, "prop_terminal": 8000,
 	"prop_exit_door": 8000, "prop_exit_lamp": 300, "prop_hide_cabinet": 1500, "prop_hide_locker": 1500,
 	"prop_light_switch": 300, "prop_camera": 800, "prop_monitor_wall": 8000, "prop_core": 8000,
-	"prop_breaker_wall": 8000}
+	"prop_breaker_wall": 8000, "prop_backup_panel": 2000, "prop_pa_speaker": 400}
 
 
 def lin(hexs):
@@ -367,10 +368,53 @@ def breaker_wall():
 	return p
 
 
+def backup_panel():
+	"""C5 backup controls panel (ASSET-062), dressing until its function is decided (level doc Open Question):
+	a wall-standing control cabinet with breaker rows, two dim gauges, pilot lights and a blank warning plate."""
+	p = []
+	box(p, (1.3, 0.3, 1.7), (0, 0, 0.08 + 0.85), "paint", 0.015)
+	box(p, (1.24, 0.26, 0.08), (0, 0, 0.04), "dark")  # plinth
+	box(p, (1.38, 0.36, 0.06), (0, 0.02, 1.81), "dark", 0.01)  # cap
+	box(p, (1.1, 0.04, 0.5), (0, 0.16, 1.4), "dark", 0.008)  # upper bezel
+	for x in (-0.3, 0.3):  # gauges
+		cyl(p, 0.11, 0.03, (x, 0.19, 1.42), "rubber", 12, rot=(math.pi / 2, 0, 0))
+		cyl(p, 0.09, 0.012, (x, 0.205, 1.42), "screen", 12, rot=(math.pi / 2, 0, 0))
+	for r in range(2):  # breaker rows
+		for c in range(6):
+			x, z = -0.45 + c * 0.18, 0.72 + r * 0.3
+			box(p, (0.12, 0.04, 0.2), (x, 0.17, z), "dark")
+			box(p, (0.04, 0.05, 0.08), (x, 0.2, z + 0.03), "rubber")
+			if r == 1:
+				box(p, (0.03, 0.02, 0.03), (x, 0.19, z + 0.14), "amber")  # pilot light
+	box(p, (0.5, 0.012, 0.12), (0, 0.155, 0.4), "warning")  # blank warning plate
+	for z in (0.2, 0.26):  # vent slits
+		box(p, (0.9, 0.01, 0.025), (0, 0.155, z), "dark")
+	for x in (-0.55, 0.55):  # conduits to the ceiling
+		cyl(p, 0.035, 1.1, (x, -0.06, 2.4), "rubber", 8)
+	return p
+
+
+def pa_speaker():
+	"""PA speaker with light (ASSET-066), wall-mounted: origin at the wall face, the bracket at y 0, horn out +Y,
+	a small lamp under it (lit by nothing yet: no hook fires the Recording scare, scare_catalogue.tres)."""
+	p = []
+	box(p, (0.14, 0.02, 0.2), (0, 0.01, 0), "dark")  # wall plate
+	box(p, (0.04, 0.16, 0.04), (0, 0.09, 0), "dark")  # arm
+	bpy.ops.mesh.primitive_cone_add(vertices=12, radius1=0.13, radius2=0.035, depth=0.26, location=(0, 0.3, 0.02),
+		rotation=(math.pi / 2, 0, 0), end_fill_type="NOTHING")  # open mouth toward +Y
+	p.append(_finish(bpy.context.active_object, "paint", 0.0))
+	cyl(p, 0.115, 0.01, (0, 0.4, 0.02), "rubber", 12, rot=(math.pi / 2, 0, 0))  # grille inside the mouth
+	cyl(p, 0.06, 0.08, (0, 0.15, 0.02), "dark", 10, rot=(math.pi / 2, 0, 0))  # driver can
+	cyl(p, 0.03, 0.05, (0, 0.07, -0.13), "lamp_off", 8)  # lamp
+	box(p, (0.03, 0.03, 0.06), (0, 0.05, -0.08), "dark")  # lamp stem
+	return p
+
+
 PROPS = {"prop_data_drive": data_drive, "prop_fuse": fuse, "prop_fuse_box": fuse_box, "prop_terminal": terminal,
 	"prop_exit_door": exit_door, "prop_exit_lamp": exit_lamp, "prop_hide_cabinet": hide_cabinet,
 	"prop_hide_locker": hide_locker, "prop_light_switch": light_switch, "prop_camera": camera,
-	"prop_monitor_wall": monitor_wall, "prop_core": core, "prop_breaker_wall": breaker_wall}
+	"prop_monitor_wall": monitor_wall, "prop_core": core, "prop_breaker_wall": breaker_wall,
+	"prop_backup_panel": backup_panel, "prop_pa_speaker": pa_speaker}
 
 
 def clear():
@@ -468,7 +512,7 @@ def main():
 		extra = []
 		if name == "prop_exit_door":
 			extra.append(join("prop_exit_lamp", exit_lamp()))
-		if name == "prop_camera":
+		if name in ("prop_camera", "prop_pa_speaker"):
 			o.location.z = 2.2
 		render(name, o, extra)
 	print("BUILT", built)

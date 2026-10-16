@@ -101,6 +101,16 @@ Each state is distinct by colour temperature, contrast and motion, not just brig
 | 5 | Violet `#7B4FA0` | Shoulder pad + clipboard | No stripe, plain sleeve band |
 
 - Suit colours separate by value as well as hue (light / light-mid / dark / mid / mid-dark) so they hold in monochrome and in red/amber zone light. Accessory is the primary identifier at distance in the dark (silhouette against emergency strips); stripe pattern is the close-range identifier under the flashlight (retro-reflective stripe material, high albedo, bright when lit, never emissive).
+- **Accessory palette** (sRGB albedo; built by `tools/art/build_characters.py` `ACCESSORY_PALETTE`, whose `check_accessory_palette()` fails the build on a breach). Rules from §4: no Signal Cyan, Exit Green or Security Red; albedo 32-225; saturation at most ~35% like the world; the main colour at least 60 luma away from its own suit so the silhouette separates under the flashlight and in amber/red zone light (the 60 is inference: a flashlight capture of each look in Zone B and C light settles it).
+
+| Slot | Accessory | Main colour | Other parts | Luma main / suit |
+|------|-----------|-------------|-------------|------------------|
+| 1 | Hard hat with lamp | Slate `#5A6066` | Lamp `#787A7E` | 95 / 225 |
+| 2 | Square backpack | Dark olive canvas `#4E4A3C` | Straps `#303034` | 74 / 178 |
+| 3 | Hood + scarf tail | Oatmeal `#C9C1AA` | Scarf `#D8D0BC` | 193 / 94 |
+| 4 | Cross-strap radio | Pale canvas strap `#C4BDA8` | Radio and antenna `#303034` | 189 / 108 |
+| 5 | Shoulder pad + clipboard | Grey pad `#B4B6B2` | Board `#B9A47E`, paper `#D2CEC4`, clip `#787A7E` | 181 / 94 |
+
 - **Copy rule (LB-6, Borrowed Face):** the disguise swaps the shapeshifter's look resource id to the target's. Everything above is the whole of what the disguise copies: albedo, normal, ORM maps, accessory mesh, stripe mask, footstep set. No per-instance data: no baked dirt, decals, wear or blood that differs per spawn or per round. Wear is baked into the shared texture set only, so the copy and the original are identical.
 - No role indicators of any kind on any body (name tag, outline, tint, aura, shader tell, particle) in any form (LB-6, ADR-0004). Carried drive/fuse and held stun item are not part of the look (Borrowed Face): they are the sanctioned tells.
 - Downed/injured presentation is a state animation and pose, not a texture or tint, and the copy never shows it.

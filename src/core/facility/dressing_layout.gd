@@ -18,6 +18,9 @@ class_name DressingLayout extends Resource
 ## a drip), one "cell x z yaw_deg size_m y" line each: y 0 lies on the floor, otherwise the decal hangs on a wall
 ## at height y facing yaw (the controller convention), x z already off the wall face.
 @export var decals: Dictionary[StringName, PackedStringArray] = {}
+## Room id -> evacuation arrow plates (signage atlas row 5), one "dir x z yaw_deg y" line each: dir `<` or `>` as
+## a viewer facing the plate reads it, x z already off the wall face, facing yaw (the controller convention).
+@export var arrows: Dictionary[StringName, PackedStringArray] = {}
 @export var clear_lines: Dictionary[StringName, PackedVector3Array] = {}
 
 
