@@ -1,0 +1,83 @@
+[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=16 format=3]
+
+[ext_resource type="Script" path="res://src/core/facility/surface_materials.gd" id="1"]
+
+[sub_resource type="StandardMaterial3D" id="m1"]
+albedo_color = Color(0.42, 0.48, 0.45, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m2"]
+albedo_color = Color(0.663, 0.769, 0.722, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m3"]
+albedo_color = Color(0.80, 0.84, 0.82, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m4"]
+albedo_color = Color(0.22, 0.23, 0.25, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m5"]
+albedo_color = Color(0.45, 0.47, 0.50, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m6"]
+albedo_color = Color(0.35, 0.36, 0.38, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m7"]
+albedo_color = Color(0.33, 0.31, 0.28, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m8"]
+albedo_color = Color(0.62, 0.60, 0.55, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m9"]
+albedo_color = Color(0.70, 0.69, 0.66, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m10"]
+albedo_color = Color(0.28, 0.28, 0.28, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m11"]
+albedo_color = Color(0.55, 0.55, 0.53, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m12"]
+albedo_color = Color(0.62, 0.62, 0.60, 1)
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="m13"]
+albedo_color = Color(0.55, 0.8, 0.9, 0.3)
+uv1_triplanar = true
+transparency = 1
+
+[sub_resource type="StandardMaterial3D" id="m14"]
+albedo_color = Color(0.5, 0.5, 0.5, 1)
+uv1_triplanar = true
+
+[resource]
+script = ExtResource("1")
+floors = Dictionary[StringName, Material]({
+&"A": SubResource("m1"),
+&"B": SubResource("m4"),
+&"C": SubResource("m7"),
+&"link": SubResource("m10")
+})
+walls = Dictionary[StringName, Material]({
+&"A": SubResource("m2"),
+&"B": SubResource("m5"),
+&"C": SubResource("m8"),
+&"link": SubResource("m11")
+})
+ceilings = Dictionary[StringName, Material]({
+&"A": SubResource("m3"),
+&"B": SubResource("m6"),
+&"C": SubResource("m9"),
+&"link": SubResource("m12")
+})
+glass = SubResource("m13")
+fallback = SubResource("m14")

@@ -253,10 +253,11 @@ func test_interact_alt_barricades_removes_and_breaks_while_interact_toggles() ->
 			break
 	var p := targets[door] as MapPassage
 	var point := p.position + Vector3.UP * _c.rules.point_height_m
-	# Stand off the leaf's swing box, across its thin axis, so the close is not refused for overlap.
-	var thin_z := p.swing_box.size.z < p.swing_box.size.x
-	var axis := Vector3.BACK if thin_z else Vector3.RIGHT
-	var off := (p.swing_box.size.z if thin_z else p.swing_box.size.x) * 0.5 + _knobs.controller.player_radius_m + 0.3
+	# Stand off the leaf's swing box on either side of the wall (its long horizontal axis; the short one runs
+	# along the wall, MapQueries._leaf), so the close is not refused for overlap and no wall is in the way (AD-249).
+	var along_z := p.swing_box.size.z < p.swing_box.size.x
+	var axis := Vector3.RIGHT if along_z else Vector3.BACK
+	var off := (p.swing_box.size.x if along_z else p.swing_box.size.z) * 0.5 + _knobs.controller.player_radius_m + 0.3
 	var survivor := _survivor()
 	var sid := survivor.net.local_player_id
 	var monster: RoundClient = null

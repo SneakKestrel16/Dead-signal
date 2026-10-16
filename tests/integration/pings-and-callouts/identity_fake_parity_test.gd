@@ -11,6 +11,10 @@ const WAIT_S := 8.0
 ## How long a client that must receive nothing more is watched: 30 ticks at 60 Hz.
 const QUIET_TICKS := 30
 ## A survivor's callout entry; nothing names the real/fake flag or the sender's player id.
+## West end of the H-S corridor (x 10-60, one room, no inner walls): the survivors and the monster stand on one
+## line along +x, in the open and in sight of each other.
+## The A1 spawn put it through A1's east wall once the level had walls (AD-249). Bodies placed off the map are frozen.
+const OPEN_LINE := Vector3(12.0, 0.0, 38.0)
 const SURVIVOR_KEYS := ["line", "identity", "origin", "gesture", "voice"]
 
 static var _next_port := 28730
@@ -223,11 +227,11 @@ func _keys(v: Variant, out: Array[String]) -> Array[String]:
 func test_ping_not_you_only_on_the_copied_survivor_and_only_within_callout_range() -> void:
 	await _compose()
 	var s: Array = _c.survivors
-	var base: Vector3 = _c.bodies[s[0]].global_position
+	var base := OPEN_LINE
 	var near := _knobs.ping.callout_range_m - 5.0
 	for i in s.size():
 		_place(s[i], base + Vector3(3.0 * i, 0.0, 0.0))
-	_place(_c.monster, base + Vector3(3.0, 0.0, near))
+	_place(_c.monster, base + Vector3(3.0 + near, 0.0, 0.0))
 	_disguise_as(s[1])
 	await _ticks(2)
 	var borrowed: int = _c.bf.appearance_of(s[1])
@@ -239,14 +243,14 @@ func test_ping_not_you_only_on_the_copied_survivor_and_only_within_callout_range
 		assert_int(p["from"]).is_equal(borrowed)
 		assert_bool(p.get("not_you", false)).override_failure_message("not_you on %d" % id).is_equal(id == s[1])
 	# Beyond callout_range_m: the ping stays a usable lie, unmarked.
-	_place(_c.monster, base + Vector3(3.0, 0.0, _knobs.ping.callout_range_m + 5.0))
+	_place(_c.monster, base + Vector3(3.0 + _knobs.ping.callout_range_m + 5.0, 0.0, 0.0))
 	await _ticks(2)
 	_ping(_c.monster)
 	await _until(_pings_got.bind(s, 2), "every survivor gets the far disguised ping")
 	for id: int in s:
 		assert_bool(_client(id).pings.received[1].has("not_you")).is_false()
 	# The real survivor's own ping, the monster wearing its face nearby: nobody is marked (the monster neither).
-	_place(_c.monster, base + Vector3(3.0, 0.0, near))
+	_place(_c.monster, base + Vector3(3.0 + near, 0.0, 0.0))
 	await _ticks(2)
 	_ping(s[1])
 	await _until(_pings_got.bind(s + [_c.monster], 3), "the real survivor's ping reaches all")
@@ -260,7 +264,7 @@ func test_ping_not_you_only_on_the_copied_survivor_and_only_within_callout_range
 func test_fake_callout_matches_real_except_gesture_and_changes_no_round_state() -> void:
 	await _compose()
 	var s: Array = _c.survivors
-	var base: Vector3 = _c.bodies[s[0]].global_position
+	var base := OPEN_LINE
 	var speaker: int = s[1]
 	var watcher: int = s[2]
 	_place(s[0], base)
