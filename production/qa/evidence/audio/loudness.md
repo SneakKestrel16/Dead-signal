@@ -17,11 +17,26 @@ Stinger playback gain = `stinger_max_db_rel` 6.0 dB (data/knobs/scare.tres), bot
 
 | File | Category | Bus | Target LUFS | Measured LUFS | Peak dBFS | Seconds |
 |---|---|---|---|---|---|---|
-| `assets/audio/foot/step_tile.wav` | foot | GameplayCues | -30.5 | -30.5 | -4.6 | 0.09 |
-| `assets/audio/foot/step_concrete.wav` | foot | GameplayCues | -31.1 | -31.1 | -3.3 | 0.11 |
-| `assets/audio/foot/step_metal.wav` | foot | GameplayCues | -26.6 | -26.6 | -3.2 | 0.25 |
-| `assets/audio/foot/step_rubber.wav` | foot | GameplayCues | -29.6 | -29.6 | -3.2 | 0.14 |
-| `assets/audio/foot/step_true_form.wav` | foot | GameplayCues | -22.2 | -22.2 | -2.7 | 0.63 |
+| `assets/audio/foot/step_tile_0.wav` | foot | GameplayCues | -24.0 | -24.0 | -2.5 | 0.28 |
+| `assets/audio/foot/step_tile_1.wav` | foot | GameplayCues | -24.0 | -24.0 | -6.8 | 0.30 |
+| `assets/audio/foot/step_tile_2.wav` | foot | GameplayCues | -24.0 | -24.0 | -4.0 | 0.28 |
+| `assets/audio/foot/step_tile_3.wav` | foot | GameplayCues | -24.0 | -24.0 | -6.4 | 0.29 |
+| `assets/audio/foot/step_concrete_0.wav` | foot | GameplayCues | -24.0 | -24.0 | -6.6 | 0.27 |
+| `assets/audio/foot/step_concrete_1.wav` | foot | GameplayCues | -24.0 | -24.0 | -5.0 | 0.26 |
+| `assets/audio/foot/step_concrete_2.wav` | foot | GameplayCues | -24.0 | -24.0 | -5.3 | 0.26 |
+| `assets/audio/foot/step_concrete_3.wav` | foot | GameplayCues | -24.0 | -24.0 | -5.6 | 0.27 |
+| `assets/audio/foot/step_metal_0.wav` | foot | GameplayCues | -24.0 | -24.0 | -7.7 | 0.28 |
+| `assets/audio/foot/step_metal_1.wav` | foot | GameplayCues | -24.0 | -24.0 | -11.6 | 0.28 |
+| `assets/audio/foot/step_metal_2.wav` | foot | GameplayCues | -24.0 | -24.0 | -8.7 | 0.28 |
+| `assets/audio/foot/step_metal_3.wav` | foot | GameplayCues | -24.0 | -24.0 | -7.6 | 0.28 |
+| `assets/audio/foot/step_rubber_0.wav` | foot | GameplayCues | -24.0 | -24.0 | -3.1 | 0.21 |
+| `assets/audio/foot/step_rubber_1.wav` | foot | GameplayCues | -24.0 | -24.0 | -4.3 | 0.25 |
+| `assets/audio/foot/step_rubber_2.wav` | foot | GameplayCues | -24.0 | -24.0 | -4.7 | 0.26 |
+| `assets/audio/foot/step_rubber_3.wav` | foot | GameplayCues | -24.0 | -24.0 | -8.8 | 0.26 |
+| `assets/audio/foot/step_true_form_0.wav` | foot | GameplayCues | -24.0 | -24.0 | -14.1 | 0.39 |
+| `assets/audio/foot/step_true_form_1.wav` | foot | GameplayCues | -24.0 | -24.0 | -9.1 | 0.39 |
+| `assets/audio/foot/step_true_form_2.wav` | foot | GameplayCues | -24.0 | -24.0 | -10.1 | 0.39 |
+| `assets/audio/foot/step_true_form_3.wav` | foot | GameplayCues | -24.0 | -24.0 | -10.8 | 0.41 |
 | `assets/audio/ambience/amb_a.wav` | ambience | Ambience | -30.0 | -30.0 | -17.1 | 12.00 |
 | `assets/audio/ambience/amb_b.wav` | ambience | Ambience | -30.0 | -30.0 | -17.1 | 12.00 |
 | `assets/audio/ambience/amb_c.wav` | ambience | Ambience | -30.0 | -30.0 | -16.2 | 12.00 |

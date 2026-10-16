@@ -56,3 +56,9 @@ Traps hit in this project. The general ones are in [pipeline-handoff.md](pipelin
 - **Transient-heavy cuts** (stun gun, body hits, locker slams) come back peak-limited until saturated (`dsp.drive`).
 - **A real siren's own pitch is a lasting line** (objective_alarm B/C at ~382 Hz): left in, de-lining blunts the
   alarm; the designer's ear decides.
+- **Raw footstep takes are peak-limited at -24 LUFS** (worst came back at -26.4): `dsp.drive` of about 2.6 fixes it
+  (steps batch).
+- **Slowed claws ring at 4-7 kHz and a rubber carpet hums at 86/92 Hz**: notch per take on the live part only;
+  measured on the padded buffer the silence dominates the median and nothing is found.
+- **Scrapes rise slowly and an onset detector skips them**: cut them from 10 ms level regions read off the
+  spectrogram.

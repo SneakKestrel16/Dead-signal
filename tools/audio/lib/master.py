@@ -32,18 +32,19 @@ FAMILIES = {
 @dataclass(frozen=True)
 class Sound:
     name: str
-    build: Callable[[np.random.Generator], np.ndarray]  # rng -> mono float array at 44.1 kHz
+    build: Callable[..., np.ndarray]  # rng -> mono float array at 44.1 kHz (rng, variant -> ... when variants > 1)
     family: str
     level: float | None  # target LUFS over the loudest 400 ms; None = ship as built (legacy placeholder)
     ids: tuple = ()  # sound bank events: (event id, volume_db, pitch_scale)
     loop: bool = False  # seamless loop: never trimmed, smpl chunk in the WAV
     synced: bool = False  # timed to a clip: keep the lead-in silence
+    variants: int = 1  # takes, each from its own seed; the bank plays them through an AudioStreamRandomizer
 
-    def file(self):
-        return f"{self.name}.wav"
+    def file(self, variant=0):
+        return f"{self.name}_{variant}.wav" if self.variants > 1 else f"{self.name}.wav"
 
-    def path(self):
-        return f"assets/audio/{self.family}/{self.file()}"
+    def path(self, variant=0):
+        return f"assets/audio/{self.family}/{self.file(variant)}"
 
 
 @dataclass
@@ -53,6 +54,13 @@ class Take:
     lufs: float
     peak_db: float
     limited: bool
+    variant: int = 0
+
+    def file(self):
+        return self.sound.file(self.variant)
+
+    def path(self):
+        return self.sound.path(self.variant)
 
 
 def seed(name, variant=0):
@@ -78,7 +86,8 @@ def trim(x, floor_db=-60.0, head=True):
 
 
 def render(sound, variant=0):
-    x = np.asarray(sound.build(seed(sound.name, variant)), float)
+    rng = seed(sound.name, variant)
+    x = np.asarray(sound.build(rng, variant) if sound.variants > 1 else sound.build(rng), float)  # takes know their index
     if sound.level is None:
         peak = 20 * np.log10(np.max(np.abs(x)) + 1e-12)
         y = x * 10 ** (min(0.0, CEILING_DB - peak) / 20)  # as built; only a resampling overshoot is pulled under the ceiling
@@ -94,7 +103,7 @@ def render(sound, variant=0):
         y = x * 10 ** (gain_db / 20)
     peak = 20 * np.log10(np.max(np.abs(y)) + 1e-12)
     limited = sound.level is not None and loudness(y) < sound.level - 0.05
-    return Take(sound, y, loudness(y), peak, limited)
+    return Take(sound, y, loudness(y), peak, limited, variant)
 
 
 def wav_bytes(x, loop=False):

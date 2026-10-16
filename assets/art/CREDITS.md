@@ -187,3 +187,20 @@ Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `to
 | https://freesound.org/s/551315/ | Firecat_the_potato_YT | CC0 1.0 |
 | https://freesound.org/s/405592/ | JohnLaVine333 | CC0 1.0 |
 | https://freesound.org/s/772971/ | Licorne_En_Fer | CC0 1.0 |
+
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/steps.toml`, MP3 previews and decoded WAVs committed). Footsteps `foot/*` (4 takes per candidate, played through an AudioStreamRandomizer) by `tools/audio/sounds/steps.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/555868/ | Nox_Sound | CC0 1.0 |
+| https://freesound.org/s/456428/ | Frigus_XIII | CC0 1.0 |
+| https://freesound.org/s/465299/ | SoftDistortionFX | CC0 1.0 |
+| https://freesound.org/s/398937/ | SoftDistortionFX | CC0 1.0 |
+| https://freesound.org/s/786977/ | Oilcan03 | CC0 1.0 |
+| https://freesound.org/s/834029/ | IENBA | CC0 1.0 |
+| https://freesound.org/s/335760/ | j1987 | CC0 1.0 |
+| https://freesound.org/s/613723/ | dynamique | CC0 1.0 |
+| https://freesound.org/s/844749/ | MeanRaccoon | CC0 1.0 |
+| https://freesound.org/s/635117/ | jocelynlopez | CC0 1.0 |
+| https://freesound.org/s/199919/ | sittingmonkeyanim | CC0 1.0 |
+| https://freesound.org/s/519600/ | Nivatius | CC0 1.0 |

@@ -32,6 +32,7 @@ FAMILY_MODULES = ["steps", "ambience", "cues", "world", "voices", "scares", "ui"
 GAIT_DB = {"walk": 0.0, "sprint": 4.0, "crouch": -8.0, "crawl": -9.0}
 # zone -> footstep surface (level doc: A labs tile, B server rooms metal grate, C security and links concrete)
 SURFACE_OF_ZONE = {"A": "tile", "B": "metal", "C": "concrete", "link": "concrete"}
+RANDOM_PITCH = 1.02  # AudioStreamRandomizer spread of a sound with variants (survivor sets are 6 % apart)
 STINGER_GAIN_DB = 6.0  # data/knobs/scare.tres stinger_max_db_rel
 
 
@@ -47,17 +48,29 @@ def all_sounds():
 def bank_tres(takes):
     ext = ['[ext_resource type="Script" path="res://src/core/audio/sound_bank.gd" id="1"]',
            '[ext_resource type="Script" path="res://src/core/audio/sound_bank_entry.gd" id="2"]']
-    subs, entries = [], []
-    for i, t in enumerate(takes):
-        s = t.sound
-        ext.append('[ext_resource type="AudioStream" path="res://%s" id="s%d"]' % (s.path(), i))
+    pools, subs, entries = [], [], []  # a sound with variants plays through one shared AudioStreamRandomizer
+    groups = {}
+    for t in takes:
+        groups.setdefault(t.sound.name, []).append(t)
+    for i, ts in enumerate(groups.values()):
+        s = ts[0].sound
+        for t in ts:
+            ext.append('[ext_resource type="AudioStream" path="res://%s" id="s%d_%d"]' % (t.path(), i, t.variant))
+        ref = 'ExtResource("s%d_0")' % i
+        if len(ts) > 1:
+            streams = "\n".join('stream_%d/stream = ExtResource("s%d_%d")\nstream_%d/weight = 1.0' % (t.variant, i, t.variant, t.variant)
+                                for t in ts)
+            pools.append('[sub_resource type="AudioStreamRandomizer" id="r%d"]\nrandom_pitch = %s\nstreams_count = %d\n%s\n'
+                         % (i, repr(float(RANDOM_PITCH)), len(ts), streams))
+            ref = 'SubResource("r%d")' % i
         bus = master.FAMILIES[s.family][1]
         for eid, vol, pitch in s.ids:
             sid = "e%d" % len(subs)
-            subs.append('[sub_resource type="Resource" id="%s"]\nscript = ExtResource("2")\nstream = ExtResource("s%d")\n'
+            subs.append('[sub_resource type="Resource" id="%s"]\nscript = ExtResource("2")\nstream = %s\n'
                         'bus = &"%s"\nvolume_db = %s\npitch_scale = %s\nloop = %s\n'
-                        % (sid, i, bus, repr(float(vol)), repr(float(pitch)), "true" if s.loop else "false"))
+                        % (sid, ref, bus, repr(float(vol)), repr(float(pitch)), "true" if s.loop else "false"))
             entries.append('&"%s": SubResource("%s")' % (eid, sid))
+    subs = pools + subs
     gait = ", ".join('&"%s": %s' % (g, repr(float(d))) for g, d in GAIT_DB.items())
     zones = ", ".join('&"%s": &"%s"' % kv for kv in SURFACE_OF_ZONE.items())
     head = ('[gd_resource type="Resource" script_class="SoundBank" load_steps=%d format=3]\n\n'
@@ -89,7 +102,7 @@ def report_md(takes):
         s = t.sound
         target = s.level if s.level is not None else round(t.lufs, 1)
         lines.append("| `%s` | %s | %s | %.1f | %.1f | %.1f | %.2f |" % (
-            s.path(), s.family, master.FAMILIES[s.family][1], target, t.lufs, t.peak_db, len(t.x) / 44100))
+            t.path(), s.family, master.FAMILIES[s.family][1], target, t.lufs, t.peak_db, len(t.x) / 44100))
         if s.level is not None and t.limited:
             print("peak-limited: %s short of %.1f" % (s.name, s.level))
     return "\n".join(lines) + "\n"
@@ -107,11 +120,11 @@ def main():
     ap.add_argument("--check", action="store_true", help="write nothing; exit 1 if a file differs from what the code makes")
     ap.add_argument("--sheet", metavar="DIR", help="write a listening sheet DIR/index.html")
     args = ap.parse_args()
-    takes = [master.render(s) for s in all_sounds()]
+    takes = [master.render(s, v) for s in all_sounds() for v in range(s.variants)]
     for t in takes:
         if t.sound.level is not None and t.limited:
             print("peak-limited: %s" % t.sound.name)
-    files = {ROOT / t.sound.path(): master.wav_bytes(t.x, t.sound.loop) for t in takes}
+    files = {ROOT / t.path(): master.wav_bytes(t.x, t.sound.loop) for t in takes}
     texts = {BANK: bank_tres(takes), REPORT: report_md(takes)}
     stale = [p for p in (ROOT / "assets/audio").rglob("*") if p.suffix in (".wav", ".ogg") and p not in files]
     if args.check:

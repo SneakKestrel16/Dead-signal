@@ -34,8 +34,11 @@ def main(family):
     for name, cands in mod.CANDIDATES.items():
         opts = [("before", dsp.legacy(cands[0].family, name))]
         for letter, snd in zip("ABC", cands):
-            take = master.render(snd)
-            opts.append((letter, take.x))
+            takes = [master.render(snd, v) for v in range(snd.variants)]
+            take = takes[0]
+            # a sound with variants is shown as its takes in a row (as a walk would play them)
+            gap = np.zeros(dsp.samples(0.5))
+            opts.append((letter, np.concatenate([a for t in takes for a in (t.x, gap)]) if len(takes) > 1 else take.x))
             m = analyze.measure(take.x, dsp.SR)
             print(f"{name} {letter}: {take.lufs:.1f} LUFS peak {take.peak_db:.1f} dBFS{' LIMITED' if take.limited else ''} "
                   f"seam {seam_jump(take.x) if snd.loop else 0:.1f}x tones {m['tones'] or 'none'}")

@@ -149,5 +149,10 @@ func test_loudness_table_meets_targets_and_stinger_stays_within_6_db_of_every_be
 	assert_int(beds).is_equal(4)
 	var paths := {}
 	for id: StringName in _bank.entries:
-		paths[(_bank.entries[id] as SoundBankEntry).stream.resource_path] = true
+		var stream := (_bank.entries[id] as SoundBankEntry).stream
+		if stream is AudioStreamRandomizer:  # a sound with variants: one file per take
+			for i in (stream as AudioStreamRandomizer).streams_count:
+				paths[(stream as AudioStreamRandomizer).get_stream(i).resource_path] = true
+		else:
+			paths[stream.resource_path] = true
 	assert_int(files).is_equal(paths.size())
