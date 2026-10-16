@@ -209,7 +209,8 @@ func test_every_module_built_and_every_hook_wired() -> void:
 		assert_object(m).is_not_null()
 		unset.append_array(_unset(m))
 	assert_array(unset).override_failure_message("unset hooks:\n" + "\n".join(unset)).is_empty()
-	assert_int(_c.sm.batch_extras.size()).is_equal(14)
+	assert_int(_c.sm.batch_extras.size()).is_equal(15)
+	assert_bool(_c.sm.batch_extras.has(Callable(_c.doors, &"door_entries"))).is_true() ## BUG-0018
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.roster_feed, &"entries"))).is_true() ## hud-results story 011
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.hold_reasons, &"entries"))).is_true() ## hud-results story 011
 	assert_bool(_c.sm.batch_extras.has(Callable(_c.survivor_hud, &"entries"))).is_true() ## hud-results story 004

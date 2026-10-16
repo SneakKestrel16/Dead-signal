@@ -187,6 +187,7 @@ func _ready() -> void:
 	for i in int(_args.get("count", "1")):
 		var c := RoundClient.new(_knobs, TestMoveStep.apply, TestMoveStep.make_body, _map, true)
 		c.name = "Client%d" % i
+		c.level = self # BUG-0018: every client applies the same door state to the one level
 		add_child(c)
 		var to := port
 		if i == 0 and latency > 0:

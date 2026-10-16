@@ -59,11 +59,12 @@ func _speed_after_1s(frame: InputFrame, mods := MovementModifiers.new()) -> floa
 	return _hspeed(body)
 
 
-func test_body_is_a_player_body_on_players_layer_colliding_with_world() -> void:
+## BUG-0018: walls, glass and closed doors, on the server as in prediction (players never block each other).
+func test_body_is_a_player_body_on_players_layer_colliding_with_walls_glass_and_doors() -> void:
 	var body := _body(Vector3(1, 2, 3))
 	assert_bool(body is PlayerBody).is_true()
 	assert_int(body.collision_layer).is_equal(PhysicsLayers.PLAYERS)
-	assert_int(body.collision_mask).is_equal(PhysicsLayers.WORLD)
+	assert_int(body.collision_mask).is_equal(PhysicsLayers.MOVE_PREDICT)
 	assert_vector(body.global_position).is_equal(Vector3(1, 2, 3))
 	assert_float(body.floor_max_angle).is_equal_approx(deg_to_rad(_knobs.controller.floor_max_angle_deg), 1e-5)
 

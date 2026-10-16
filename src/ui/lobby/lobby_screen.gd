@@ -347,6 +347,7 @@ func _new_round_client(parent: Node) -> RoundClient:
 	floors.name = &"Map"
 	c.add_child(floors)
 	MapGreybox.build(floors, map)
+	c.level = floors # BUG-0018: its doors follow the server's
 	return c
 
 

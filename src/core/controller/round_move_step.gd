@@ -4,8 +4,9 @@ class_name RoundMoveStep extends RefCounted
 ## so the server and the owner's prediction run the same step. Each body keeps its own MoveState (in its
 ## meta) whose modifiers are the owner's set passed in. The gait reads the frame's sprint and crouch; the
 ## crouch posture (PlayerBody.set_low) is not driven here: no round module drives it yet.
-## Bodies are PlayerBody (ADR-0007 values from ControllerKnobs) on the PLAYERS layer colliding with WORLD
-## only: players do not block each other, as with the harness step this replaces.
+## Bodies are PlayerBody (ADR-0007 values from ControllerKnobs) on the PLAYERS layer colliding with walls,
+## glass and closed doors (PhysicsLayers.MOVE_PREDICT, BUG-0018), on the server too: players do not block
+## each other, as with the harness step this replaces, so server and prediction share one mask.
 ## Usage:
 ##   RoundComposer.new(..., RoundMoveStep.step_for(knobs), PhysicsLayers.WORLD, RoundMoveStep.body_maker(knobs), ...)
 ##   RoundClient.new(knobs, RoundMoveStep.step_for(knobs), RoundMoveStep.body_maker(knobs), map, true)
@@ -41,7 +42,7 @@ static func state_of(body: CharacterBody3D) -> MovementStep.MoveState:
 ## A PlayerBody under `parent` at `pos`.
 static func make_body(parent: Node, pos: Vector3, knobs: Knobs) -> CharacterBody3D:
 	var p := PlayerBody.new()
-	p.setup(knobs, PhysicsLayers.WORLD)
+	p.setup(knobs, PhysicsLayers.MOVE_PREDICT)
 	parent.add_child(p)
 	p.global_position = pos
 	return p

@@ -241,6 +241,10 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 	sm.batch_extras.append(hold_reasons.entries)
 	survivor_hud = SurvivorHudFeed.new(survivors, _tick, downing.life_state, downing.rescue_progress_s)
 	sm.batch_extras.append(survivor_hud.entries)
+	# BUG-0018: door state reaches the level's blockers here and every client's through door_entries.
+	doors.blockers = DoorBlockers.new(_world, map)
+	doors.exit_open = objectives.exit_open
+	sm.batch_extras.append(doors.door_entries)
 	sm.catch_up.assign([lifecycle.match_flow().catch_up, bf.catch_up, objectives.catch_up])
 	var park := 0
 	for id in roster.player_ids():

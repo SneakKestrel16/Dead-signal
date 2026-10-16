@@ -9,6 +9,10 @@ class_name SurfaceMaterials extends Resource
 @export var ceilings: Dictionary[StringName, Material] = {}
 ## Glass partitions (research-facility.md `:` walls).
 @export var glass: Material
+## Door and exit leaves (BUG-0018; placeholder until the door models, ASSET-048/049).
+@export var door: Material
+## The planks drawn on a barricaded door (BUG-0018; placeholder until ASSET-049).
+@export var barricade: Material
 ## Used for a zone missing from a table.
 @export var fallback: Material
 

@@ -90,6 +90,12 @@ var spectator_cam: SpectatorCamera
 var scripted: InputFrame
 ## Full join version string; "" = knobs.join_version(VERSION_BUILD). A shipped session sets the lobby's.
 var version := ""
+## The level the caller built for this client (MapGreybox.build's root, or any ancestor of it), set before
+## join; null = no doors applied (BUG-0018). Its door blockers follow the server's door state, so prediction
+## collides with the doors the server's movement does.
+var level: Node
+## This client's DoorBlockers (EventBatch.DOORS, BARRICADE); null without a level.
+var doors: DoorBlockers
 ## handle -> remote body Node3D (child "Mesh" MeshInstance3D, child "Cone" SpotLight3D).
 var remotes: Dictionary[int, Node3D] = {}
 
@@ -197,6 +203,10 @@ func _on_connected() -> void:
 	callouts = CalloutReceiver.new(router, smp)
 	facility_scare = FacilityScareDisplay.new(router)
 	defense = DefenseDisplay.new(router)
+	if level != null: # BUG-0018
+		doors = DoorBlockers.new(level, _map)
+		router.subscribe(EventBatch.DOORS, doors.on_doors)
+		router.subscribe(EventBatch.BARRICADE, doors.on_barricade)
 	if _render:
 		head = Node3D.new()
 		head.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF

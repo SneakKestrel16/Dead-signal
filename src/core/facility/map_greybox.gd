@@ -10,9 +10,9 @@ class_name MapGreybox extends RefCounted
 ## - each wall drawn as two half-thickness skins, one per side, split per touching volume, so each room shows
 ##   its own zone's wall material (SurfaceMaterials, data/art/surface_materials.tres);
 ## - a coloured post at every interactable and door.
-## Door blockers (DoorBlockers) are left in the scene with their shapes disabled and their leaves undrawn: door
-## state is logical at runtime (Doors.is_closed feeds sight and interaction), nothing applies it to physics
-## yet, so a passage is always walkable, the exit too (match_flow gates escape on its own).
+## Door blockers keep the scene's start state (doors open, exit closed until Exit Open, research-facility.md
+## AC 10), each leaf drawn in SurfaceMaterials.door while its blocker is enabled. DoorBlockers drives them from
+## door state: Doors on the host, the replicated EventBatch.DOORS on a client (BUG-0018).
 ## Usage: `MapGreybox.build(parent, MapData.load_map())`
 
 const LEVEL := "res://assets/levels/research_facility.tscn"
@@ -41,10 +41,11 @@ static func build(parent: Node, map: MapData) -> Node3D:
 			mesh.free()
 		elif n.begins_with("Glass_"):
 			mesh.material_override = mats.glass
-		elif body.has_meta(&"passage") or n == "Floor":
-			if body.has_meta(&"passage"):
-				(body.get_node(^"Shape") as CollisionShape3D).disabled = true
-			mesh.free() ## the slabs below draw the floor; open doors draw nothing
+		elif body.has_meta(&"passage"):
+			mesh.material_override = mats.door
+			mesh.visible = not (body.get_node(^"Shape") as CollisionShape3D).disabled
+		elif n == "Floor":
+			mesh.free() ## the slabs below draw the floor
 		else: ## LOS blockers (Core, racks, breaker wall)
 			mesh.material_override = mats.wall_of(_zone(map, queries.volume_at(body.position)))
 	for v in map.volumes:

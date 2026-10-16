@@ -100,11 +100,15 @@ func test_a_ray_across_every_wall_skin_hits_world() -> void:
 		assert_bool(not hit.is_empty()).override_failure_message("%s: no WORLD collider" % s.name).is_true()
 
 
-func test_a_ray_through_every_passage_at_1_m_is_clear() -> void:
+## BUG-0018: the exit's blocker stays closed until Exit Open (research-facility.md AC 10); doors start open.
+func test_a_ray_through_every_passage_at_1_m_is_clear_but_the_closed_exit() -> void:
 	for p in _map.passages:
 		var n := Vector3.RIGHT if _on_vertical_line(p) else Vector3.BACK
 		var c := Vector3(p.position.x, PROBE_Y, p.position.z)
 		var hit := _ray(c - n * 0.6, c + n * 0.6, PhysicsLayers.MOVE_PREDICT)
+		if p.kind == MapPassage.EXIT:
+			assert_int((hit.get("collider") as CollisionObject3D).collision_layer).is_equal(PhysicsLayers.DOORS)
+			continue
 		assert_dict(hit).override_failure_message("%s blocked by %s" % [p.id, hit.get("collider")]).is_empty()
 
 
@@ -143,7 +147,7 @@ func test_no_marker_or_passage_centre_is_within_a_body_radius_of_a_wall() -> voi
 	cap.height = _knobs.controller.capsule_height_m
 	var q := PhysicsShapeQueryParameters3D.new()
 	q.shape = cap
-	q.collision_mask = PhysicsLayers.MOVE_PREDICT ## doors are open at runtime
+	q.collision_mask = PhysicsLayers.WORLD | PhysicsLayers.GLASS ## walls; door and exit blockers fill their own opening
 	var bad: Array[String] = []
 	var points: Array = []
 	for m in _map.markers:

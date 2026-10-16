@@ -61,6 +61,10 @@ const HOLD_END := &"HoldEnd"
 ## {life: Downing.LifeState, rescue_s: float (tenths)}. Sent to that survivor's stream only (its spectators
 ## included), on change. The roster has no Seized state, so this is the only carrier of the victim's Seized.
 const OWN_LIFE := &"OwnLife"
+## Entry type of every door's state and the exit's (Facility Map's door replication, BUG-0018): {closed:
+## Array[bool] by door net id, exit: bool, true once Exit Open}. Not a catalog event; a door is a world object,
+## so it is sent to everyone, on change and in full on a rejoin. Clients apply it to their own door blockers.
+const DOORS := &"DoorStates"
 
 
 ## A positional sound queued for this tick. `source` is server-only: the emitter's own client plays

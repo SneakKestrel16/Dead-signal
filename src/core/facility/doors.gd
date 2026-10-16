@@ -7,12 +7,16 @@ class_name Doors extends RefCounted
 ## shapeshifter is one more capsule: it rejects the close only once it is in the swing area, and a door
 ## closed in front of it stops the dash at the blocker.
 ## A door Survivor Defense holds shut (set_held_shut: barricaded, story survivor-defense/007) stays closed:
-## its open is refused. Not here: barricade state itself (Survivor Defense's Barricades),
-## replicating door state to clients (the client applies a received copy with DoorBlockers.apply), and
-## a catalog event for a toggle (the catalog has none; readers use the registry view).
+## its open is refused. Not here: barricade state itself (Survivor Defense's Barricades) and a catalog event
+## for a toggle (the catalog has none; readers use the registry view).
+## BUG-0018: door_entries replicates every door's state and the exit's (EventBatch.DOORS) to every client,
+## which applies it to its own blockers (DoorBlockers.on_doors). The exit opens on Exit Open (`exit_open`,
+## Survivor Objectives' TerminalState.ACTIVATED, rule 20), on this module's next tick.
 ## Usage:
 ##   var doors := Doors.new(holds, map, capsules, can_use)   # before any other interactable registers
 ##   doors.blockers = DoorBlockers.new(level_root, map)
+##   doors.exit_open = objectives.exit_open
+##   sm.batch_extras.append(doors.door_entries)
 ##   server.start_round({TickOrder.FACILITY_MAP: doors}, knobs)
 ##   rules = MapQueries.InteractRules.from_knobs(knobs, doors.is_closed)
 
@@ -53,6 +57,8 @@ class Door extends Interactable:
 
 ## Blockers this module drives on the server; null = no level geometry (headless rounds).
 var blockers: DoorBlockers = null
+## `exit_open() -> bool`: true once the exit is open (Survivor Objectives); unset = closed all round.
+var exit_open: Callable
 
 var _holds: HoldService
 var _map: MapData
@@ -65,6 +71,11 @@ var _radius: float
 ## By map net id (doors come first in MapData.interactables, so a door's net id is its index).
 var _closed: Array[bool] = []
 var _ids: Array[StringName] = []
+var _runner: TickRunner
+## [closed states, exit open] last replicated; this tick's entries and their tick.
+var _sent: Array = []
+var _out: Array = []
+var _out_tick := -1
 
 
 ## `capsules() -> Array[Vector4]`: every player capsule that takes space (not Out), as
@@ -79,7 +90,8 @@ func _init(holds: HoldService, map: MapData, capsules: Callable, eligible: Calla
 
 
 ## RoundServer entry: registers every door, open (the greybox's start state), and the registry view.
-func setup(_tick_runner: Node, _bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+func setup(tick_runner: Node, _bus: EventBus, registry: StateRegistry, knobs: Knobs) -> void:
+	_runner = tick_runner as TickRunner
 	_radius = knobs.controller.player_radius_m
 	var rules := MapQueries.InteractRules.from_knobs(knobs)
 	_closed = []
@@ -100,12 +112,33 @@ func setup(_tick_runner: Node, _bus: EventBus, registry: StateRegistry, knobs: K
 		_closed.append(false)
 		_ids.append(p.id)
 	registry.register_view(StateKeys.DOOR_STATE, &"FacilityMap", DoorStateView.new(self))
+	_sent = [_closed.duplicate(), false] ## the level's start state: every client builds it the same
+	_out = []
+	_out_tick = -1
 	_apply()
 
 
-## Instant interactions only: nothing to advance.
+## Door toggles are instant interactions; the tick only follows Exit Open with the exit's blocker.
 func server_tick(_tick: int) -> void:
-	pass
+	if blockers != null:
+		blockers.set_exit_open(_exit_is_open())
+
+
+## ServerMovement.batch_extras provider (BUG-0018; a door is a world object, so everyone, as
+## Barricades.barricade_entries): [EventBatch.DOORS, {closed, exit}] when any door or the exit changed since
+## the last batch, diffed once per tick, the same entry for every viewer. `full` (a rejoin): the current state.
+func door_entries(_viewer: int, full: bool = false) -> Array:
+	var now := [_closed.duplicate(), _exit_is_open()]
+	if full:
+		return [[EventBatch.DOORS, {"closed": now[0], "exit": now[1]}]]
+	var t := _runner.current_tick() if _runner != null else _out_tick + 1 ## no runner (unit tests): every call is a tick
+	if t != _out_tick:
+		_out_tick = t
+		_out = []
+		if now != _sent:
+			_sent = now
+			_out = [[EventBatch.DOORS, {"closed": now[0], "exit": now[1]}]]
+	return _out
 
 
 ## True while door `net_id` is closed; false for any other id. MapQueries' door_closed callable.
@@ -140,6 +173,10 @@ func toggle(net_id: int) -> bool:
 	_closed[net_id] = not _closed[net_id]
 	_apply()
 	return true
+
+
+func _exit_is_open() -> bool:
+	return exit_open.is_valid() and exit_open.call()
 
 
 func _apply() -> void:

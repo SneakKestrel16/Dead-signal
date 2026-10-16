@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=12 format=3]
+[gd_resource type="Resource" script_class="SurfaceMaterials" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://src/core/facility/surface_materials.gd" id="1"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_floor_tile_a.tres" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Material" path="res://assets/art/materials/mat_concrete_a.tres" id="7"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_painted_block_zone_c.tres" id="8"]
 [ext_resource type="Material" path="res://assets/art/materials/mat_painted_block_a.tres" id="9"]
+[ext_resource type="Material" path="res://assets/art/materials/mat_trim_metal.tres" id="10"]
 
 [sub_resource type="StandardMaterial3D" id="m13"]
 albedo_color = Color(0.55, 0.8, 0.9, 0.3)
@@ -17,6 +18,9 @@ transparency = 1
 [sub_resource type="StandardMaterial3D" id="m14"]
 albedo_color = Color(0.5, 0.5, 0.5, 1)
 uv1_triplanar = true
+[sub_resource type="StandardMaterial3D" id="m15"]
+albedo_color = Color(0.45, 0.3, 0.18, 1)
+roughness = 0.9
 
 [resource]
 script = ExtResource("1")
@@ -40,3 +44,5 @@ ceilings = Dictionary[StringName, Material]({
 })
 glass = SubResource("m13")
 fallback = SubResource("m14")
+door = ExtResource("10")
+barricade = SubResource("m15")
