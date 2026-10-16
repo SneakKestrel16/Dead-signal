@@ -1,0 +1,31 @@
+[[recording]]
+id = 213004
+url = "https://freesound.org/s/213004/"
+author = "abstraktgeneriert"
+licence = "CC0-1.0"
+why = "ui_click: mouse click, 2.3 s"
+sha256 = "bd5dfae432577e71497c1f00511da36e608e3ed7507926248d5b06993f513812"
+
+[[recording]]
+id = 678248
+url = "https://freesound.org/s/678248/"
+author = "Pixeliota"
+licence = "CC0-1.0"
+why = "ui_click: single mouse click, 1.2 s"
+sha256 = "a8d0369a986abe53067b160e0fe902e1a6ebfdfc5ce443ac67a37185fc04462d"
+
+[[recording]]
+id = 323746
+url = "https://freesound.org/s/323746/"
+author = "Reitanna"
+licence = "CC0-1.0"
+why = "ping_rejected: pen click, 0.1 s"
+sha256 = "7c24077dd46616ede1e241e879e31968557f4e1e52e4a1b287d32cc8e06e91d0"
+
+[[recording]]
+id = 740253
+url = "https://freesound.org/s/740253/"
+author = "JoontheFloof"
+licence = "CC0-1.0"
+why = "ping_rejected: relay switch tick, 0.1 s"
+sha256 = "066151920cb2846176cf74d06908418b9be6aae53582867ea9a42bfb93b543da"

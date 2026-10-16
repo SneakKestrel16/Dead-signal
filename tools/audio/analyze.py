@@ -65,7 +65,7 @@ def measure(x, sr):
     freqs, psd = signal.welch(x, sr, nperseg=min(len(x), 16384))
     flat = float(np.exp(np.mean(np.log(psd[1:] + 1e-20))) / (np.mean(psd[1:]) + 1e-20))
     # lasting tone: spectrogram column medians vs a wide median of the long-term spectrum
-    ff, tt, s = signal.spectrogram(x, sr, nperseg=8192, noverlap=4096)
+    ff, tt, s = signal.spectrogram(x, sr, nperseg=min(len(x), 8192), noverlap=min(len(x), 8192) // 2)
     ls = 10 * np.log10(s + 1e-20)
     base = signal.medfilt(np.median(ls, axis=1), 41)
     held = np.mean(ls > base[:, None] + 15, axis=1)

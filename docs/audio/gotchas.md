@@ -28,3 +28,25 @@ Traps hit in this project. The general ones are in [pipeline-handoff.md](pipelin
 
 - **`tools/audio/` sits inside the Godot project, so the editor imports every recording and legacy WAV** (123 `.import`
   files appeared after `--import`). `tools/audio/.gdignore` stops it; keep the file.
+
+## Family batches (2026-10-16)
+
+- **`analyze.measure` fails on clips under 8192 samples** (186 ms: "noverlap must be less than nperseg"), which broke
+  `review.py` for UI ticks. `nperseg=min(len(x), 8192)` fixes it (scares/UI batch).
+- **`export.py --only` is a name prefix**: `--only ui_` does not export `ping_rejected`; use `--only ping_`.
+- **Short ticks hit the -1 dBFS ceiling before -26 LUFS** (a clip under 400 ms counts as padded with silence): UI
+  ticks are levelled at about -29.
+- **`fetch.py --search` crashes with a cp1252 error** on pages containing "►": set `PYTHONIOENCODING=utf-8`.
+- **Freesound search costs about 35 s with `--n 5`**: every hit is one info request at 4 s spacing.
+- **A Python script run from `%LOCALAPPDATA%\Temp` imports whatever sits beside it**: an unrelated `inspect.py`
+  there shadows the stdlib and breaks numpy. Keep scratch scripts in a clean folder.
+- **Pitch estimates mislead on short, rough voiced sounds** (octave errors from autocorrelation and the
+  `analyze.py` tone detector): never set a pitch ratio from one reading (voices batch).
+- **Envelope correlation says nothing about whether words survive radio smearing**: only the designer's ear can
+  (voices batch).
+- **A "screams" recording has breath dips inside a segment** that an energy gate misses: print a 50 ms envelope and
+  cut the steady stretch. Freesound 439441 (`bear_mad`) is one roar looped about 4 times, flat at -7 dB.
+- **No recording of a pane that cracks but stays was found**: `scare_glass_break` is built from ice cracking and glass
+  pieces; the designer's ear decides.
+- **The export's loudness report used the family default as every sound's target**; a sound with its own `level`
+  (pain cry -19.5) then failed `sound_bank_test`. The target column is now the sound's own level.

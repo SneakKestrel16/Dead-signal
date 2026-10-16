@@ -98,3 +98,46 @@ Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `to
 | https://freesound.org/s/243382/ | JohnsonBrandEditing | CC0 1.0 |
 | https://freesound.org/s/439441/ | Asteroiderer | CC0 1.0 |
 | https://freesound.org/s/344972/ | mrmunk | CC0 1.0 |
+
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/scares.toml`, MP3 previews and decoded WAVs committed). Scares `scare/*` and the stinger, cut, layered and run through a local speaker() for alarms and PA voices by `tools/audio/sounds/scares.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/452609/ | kyles | CC0 1.0 |
+| https://freesound.org/s/411694/ | deoking | CC0 1.0 |
+| https://freesound.org/s/536777/ | egomassive | CC0 1.0 |
+| https://freesound.org/s/128103/ | Project_Trident | CC0 1.0 |
+| https://freesound.org/s/474008/ | Gammelsmurfen778 | CC0 1.0 |
+| https://freesound.org/s/465696/ | ZapertyHD | CC0 1.0 |
+| https://freesound.org/s/451933/ | kyles | CC0 1.0 |
+| https://freesound.org/s/807384/ | tt_runscript | CC0 1.0 |
+| https://freesound.org/s/406641/ | tlcolbe | CC0 1.0 |
+| https://freesound.org/s/724123/ | saha213131 | CC0 1.0 |
+| https://freesound.org/s/341176/ | klangfabrik | CC0 1.0 |
+| https://freesound.org/s/379015/ | 13FPanska_Cerny_Jan | CC0 1.0 |
+| https://freesound.org/s/262635/ | j_p_higgins | CC0 1.0 |
+| https://freesound.org/s/177224/ | ecfike | CC0 1.0 |
+| https://freesound.org/s/572529/ | TRP | CC0 1.0 |
+| https://freesound.org/s/743963/ | cryptidcat | CC0 1.0 |
+| https://freesound.org/s/450154/ | kyles | CC0 1.0 |
+| https://freesound.org/s/637521/ | kyles | CC0 1.0 |
+| https://freesound.org/s/616850/ | TRP | CC0 1.0 |
+| https://freesound.org/s/756799/ | telescapes | CC0 1.0 |
+| https://freesound.org/s/542635/ | Warrick_Lendon | CC0 1.0 |
+| https://freesound.org/s/683256/ | MathewHenry | CC0 1.0 |
+| https://freesound.org/s/373169/ | sgossner | CC0 1.0 |
+| https://freesound.org/s/374487/ | sgossner | CC0 1.0 |
+| https://freesound.org/s/376204/ | Maximum993 | CC0 1.0 |
+| https://freesound.org/s/145363/ | kleanthism | CC0 1.0 |
+| https://freesound.org/s/414505/ | renspiep | CC0 1.0 |
+| https://freesound.org/s/234236/ | ProductionNow | CC0 1.0 |
+| https://freesound.org/s/684805/ | MathewHenry | CC0 1.0 |
+
+Freesound recordings (fetched 2026-10-16 by `tools/audio/fetch.py`; manifest `tools/audio/sources/ui.toml`, MP3 previews and decoded WAVs committed). UI `ui/click` and `ping/rejected` by `tools/audio/sounds/ui.py`:
+
+| Freesound id | Author | Licence |
+|---|---|---|
+| https://freesound.org/s/213004/ | abstraktgeneriert | CC0 1.0 |
+| https://freesound.org/s/678248/ | Pixeliota | CC0 1.0 |
+| https://freesound.org/s/323746/ | Reitanna | CC0 1.0 |
+| https://freesound.org/s/740253/ | JoontheFloof | CC0 1.0 |
