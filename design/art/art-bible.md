@@ -90,7 +90,7 @@ Each state is distinct by colour temperature, contrast and motion, not just brig
 
 - **Archetype:** facility evacuees in padded work jumpsuits with one carried item each. Anonymous bodies, memorable accessories.
 - **Identical bodies.** All survivors share one skeleton, height, proportions and animation set so the disguise needs no scale or rig differences. Identity differs only through the look resource below.
-- **Identity kit = one copyable `CharacterLook` resource per survivor, three redundant traits (hue + silhouette + pattern):**
+- **Identity kit = one copyable `CharacterLook` resource per survivor (in code: the existing `CharacterDef`, `data/characters/c1..c5.tres`), three redundant traits (hue + silhouette + pattern):**
 
 | Slot | Suit colour | Accessory silhouette | Chest stripe pattern |
 |------|-------------|----------------------|----------------------|
