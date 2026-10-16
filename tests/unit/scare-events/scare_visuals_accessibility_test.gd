@@ -163,3 +163,56 @@ func test_impossible_frame_only_on_the_target_feed() -> void:
 		_step(a)
 	assert_bool(fa.screen.visible).is_false()
 	assert_object((fa.screen.material_override as StandardMaterial3D).albedo_texture).is_equal(fa.viewport.get_texture())
+
+
+# VFX ASSET-079, 083, 084 (design/assets/specs/vfx-assets.md) -----------------------------------------
+
+const ORIGIN := Vector3(4.0, 0.0, -6.0)
+
+
+func _deliver(v: ScareVisuals, scare: StringName) -> void:
+	v.on_scare(1, {"scare": scare, "scope": 0, "origin": ORIGIN, "intensity": 0})
+
+
+func test_reveal_flares_at_the_origin_and_fades() -> void:
+	var r := _rig()
+	var v: ScareVisuals = r[4]
+	_deliver(v, ScareVisuals.REVEAL)
+	assert_float(v.flare().light_energy).is_greater(0.0)
+	assert_vector(v.flare().position - ORIGIN).is_equal(ScareVisuals.FLARE_UP)
+	for i in int(ScareVisuals.FLARE_S / STEP) + 2:
+		_step(r)
+	assert_float(v.flare().light_energy).is_equal(0.0)
+
+
+func test_reduced_flash_reveal_has_no_flare() -> void:
+	var r := _rig()
+	(r[0] as ScarePresenter).flash_scale = 0.0
+	var v: ScareVisuals = r[4]
+	_deliver(v, ScareVisuals.REVEAL)
+	_step(r)
+	assert_float(v.flare().light_energy).is_equal(0.0)
+
+
+func test_door_burst_throws_dust_and_debris_and_glass_break_drops_shards() -> void:
+	var r := _rig()
+	var v: ScareVisuals = r[4]
+	_deliver(v, ScareVisuals.DOOR_BURST)
+	for b: StringName in [&"vfx_door_dust", &"vfx_door_debris"]:
+		var p := v.burst(b)
+		assert_bool(p.emitting).override_failure_message(b).is_true()
+		assert_vector(p.position).is_equal(ORIGIN + ScareVisuals.DOOR_UP)
+	assert_bool(v.burst(&"vfx_glass_shards").emitting).is_false()
+	_deliver(v, ScareVisuals.GLASS_BREAK)
+	assert_bool(v.burst(&"vfx_glass_shards").emitting).is_true()
+	assert_vector(v.burst(&"vfx_glass_shards").position).is_equal(ORIGIN + ScareVisuals.GLASS_UP)
+
+
+func test_other_scares_fire_no_particles_or_flare() -> void:
+	var r := _rig()
+	var v: ScareVisuals = r[4]
+	_deliver(v, &"blackout")
+	assert_float(v.flare().light_energy).is_equal(0.0)
+	for b: StringName in [&"vfx_door_dust", &"vfx_door_debris", &"vfx_glass_shards"]:
+		assert_bool(v.burst(b).emitting).is_false()
+

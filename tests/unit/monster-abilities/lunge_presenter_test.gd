@@ -1,7 +1,8 @@
 # Story monster-abilities/007: client presentation of the Lunge (design/gdd/monster-abilities.md rule 5,
 # Visual/Audio Requirements, Impact Moments; ADR-0013 §2-3). LungePresenter is fed Sound payloads as the
 # ClientEventRouter hands them over; remote bodies are plain Node3Ds with a "Mesh" child, as RoundClient
-# draws them. Greybox stand-ins: generated tones, a squashed mesh for the coil, a tilt for the stumble.
+# draws them. Greybox stand-in: generated tones. The coil and stumble are the art's clips (BodyVisual.clip_for
+# of pose()), so the presenter never squashes or tilts the "Mesh" the art hangs under.
 extends GdUnitTestSuite
 
 const MONSTER_H := 7
@@ -24,12 +25,8 @@ func before_test() -> void:
 		add_child(n)
 		_remotes[h] = n
 	_remotes[MONSTER_H].position = MONSTER_AT
-	_p = auto_free(LungePresenter.new(_knobs, _remotes, _is_monster))
+	_p = auto_free(LungePresenter.new(_knobs, _remotes))
 	add_child(_p)
-
-
-func _is_monster(h: int) -> bool:
-	return h == MONSTER_H
 
 
 func _sound(sound_set: StringName, at: Vector3) -> void:
@@ -69,10 +66,15 @@ func test_unknown_sound_sets_play_nothing() -> void:
 func test_coil_pose_holds_for_the_wind_up_then_rests() -> void:
 	_sound(MonsterAbilities.CUE_SOUND, MONSTER_AT)
 	_p.advance(_knobs.ability.lunge_windup_s * 0.5)
-	assert_float(_mesh(MONSTER_H).scale.y).is_less(1.0)
+	# Rule 5 telegraph: the visible crouch-and-coil is the true form's Lunge_Coil clip for the whole wind-up.
+	assert_str(_p.pose()).is_equal("coil")
+	assert_str(BodyVisual.clip_for(CharacterDef.TRUE_FORM_APPEARANCE_ID, 0, 0.0, _p.pose())).is_equal("Lunge_Coil")
+	assert_str(BodyVisual.clip_for(3, 0, 0.0, _p.pose())).is_equal("Idle") # survivor bodies never coil
+	# No squash on the art: the clip carries the pose.
+	assert_vector(_mesh(MONSTER_H).scale).is_equal(Vector3.ONE)
 	assert_vector(_mesh(SURVIVOR_H).scale).is_equal(Vector3.ONE)
 	_p.advance(_knobs.ability.lunge_windup_s * 0.6)
-	assert_vector(_mesh(MONSTER_H).scale).is_equal(Vector3.ONE)
+	assert_str(_p.pose()).is_equal("")
 
 
 func test_scrape_ends_the_coil_and_stumbles_for_the_miss_slow() -> void:
@@ -81,11 +83,12 @@ func test_scrape_ends_the_coil_and_stumbles_for_the_miss_slow() -> void:
 	_sound(MonsterAbilities.SCRAPE_SOUND, MONSTER_AT)
 	assert_bool(_p.player(MonsterAbilities.SCRAPE_SOUND).playing).is_true()
 	_p.advance(_knobs.ability.miss_slow_s * 0.5)
+	assert_str(_p.pose()).is_equal("stumble")
+	assert_str(BodyVisual.clip_for(CharacterDef.TRUE_FORM_APPEARANCE_ID, 0, 0.0, _p.pose())).is_equal("Lunge_Stumble")
 	assert_vector(_mesh(MONSTER_H).scale).is_equal(Vector3.ONE)
-	assert_float(absf(_mesh(MONSTER_H).rotation.x)).is_greater(0.0)
-	assert_float(_mesh(SURVIVOR_H).rotation.x).is_equal(0.0)
-	_p.advance(_knobs.ability.miss_slow_s * 0.6)
 	assert_float(_mesh(MONSTER_H).rotation.x).is_equal(0.0)
+	_p.advance(_knobs.ability.miss_slow_s * 0.6)
+	assert_str(_p.pose()).is_equal("")
 
 
 # AC-3: presentation-only hit-stop: remote bodies hold their pose for lunge_hit_stop_s, nothing else stops.
@@ -111,3 +114,25 @@ func test_a_body_freed_during_the_hit_stop_is_skipped() -> void:
 	_remotes.erase(SURVIVOR_H)
 	_p.advance(0.01)
 	assert_vector(_remotes[MONSTER_H].position).is_equal(MONSTER_AT)
+
+
+# VFX ASSET-085 (design/assets/specs/vfx-assets.md; art bible §5 no gore) ---------------------------
+
+func test_hit_bursts_dust_and_cloth_on_the_survivor_and_no_scrape() -> void:
+	var at := Vector3(1.0, 0.0, -3.0)
+	_sound(MonsterAbilities.HIT_SOUND, at)
+	assert_bool(_p.burst(&"vfx_lunge_hit").emitting).is_true()
+	assert_vector(_p.burst(&"vfx_lunge_hit").position).is_equal(at + LungePresenter.HIT_UP)
+	assert_bool(_p.burst(&"vfx_lunge_scrape").emitting).is_false()
+	# No blood: no burst colour is red-dominant.
+	for b: StringName in [&"vfx_lunge_hit", &"vfx_lunge_scrape"]:
+		var c := (_p.burst(b).process_material as ParticleProcessMaterial).color
+		assert_bool(c.r > c.g * 1.5 and c.r > c.b * 1.5).override_failure_message(b).is_false()
+
+
+func test_miss_scrapes_floor_dust_at_the_monster() -> void:
+	_sound(MonsterAbilities.SCRAPE_SOUND, MONSTER_AT)
+	assert_bool(_p.burst(&"vfx_lunge_scrape").emitting).is_true()
+	assert_vector(_p.burst(&"vfx_lunge_scrape").position).is_equal(MONSTER_AT)
+	assert_bool(_p.burst(&"vfx_lunge_hit").emitting).is_false()
+

@@ -136,7 +136,9 @@ func test_own_shock_jitters_the_camera_offset_and_shows_the_blue_edge() -> void:
 	# Past stun_root_s the jitter is over: the offset returns to rest (it never touched yaw or pitch).
 	_fx.advance(_knobs.defense.stun_root_s)
 	assert_bool(_fx.rotation.is_zero_approx()).is_true()
-	_p.advance(ShockPresenter.EDGE_S)
+	# ASSET-080: the edge lasts the stun (stun_root_s), then goes.
+	assert_float(_p.edge().modulate.a).is_greater(0.0)
+	_p.advance(_knobs.defense.stun_root_s)
 	assert_float(_p.edge().modulate.a).is_equal(0.0)
 
 
@@ -163,8 +165,48 @@ func test_reduced_flash_scales_the_arc_spark_and_edge() -> void:
 	var seen := _observe(H_SURVIVOR, &"PlayerShocked")
 	assert_float(seen[3]).is_equal(0.0)
 	assert_float(seen[1]).is_greater(0.0) # the stagger and sound still play
+	# ASSET-080 reduced-flash variant: the edge still shows, as a static edge with no flicker.
 	_p.on_player_shocked(11, {"own": true})
-	assert_float(_p.edge().modulate.a).is_equal(0.0)
+	var alphas: Array[float] = []
+	for i in 20:
+		_p.advance(0.02)
+		alphas.append(_p.edge().modulate.a)
+	assert_float(alphas.min()).is_equal(ShockPresenter.EDGE_STATIC_A)
+	assert_float(alphas.max()).is_equal(ShockPresenter.EDGE_STATIC_A)
+
+
+func test_reduced_flash_fires_no_arc_burst() -> void:
+	_body(H_SURVIVOR, C3, Vector3.ZERO)
+	_p.flash_scale = 0.0
+	_observe(H_SURVIVOR, &"PlayerShocked")
+	assert_bool(_p.arc_burst().emitting).is_false()
+
+
+func test_full_flash_edge_flickers() -> void:
+	_p.on_player_shocked(11, {"own": true})
+	var alphas: Array[float] = []
+	for i in 20:
+		_p.advance(0.02)
+		alphas.append(_p.edge().modulate.a)
+	assert_float(alphas.max() - alphas.min()).is_greater(0.1)
+
+
+# VFX ASSET-080/081: arc particles at the target, spark particles on a resisted hit -----------------
+
+func test_shock_fires_the_blue_white_arc_burst_at_the_target_chest() -> void:
+	_body(H_SURVIVOR, C3, Vector3(1, 0, 2))
+	_p.on_player_shocked(10, {"body": H_SURVIVOR})
+	assert_bool(_p.arc_burst().emitting).is_true()
+	assert_vector(_p.arc_burst().position).is_equal(Vector3(1, 0, 2) + ShockPresenter.CHEST_UP)
+	assert_bool(_p.spark_burst().emitting).is_false()
+
+
+func test_resisted_hit_fires_the_spark_burst_only() -> void:
+	_body(H_MONSTER, CharacterDef.TRUE_FORM_APPEARANCE_ID, Vector3(2, 0, 2))
+	_p.on_player_shocked(10, {"body": H_MONSTER})
+	assert_bool(_p.spark_burst().emitting).is_true()
+	assert_vector(_p.spark_burst().position).is_equal(Vector3(2, 0, 2) + ShockPresenter.CHEST_UP)
+	assert_bool(_p.arc_burst().emitting).is_false()
 
 
 func test_flash_cap_refuses_the_arc_but_not_the_stagger() -> void:

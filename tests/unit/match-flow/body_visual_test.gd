@@ -119,49 +119,50 @@ func test_unknown_state_falls_back_to_idle() -> void:
 func test_leaving_downed_plays_stand_up_and_coil_runs_into_the_dash() -> void:
 	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
 	mesh.mesh = CapsuleMesh.new()
-	_bv.show(4, mesh, 3, MovementStep.Gait.CRAWL, false, Vector3.ZERO, 0.0)
+	_bv.show(4, mesh, 3, MovementStep.Gait.CRAWL, Vector3.ZERO, 0.0)
 	var ap := mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
 	assert_str(String(ap.current_animation)).is_equal("Downed")
-	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, false, Vector3.ZERO, 16.0)
+	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, Vector3.ZERO, 16.0)
 	assert_str(String(ap.current_animation)).is_equal("Stand_Up")
-	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, false, Vector3.ZERO, 32.0)
+	_bv.show(4, mesh, 3, MovementStep.Gait.WALK, Vector3.ZERO, 32.0)
 	assert_str(String(ap.current_animation)).is_equal("Stand_Up") # held until it finishes
 	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
 	mesh = auto_free(MeshInstance3D.new())
-	_bv.show(5, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 0.0, &"coil")
+	_bv.show(5, mesh, tf, MovementStep.Gait.WALK, Vector3.ZERO, 0.0, &"coil")
 	ap = mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
 	assert_str(String(ap.current_animation)).is_equal("Lunge_Coil")
-	_bv.show(5, mesh, tf, MovementStep.Gait.SPRINT, false, Vector3.ZERO, 16.0)
+	_bv.show(5, mesh, tf, MovementStep.Gait.SPRINT, Vector3.ZERO, 16.0)
 	assert_str(String(ap.current_animation)).is_equal("Lunge_Dash")
 
 
-func test_show_rebuilds_on_appearance_change_and_hides_art_while_transforming() -> void:
+func test_show_rebuilds_on_appearance_change_and_keeps_the_art_while_transforming() -> void:
 	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
 	var capsule := CapsuleMesh.new()
 	mesh.mesh = capsule
-	_bv.show(4, mesh, 2, MovementStep.Gait.WALK, false, Vector3.ZERO, 0.0)
+	_bv.show(4, mesh, 2, MovementStep.Gait.WALK, Vector3.ZERO, 0.0)
 	var first := mesh.get_node(^"Visual") as Node3D
 	assert_str(String(_accessories(first)[0].name)).is_equal(String(ACCESSORY[1]))
 	assert_object(mesh.mesh).is_null()
-	_bv.show(4, mesh, 2, MovementStep.Gait.WALK, false, Vector3(0.05, 0, 0), 16.0)
+	_bv.show(4, mesh, 2, MovementStep.Gait.WALK, Vector3(0.05, 0, 0), 16.0)
 	assert_object(mesh.get_node(^"Visual")).is_same(first)
 	assert_str(String((first.find_child("AnimationPlayer", true, false) as AnimationPlayer).current_animation)) \
 			.is_equal("Walk")
-	_bv.show(4, mesh, 0, MovementStep.Gait.WALK, true, Vector3(0.05, 0, 0), 32.0)
+	_bv.show(4, mesh, 0, MovementStep.Gait.WALK, Vector3(0.05, 0, 0), 32.0)
 	var second := mesh.get_node(^"Visual") as Node3D
 	assert_object(second.find_child(BodyVisual.TRUE_LOD_NAMES[0], true, false)).is_not_null()
-	assert_bool(second.visible).is_false()
-	assert_object(mesh.mesh).is_same(capsule)
+	# ASSET-078: the warp plays on the art (TransformPresenter overlay), so no capsule ever swaps back in.
+	assert_bool(second.visible).is_true()
+	assert_object(mesh.mesh).is_null()
 
 
 func test_a_finished_coil_is_held_not_restarted() -> void:
 	var mesh: MeshInstance3D = auto_free(MeshInstance3D.new())
 	mesh.mesh = CapsuleMesh.new()
 	var tf := CharacterDef.TRUE_FORM_APPEARANCE_ID
-	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 0.0, &"coil")
+	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, Vector3.ZERO, 0.0, &"coil")
 	var ap := mesh.get_node(^"Visual").find_child("AnimationPlayer", true, false) as AnimationPlayer
 	ap.advance(ap.get_animation(&"Lunge_Coil").length + 1.0)
 	assert_bool(ap.is_playing()).is_false()
-	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, false, Vector3.ZERO, 16.0, &"coil")
+	_bv.show(1, mesh, tf, MovementStep.Gait.WALK, Vector3.ZERO, 16.0, &"coil")
 	assert_bool(ap.is_playing()).is_false()
 	assert_str(String(ap.assigned_animation)).is_equal("Lunge_Coil")

@@ -59,7 +59,10 @@ func test_disguised_shock_staggers_the_borrowed_body_with_its_survivors_grunt() 
 	_p.advance(0.05)
 	assert_array(_cues).is_equal([[&"voice_c3.shocked_grunt", Vector3(1, 0, 2)]])
 	assert_float(_p.stagger_weight(H_COPY)).is_greater(0.0)
-	assert_float(copy.rotation.x).is_not_equal(0.0)
+	# The stagger is the art's clip (BodyVisual.clip_for): the survivor hit reaction, never a tilt of the
+	# "Mesh" on top of it (the art lives under it, so a tilt would double the pose).
+	assert_str(BodyVisual.clip_for(C3, 0, 0.0, BodyVisual.STAGGER)).is_equal("Hit_Chest")
+	assert_float(copy.rotation.x).is_equal(0.0)
 	# The real survivor beside it is untouched: only the hit body staggers.
 	assert_float(_p.stagger_weight(H_REAL)).is_equal(0.0)
 	assert_float(real.rotation.x).is_equal(0.0)
@@ -70,7 +73,9 @@ func test_true_form_stun_plays_the_monster_stagger_and_pain_cry() -> void:
 	_p.on_shock(10, {"body": H_COPY})
 	_p.advance(0.05)
 	assert_array(_cues).is_equal([[DisguisePresenter.TRUE_FORM_CUE, Vector3.ZERO]])
-	assert_float(mi.rotation.x).is_not_equal(0.0)
+	assert_float(_p.stagger_weight(H_COPY)).is_greater(0.0)
+	assert_str(BodyVisual.clip_for(CharacterDef.TRUE_FORM_APPEARANCE_ID, 0, 0.0, BodyVisual.STAGGER)).is_equal("Hit_Head")
+	assert_float(mi.rotation.x).is_equal(0.0)
 
 
 func test_cue_follows_the_body_shown_not_the_event_type() -> void:
@@ -83,13 +88,13 @@ func test_cue_follows_the_body_shown_not_the_event_type() -> void:
 			[&"voice_c3.shocked_grunt", DisguisePresenter.TRUE_FORM_CUE])
 
 
-func test_stagger_lasts_the_stun_root_then_restores_the_rest_pose() -> void:
+func test_stagger_lasts_the_stun_root_and_never_moves_the_mesh() -> void:
 	var mi := _body(H_COPY, C3, Vector3.ZERO)
 	var rest := mi.transform
 	_p.on_shock(10, {"body": H_COPY})
 	_p.advance(_knobs.defense.stun_root_s * 0.5)
 	assert_float(_p.stagger_weight(H_COPY)).is_greater(0.0)
-	assert_bool(mi.transform.is_equal_approx(rest)).is_false()
+	assert_bool(mi.transform.is_equal_approx(rest)).is_true()
 	_p.advance(_knobs.defense.stun_root_s * 0.5 + 0.01)
 	assert_float(_p.stagger_weight(H_COPY)).is_equal(0.0)
 	assert_bool(mi.transform.is_equal_approx(rest)).is_true()

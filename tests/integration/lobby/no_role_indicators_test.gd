@@ -333,11 +333,22 @@ func _assert_plain_body(body: Node3D, needles: Array[String]) -> void:
 					.override_failure_message("%s.%s carries '%s'" % [where, prop.name, needle]).is_false()
 
 
-## No node in the client's whole tree draws a world-space tag, icon or marker.
+## No node in the client's whole tree draws a world-space tag, icon or marker. The one allowed particle node
+## is an event VFX burst (VfxBurst, design/assets/specs/vfx-assets.md): named vfx_*, one-shot, idle when no
+## event fired, and never under a remote body, so it cannot mark one (LB-6, art bible P2).
 func _assert_no_world_tags(client: Node) -> void:
 	for n in client.find_children("*", "", true, false):
-		assert_bool(n.get_class() in TAG_CLASSES) \
-			.override_failure_message("world tag %s (%s)" % [client.get_path_to(n), n.get_class()]).is_false()
+		var where := "world tag %s (%s)" % [client.get_path_to(n), n.get_class()]
+		if n is GPUParticles3D and String(n.name).begins_with("vfx_"):
+			var p := n as GPUParticles3D
+			assert_bool(p.one_shot and not p.emitting).override_failure_message(where + " left emitting").is_true()
+			var up := p.get_parent()
+			while up != null and up != client:
+				assert_bool(up.has_node(^"Mesh") and up.has_node(^"Cone")) \
+					.override_failure_message(where + " under a body").is_false()
+				up = up.get_parent()
+			continue
+		assert_bool(n.get_class() in TAG_CLASSES).override_failure_message(where).is_false()
 
 
 func _on_joined(pid: int, parent: Node, bodies: Dictionary) -> void:

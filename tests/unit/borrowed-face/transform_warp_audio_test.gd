@@ -206,3 +206,76 @@ func test_warp_covers_the_transforming_body_only_while_the_flag_is_set() -> void
 	_states[H_MONSTER] = {"transforming": true}
 	p.advance(0.0)
 	assert_float((mon.material_overlay as ShaderMaterial).get_shader_parameter(&"warp")).is_equal(0.0)
+
+
+## A drawn body as RoundClient + BodyVisual leave it: "Mesh" with no mesh of its own (the capsule is
+## detached) and the art under "Mesh/Visual": two LOD meshes and an accessory. Returns the art meshes.
+func _art_body(handle: int, transforming: bool, appearance: int = S1) -> Array[MeshInstance3D]:
+	var mesh := _body(handle, transforming)
+	_states[handle]["appearance"] = appearance
+	var visual := Node3D.new()
+	visual.name = BodyVisual.VISUAL
+	mesh.add_child(visual)
+	var out: Array[MeshInstance3D] = []
+	for n: StringName in [&"body_lod0", &"body_lod1", &"acc_c1_hardhat"]:
+		var mi := MeshInstance3D.new()
+		mi.name = n
+		mi.mesh = BoxMesh.new()
+		visual.add_child(mi)
+		out.append(mi)
+	return out
+
+
+## ASSET-078: the warp is on the art itself (every art mesh of the body, one shared material), not on a
+## swapped-in capsule, and leaves every one of them when the flag clears.
+func test_warp_overlays_every_art_mesh_while_transforming_only() -> void:
+	var p := _presenter()
+	var art := _art_body(H_MONSTER, true)
+	var other := _art_body(H_OTHER, false)
+	p.advance(0.0)
+	var mat := art[0].material_overlay as ShaderMaterial
+	assert_object(mat).is_not_null()
+	assert_object(mat.shader).is_same(TransformPresenter.WARP_SHADER)
+	for mi in art:
+		assert_object(mi.material_overlay).is_same(mat)
+	for mi in other:
+		assert_object(mi.material_overlay).is_null()
+	_states[H_MONSTER]["transforming"] = false
+	p.advance(0.016)
+	for mi in art:
+		assert_object(mi.material_overlay).is_null()
+
+
+## LB-6 / art bible P2: a steady disguised body (a survivor look, not transforming) never carries the warp,
+## however long it is drawn.
+func test_no_warp_on_a_steady_disguised_body() -> void:
+	var p := _presenter()
+	var art := _art_body(H_MONSTER, false, S1)
+	for i in 10:
+		p.advance(0.5)
+	for mi in art:
+		assert_object(mi.material_overlay).is_null()
+
+
+## The art is rebuilt when the appearance changes (BodyVisual); meshes that appear mid-warp get the same
+## overlay, at the same progress.
+func test_meshes_built_mid_warp_join_the_running_warp() -> void:
+	var p := _presenter()
+	var art := _art_body(H_MONSTER, true)
+	p.advance(0.0)
+	p.advance(_knobs.borrowed_face.transform_duration_s / 2.0)
+	var late := MeshInstance3D.new()
+	late.mesh = BoxMesh.new()
+	art[0].get_parent().add_child(late)
+	p.advance(0.0)
+	assert_object(late.material_overlay).is_same(art[0].material_overlay)
+	assert_float((late.material_overlay as ShaderMaterial).get_shader_parameter(&"warp")).is_equal_approx(0.5, 0.01)
+
+
+## Reduced motion reaches the overlay: static tint, no moving shimmer (ADR-0010 §6).
+func test_reduced_motion_reaches_the_overlay() -> void:
+	var p := _presenter()
+	var art := _art_body(H_MONSTER, true)
+	p.reduced_motion = true
+	p.advance(0.0)
+	assert_bool((art[0].material_overlay as ShaderMaterial).get_shader_parameter(&"reduced_motion")).is_true()

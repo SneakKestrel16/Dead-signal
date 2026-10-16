@@ -276,3 +276,22 @@ func test_core_pulses_once_per_install_softer_with_reduced_flash() -> void:
 	_event(SurvivorObjectives.FUSE_BOX_ID + 1, F.INSTALLED)
 	_props.advance(0.0)
 	assert_float(_props.core_energy()).is_equal_approx(base * ObjectiveProps.CORE_PULSE_REDUCED_PEAK, 1e-3)
+
+
+## VFX ASSET-082: brief sparks at the fuse box's socket when its fuse goes in, once per install.
+func test_fuse_install_sparks_at_its_box_socket() -> void:
+	var b1 := _first(&"fuse_box", 1)
+	_grant(b1, SurvivorObjectives.FUSE_BOX_ID + 1)
+	assert_bool(_props.install_sparks().emitting).is_false()
+	_event(SurvivorObjectives.FUSE_BOX_ID + 1, F.INSTALLED)
+	assert_bool(_props.install_sparks().emitting).is_true()
+	assert_vector(_props.install_sparks().position).is_equal_approx(
+			_prop(b1).global_transform * ObjectiveProps.SOCKET, Vector3.ONE * 1e-4)
+
+
+func test_no_sparks_without_an_install() -> void:
+	var b0 := _first(&"fuse_box")
+	_grant(b0, SurvivorObjectives.FUSE_BOX_ID)
+	_event(SurvivorObjectives.FUSE_ID, F.DROPPED, {"at": Vector3(1, 0, 1)})
+	assert_bool(_props.install_sparks().emitting).is_false()
+

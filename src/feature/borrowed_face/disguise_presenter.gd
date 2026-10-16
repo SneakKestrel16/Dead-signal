@@ -7,8 +7,8 @@ class_name DisguisePresenter extends Node
 ## by the event type, role or player: the survivor's shocked grunt for C1-C5, the pain cry for the true
 ## form. Disguise copy rules need no client code: carried items, Downed presentation and name labels are
 ## never drawn on a body (ADR-0010 §7), and footsteps use the appearance's set server-side (Footsteps).
-## Client only; decides nothing and emits no server event. Greybox: the stagger tilts the body's "Mesh"
-## child backwards about the feet and eases it upright; the rig's stagger clip replaces it (ADR-0010 §3).
+## Client only; decides nothing and emits no server event. The stagger itself is the art's hit clip
+## (BodyVisual.clip_for with STAGGER while stagger_weight > 0, ADR-0010 §3); nothing here moves the body.
 ## Usage (client):
 ##   var d := DisguisePresenter.new(remotes, puppets.state_of, knobs)
 ##   add_child(d)   # the shock events reach on_shock through ShockPresenter (survivor-defense story 011)
@@ -22,9 +22,6 @@ signal cue(sound: StringName, at: Vector3)
 const TRUE_FORM_CUE := &"voice_c0.pain_cry"
 ## Survivor cue = CharacterDef.voice_set + this suffix (same inference as TRUE_FORM_CUE).
 const GRUNT_SUFFIX := ".shocked_grunt"
-## Greybox stagger tilt at its peak, radians. NOT SOURCEABLE: no animation direction yet; settled by the
-## stagger clip of the shared survivor rig and the true-form rig (ADR-0010 §3).
-const STAGGER_TILT_RAD := 0.35
 
 ## Shock or stun payloads that named no body and were not the own one.
 var rejected: int = 0
@@ -36,8 +33,6 @@ var _duration_s: float
 var _voices: Dictionary[int, StringName] = {}
 ## handle -> seconds since its stagger began
 var _staggers: Dictionary[int, float] = {}
-## handle -> the Mesh transform before the stagger
-var _rest: Dictionary[int, Transform3D] = {}
 
 
 ## `remotes`: the client's handle -> drawn body (shared, not copied). `state_of(handle) -> Dictionary`:
@@ -86,24 +81,12 @@ func stagger_weight(handle: int) -> float:
 	return 1.0 - _staggers[handle] / _duration_s
 
 
-## Moves every stagger on by `delta` seconds and poses the drawn bodies.
+## Moves every stagger on by `delta` seconds; a stagger ends after stun_root_s or when its body goes.
 func advance(delta: float) -> void:
 	for h: int in _staggers.keys():
-		var mi: Node3D = _remotes[h].get_node_or_null(^"Mesh") if _remotes.has(h) else null
-		if mi == null:
-			_staggers.erase(h)
-			_rest.erase(h)
-			continue
-		if not _rest.has(h):
-			_rest[h] = mi.transform
 		_staggers[h] += delta
-		if _staggers[h] >= _duration_s:
-			mi.transform = _rest[h]
+		if not _remotes.has(h) or _staggers[h] >= _duration_s:
 			_staggers.erase(h)
-			_rest.erase(h)
-			continue
-		# Tilt about the body origin (its feet), backwards from its facing.
-		mi.transform = Transform3D(Basis(Vector3.RIGHT, STAGGER_TILT_RAD * stagger_weight(h)), Vector3.ZERO) * _rest[h]
 
 
 func _process(delta: float) -> void:

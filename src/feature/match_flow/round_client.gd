@@ -272,8 +272,7 @@ func _on_connected() -> void:
 		add_child(lights)
 		camera.environment = lights.presets.environment()
 		router.subscribe(EventBatch.LIGHTING, lights.on_lighting)
-		lunge_fx = LungePresenter.new(knobs, remotes, func(h: int) -> bool:
-			return puppets.state_of(h).get("appearance", -1) == CharacterDef.TRUE_FORM_APPEARANCE_ID)
+		lunge_fx = LungePresenter.new(knobs, remotes)
 		add_child(lunge_fx)
 		router.subscribe(EventBatch.SOUND, lunge_fx.on_sound)
 		warp = TransformPresenter.new(remotes, puppets.state_of, knobs)
@@ -373,6 +372,8 @@ func set_reduced_motion(on: bool) -> void:
 		viewmodel.reduced_motion = on
 	if objective_props != null:
 		objective_props.reduced_motion = on
+	if warp != null:
+		warp.reduced_motion = on
 	if hud != null:
 		push_reduced_motion(hud, on)
 
@@ -627,7 +628,7 @@ func _draw_remotes() -> void:
 		(n.get_node(^"Cone") as SpotLight3D).visible = st.get("flashlight", false)
 		if body_visuals != null: # character art over the greybox capsule (ASSET-001..010)
 			body_visuals.show(h, n.get_node(^"Mesh"), st.get("appearance", SnapshotCodec.NO_APPEARANCE),
-					st.get("gait", 0), st.get("transforming", false), pose[0], _now_ms,
+					st.get("gait", 0), pose[0], _now_ms,
 					BodyVisual.STAGGER if disguise.stagger_weight(h) > 0.0 else lunge_fx.pose()) # clips over the gait
 			if objective_props != null: # carried objectives in the right hand (rule 10)
 				objective_props.hold_items(n.get_node(^"Mesh"), st.get("drive", false), st.get("fuse", false))

@@ -10,7 +10,7 @@ class_name BodyVisual extends RefCounted
 ## coil, miss stumble and hit (LungePresenter.pose()); clips in tools/art/build_anims.py. True-form clips play
 ## only on the true form, so a disguise borrows the survivor set whole (Borrowed Face, ASSET-008).
 ## Client presentation only; decides nothing. Built nodes carry no script, meta or file path (AC-LB-31).
-## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, transforming, pos, now_ms, action)`
+## Usage (RoundClient._draw_remotes): `visuals.show(h, mesh, appearance, gait, pos, now_ms, action)`
 
 const SURVIVOR_SCENE := "res://assets/art/characters/survivors/char_survivor_body.glb"
 const TRUE_FORM_SCENE := "res://assets/art/characters/shapeshifter/char_shapeshifter_true.glb"
@@ -71,8 +71,6 @@ var _acc_material: StandardMaterial3D
 ## handle -> [visual Node3D, appearance, last pos, last ms, smoothed speed, last clip]
 ## ponytail: entries of departed handles stay until the handle is reused (bounded by MAX_BODIES).
 var _shown := {}
-## handle -> the greybox capsule Mesh detached from its "Mesh" node while the art shows.
-var _capsules := {}
 
 
 ## [tint, accessory node name, stripe row] for `appearance`; the plain fallback for an unknown id.
@@ -150,12 +148,11 @@ func build(appearance: int) -> Node3D:
 	return n
 
 
-## Draws handle `h`'s art under its greybox `mesh` (RoundClient remote "Mesh"): rebuilt when the appearance
-## changes, animated from gait and drawn speed. While transforming the greybox capsule shows instead (it
-## carries TransformPresenter's warp overlay) and the art hides.
-## ponytail: capsule stand-in during the warp; move the overlay onto the art meshes when the warp is reworked.
-func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transforming: bool, pos: Vector3,
-		now_ms: float, action: StringName = &"") -> void:
+## Draws handle `h`'s art under its greybox `mesh` (RoundClient remote "Mesh"), whose capsule is detached:
+## rebuilt when the appearance changes, animated from gait and drawn speed. The art also shows while
+## transforming; TransformPresenter lays the warp over its meshes (ASSET-078).
+func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, pos: Vector3, now_ms: float,
+		action: StringName = &"") -> void:
 	var e: Array = _shown.get(h, [])
 	if e.is_empty() or not is_instance_valid(e[0]) or (e[0] as Node).get_parent() != mesh or e[1] != appearance:
 		if not e.is_empty() and is_instance_valid(e[0]):
@@ -173,14 +170,9 @@ func show(h: int, mesh: GeometryInstance3D, appearance: int, gait: int, transfor
 		e[2] = pos
 		e[3] = now_ms
 	var node := e[0] as Node3D
-	node.visible = not transforming
 	# The capsule mesh is detached rather than hidden (hiding "Mesh" would hide the art under it; a zero
 	# render layer mask made Godot 4.7.2 log "indexing did not unpair geometries from light" at teardown).
-	if transforming and mesh.mesh == null:
-		mesh.mesh = _capsules.get(h)
-	elif not transforming and mesh.mesh != null:
-		_capsules[h] = mesh.mesh
-		mesh.mesh = null
+	mesh.mesh = null
 	var clip := clip_for(appearance, gait, e[4], action)
 	var ap := node.find_child("AnimationPlayer", true, false) as AnimationPlayer
 	if LOCOMOTION.has(clip) and not FOLLOW.has(clip): # leaving Downed or the coil: follow it; let a follow-up finish

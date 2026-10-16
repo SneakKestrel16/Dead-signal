@@ -9,10 +9,14 @@ class_name ShockPresenter extends Node3D
 ## - MonsterStunned on a body (only ever sent for the true form): the stagger and pain cry, arc, crackle.
 ## - Own PlayerShocked: camera jitter (a CameraFx offset only: view direction and aim unchanged) and the
 ##   brief blue edge, with the crackle. Own MonsterStunned: the 200 ms camera jolt.
-## Reduced flash: `flash_scale` scales the arc, spark and edge, and the FlashLimiter can refuse the arc
-## and spark; the stagger and sounds still play. Reduced motion: CameraFx.enabled. Client only; decides
-## nothing and emits no server event. Greybox: the arc and spark are OmniLight3D pulses, the edge a
-## bordered panel; the VFX art pass replaces them.
+## VFX (design/assets/specs/vfx-assets.md): ASSET-080 the taser arc is a blue-white particle burst
+## (vfx_taser_arc) plus the OmniLight3D pulse at the target, and the victim's blue edge lasts the stun
+## (stun_root_s) with a flicker; ASSET-081 the resisted spark is a small orange burst (vfx_stun_spark) plus
+## its light. Reduced flash: `flash_scale` scales the arc, spark light and edge, and the FlashLimiter can
+## refuse the arc and spark light (the arc burst goes with them); at scale 0 the edge is static, no
+## flicker (ASSET-080 variant). The spark burst always plays: a few small particles, no luminance flash
+## (inference; a photosensitivity review settles it). The stagger and sounds always play. Reduced
+## motion: CameraFx.enabled. Client only; decides nothing and emits no server event.
 ## Usage (client):
 ##   var s := ShockPresenter.new(disguise, remotes, puppets.state_of, camera_fx, limiter, knobs)
 ##   add_child(s); router.subscribe(&"PlayerShocked", s.on_player_shocked)
@@ -39,8 +43,15 @@ const SPARK_ENERGY := 2.0
 const SPARK_RANGE_M := 0.8
 const EDGE_COLOUR := Color(0.3, 0.55, 1.0)
 const EDGE_PX := 24
-## "Brief" blue edge (Visual table, no duration given). NOT SOURCEABLE: 0.5 s greybox guess.
-const EDGE_S := 0.5
+## The edge lasts the stun (ASSET-080 "for the stun duration"). Full flash: it flickers at EDGE_FLICKER_HZ
+## between full and EDGE_FLICKER_LOW of its fading peak; at flash scale 0 it holds EDGE_STATIC_A.
+## NOT SOURCEABLE: 3 Hz stays at the common 3 flashes/s photosensitivity line; the alphas are guesses.
+const EDGE_FLICKER_HZ := 3.0
+const EDGE_FLICKER_LOW := 0.4
+const EDGE_STATIC_A := 0.5
+## Arc and spark burst looks (NOT SOURCEABLE, settled by the VFX art pass): blue-white arc, warm spark.
+const ARC_BURST_COLOUR := Color(0.8, 0.9, 1.0)
+const SPARK_BURST_COLOUR := Color(1.0, 0.75, 0.35)
 ## NOT SOURCEABLE (the GDD gives no amplitudes): jitter and jolt sizes in degrees (jolt x yaw, y pitch).
 const JITTER_DEG := 1.5
 const JOLT_DEG := Vector2(2.0, -3.0)
@@ -63,7 +74,11 @@ var _edge := Panel.new()
 ## [peak, seconds left, seconds total] of the arc, spark and edge.
 var _arc_run: Array = [0.0, 0.0, 0.0]
 var _spark_run: Array = [0.0, 0.0, 0.0]
-var _edge_run: Array = [0.0, 0.0, 0.0]
+var _edge_left := 0.0
+var _arc_burst := VfxBurst.make(&"taser_arc", ARC_BURST_COLOUR, 24, ARC_S, Vector2(2.0, 5.0), 180.0,
+		Vector3.ZERO, 0.04, VfxBurst.Shape.QUAD, true)
+var _spark_burst := VfxBurst.make(&"stun_spark", SPARK_BURST_COLOUR, 12, 0.35, Vector2(1.0, 2.5), 70.0,
+		Vector3(0, -9.8, 0), 0.03, VfxBurst.Shape.QUAD, true)
 
 
 ## `disguise`: plays the stagger and vocal cue. `remotes` / `state_of`: as DisguisePresenter. `camera_fx`
@@ -83,6 +98,8 @@ func _init(disguise: DisguisePresenter, remotes: Dictionary[int, Node3D], state_
 		light.omni_range = l[2]
 		light.light_energy = 0.0
 		add_child(light)
+	add_child(_arc_burst)
+	add_child(_spark_burst)
 	var box := StyleBoxFlat.new()
 	box.draw_center = false
 	box.border_color = EDGE_COLOUR
@@ -102,7 +119,7 @@ func on_player_shocked(tick: int, payload: Dictionary) -> void:
 	if payload.get("own") == true:
 		if _fx != null:
 			_fx.jitter(JITTER_DEG, _jitter_s)
-		_edge_run = [flash_scale, EDGE_S, EDGE_S]
+		_edge_left = _jitter_s
 		cue.emit(CRACKLE, _fx.global_position if _fx != null and _fx.is_inside_tree() else Vector3.ZERO)
 		advance(0.0)
 		return
@@ -114,6 +131,7 @@ func on_player_shocked(tick: int, payload: Dictionary) -> void:
 		var n: Node3D = _remotes.get(h)
 		if n != null:
 			_pulse(_spark, _spark_run, SPARK_ENERGY, n.position)
+			VfxBurst.fire(_spark_burst, n.position + CHEST_UP)
 			cue.emit(FIZZ, n.position + CHEST_UP)
 		return
 	_hit(tick, h)
@@ -147,12 +165,32 @@ func edge() -> Panel:
 	return _edge
 
 
-## Advances the arc, spark and edge by `delta` seconds (all fade linearly).
+## The arc particle burst (tests).
+func arc_burst() -> GPUParticles3D:
+	return _arc_burst
+
+
+## The resisted spark particle burst (tests).
+func spark_burst() -> GPUParticles3D:
+	return _spark_burst
+
+
+## Advances the arc, spark and edge by `delta` seconds (the lights fade linearly).
 func advance(delta: float) -> void:
 	_now += delta
 	_arc.light_energy = _fade(_arc_run, delta)
 	_spark.light_energy = _fade(_spark_run, delta)
-	_edge.modulate.a = _fade(_edge_run, delta)
+	_edge_left = maxf(_edge_left - delta, 0.0)
+	_edge.modulate.a = edge_alpha(_edge_left / _jitter_s, _now) if _edge_left > 0.0 else 0.0
+
+
+## Edge alpha with `left` (1 -> 0) of the stun remaining at time `now`: static at flash scale 0, otherwise
+## the fading peak times a square flicker.
+func edge_alpha(left: float, now: float) -> float:
+	if flash_scale <= 0.0:
+		return EDGE_STATIC_A
+	var high := fmod(now * EDGE_FLICKER_HZ, 1.0) < 0.5
+	return flash_scale * left * (1.0 if high else EDGE_FLICKER_LOW)
 
 
 func _process(delta: float) -> void:
@@ -175,6 +213,8 @@ func _pulse(light: OmniLight3D, run: Array, energy: float, feet: Vector3) -> voi
 	light.position = feet + CHEST_UP
 	if flash_scale > 0.0 and _limiter.try_flash(_now):
 		run.assign([energy * flash_scale, ARC_S, ARC_S])
+		if light == _arc:
+			VfxBurst.fire(_arc_burst, light.position)
 	advance(0.0)
 
 

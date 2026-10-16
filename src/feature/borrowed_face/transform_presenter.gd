@@ -1,11 +1,13 @@
 class_name TransformPresenter extends Node
 ## Client presentation of a transformation (story borrowed-face/010; borrowed-face.md rule 8, States
 ## "Transforming", Tells T1; TR-borrowedface-006). Two halves, both read only what the client was sent:
-## - Warp: every drawn remote body whose snapshot state says transforming gets the warp overlay
-##   (spatial_fx_transform_warp.gdshader as material_overlay on its "Mesh", ADR-0010 §6), `warp` rising 0 -> 1 over
-##   transform_duration_s from when this client first saw the flag; it leaves when the flag clears
-##   (completion or stun interrupt). The flag rides on the body like appearance, so every client that draws
-##   the body sees it, with no role or target.
+## - Warp (ASSET-078): every drawn remote body whose snapshot state says transforming gets the warp overlay
+##   (spatial_fx_transform_warp.gdshader as material_overlay, ADR-0010 §6) on every mesh it draws: the
+##   character art under "Mesh" (BodyVisual: LODs, accessory, held items), one material per body. `warp`
+##   rises 0 -> 1 over transform_duration_s from when this client first saw the flag and ends on the
+##   shader's clean silhouette frame (art bible §5); it leaves when the flag clears (completion or stun
+##   interrupt), so a steady disguised body never carries it (LB-6). The flag rides on the body like
+##   appearance, so every client that draws the body sees it, with no role or target.
 ## - Distortion: a positional sound of set BorrowedFace.DISTORTION_SOUND (ADR-0004 §6, no body reference)
 ##   plays from an AudioStreamPlayer3D placed at the event position, audible to distortion_radius_m (the
 ##   send radius, ADR-0013 §2), so the engine pans it from the true bearing. Other sound sets are ignored.
@@ -28,8 +30,8 @@ const TONE_WOBBLE_HZ := 9.0
 const TONE_DEPTH := 0.6
 const TONE_GAIN := 0.5
 
-## Reduced motion (accessibility): static tint instead of the moving shimmer (ADR-0010 §6). No settings
-## store exists yet, so it stays off until one sets it.
+## Reduced motion (accessibility): static tint instead of the moving shimmer (ADR-0010 §6); RoundClient
+## set_reduced_motion() sets it.
 var reduced_motion := false
 
 var _remotes: Dictionary[int, Node3D]
@@ -40,6 +42,8 @@ var _tone: AudioStream
 var _bus: StringName = &"Master"
 ## handle -> seconds since this client first saw it transforming
 var _warps: Dictionary[int, float] = {}
+## handle -> its warp material, shared by every mesh of the body
+var _mats: Dictionary[int, ShaderMaterial] = {}
 
 
 ## `remotes`: the client's handle -> drawn body (shared, not copied). `state_of(handle) -> Dictionary`: the
@@ -83,29 +87,32 @@ static func bearing_deg(listener: Transform3D, at: Vector3) -> float:
 	return rad_to_deg(atan2(local.x, -local.z))
 
 
-## Moves every warp on by `delta` seconds, starting and ending overlays from the snapshot flag.
+## Moves every warp on by `delta` seconds, starting and ending overlays from the snapshot flag. Meshes are
+## re-collected each call: the art is rebuilt when the appearance changes.
 func advance(delta: float) -> void:
 	for h: int in _warps.keys():
 		if not _remotes.has(h):
 			_warps.erase(h)
+			_mats.erase(h)
 	for h: int in _remotes:
-		var mi := _remotes[h].get_node_or_null(^"Mesh") as GeometryInstance3D
-		if mi == null:
-			continue
+		var meshes := _remotes[h].find_children("*", "GeometryInstance3D", true, false)
 		if not _state_of.call(h).get("transforming", false):
 			if _warps.erase(h):
-				mi.material_overlay = null
+				_mats.erase(h)
+				for mi: Node in meshes:
+					(mi as GeometryInstance3D).material_overlay = null
 			continue
 		if not _warps.has(h):
 			_warps[h] = 0.0
-			var m := ShaderMaterial.new()
-			m.shader = WARP_SHADER
-			mi.material_overlay = m
+			_mats[h] = ShaderMaterial.new()
+			_mats[h].shader = WARP_SHADER
 		else:
 			_warps[h] += delta
-		var mat := mi.material_overlay as ShaderMaterial
+		var mat := _mats[h]
 		mat.set_shader_parameter(&"warp", minf(_warps[h] / _duration_s, 1.0))
 		mat.set_shader_parameter(&"reduced_motion", reduced_motion)
+		for mi: Node in meshes:
+			(mi as GeometryInstance3D).material_overlay = mat
 
 
 func _process(delta: float) -> void:

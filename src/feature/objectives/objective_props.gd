@@ -12,7 +12,10 @@ class_name ObjectiveProps extends Node
 ## Glows (research-facility.md Lighting States and N-03; ASSET-057/058/060): a fuse box's indicator bar is dark
 ## on an inactive candidate, dim on an active one and lit once its fuse is in; The Core pulses once per
 ## install; the terminal screen is dark until power, then shows locked / armed / activating (the countdown) /
-## paused / activated by colour and intensity (screen_state). Reduced motion or reduced flash holds the
+## paused / activated by colour and intensity (screen_state). VFX ASSET-082: brief sparks (vfx_fuse_sparks)
+## at the box's socket when its fuse goes in; they are not The Core pulse (a light change). The sparks are a
+## few small particles, no luminance flash, so they play at reduced flash too (inference; a photosensitivity
+## review settles it). Reduced motion or reduced flash holds the
 ## countdown steady; reduced flash softens The Core's pulse (research-facility.md Accessibility).
 ## Client only, decides nothing: hidden entities, ObjectiveProgressChanged and the countdown's PROGRESS entry
 ## in, node visibility and emission out.
@@ -81,12 +84,16 @@ var _states: Dictionary[int, int] = {}
 var _at: Dictionary[int, Vector3] = {}
 ## Objective id -> its drawn item (dropped, docked or installed), built on first need.
 var _items: Dictionary[int, Node3D] = {}
+## Install sparks; look NOT SOURCEABLE (VFX art pass): a warm spark spray falling from the socket.
+var _sparks := VfxBurst.make(&"fuse_sparks", Color(1.0, 0.8, 0.45), 20, 0.5, Vector2(1.0, 2.5), 60.0,
+		Vector3(0, -9.8, 0), 0.025, VfxBurst.Shape.QUAD, true, Vector3.FORWARD)
 
 
 ## `level`: the root MapGreybox.build returned, or any ancestor of it.
 func _init(level: Node, map: MapData) -> void:
 	_map = map
 	_mats = load(MapGreybox.SURFACES) as SurfaceMaterials
+	add_child(_sparks)
 	for i in map.markers.size():
 		var m := map.markers[i]
 		if m.type in KINDS:
@@ -139,6 +146,9 @@ func on_objective(_tick: int, p: Dictionary) -> void:
 	if o >= SurvivorObjectives.FUSE_BOX_ID and o < SurvivorObjectives.TERMINAL_ID \
 			and s == SurvivorObjectives.FuseState.INSTALLED and _states.get(o, -1) != s:
 		_core_left = CORE_PULSE_S
+		var box: Node3D = _props.get(_marker_of.get(o, -1))
+		if box != null: # the parent is a plain Node, so the position is the world one
+			VfxBurst.fire(_sparks, (box.global_transform if box.is_inside_tree() else box.transform) * SOCKET)
 	_states[o] = s
 	var at: Variant = p.get("at")
 	if at is Vector3 and (at as Vector3).is_finite():
@@ -268,6 +278,11 @@ func _refresh() -> void:
 			var box: Node3D = _props.get(_marker_of.get(o, -1))
 			if s == SurvivorObjectives.FuseState.INSTALLED and box != null:
 				_place(o, &"fuse", box, SOCKET, Basis(Vector3.RIGHT, -PI / 2.0))
+
+
+## The fuse install sparks (tests and captures).
+func install_sparks() -> GPUParticles3D:
+	return _sparks
 
 
 ## The active terminal's prop, or null before this client knows it.
