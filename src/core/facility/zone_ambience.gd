@@ -7,8 +7,9 @@ class_name ZoneAmbience extends Node
 ## default (breaking-changes.md) does not apply.
 ## Not here: the B3 machinery loop (a positional WorldSFX loop through ADR-0013's AudioDirector, not built
 ## yet), the Evacuation alarm bed (Scare Events / M4 audio pass) and ducking of Ambience (ADR-0013 §4).
+## Beds come from the SoundBank (`ambience/<zone>`, audio pass); a zone with no entry keeps its placeholder tone.
 ## Usage:
-##   var amb := ZoneAmbience.new(map, ZoneAmbience.placeholder_beds(), body)
+##   var amb := ZoneAmbience.new(map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
 ##   add_child(amb); hud.add_child(amb.make_overlay())
 
 ## ADR-0013 §1 bus, looked up by name in default_bus_layout.tres.
@@ -114,6 +115,17 @@ func make_overlay() -> Label:
 	_overlay = Label.new()
 	_overlay.position = Vector2(8.0, 8.0)
 	return _overlay
+
+
+## The bank's bed (`ambience/<zone>`, looping) for every zone in PLACEHOLDER_HZ, its placeholder tone where the
+## bank has none.
+static func bank_beds(bank: SoundBank) -> Dictionary[StringName, AudioStream]:
+	var out := placeholder_beds()
+	for zone: StringName in out:
+		var e := bank.resolve(StringName("ambience/" + zone))
+		if e != null and e.stream != null:
+			out[zone] = e.stream
+	return out
 
 
 ## PLACEHOLDER beds for every zone in PLACEHOLDER_HZ.

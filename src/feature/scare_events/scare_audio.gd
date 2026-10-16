@@ -8,10 +8,10 @@ class_name ScareAudio extends Node3D
 ## duck_db with duck_attack_s / duck_release_s (rule 18, ADR-0013 §4); no other bus is ducked, so gameplay cues
 ## and callouts are never masked. The stinger and scare-master scales (rule 26, 0-1) write only the Stinger and
 ## Scare buses: level only, never timing. No settings store yet: both stay at 1.0.
-## PLACEHOLDER: there is no AudioDirector or AudioCatalog yet (ADR-0013 §2-3): sounds are generated tones and
-## players are made per sound, not pooled; the AudioDirector replaces this class. The stinger tone peaks at the
-## ambient bed's placeholder amplitude (ZoneAmbience.PLACEHOLDER_AMPLITUDE), standing in for "authored
-## loudness-normalised to the ambient bed", so its player gain is its level over the bed.
+## Sounds come from the SoundBank (`scare/<scare id>`, `scare/stinger`; audio pass); an id with no entry keeps
+## its generated PLACEHOLDER tone. Players are made per sound, not pooled; the AudioDirector (ADR-0013 §3)
+## replaces that. The stinger file is authored loudness-normalised to the ambient beds (just under them,
+## production/qa/evidence/audio/loudness.md), so its player gain stinger_max_db_rel is its level over the bed.
 ## ponytail: the duck holds for a fixed time per trigger (a placeholder cue's length, or duck_release_s for the
 ## stun events) instead of ADR-0013's start/finish counter; equivalent while every cue is a fixed-length beep.
 ## Usage (client):
@@ -24,6 +24,8 @@ const SFX_BUS := &"ScareSFX"
 const STINGER_BUS := &"Stinger"
 const SCARE_BUS := &"Scare"
 const DUCKED: Array[StringName] = [&"Ambience", &"ScareDuck"]
+## SoundBank id of the stinger; a scare's diegetic sound is `scare/<scare id>`.
+const STINGER_ID := &"scare/stinger"
 ## PLACEHOLDER tones: lengths, pitches and the diegetic peak. NOT SOURCEABLE: replaced by the sound assets.
 const SFX_S := 0.6
 const SFX_AMPLITUDE := 0.5
@@ -45,7 +47,8 @@ var _catalogue: ScareCatalogue
 var _scare: ScareKnobs
 var _tick_s: float
 var _write: Callable
-var _stinger_tone: AudioStreamWAV
+var _stinger_tone: AudioStream
+var _bank: SoundBank
 var _now := 0.0
 ## Start times of stingers not started yet.
 var _pending: Array[float] = []
@@ -54,12 +57,16 @@ var _duck := 0.0
 
 
 ## `write_db(bus: StringName, db: float)` sets a bus's volume; default AudioServer by bus name (tests fake it).
-func _init(catalogue: ScareCatalogue, knobs: Knobs, write_db: Callable = Callable()) -> void:
+## `bank`: the sound map (default the shipped one).
+func _init(catalogue: ScareCatalogue, knobs: Knobs, write_db: Callable = Callable(),
+		bank: SoundBank = SoundBank.load_shipped()) -> void:
+	_bank = bank
 	_catalogue = catalogue
 	_scare = knobs.scare
 	_tick_s = 1.0 / knobs.net.sim_tick_hz
 	_write = write_db if write_db.is_valid() else _write_bus
-	_stinger_tone = PlaceholderAudio.tone(STINGER_HZ, STINGER_S, ZoneAmbience.PLACEHOLDER_AMPLITUDE)
+	var st := bank.resolve(STINGER_ID)
+	_stinger_tone = st.stream if st != null and st.stream != null 			else PlaceholderAudio.tone(STINGER_HZ, STINGER_S, ZoneAmbience.PLACEHOLDER_AMPLITUDE)
 	stinger_scale = 1.0
 	scare_scale = 1.0
 
@@ -72,7 +79,12 @@ func on_scare(_tick: int, payload: Dictionary) -> void:
 	if entry == null or not at is Vector3:
 		return
 	var p := AudioStreamPlayer3D.new()
-	p.stream = PlaceholderAudio.tone(220.0 + float(absi(hash(id)) % 200), SFX_S, SFX_AMPLITUDE)
+	var e := _bank.resolve(StringName("scare/" + id))
+	if e != null and e.stream != null:
+		p.stream = e.stream
+		p.volume_db = e.volume_db
+	else:
+		p.stream = PlaceholderAudio.tone(220.0 + float(absi(hash(id)) % 200), SFX_S, SFX_AMPLITUDE)
 	p.bus = SFX_BUS
 	p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
 	p.max_distance = entry.audible_range_m # ADR-0013 §2: audible exactly where it was sent

@@ -135,6 +135,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** construct the widget up front and let it gate itself on model state (`FormPicker.for_client`), instead of deferring construction through a bound connection.
 - **Source:** borrowed-face story 011, 2026-10-15. Verified on 4.7.2 by bisecting `tests/integration/hud-results` (leak with the connection, clean without).
 
+### Iterating an array property of a temporary loaded Resource leaks the script graph
+
+- **Symptom:** a test passes with 0 orphans but the engine prints "N ObjectDB instances were leaked at exit" and "N resources still in use at exit"; `--verbose` lists only `GDScript` / `GDScriptNativeClass` instances and scripts.
+- **Cause:** `for v in MapData.load_map().volumes:` (also `var vs := MapData.load_map().volumes; for v in vs:`). Holding the resource itself in a local (`var m := MapData.load_map(); for v in m.volumes:`) does not leak. Inference on the mechanism (the array outliving its owner keeps the sub-resources' scripts referenced at unload): not checked against engine source.
+- **Fix:** keep the loaded resource in a local and iterate its property.
+- **Source:** audio pass, 2026-10-16 (`tests/unit/audio/sound_bank_test.gd`). Verified on 4.7.2 by bisecting a one-test suite: the three forms above, leak / leak / clean; same with `ScareCatalogue.load_shipped().entries`.
+
 ## Rendering
 
 ### A lit mesh with render `layers = 0` logs "indexing did not unpair geometries from light" at teardown

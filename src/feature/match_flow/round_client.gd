@@ -258,11 +258,16 @@ func _on_connected() -> void:
 		add_child(shock)
 		router.subscribe(&"PlayerShocked", shock.on_player_shocked)
 		router.subscribe(&"MonsterStunned", shock.on_monster_stunned)
-		audio = PlaceholderAudio.new()
+		audio = PlaceholderAudio.new(SoundBank.load_shipped(), _map)
 		add_child(audio)
 		router.subscribe(EventBatch.SOUND, audio.on_sound)
 		disguise.cue.connect(audio.play_at)
 		shock.cue.connect(audio.play_at)
+		var world_sfx := WorldSfx.new(_map, audio.play_at, camera.get_global_position) # audio pass
+		router.subscribe(EventBatch.DOORS, world_sfx.on_doors)
+		router.subscribe(EventBatch.BARRICADE, world_sfx.on_barricade)
+		router.subscribe(&"ObjectiveProgressChanged", world_sfx.on_objective)
+		router.subscribe(&"RoundPhaseChanged", world_sfx.on_phase)
 		lights = LightingPresenter.new(_map, LightingPresets.load_shipped())
 		add_child(lights)
 		camera.environment = lights.presets.environment()
@@ -293,7 +298,7 @@ func _on_connected() -> void:
 		hud_model = HudModel.new(match_display, knobs, router)
 		ShapeshifterHud.mount(hud, hud_model, camera) # hud-results/006: instanced on shapeshifter state only
 		hud.add_child(AlwaysOnHud.new(hud_model, net.local_player_id)) # H1-H6 (hud-results story 002)
-		ambience = ZoneAmbience.new(_map, ZoneAmbience.placeholder_beds(), body)
+		ambience = ZoneAmbience.new(_map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
 		add_child(ambience)
 		if ambience_debug:
 			hud.add_child(ambience.make_overlay())

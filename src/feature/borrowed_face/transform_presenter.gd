@@ -10,8 +10,8 @@ class_name TransformPresenter extends Node
 ##   plays from an AudioStreamPlayer3D placed at the event position, audible to distortion_radius_m (the
 ##   send radius, ADR-0013 §2), so the engine pans it from the true bearing. Other sound sets are ignored.
 ## Client only; decides nothing and emits no server event.
-## Greybox deviations (ADR-0010 §5, ADR-0013 §1-3): no pre-warm pass, no AudioDirector pool, catalog or bus
-## tree yet; the player is created per distortion on the default bus.
+## Greybox deviations (ADR-0010 §5, ADR-0013 §3): no pre-warm pass, no AudioDirector pool; the player is created
+## per distortion, on the SoundBank entry's bus.
 ## Usage (client):
 ##   var w := TransformPresenter.new(remotes, puppets.state_of, knobs)
 ##   add_child(w); router.subscribe(EventBatch.SOUND, w.on_sound)
@@ -36,19 +36,27 @@ var _remotes: Dictionary[int, Node3D]
 var _state_of: Callable
 var _duration_s: float
 var _radius_m: float
-var _tone: AudioStreamWAV
+var _tone: AudioStream
+var _bus: StringName = &"Master"
 ## handle -> seconds since this client first saw it transforming
 var _warps: Dictionary[int, float] = {}
 
 
 ## `remotes`: the client's handle -> drawn body (shared, not copied). `state_of(handle) -> Dictionary`: the
 ## newest snapshot state of a handle (PuppetMap.state_of), read for "transforming".
-func _init(remotes: Dictionary[int, Node3D], state_of: Callable, knobs: Knobs) -> void:
+## `bank`: the sound map; the distortion is its BorrowedFace.DISTORTION_SOUND entry, else the placeholder tone.
+func _init(remotes: Dictionary[int, Node3D], state_of: Callable, knobs: Knobs,
+		bank: SoundBank = SoundBank.load_shipped()) -> void:
 	_remotes = remotes
 	_state_of = state_of
 	_duration_s = knobs.borrowed_face.transform_duration_s
 	_radius_m = knobs.borrowed_face.distortion_radius_m
-	_tone = tone(_duration_s)
+	var e := bank.resolve(BorrowedFace.DISTORTION_SOUND)
+	if e != null and e.stream != null:
+		_tone = e.stream
+		_bus = e.bus
+	else:
+		_tone = tone(_duration_s)
 
 
 ## ClientEventRouter handler for EventBatch.SOUND entries ({pos, set}): plays the distortion, ignores the rest.
@@ -58,6 +66,7 @@ func on_sound(_tick: int, payload: Dictionary) -> void:
 		return
 	var p := AudioStreamPlayer3D.new()
 	p.stream = _tone
+	p.bus = _bus
 	p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
 	p.max_distance = _radius_m
 	p.position = at # parent is a plain Node, so this is the world position

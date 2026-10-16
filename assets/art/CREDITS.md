@@ -46,3 +46,21 @@ shared `mat_steel_plate_a.tres` (sources above), remapped in their `.glb.import`
 
 Built by `tools/art/build_viewmodel.py` (arms cut to the forearms, hands and the elbow end of the upper arm,
 decimated to the 8k budget, three poses baked with IK).
+
+## Audio
+
+Built by `tools/audio/build_audio.py` (downloads to the gitignored `tools/audio/.cache/`). Each Kenney pack page
+states "Creative Commons CC0"; every file below is processed (pitched, filtered, mixed, loudness-normalised).
+
+| Source | Author | URL | Licence | Fetched | Used in (`assets/audio/`) |
+|--------|--------|-----|---------|---------|---------------------------|
+| Impact Sounds | Kenney | https://kenney.nl/assets/impact-sounds | CC0 1.0 | 2026-10-15 | foot/step_*, cue/lunge_scrape, cue/lunge_hit, cue/taser_crackle (pop), cue/fuse_install, world/barricade_*, scare/door_burst, scare/slammed_door, scare/glass_break, scare/ambush_lunge |
+| RPG Audio | Kenney | https://kenney.nl/assets/rpg-audio | CC0 1.0 | 2026-10-15 | world/door_open, world/door_close, cue/hide_enter, cue/hide_exit, cue/fuse_install, world/objective_dock, scare/slammed_door, scare/blackout (relay clack) |
+| Interface Sounds | Kenney | https://kenney.nl/assets/interface-sounds | CC0 1.0 | 2026-10-15 | ui/ui_click, ui/ping_rejected, foot/step_true_form, cue/lunge_scrape (scratch) |
+| Sci-Fi Sounds | Kenney | https://kenney.nl/assets/sci-fi-sounds | CC0 1.0 | 2026-10-15 | cue/distortion (force field layer), scare/door_burst, scare/blackout (low-frequency thunk), scare/surveillance_image |
+
+Synthesised for this project (project-owned, Python stdlib in `build_audio.py`): every zone bed
+(`ambience/amb_*`), the stinger, alarms, the lunge wind-up, taser crackle and fizz, hide breathing, the
+distortion drone, survivor grunts and the true-form pain cry, the recording babble, and the callout radio blips
+(`voice/callout_c1..c5`: non-verbal, one motif and pitch per voice set; no CC0 source speaks the eight callout
+lines, so spoken lines remain to be recorded).

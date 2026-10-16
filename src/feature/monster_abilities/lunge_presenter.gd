@@ -10,9 +10,9 @@ class_name LungePresenter extends Node3D
 ## It decides nothing and emits nothing. Sounds reach only clients within the send radius, so a viewer
 ## farther than lunge_cue_radius_m sees no coil (inference: the GDD ties the pose to the cue; a snapshot
 ## Lunge flag would show it at any range if the designer wants that).
-## GREYBOX PLACEHOLDERS (no audio or animation assets yet): generated tones stand in for the catalog
-## sounds, a squashed mesh for the coil, a forward tilt for the stumble. AudioDirector (ADR-0013 §3) and
-## its bus tree do not exist yet: the three players are built once here and play on Master.
+## Sounds are the SoundBank entries (audio pass), each set's generated tone where the bank has none; the
+## three players are built once here, on the entries' bus. GREYBOX: a squashed mesh for the coil, a forward
+## tilt for the stumble.
 ## Must process after RoundClient draws remotes (it is RoundClient's child; tree order runs it later).
 ## Usage:
 ##   var fx := LungePresenter.new(knobs, round_client.remotes, is_monster_handle)
@@ -44,7 +44,9 @@ var _held: Dictionary[int, Transform3D] = {}
 
 ## `remotes`: RoundClient.remotes (handle -> body with a "Mesh" child), read live. `is_monster(handle)
 ## -> bool`: the handle is the shapeshifter's body.
-func _init(knobs: Knobs, remotes: Dictionary[int, Node3D], is_monster: Callable) -> void:
+## `bank`: the sound map; each set plays its entry, else its placeholder tone.
+func _init(knobs: Knobs, remotes: Dictionary[int, Node3D], is_monster: Callable,
+		bank: SoundBank = SoundBank.load_shipped()) -> void:
 	_knobs = knobs
 	_remotes = remotes
 	_is_monster = is_monster
@@ -53,7 +55,13 @@ func _init(knobs: Knobs, remotes: Dictionary[int, Node3D], is_monster: Callable)
 		var t: Array = TONES[s]
 		var secs: float = t[3] if t[3] > 0.0 else knobs.ability.lunge_windup_s
 		var p := AudioStreamPlayer3D.new()
-		p.stream = tone(t[0], t[1], t[2], secs)
+		var e := bank.resolve(s)
+		if e != null and e.stream != null:
+			p.stream = e.stream
+			p.bus = e.bus
+			p.volume_db = e.volume_db
+		else:
+			p.stream = tone(t[0], t[1], t[2], secs)
 		p.max_distance = knobs.ability.lunge_cue_radius_m ## ADR-0013: equals the send radius
 		p.unit_size = UNIT_SIZE
 		p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
