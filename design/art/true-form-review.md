@@ -120,3 +120,31 @@ Known gaps:
 - The hands curl into claws.
 
 Pick: (open)
+
+Designer, 2026-10-17: "the models still look bad". Asked for a decent base model to build on.
+
+## Round 5 (2026-10-17): the base model, textured and sculpted
+
+The round 4 model is kept as the base, with three layers added, all baked from the subdivided high copy onto
+MakeHuman's UVs:
+
+- **Anatomy in the normal map** (`sculpt()`): ribs, sternum, collarbones, spine knobs, a hollow belly under the ribs,
+  a puckered groove along the incision.
+- **A painted base colour** (`paint()`, `PAINT`): mottled pale grey with yellow blotches and blue-grey veins,
+  darkened in the creases by local ambient occlusion. Bruising sits round the eyes, the incision, the halo pins and
+  the mouth corners. The cuts are raw red and the sockets black.
+- **Sunken eye sockets** (`SOCKET`): the lids pushed 12 mm into the skull. Eye positions come from MakeHuman's eye
+  helpers, carried through the T-pose.
+
+Also fixed: the hardware parts had lost their materials at the join, so metal and teeth drew as skin. Metal is now
+half-metallic, so it does not read black in dim light. Triangles 14,794 / 6,858 / 2,735.
+
+Renders: `tools/art/review/e4_{front,back,crouch,dark,head,chest}.png`.
+
+Known gaps:
+
+- The veins read partly as cracks.
+- The hands curl into claws.
+- The scalp falls dark under the lineup's front-low spots.
+
+Pick: (open)

@@ -63,6 +63,11 @@ WRINKLE = (0.012, 0.0012)  # displace noise scale and depth (m, MakeHuman scale)
 JAW_DEG = 26  # the dislocated jaw hangs open this far about the hinge under the ears (art bible §5)
 HALO_GAP = 0.028  # ring clearance off the skull (m)
 MOUTH = ((40, 12, 14), 0.8)  # the dark inside of the open mouth
+SOCKET = (0.03, 0.012)  # eye sockets: radius and how far the lids sink (m)
+## Painted skin (sRGB): mottled pale grey, yellow blotches, blue-grey veins, bruising round every wound, raw cuts,
+## black sockets. Baked from a procedural shader on the high mesh into the base colour.
+PAINT = dict(pale=(132, 124, 116), grey=(100, 95, 100), yellow=(138, 126, 96), vein=(70, 78, 102),
+	bruise=(88, 64, 82), raw=(112, 36, 34), socket=(22, 16, 18))
 
 
 def bone_map():
@@ -91,6 +96,11 @@ def make_human():
 			ts.load_target(h, os.path.join(tdir, folder, p + name + ".target.gz"), weight=w, name=p + name)
 	ts.bake_targets(h)
 	mrig = hs.add_builtin_rig(h, "game_engine")
+	eyes = []
+	for name in ("helper-l-eye", "helper-r-eye"):
+		gi = h.vertex_groups[name].index
+		pts = [v.co for v in h.data.vertices if any(g.group == gi for g in v.groups)]
+		eyes.append(sum(pts, Vector()) / len(pts))
 	body = h.vertex_groups["body"].index
 	bm = bmesh.new()
 	bm.from_mesh(h.data)
@@ -100,10 +110,10 @@ def make_human():
 	bm.free()
 	h.modifiers.clear()
 	h.parent = None
-	return h, mrig
+	return h, mrig, eyes
 
 
-def t_pose(h, mrig, rig):
+def t_pose(h, mrig, rig, pts):
 	"""Poses MakeHuman's rig so every mapped bone points along ours (A-pose arms up into our T-pose), parents first,
 	and applies it with volume-preserving skinning. Rotating the arms by blending vertex positions instead left a
 	web of skin from the jaw to the arms."""
@@ -127,6 +137,9 @@ def t_pose(h, mrig, rig):
 		new.translation = cur.translation
 		pb.matrix = new
 	bpy.context.view_layer.update()
+	hp = mrig.pose.bones["head"]
+	move = hp.matrix @ hp.bone.matrix_local.inverted()
+	pts[:] = [move @ q for q in pts]
 	bpy.ops.object.mode_set(mode="OBJECT")
 	bc.activate(h)
 	bpy.ops.object.modifier_apply(modifier="Pose")
@@ -213,6 +226,161 @@ def open_jaw(h):
 	return dict(corner=corner, line=line, front=front, hinge=hinge, rot=rot)
 
 
+def incision(rig):
+	"""The Y-incision as (x, z) segments on the front: collarbones to the sternum's foot, then down to the navel."""
+	top_z = rig.data.bones["DEF-neck"].head_local.z - 0.05
+	mid_z, low_z = rig.data.bones["DEF-spine.003"].head_local.z, rig.data.bones["DEF-hips"].head_local.z + 0.06
+	return [((s * 0.12, top_z), (0.0, mid_z)) for s in (-1, 1)] + [((0.0, mid_z), (0.0, low_z))]
+
+
+def seg_dist(x, z, seg):
+	(x0, z0), (x1, z1) = seg
+	dx, dz = x1 - x0, z1 - z0
+	t = min(1.0, max(0.0, ((x - x0) * dx + (z - z0) * dz) / (dx * dx + dz * dz)))
+	return math.hypot(x - x0 - dx * t, z - z0 - dz * t)
+
+
+def sink_eyes(h, eyes):
+	"""Sinks the lids into the skull round each eye (the eyeballs are MakeHuman helpers, already gone)."""
+	r, depth = SOCKET
+	for v in h.data.vertices:
+		for e in eyes:
+			d = (v.co - e).length
+			if d < r:
+				v.co.y += depth * smooth(1 - d / r)
+
+
+def sculpt(high, rig, mouth):
+	"""Starved anatomy pressed into the high mesh along its normals, for the normal bake: ribs under the skin,
+	sternum, collarbones, spine knobs, a hollow belly under the ribs, a puckered groove along the incision."""
+	zn = rig.data.bones["DEF-neck"].head_local.z
+	zm = rig.data.bones["DEF-spine.003"].head_local.z
+	zh = rig.data.bones["DEF-hips"].head_local.z
+	ys = rig.data.bones["DEF-spine.003"].head_local.y
+	cuts = incision(rig)
+	for v in high.data.vertices:
+		x, y, z = v.co
+		ax, d = abs(x), 0.0
+		if zh < z < zn and ax < 0.18:
+			if y < ys - 0.02:  # front
+				zc = zn - 0.045 + 0.1 * ax
+				if 0.015 < ax < 0.17:
+					d += 0.004 * smooth(1 - abs(z - zc) / 0.01)
+				edge = zm - 0.9 * ax
+				if ax < 0.14 and edge < z < zc - 0.015:
+					rib = (0.5 + 0.5 * math.cos(2 * math.pi * (z + 0.55 * ax) / 0.028)) ** 3
+					d += 0.003 * rib * smooth(ax / 0.02) * smooth((z - edge) / 0.015) * smooth((0.14 - ax) / 0.02)
+					d += 0.002 * smooth(1 - ax / 0.015) * smooth((z - zm) / 0.01)
+				if ax < 0.11 and zh + 0.08 < z < edge:
+					d -= 0.007 * smooth((z - zh - 0.08) / 0.05) * smooth((edge - z) / 0.04) * smooth(1 - ax / 0.11)
+				c = min(seg_dist(x, z, sg) for sg in cuts)
+				d += -0.002 * smooth(1 - c / 0.003) + 0.0012 * smooth(1 - abs(c - 0.006) / 0.004)
+			elif y > ys + 0.02 and ax < 0.015:  # spine knobs down the back
+				d += 0.004 * smooth(1 - ax / 0.015) * (0.5 + 0.5 * math.cos(2 * math.pi * z / 0.03)) ** 2
+		if d:
+			v.co += v.normal * d
+
+
+def paint(high, rig, mouth):
+	"""Vertex masks on the high mesh (R socket, G bruise, B raw) and an emission shader that mixes them over
+	mottled, veined skin and darkens the creases (local ambient occlusion). Baked as EMIT into the base colour."""
+	ys = rig.data.bones["DEF-spine.003"].head_local.y
+	cuts = incision(rig)
+	corners = [Vector((sx * mouth["corner"], mouth["front"], mouth["line"])) for sx in (-1, 1)]
+	attr = high.data.color_attributes.new("mask", "FLOAT_COLOR", "POINT")
+	for i, v in enumerate(high.data.vertices):
+		x, y, z = v.co
+		de = min((v.co - e).length for e in mouth["eyes"])
+		r = smooth((0.034 - de) / 0.012)  # black to the lids' rim, then a bruised ring
+		g = 0.6 * smooth(1 - abs(de - 0.038) / 0.014)
+		b = 0.0
+		if y < ys:
+			c = min(seg_dist(x, z, sg) for sg in cuts)
+			g = max(g, 0.8 * smooth(1 - c / 0.03))
+			b = smooth(1 - c / 0.006)
+		dp = min((v.co - q).length for q in mouth["pins"])
+		g, b = max(g, smooth(1 - dp / 0.025)), max(b, smooth(1 - dp / 0.008))
+		dm = min((v.co - q).length for q in corners)
+		g, b = max(g, 0.7 * smooth(1 - dm / 0.025)), max(b, 0.6 * smooth(1 - dm / 0.012))
+		attr.data[i].color = (r, g, b, 1)
+	m = bpy.data.materials.new("paint")
+	m.use_nodes = True
+	nt = m.node_tree
+	nt.nodes.clear()
+	n, ln = nt.nodes.new, nt.links.new
+
+	def rgb(key):
+		c = PAINT[key]
+		return (bc.lin(c[0]), bc.lin(c[1]), bc.lin(c[2]), 1)
+
+	def mix(fac, a, b):
+		mx = n("ShaderNodeMix")
+		mx.data_type = "RGBA"
+		for slot, val in ((0, fac), (6, a), (7, b)):
+			if isinstance(val, tuple):
+				mx.inputs[slot].default_value = val
+			else:
+				ln(val, mx.inputs[slot])
+		return mx.outputs[2]
+
+	def noise(scale):
+		t = n("ShaderNodeTexNoise")
+		t.inputs["Scale"].default_value = scale
+		t.inputs["Detail"].default_value = 4
+		ln(co, t.inputs["Vector"])
+		return t
+
+	def ramp(src, a, b):
+		r_ = n("ShaderNodeMapRange")
+		r_.inputs[1].default_value, r_.inputs[2].default_value = a, b
+		ln(src, r_.inputs[0])
+		return r_.outputs[0]
+
+	co = n("ShaderNodeTexCoord").outputs["Object"]
+	col = mix(ramp(noise(6).outputs["Fac"], 0.35, 0.65), rgb("pale"), rgb("grey"))
+	col = mix(ramp(noise(28).outputs["Fac"], 0.55, 0.8), col, rgb("yellow"))
+	warp = n("ShaderNodeVectorMath")
+	warp.operation = "MULTIPLY_ADD"
+	ln(noise(4).outputs["Color"], warp.inputs[0])
+	warp.inputs[1].default_value = (0.08, 0.08, 0.08)
+	ln(co, warp.inputs[2])
+	vor = n("ShaderNodeTexVoronoi")
+	vor.feature = "DISTANCE_TO_EDGE"
+	vor.inputs["Scale"].default_value = 11
+	ln(warp.outputs[0], vor.inputs["Vector"])
+	vein = ramp(vor.outputs["Distance"], 0.008, 0.0)
+	vmask = ramp(noise(3).outputs["Fac"], 0.52, 0.62)
+	vf = n("ShaderNodeMath")
+	vf.operation = "MULTIPLY"
+	ln(vein, vf.inputs[0])
+	ln(vmask, vf.inputs[1])
+	col = mix(vf.outputs[0], col, rgb("vein"))
+	sep = n("ShaderNodeSeparateColor")
+	at = n("ShaderNodeAttribute")
+	at.attribute_name = "mask"
+	ln(at.outputs["Color"], sep.inputs[0])
+	col = mix(sep.outputs[1], col, rgb("bruise"))
+	col = mix(sep.outputs[2], col, rgb("raw"))
+	col = mix(sep.outputs[0], col, rgb("socket"))
+	ao = n("ShaderNodeAmbientOcclusion")
+	ao.only_local = True
+	ao.samples = 16
+	ao.inputs["Distance"].default_value = 0.04
+	shade = ramp(ao.outputs["AO"], 0.0, 1.0)
+	shade.node.inputs[3].default_value = 0.4
+	mul = n("ShaderNodeMix")
+	mul.data_type, mul.blend_type = "RGBA", "MULTIPLY"
+	mul.inputs[0].default_value = 1.0
+	ln(col, mul.inputs[6])
+	ln(shade, mul.inputs[7])
+	em = n("ShaderNodeEmission")
+	ln(mul.outputs[2], em.inputs["Color"])
+	out = n("ShaderNodeOutputMaterial")
+	ln(em.outputs[0], out.inputs["Surface"])
+	high.data.materials.clear()
+	high.data.materials.append(m)
+
+
 def surface(bvh, origin, direction):
 	hit = bvh.ray_cast(Vector(origin), Vector(direction).normalized(), 1.0)
 	return hit[0]
@@ -242,7 +410,7 @@ def hardware(h, rig, mouth):
 	for i in (2, 6, 10, 14, 18, 22):
 		tf.rod(metal, ring[i], hits[i].lerp(axis, 0.04), 0.004, 0.0025)
 		tf.ellipsoid(metal, ring[i], (0.011, 0.011, 0.014), segs=8, rings=6)
-	c = axis
+	mouth["pins"] = [hits[i] for i in (2, 6, 10, 14, 18, 22)]
 	parts.append(("halo", metal, "DEF-head", 2))
 	posts = bmesh.new()
 	for s in (-1, 1):
@@ -252,10 +420,7 @@ def hardware(h, rig, mouth):
 	parts.append(("posts", posts, "DEF-spine.003", 2))
 	# staples along a Y-incision on the chest, found on the skin by rays from the front
 	staples = bmesh.new()
-	chest = rig.data.bones["DEF-spine.003"]
-	top_z = rig.data.bones["DEF-neck"].head_local.z - 0.05  # from the collarbones down to the sternum's foot
-	mid_z, low_z = chest.head_local.z, rig.data.bones["DEF-hips"].head_local.z + 0.06
-	lines = [((s * 0.12, top_z), (0.0, mid_z)) for s in (-1, 1)] + [((0.0, mid_z), (0.0, low_z))]
+	lines = incision(rig)
 	cut = bmesh.new()
 	for (x0, z0), (x1, z1) in lines:
 		n = max(2, int(math.hypot(x1 - x0, z1 - z0) / 0.022))
@@ -299,8 +464,7 @@ def hardware(h, rig, mouth):
 	for name, b, bname, mat in parts:
 		o = tf.obj_from(b, "part_" + name)
 		o.vertex_groups.new(name=bname).add(list(range(len(o.data.vertices))), 1.0, "REPLACE")
-		for p in o.data.polygons:
-			p.material_index = mat
+		o["mat"] = mat  # set once the part has the skin's material slots (an index past the slots is dropped)
 		objs.append(o)
 	return objs
 
@@ -314,13 +478,15 @@ def build(out):
 					cb.fcurves.remove(fc)
 	build_anims.add_true_clips(rig)
 	bpy.data.objects.remove(body)
-	h, mrig = make_human()
-	t_pose(h, mrig, rig)
+	h, mrig, eyes = make_human()
+	t_pose(h, mrig, rig, eyes)
 	mouth = open_jaw(h)
+	sink_eyes(h, eyes)
+	mouth["eyes"] = eyes
 	fit_rig(h, mrig, rig)
 	h.data.materials.clear()
 	for args in (("mat_shapeshifter_skin",) + SKIN, ("mat_shapeshifter_bone", (206, 198, 178), 0.55),
-			("mat_shapeshifter_metal", (128, 128, 132), 0.35, 0.0, 0.1, 1.0), ("mat_shapeshifter_mouth",) + MOUTH):
+			("mat_shapeshifter_metal", (150, 150, 156), 0.45, 0.0, 0.1, 0.5), ("mat_shapeshifter_mouth",) + MOUTH):
 		h.data.materials.append(tf.material(*args))
 	for p in h.data.polygons:
 		p.material_index = 0
@@ -336,6 +502,7 @@ def build(out):
 	bc.activate(high)
 	for m in list(high.modifiers):
 		bpy.ops.object.modifier_apply(modifier=m.name)
+	sculpt(high, rig, mouth)
 	# low: the skin decimated to what the budget leaves after the hardware, then joined with it
 	bc.triangulate(h)
 	for o in parts:
@@ -347,18 +514,23 @@ def build(out):
 		bc.activate(h)
 		bpy.ops.object.modifier_apply(modifier="Dec")
 		bc.triangulate(h)
+	base = os.path.splitext(out)[0]
+	bake(high, h, base + "_normal_1024.png", "NORMAL")
+	paint(high, rig, mouth)
+	bake(high, h, base + "_albedo_1024.png", "EMIT")
+	bpy.data.objects.remove(high)
 	bpy.ops.object.select_all(action="DESELECT")
 	for o in parts:
 		o.data.materials.clear()
 		for m in h.data.materials:
 			o.data.materials.append(m)
+		for poly in o.data.polygons:
+			poly.material_index = o["mat"]
 		o.select_set(True)
 	h.select_set(True)
 	bpy.context.view_layer.objects.active = h
 	bpy.ops.object.join()
 	h.name = h.data.name = "char_shapeshifter_true_lod0"
-	bake(high, h, os.path.splitext(out)[0] + "_normal_1024.png")
-	bpy.data.objects.remove(high)
 	h.parent = rig
 	arm = h.modifiers.new("Armature", "ARMATURE")
 	arm.object = rig
@@ -379,34 +551,36 @@ def build(out):
 	return report
 
 
-def bake(high, low, path):
-	"""Wrinkled-skin normal map from the high copy onto the low mesh's own MakeHuman UVs (Cycles, CPU)."""
+def bake(high, low, path, kind):
+	"""From the high copy onto the skin's own MakeHuman UVs (Cycles, CPU): NORMAL (wrinkles and anatomy) into the
+	skin's normal input, EMIT (the painted skin) into its base colour."""
 	img = bpy.data.images.new(os.path.splitext(os.path.basename(path))[0], BAKE_PX, BAKE_PX, float_buffer=False)
-	img.colorspace_settings.name = "Non-Color"
-	for mat in low.data.materials:
-		n = mat.node_tree.nodes.new("ShaderNodeTexImage")
-		n.image = img
-		mat.node_tree.nodes.active = n
+	img.colorspace_settings.name = "Non-Color" if kind == "NORMAL" else "sRGB"
+	mat = low.data.materials[0]
+	nodes, links = mat.node_tree.nodes, mat.node_tree.links
+	tex = nodes.new("ShaderNodeTexImage")
+	tex.image = img
+	nodes.active = tex
 	sc = bpy.context.scene
 	sc.render.engine = "CYCLES"
 	sc.cycles.device = "CPU"
-	sc.cycles.samples = 1
+	sc.cycles.samples = 1 if kind == "NORMAL" else 16
 	bpy.ops.object.select_all(action="DESELECT")
 	high.select_set(True)
 	low.select_set(True)
 	bpy.context.view_layer.objects.active = low
-	bpy.ops.object.bake(type="NORMAL", use_selected_to_active=True, cage_extrusion=0.006, max_ray_distance=0.02,
+	bpy.ops.object.bake(type=kind, use_selected_to_active=True, cage_extrusion=0.012, max_ray_distance=0.03,
 		margin=4)
 	img.filepath_raw = path
 	img.file_format = "PNG"
 	img.save()
-	mat = low.data.materials[0]  # the skin only: metal and bone stay smooth
-	nodes, links = mat.node_tree.nodes, mat.node_tree.links
-	nm = nodes.new("ShaderNodeNormalMap")
-	links.new(nodes.active.outputs["Color"], nm.inputs["Color"])
-	links.new(nm.outputs["Normal"], nodes["Principled BSDF"].inputs["Normal"])
-	for m in low.data.materials[1:]:
-		m.node_tree.nodes.remove(m.node_tree.nodes.active)
+	bsdf = nodes["Principled BSDF"]
+	if kind == "NORMAL":
+		nm = nodes.new("ShaderNodeNormalMap")
+		links.new(tex.outputs["Color"], nm.inputs["Color"])
+		links.new(nm.outputs["Normal"], bsdf.inputs["Normal"])
+	else:
+		links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
 
 
 def main():
