@@ -2,7 +2,7 @@
 
 Re-runnable, no manual steps:
   "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup \
-      --python tools/art/build_characters.py
+      --python tools/art/build_characters.py [-- --true-options]
 
 Source rig and animations: Quaternius "Universal Animation Library" (Standard), CC0 1.0, fetched from the
 glTF mirror github.com/J-Ponzo/gltf-universal-animation-library into tools/art/.cache/ (gitignored). See
@@ -742,7 +742,137 @@ def arm_shift(ax):
 	return d1 + (h_hand - h_fore) * (ARM_SCALE[1] - 1) + (ax - h_hand) * (ARM_SCALE[2] - 1)
 
 
-def build_true_form():
+## True-form options for the designer (review 2026-10-17: "the monster can be improved a lot"). Each keeps the art
+## bible §5 limits (2.4 m, over-long arms, narrow trunk, wet near-black, bone-white focal points, no emissive eyes,
+## same rig) and changes the silhouette: limb thinning (radius toward the bone, 1 = as shipped), the face pulled
+## forward, and its bone parts (true_parts). "" is the shipped form.
+TRUE_STYLES = {
+	"": {"thin": 1.0, "snout": 1.0},
+	"a": {"thin": 0.62, "snout": 1.0},  # ribcage: open bone cage, collarbones, long jaw teeth, spine knobs
+	"b": {"thin": 0.55, "snout": 1.7},  # hunter: long skull with a bone cap, sickle claws, elbow spurs, spine spikes
+	"c": {"thin": 0.7, "snout": 1.0},  # split maw: a vertical toothed slit down the face and a toothed chest maw
+}
+LIMBS = ("DEF-upper_arm", "DEF-forearm", "DEF-thigh", "DEF-shin")
+
+
+def thin_limbs(me, dom, rig, f):
+	"""Moves every limb vertex toward its bone's axis: radius * f (emaciated limbs, not a mannequin's)."""
+	if f == 1.0:
+		return
+	for i, v in enumerate(me.vertices):
+		if not dom[i].startswith(LIMBS) or dom[i] not in rig.data.bones:
+			continue
+		b = rig.data.bones[dom[i]]
+		a, d = b.head_local, b.tail_local - b.head_local
+		t = max(0.0, min(1.0, (v.co - a).dot(d) / d.length_squared))
+		c = a + d * t
+		v.co = c + (v.co - c) * f
+
+
+def part(bm, bones, verts, bone):
+	"""Bone material on the new primitive's faces, its vertices tagged for `bone`."""
+	for fc in {f for v in verts for f in v.link_faces}:
+		fc.material_index = 1
+	bm.verts.index_update()
+	bones.append(bone)
+	claim(bm, len(bones))
+
+
+def seg(bm, bones, a, b, r1, r2, bone, segs=6):
+	"""A tapered bone-white rod from a (radius r1) to b (radius r2): ribs, claws, teeth, spikes."""
+	a, b = Vector(a), Vector(b)
+	d = b - a
+	r = bmesh.ops.create_cone(bm, cap_ends=True, segments=segs, radius1=r1, radius2=r2, depth=d.length)
+	bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=d.normalized().to_track_quat("Z", "Y").to_matrix())
+	bmesh.ops.translate(bm, vec=(a + b) / 2, verts=r["verts"])
+	part(bm, bones, r["verts"], bone)
+
+
+def spine_bone(z):
+	return "DEF-spine.003" if z > 1.3 else ("DEF-spine.002" if z > 1.15 else "DEF-spine.001")
+
+
+def true_parts(style, bm, bones, rig, me, dom, lo_h, hi_h):
+	"""Bone parts of option `style` (TRUE_STYLES). Coordinates are the source rig's (m, -Y front, Z up).
+	Returns the body's polygon indices to draw in bone (set after the material slots are reset)."""
+	cap = []
+	spine = [v.co for i, v in enumerate(me.vertices) if dom[i].startswith("DEF-spine.00")]
+	front = min(c.y for c in spine)
+	back = max(c.y for c in spine)
+	fy = lo_h.y
+	mid_z = (lo_h.z + hi_h.z) / 2
+
+	def tips(length, r):
+		for side in ("L", "R"):
+			for f in ("f_index", "f_middle", "f_ring", "f_pinky", "thumb"):
+				b = rig.data.bones["DEF-%s.03.%s" % (f, side)]
+				d = (b.tail_local - b.head_local).normalized()
+				seg(bm, bones, b.tail_local - d * 0.01, b.tail_local + d * length, r, 0.0, b.name)
+
+	if style == "a":
+		for k in range(8):  # an open cage: each rib round the side and back, the lowest ones shorter
+			z = 1.47 - k * 0.042
+			w = 0.15 - k * 0.006
+			for s in (-1, 1):
+				seg(bm, bones, (s * 0.02, front - 0.02, z), (s * w, front + 0.02, z - 0.02), 0.011, 0.008, spine_bone(z))
+				seg(bm, bones, (s * w, front + 0.02, z - 0.02), (s * (w - 0.01), back - 0.03, z - 0.04), 0.008,
+					0.006, spine_bone(z))
+		seg(bm, bones, (0, front - 0.022, 1.50), (0, front - 0.018, 1.18), 0.014, 0.008, "DEF-spine.003")
+		for s in (-1, 1):  # collarbones
+			seg(bm, bones, (s * 0.03, front - 0.01, 1.53), (s * 0.21, front + 0.02, 1.57), 0.012, 0.01,
+				"DEF-spine.003")
+		for k in range(12):  # spine knobs
+			z = 1.56 - k * 0.05
+			seg(bm, bones, (0, back - 0.01, z), (0, back + 0.035, z - 0.01), 0.016, 0.004, spine_bone(z))
+		for k in range(10):  # long teeth, upper and lower
+			x = (k - 4.5) * 0.017
+			y = fy + 0.008 + abs(x) * 0.7
+			seg(bm, bones, (x, y - 0.006, mid_z + 0.01), (x, y - 0.016, mid_z - 0.075), 0.009, 0.0, "DEF-head", segs=5)
+			seg(bm, bones, (x, y - 0.006, mid_z - 0.12), (x, y - 0.016, mid_z - 0.045), 0.008, 0.0, "DEF-head", segs=5)
+		tips(0.1, 0.01)
+	elif style == "b":
+		cap = [poly.index for poly in me.polygons  # the bone cap over the long skull
+			if dom[me.loops[poly.loop_start].vertex_index].startswith("DEF-head") and poly.center.z > mid_z + 0.02]
+		for k in range(8):  # two tooth rows along the snout
+			y = fy + 0.01 + k * 0.022
+			for s in (-1, 1):
+				x = s * (0.028 + k * 0.006)
+				seg(bm, bones, (x, y, mid_z - 0.02), (x * 1.1, y, mid_z - 0.07), 0.006, 0.0, "DEF-head", segs=5)
+		tips(0.22, 0.014)  # sickle claws
+		for side, s in (("L", 1), ("R", -1)):
+			b = rig.data.bones["DEF-forearm.%s" % side]  # elbow spurs, pointing back
+			e = b.head_local
+			seg(bm, bones, e, e + Vector((s * 0.02, 0.16, 0.03)), 0.02, 0.0, b.name)
+			seg(bm, bones, (s * 0.17, back - 0.04, 1.50), (s * 0.24, back + 0.14, 1.62), 0.022, 0.0,
+				"DEF-spine.003")  # shoulder spikes
+		for k in range(10):  # spine spikes, longest between the shoulders
+			z = 1.55 - k * 0.055
+			ln = 0.16 - k * 0.012
+			seg(bm, bones, (0, back - 0.01, z), (0, back + ln, z + ln * 0.5), 0.018, 0.0, spine_bone(z))
+	elif style == "c":
+		for k in range(9):  # the face split top to bottom, teeth on both lips pointing in
+			z = lo_h.z + 0.02 + k * (hi_h.z - lo_h.z - 0.04) / 8
+			for s in (-1, 1):
+				seg(bm, bones, (s * 0.04, fy + 0.004, z), (s * 0.006, fy - 0.004, z - 0.006), 0.006, 0.0,
+					"DEF-head", segs=5)
+		for k in range(7):  # the chest maw: rib-teeth closing over the sternum
+			z = 1.46 - k * 0.045
+			for s in (-1, 1):
+				seg(bm, bones, (s * 0.13, front + 0.01, z), (s * 0.012, front - 0.03, z - 0.02), 0.012, 0.0,
+					spine_bone(z))
+		for s in (-1, 1):  # bone plates over the shoulders
+			r = bmesh.ops.create_uvsphere(bm, u_segments=10, v_segments=6, radius=1.0)
+			for v in r["verts"]:
+				v.co = Vector((v.co.x * 0.08 + s * 0.15, v.co.y * 0.08 + (front + back) / 2, v.co.z * 0.04 + 1.5))
+			part(bm, bones, r["verts"], "DEF-spine.003")
+		for k in range(8):
+			z = 1.55 - k * 0.06
+			seg(bm, bones, (0, back - 0.01, z), (0, back + 0.05, z), 0.014, 0.0, spine_bone(z))
+		tips(0.13, 0.011)
+	return cap
+
+
+def build_true_form(style="", out=None):
 	rig, body = load_source()
 	# Animations keep only rotations below the hips, so the stretched rest lengths survive playback.
 	for a in bpy.data.actions:
@@ -758,8 +888,12 @@ def build_true_form():
 	bpy.ops.object.mode_set(mode="OBJECT")
 	dom = dominant_groups(body)
 	me = body.data
+	opt = TRUE_STYLES[style]
+	thin_limbs(me, dom, rig, opt["thin"])
 	for i, v in enumerate(me.vertices):
 		g = dom[i]
+		if g.startswith(HEAD) and opt["snout"] != 1.0 and v.co.z > 1.6 and v.co.y < 0.0:
+			v.co.y *= opt["snout"]  # the face (-Y) pulled forward into a long skull
 		if g.startswith(ARM) or (g.startswith("DEF-shoulder") and abs(v.co.x) > 0.19):
 			s = 1 if v.co.x > 0 else -1
 			v.co.x += s * arm_shift(abs(v.co.x))
@@ -787,61 +921,65 @@ def build_true_form():
 	lo_h, hi_h = group_bbox(body, dom, ("DEF-head",))
 	bm = bmesh.new()
 	bones = []
-	# Ribs: six bone-white arcs on the chest front (asymmetric: the left side has one more).
-	front = min(v.co.y for i, v in enumerate(me.vertices) if dom[i].startswith("DEF-spine.00"))
-	for k in range(6):
-		z = 1.40 - k * 0.05
-		for s in (-1, 1):
-			if s < 0 and k == 5:
-				continue
-			bm_cyl(bm, (s * 0.05, front - 0.005, z), 0.008, 0.006, 0.11 - k * 0.006, segs=6, axis="X",
-				tag=1, angle=s * 0.35)
-			bones.append("DEF-spine.003" if z > 1.3 else "DEF-spine.002")
-			claim(bm, len(bones))
-	bm.verts.index_update()
-	# Claws: a long cone past every finger tip and the thumb.
-	def tip(name):
-		b = rig.data.bones[name]
-		return b.tail_local, (b.tail_local - b.head_local).normalized()
-	from mathutils import Matrix
-	for side in ("L", "R"):
-		for f in ("f_index", "f_middle", "f_ring", "f_pinky", "thumb"):
-			name = "DEF-%s.03.%s" % (f, side)
-			p, d = tip(name)
-			r = bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=0.011, radius2=0.0, depth=0.09)
-			q = d.to_track_quat("Z", "Y").to_matrix()
-			bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=q)
-			bmesh.ops.translate(bm, vec=p + d * 0.04, verts=r["verts"])
+	cap = []
+	if style:
+		cap = true_parts(style, bm, bones, rig, me, dom, lo_h, hi_h)
+	else:
+		# Ribs: six bone-white arcs on the chest front (asymmetric: the left side has one more).
+		front = min(v.co.y for i, v in enumerate(me.vertices) if dom[i].startswith("DEF-spine.00"))
+		for k in range(6):
+			z = 1.40 - k * 0.05
+			for s in (-1, 1):
+				if s < 0 and k == 5:
+					continue
+				bm_cyl(bm, (s * 0.05, front - 0.005, z), 0.008, 0.006, 0.11 - k * 0.006, segs=6, axis="X",
+					tag=1, angle=s * 0.35)
+				bones.append("DEF-spine.003" if z > 1.3 else "DEF-spine.002")
+				claim(bm, len(bones))
+		bm.verts.index_update()
+		# Claws: a long cone past every finger tip and the thumb.
+		def tip(name):
+			b = rig.data.bones[name]
+			return b.tail_local, (b.tail_local - b.head_local).normalized()
+		from mathutils import Matrix
+		for side in ("L", "R"):
+			for f in ("f_index", "f_middle", "f_ring", "f_pinky", "thumb"):
+				name = "DEF-%s.03.%s" % (f, side)
+				p, d = tip(name)
+				r = bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=0.011, radius2=0.0, depth=0.09)
+				q = d.to_track_quat("Z", "Y").to_matrix()
+				bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=q)
+				bmesh.ops.translate(bm, vec=p + d * 0.04, verts=r["verts"])
+				for fc in {f for v in r["verts"] for f in v.link_faces}:
+					fc.material_index = 1
+				bm.verts.index_update()
+				bones.append(name)
+				claim(bm, len(bones))
+		# Teeth: a ring of downward cones across the lower face; spikes along the back, one shoulder only.
+		fy = lo_h.y
+		mz = lo_h.z + (hi_h.z - lo_h.z) * 0.3
+		for k in range(9):
+			x = (k - 4) * 0.018
+			y = fy + 0.012 + abs(x) * 0.6
+			r = bmesh.ops.create_cone(bm, cap_ends=True, segments=5, radius1=0.006, radius2=0.0, depth=0.035)
+			bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=Matrix.Rotation(math.pi, 3, "X"))
+			bmesh.ops.translate(bm, vec=Vector((x, y, mz)), verts=r["verts"])
 			for fc in {f for v in r["verts"] for f in v.link_faces}:
 				fc.material_index = 1
 			bm.verts.index_update()
-			bones.append(name)
+			bones.append("DEF-head")
 			claim(bm, len(bones))
-	# Teeth: a ring of downward cones across the lower face; spikes along the back, one shoulder only.
-	fy = lo_h.y
-	mz = lo_h.z + (hi_h.z - lo_h.z) * 0.3
-	for k in range(9):
-		x = (k - 4) * 0.018
-		y = fy + 0.012 + abs(x) * 0.6
-		r = bmesh.ops.create_cone(bm, cap_ends=True, segments=5, radius1=0.006, radius2=0.0, depth=0.035)
-		bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=Matrix.Rotation(math.pi, 3, "X"))
-		bmesh.ops.translate(bm, vec=Vector((x, y, mz)), verts=r["verts"])
-		for fc in {f for v in r["verts"] for f in v.link_faces}:
-			fc.material_index = 1
-		bm.verts.index_update()
-		bones.append("DEF-head")
-		claim(bm, len(bones))
-	back = max(v.co.y for i, v in enumerate(me.vertices) if dom[i].startswith("DEF-spine.00"))
-	for k, (x, z, ln) in enumerate([(0.0, 1.42, 0.10), (0.0, 1.30, 0.08), (0.0, 1.18, 0.07), (0.12, 1.45, 0.14),
-			(0.16, 1.47, 0.11)]):
-		r = bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=0.016, radius2=0.0, depth=ln)
-		bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=Matrix.Rotation(-math.pi / 2 + 0.5, 3, "X"))
-		bmesh.ops.translate(bm, vec=Vector((x, back + ln * 0.35, z)), verts=r["verts"])
-		for fc in {f for v in r["verts"] for f in v.link_faces}:
-			fc.material_index = 1
-		bm.verts.index_update()
-		bones.append("DEF-spine.003")
-		claim(bm, len(bones))
+		back = max(v.co.y for i, v in enumerate(me.vertices) if dom[i].startswith("DEF-spine.00"))
+		for k, (x, z, ln) in enumerate([(0.0, 1.42, 0.10), (0.0, 1.30, 0.08), (0.0, 1.18, 0.07), (0.12, 1.45, 0.14),
+				(0.16, 1.47, 0.11)]):
+			r = bmesh.ops.create_cone(bm, cap_ends=True, segments=6, radius1=0.016, radius2=0.0, depth=ln)
+			bmesh.ops.rotate(bm, verts=r["verts"], cent=Vector(), matrix=Matrix.Rotation(-math.pi / 2 + 0.5, 3, "X"))
+			bmesh.ops.translate(bm, vec=Vector((x, back + ln * 0.35, z)), verts=r["verts"])
+			for fc in {f for v in r["verts"] for f in v.link_faces}:
+				fc.material_index = 1
+			bm.verts.index_update()
+			bones.append("DEF-spine.003")
+			claim(bm, len(bones))
 	extra = new_mesh_obj("true_bones_tmp", bm)
 	for name, idx in part_groups(extra, bones):
 		g = extra.vertex_groups.get(name) or extra.vertex_groups.new(name=name)
@@ -864,6 +1002,8 @@ def build_true_form():
 	me.materials.append(bone)
 	for poly in me.polygons:
 		poly.material_index = 0
+	for i in cap:
+		me.polygons[i].material_index = 1
 	extra.data.materials.append(skin)
 	extra.data.materials.append(bone)
 	for u in list(me.uv_layers)[1:]:
@@ -880,13 +1020,18 @@ def build_true_form():
 	# hips' animated translation scales with it).
 	h = max((rig.matrix_world @ v.co).z for v in me.vertices)
 	rig.scale = (TRUE_HEIGHT_M / h,) * 3
-	export(os.path.join(OUT_TRUE, "char_shapeshifter_true.glb"), [rig] + lods)
+	export(out or os.path.join(OUT_TRUE, "char_shapeshifter_true.glb"), [rig] + lods)
 	report = {o.name: tris(o) for o in lods}
 	print("TRUE_TRIS", report)
 	return report
 
 
 def main():
+	if "--true-options" in sys.argv:  # review builds, nothing shipped: tools/art/review/true_<style>.glb
+		fetch()
+		print("DONE", {k: build_true_form(k, os.path.join(ROOT, "tools", "art", "review", "true_%s.glb" % k))
+			for k in TRUE_STYLES if k})
+		return
 	check_accessory_palette()
 	fetch()
 	a = build_survivor()

@@ -5,6 +5,8 @@ extends Node3D
 ##       [--anim=Idle] [--turn=0] [--dist=4.5] [--frame=60] [--dark]
 ## --turn rotates every body (degrees; 180 shows the backs), --dist is the camera distance (m), --anim the clip
 ## every body plays, --dark drops the ambient to near black (the flashlight spots alone). Saves --shot at drawn frame --frame, then quits. No input, no network.
+## --true=<glb>,<glb>,... (true-form review, tools/art/build_characters.py --true-options): C3, the shipped true
+## form, then one true form per glb instead of the line-up above.
 
 const ORDER: Array[int] = [1, 2, 3, 3, 4, 5, 0]
 const SPACING_M := 1.25
@@ -20,9 +22,18 @@ func _ready() -> void:
 	var visuals := BodyVisual.new()
 	var turn := deg_to_rad(float(_args.get("turn", "0")))
 	var anim := StringName(_args.get("anim", "Idle"))
-	for i in ORDER.size():
-		var x := (i - (ORDER.size() - 1) / 2.0) * SPACING_M
-		var body := visuals.build(ORDER[i])
+	var order := ORDER
+	var glbs := [""]
+	if _args.has("true"):
+		order = [3, 0]
+		for g in String(_args["true"]).split(","):
+			order.append(0)
+			glbs.append(g)
+	for i in order.size():
+		var x := (i - (order.size() - 1) / 2.0) * SPACING_M
+		var k := i - (order.size() - glbs.size())
+		visuals._scenes[BodyVisual.TRUE_FORM_SCENE] = load(glbs[k] if k > 0 else BodyVisual.TRUE_FORM_SCENE)
+		var body := visuals.build(order[i])
 		body.position = Vector3(x, 0, 0)
 		body.rotation.y += turn + PI # yaw PI faces +Z, toward the camera
 		add_child(body)
@@ -57,7 +68,7 @@ func _ready() -> void:
 	var cam := Camera3D.new()
 	var dist := float(_args.get("dist", "4.5"))
 	cam.position = Vector3(0, 1.4, dist)
-	cam.fov = 2.0 * rad_to_deg(atan((ORDER.size() * SPACING_M * 0.55) / dist)) * 0.6
+	cam.fov = 2.0 * rad_to_deg(atan((order.size() * SPACING_M * 0.55) / dist)) * 0.6
 	add_child(cam)
 	cam.look_at(Vector3(0, 1.1, 0))
 	cam.make_current()
