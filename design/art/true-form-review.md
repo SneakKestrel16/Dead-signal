@@ -34,4 +34,24 @@ Not changed in any option, and the next layer whichever ships: the skin is still
 the survivor mannequin's muscles (no wrinkles, veins or wet variation), so up close every option reads partly as
 a black mannequin. A skin texture set (normal and roughness detail) is the follow-up.
 
+Pick: none. Designer, 2026-10-17: "can you do a better model for the monster" (all four still read as the
+mannequin).
+
+## Round 2 (2026-10-17): option D, a new body
+
+`tools/art/build_true_form.py` builds the body from scratch instead of reshaping the survivor mannequin: tubes
+grown along the rig's DEF bones (Blender skin modifier: starved shafts, knobbed elbows and knees, narrow pelvis,
+starved waist, deep narrow chest), a long eyeless skull with brow ridges and a hanging jaw, ribs and vertebrae
+pressing through the skin, shoulder blades, all voxel-remeshed into one surface with flesh noise. That high mesh
+(about 105k faces) bakes a 1024 normal map onto the 15k LOD0. Bone white only on the teeth, finger and toe claws
+and the spine tips between the shoulder blades. Same rig and clips; weights by distance to the DEF bones
+(Blender's bone-heat weighting failed silently on this mesh).
+
+```bash
+"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup     --python tools/art/build_true_form.py            # tools/art/review/true_d.glb; -- --ship replaces the shipped one
+"$G" --path . --resolution 1600x800 --write-movie <tmp>.avi res://tests/manual/character_lineup.tscn --     --shot=tools/art/review/d_front.png --dist=6.5 --true=res://tools/art/review/true_d.glb     [--turn=70 | --dark | --anim=Walk --frame=75 | --anim=Crouch_Fwd --frame=75]
+```
+
+Triangles 14,693 / 6,853 / 2,933. Line-up: survivor C3, shipped form, D.
+
 Pick: (open)
