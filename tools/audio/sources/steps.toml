@@ -93,3 +93,19 @@ author = "Nivatius"
 licence = "CC0-1.0"
 why = "step_true_form: grizzly bear running past the recorder, 12.5 s, heavy padded paws on ground (public domain, NPS)"
 sha256 = "2803ba7c5b5cdbdaf9d7fa0d0e527b9bc0c5e38c0b6a3e08cfde4c0c08172ab9"
+
+[[recording]]
+id = 834027
+url = "https://freesound.org/s/834027/"
+author = "IENBA"
+licence = "CC0-1.0"
+why = "step_tile round 2: boots on a tile floor, 10 steps, MKH shotgun, 6.1 s"
+sha256 = "3912d47e76e0544cb7bd386a79a9dd528feec63ff5aa5ae638cc8a7d5b969ec6"
+
+[[recording]]
+id = 349865
+url = "https://freesound.org/s/349865/"
+author = "jtnewlin13"
+licence = "CC0-1.0"
+why = "step_tile round 2: heavy boots walking on tile, 18 s"
+sha256 = "d18ffad5f838d9d24238998a525574e8b45afe4fb4226ee726e6b8ef63f065b7"

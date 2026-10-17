@@ -21,6 +21,7 @@ uv run tools/audio/fetch.py                   # download manifest rows (tools/au
 uv run tools/audio/fetch.py --search "room tone"      # CC0 hits with licence, author, description, spectrogram URL
 uv run tools/audio/analyze.py 144046          # measure a recording (bands, hold, crest, lasting tones)
 uv run tools/audio/review.py ambience         # build tools/audio/review/ambience/index.html (A/B page)
+uv run tools/audio/review.py cues --round 2   # round 2 page: what ships now against the module's ROUND2 (D, E, F)
 ```
 
 ## Rules (designer)

@@ -109,3 +109,51 @@ author = "mrmunk"
 licence = "CC0-1.0"
 why = "pain_cry_true_form: a pig in slop squealing, 9 s; large grounded animal squeal"
 sha256 = "f5deac340dddcf69803a73bac9673ecb0d79c7fd79b62c25e3bd406186f3161e"
+
+[[recording]]
+id = 524558
+url = "https://freesound.org/s/524558/"
+author = "InfrawaveSound"
+licence = "CC0-1.0"
+why = "grunt round 2: various male grunts, clean close mic, gated, 52 s; clearer, unmuffled grunts"
+sha256 = "450c4c6e41518dda550e3a9d1182c5cc65e857098b0115e594cd5f441ccd1430"
+
+[[recording]]
+id = 727827
+url = "https://freesound.org/s/727827/"
+author = "abraksil"
+licence = "CC0-1.0"
+why = "grunt round 2: sequence of painful male grunts, 16 s"
+sha256 = "b65b0b8a360c12919a97ced6d9239b6fdda71b9b97a9050cfa6ba9f35ea8e503"
+
+[[recording]]
+id = 464486
+url = "https://freesound.org/s/464486/"
+author = "elynch0901"
+licence = "CC0-1.0"
+why = "grunt round 2: a male grunting in pain after a punch, 0.6 s"
+sha256 = "ad2727f3bc69029b479e657b3daf4add0f2448a045d1664343ed056c88eb5b68"
+
+[[recording]]
+id = 464675
+url = "https://freesound.org/s/464675/"
+author = "BranndyBottle"
+licence = "CC0-1.0"
+why = "grunt round 2: a single female grunt, 0.6 s"
+sha256 = "7fb58ab847480775a2e3a793fb024102ba3a8a9c9eeebb8c16b5890071125b0e"
+
+[[recording]]
+id = 464674
+url = "https://freesound.org/s/464674/"
+author = "BranndyBottle"
+licence = "CC0-1.0"
+why = "grunt round 2: a single female grunt, 0.7 s"
+sha256 = "0c7de7a10e522a531ff390917379ec5a16b5aff674bed55866414070e875ac28"
+
+[[recording]]
+id = 188363
+url = "https://freesound.org/s/188363/"
+author = "DarkAliceNite"
+licence = "CC0-1.0"
+why = "grunt round 2: a woman straining with something heavy, 2.9 s"
+sha256 = "7842ccbe0f07c40c7148df72d9d5e8da9cc1c7a11d172b564dfa7265213b9ce5"

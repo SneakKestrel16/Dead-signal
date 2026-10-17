@@ -181,3 +181,107 @@ author = "kyles"
 licence = "CC0-1.0"
 why = "hide_exit: metal locker or gate grill door opening, 4.3 s"
 sha256 = "17a4a88fd1f2f16e5c9b6e5dd02c87a315f6d626f0fb07d9c5c85cc66e4653af"
+
+[[recording]]
+id = 250031
+url = "https://freesound.org/s/250031/"
+author = "launemax"
+licence = "CC0-1.0"
+why = "lunge_hit round 2: clothing rustle and punches on a body, 136 s"
+sha256 = "a6bb03ac5fd1078dd7191b7b7c8f0481ef38a2cbb8ba64099b2eb23e56b3aeb7"
+
+[[recording]]
+id = 191659
+url = "https://freesound.org/s/191659/"
+author = "mmaruska"
+licence = "CC0-1.0"
+why = "lunge_hit round 2: slaps and hits on a body, 31 s"
+sha256 = "546d7cfc96de599b3fea8debaa1c52f511d5660d87796f9c41d9af09685f3f3a"
+
+[[recording]]
+id = 568799
+url = "https://freesound.org/s/568799/"
+author = "wormletter"
+licence = "CC0-1.0"
+why = "lunge_hit round 2: an actor collapsing on a stage floor, mostly thud, 7.6 s"
+sha256 = "33490f8b1146a9dc0acffa21f2de3005906999807d646e550dc8737056431c52"
+
+[[recording]]
+id = 235243
+url = "https://freesound.org/s/235243/"
+author = "jaredpass24"
+licence = "CC0-1.0"
+why = "lunge_hit / lunge_cue round 2: aggressive jacket rustle, 6.8 s"
+sha256 = "f55a805435ac051b36c7efa9a92608f9f38470647364278fa2b21279fb825b21"
+
+[[recording]]
+id = 541081
+url = "https://freesound.org/s/541081/"
+author = "Chelly01"
+licence = "CC0-1.0"
+why = "distortion round 2: back, knees and knuckles cracking, booth, 7 s"
+sha256 = "f2543ce780452d19f5ffb6215ba96ea346a8de4c158344926c463f0d9cbaf18a"
+
+[[recording]]
+id = 764458
+url = "https://freesound.org/s/764458/"
+author = "CarikaDarvall"
+licence = "CC0-1.0"
+why = "distortion round 2: a back cracked by a chiropractor, 7 s"
+sha256 = "f2209d6cc23919a358f9d581ce8c98d2c85dfd4dd35e56afc10084c5f64b9412"
+
+[[recording]]
+id = 575332
+url = "https://freesound.org/s/575332/"
+author = "breadparticles"
+licence = "CC0-1.0"
+why = "distortion round 2: squeezing wet sponges in a bowl, 31 s; wet flesh moving"
+sha256 = "463ba3a182605ee39bab83af62e625bd0ed88f153d8c74878f5743c6fc416757"
+
+[[recording]]
+id = 372076
+url = "https://freesound.org/s/372076/"
+author = "kessir"
+licence = "CC0-1.0"
+why = "lunge_cue round 2: a rabbit snarling, 12 s; pitched down, the creature's snarl"
+sha256 = "1dff2207e7e6432bae537582effd93058b0359cbedf3aee32e1fbadaaebfbe7b"
+
+[[recording]]
+id = 517848
+url = "https://freesound.org/s/517848/"
+author = "mf_gloom"
+licence = "CC0-1.0"
+why = "lunge_cue round 2: a fighter's lunge grunt, 6 s"
+sha256 = "9b09c1debfbc9d3e9e2f9371b16bd5e96e552fa37d1d0f8438232b08039926b3"
+
+[[recording]]
+id = 475135
+url = "https://freesound.org/s/475135/"
+author = "bolkmar"
+licence = "CC0-1.0"
+why = "lunge_cue round 2: a low swoosh, recorded, 1.1 s; the body launching"
+sha256 = "f618f47f61005225e6442e2b0e385fd0b3950b307fd932fee4497bb663885278"
+
+[[recording]]
+id = 708668
+url = "https://freesound.org/s/708668/"
+author = "Karla_Bezuidenhout"
+licence = "CC0-1.0"
+why = "fuse_install round 2: inserting a charger head into a plug, 3.9 s; the fuse pushed into its clips"
+sha256 = "6b3b67450db0b4332ae7e8dfc6fe10b5a446ffffc3df375882601f96b903f336"
+
+[[recording]]
+id = 130153
+url = "https://freesound.org/s/130153/"
+author = "sribubba"
+licence = "CC0-1.0"
+why = "fuse_install round 2: a dual pole household circuit breaker, 0.7 s"
+sha256 = "f6d6c060b53f911bcc8d8767b07c6f26b4e9150b00533982558b4356598f45ff"
+
+[[recording]]
+id = 593976
+url = "https://freesound.org/s/593976/"
+author = "mincedbeats"
+licence = "CC0-1.0"
+why = "fuse_install round 2: a kitchen fuse switch on and off, 2.7 s"
+sha256 = "c1de84762a0b53b266bbe5d77e41e9e7c33b4c3cf986f48ff5425645227e9c9c"

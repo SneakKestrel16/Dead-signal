@@ -229,3 +229,43 @@ author = "MathewHenry"
 licence = "CC0-1.0"
 why = "scare_transformation_reveal: dark deep percussion hit in reverb, 10 s, the low weight under the reveal"
 sha256 = "c0fa01236573b7907c86df52d25e32702b1e4d30bc97837bba6c1ee0f918ec89"
+
+[[recording]]
+id = 338355
+url = "https://freesound.org/s/338355/"
+author = "ScouseMouseJB"
+licence = "CC0-1.0"
+why = "scare_alarm_evacuation round 2: a university fire drill alarm, 34 s; an actual building alarm"
+sha256 = "6024cb69b2d72ee49f4f2327cf9d5bba1e70c5869c91f8e5f17c08614494a197"
+
+[[recording]]
+id = 319413
+url = "https://freesound.org/s/319413/"
+author = "pushkin"
+licence = "CC0-1.0"
+why = "scare_alarm_evacuation round 2: a building's fire alarm, 32 s"
+sha256 = "0a89258cb93066e9d12d58e44d85aac0c28a073b95a734a2daac4040ef66438e"
+
+[[recording]]
+id = 155969
+url = "https://freesound.org/s/155969/"
+author = "klangfabrik"
+licence = "CC0-1.0"
+why = "scare_alarm_evacuation round 2: high-rise fire alarm ramping tone, close then far, 78 s"
+sha256 = "37f986c6d011e004ceeffd58d310703faa793656f6fa50501cfaa6746a77e0b7"
+
+[[recording]]
+id = 418194
+url = "https://freesound.org/s/418194/"
+author = "deleted_user_3656686"
+licence = "CC0-1.0"
+why = "scare_glass_break round 2: hard impact on glass with cracks forming after, 0.7 s"
+sha256 = "688768d3d7c3bd081b28e28fbd116e80bde4b9ad39731c89e2f9cf173f44c682"
+
+[[recording]]
+id = 475443
+url = "https://freesound.org/s/475443/"
+author = "o_ciz"
+licence = "CC0-1.0"
+why = "scare_glass_break round 2: cracking glass shards, 81 s; varied crack ticks"
+sha256 = "d73fa1686bab4a85a1a1ff3b6a211d081dab00b8ca0e58528f02472cc8a85bfb"

@@ -12,11 +12,13 @@ Timing (source: WorldSfx plays on the state flip, so these start at the event):
 - objective_dock: dock_s = 2.0 s hold (objectives.tres); the drive seats at the end.
 - objective_alarm: plays once, facility-wide (WorldSfx.ALARM): 2.4 s of a siren in the distance.
 """
+from dataclasses import replace
+
 import numpy as np
 
 from lib import dsp
 from lib.master import Sound
-from sounds.cues import S, body, finish, grab, put, reverse, speaker, window
+from sounds.cues import S, at, body, finish, grab, put, reverse, speaker, window
 
 
 def door_open_a(rng):
@@ -203,3 +205,38 @@ def option(name, i):
 
 SOUNDS = [option(n, 0) for n in WORLD]
 CANDIDATES = {n: [option(n, i) for i in range(3)] for n in WORLD}
+
+
+# ---- round 2 (docs/audio/picks.md: no pick and no note on barricade_build, so three new directions) ------------
+def barricade_build_d(rng):
+    """A plank slapped against the frame (a dropped plank, its clatter), then three hammer blows, the last firm."""
+    out = np.zeros(S(1.6))
+    put(out, at(537755, 6.37, 0.35), 0.0, -2, hp=80)
+    for i, t in enumerate((0.45, 0.85, 1.2)):
+        put(out, grab(707525, i, 0.25, sep=0.1), t + rng.uniform(-0.02, 0.02), -4 + 3 * (i == 2), hp=150)
+    return out
+
+
+def barricade_build_e(rng):
+    """Two planks clattering into place, then a quick run of nail blows."""
+    out = np.zeros(S(1.6))
+    put(out, at(478238, 1.57, 0.3), 0.0, -2, hp=80)
+    put(out, at(478238, 3.22, 0.3), 0.22, -5, hp=80)
+    for i, t in enumerate((0.7, 0.92, 1.12, 1.32)):
+        put(out, grab(811941, i, 0.22, sep=0.1), t, -3, hp=150)
+    return out
+
+
+def barricade_build_f(rng):
+    """Heavy: two mallet blows on a timber, the plank rattling against the frame after each, then it settles."""
+    out = np.zeros(S(1.6))
+    for i, t in enumerate((0.0, 0.6)):
+        put(out, grab(676730, i, 0.35, sep=0.3, rate=0.95), t, 0, hp=70)
+        put(out, at(537755, (9.01, 12.66)[i], 0.25), t + 0.08, -9, hp=150)
+    put(out, at(478238, 6.63, 0.6), 1.0, -6, hp=100)
+    return out
+
+
+ROUND2 = {"barricade_build": [replace(option("barricade_build", 0), name=f"barricade_build_{l}",
+                                      build=finish(fn, DRIVE.get("barricade_build", 0.0)), ids=())
+                              for l, fn in zip("def", (barricade_build_d, barricade_build_e, barricade_build_f))]}

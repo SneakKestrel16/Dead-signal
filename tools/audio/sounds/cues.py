@@ -18,6 +18,7 @@ Beats and where they come from (frame rate 24: tools/art/build_anims.py comment 
   opens at the start of the exit. hide_cue: one breath, every hide_cue_interval_s = 5 s.
 - fuse_install: fires when the 8 s hold completes (fuse_install_s): the seat of the fuse.
 """
+from dataclasses import replace
 from math import gcd
 
 import numpy as np
@@ -448,3 +449,140 @@ def option(name, i):
 
 SOUNDS = [option(n, 0) for n in CUES]
 CANDIDATES = {n: [option(n, i) for i in range(3)] for n in CUES}
+
+
+# ---- round 2 (docs/audio/picks.md) ---------------------------------------------------------------------------
+# New recordings: sources/cues.toml round-2 rows. Times below are event feet read with peaks() (cut 3 ms ahead).
+def at(sid, t, dur, rate=1.0, rel=0.03):
+    """`dur` seconds of `sid` from 3 ms before `t` (an event foot read off the recording)."""
+    return grab(sid, dur=dur, rate=rate, rel=rel, start=t - 0.003)
+
+
+def lunge_cue_d(rng):
+    """Lunge round 2 ("they all sound the same and none sound like a lunge"; round 1 was breath and bone each time).
+    The creature: a snarl (a rabbit's, slowed to half: a big animal's hiss) rising through the coil, the body
+    launching on a low swoosh at the release (0.56 s) with its clothes snapping."""
+    out = np.zeros(S(0.6))
+    put(out, at(372076, 7.15, 0.3, rate=0.5), 0.08, -3, hp=100, lp=6000)
+    put(out, at(475135, 0.17, 0.25), 0.4, -2, hp=60)
+    put(out, at(235243, 4.11, 0.1), 0.53, -6, hp=300)
+    return out * swell(len(out), (0, 0.3), (0.3, 0.7), (0.56, 1.0), (0.6, 0.0))
+
+
+def lunge_cue_e(rng):
+    """The effort: a fighter's lunge grunt slowed to 0.75 peaking at the release, a stomp pushing off the floor
+    under it, the swoosh of the body going."""
+    out = np.zeros(S(0.6))
+    put(out, at(517848, 2.50, 0.25, rate=0.75), 0.32, -2, hp=90)
+    put(out, at(475135, 0.17, 0.25), 0.36, -6, hp=60)
+    put(out, grab(465299, 0, 0.2, rate=0.7), 0.5, -4, lp=1500)
+    return out * swell(len(out), (0, 0.6), (0.56, 1.0), (0.6, 0.0))
+
+
+def lunge_cue_f(rng):
+    """No voice: the body. Clothes pulled tight as it crouches, a scrape of the push-off, the low swoosh into the dash."""
+    out = np.zeros(S(0.6))
+    put(out, at(235243, 0.77, 0.3), 0.0, -6, hp=200)
+    put(out, at(235243, 1.38, 0.2), 0.25, -4, hp=200)
+    put(out, grab(578493, 0, 0.25, rate=1.2, sep=0.4), 0.33, -5, hp=150, lp=6000)
+    put(out, at(475135, 0.17, 0.25, rate=0.85), 0.38, -1, hp=50)
+    return out * swell(len(out), (0, 0.4), (0.56, 1.0), (0.6, 0.0))
+
+
+def lunge_hit_d(rng):
+    """Lunge hit round 2 ("a survivor being hit: a low thud with cloth being moved"). A punch into a body, the
+    thud of the weight under it (an actor's collapse, low-passed), the jacket thrown about after."""
+    out = np.zeros(S(0.55))
+    put(out, at(250031, 126.00, 0.2), 0.0, -3)
+    put(out, at(568799, 4.00, 0.45), 0.0, 0, lp=900)
+    put(out, at(235243, 4.11, 0.3), 0.03, -6, hp=250)
+    return out
+
+
+def lunge_hit_e(rng):
+    """Thud-led: the collapse thud slowed (heavier), a low body under it, cloth dragged across after."""
+    out = np.zeros(S(0.55))
+    put(out, at(568799, 0.00, 0.5, rate=0.85), 0.0, 0, lp=700)
+    put(out, body(rng, 0.3, 120, 0.08), 0.0, -4)
+    put(out, at(250031, 16.63, 0.3), 0.06, -7, hp=300)
+    return out
+
+
+def lunge_hit_f(rng):
+    """A blow on a body, dulled (no slap), a thump, and two moves of a jacket as the survivor is thrown."""
+    out = np.zeros(S(0.55))
+    put(out, at(191659, 13.43, 0.15), 0.0, -2, lp=2500)
+    put(out, body(rng, 0.35, 140, 0.1), 0.0, -2)
+    put(out, at(235243, 0.03, 0.15), 0.05, -7, hp=250)
+    put(out, at(235243, 1.38, 0.2), 0.22, -9, hp=250)
+    return out
+
+
+def distortion_d(rng):
+    """Distortion round 2 (on A: "sounds like crunching on a chip, should be flesh and bone moving"). No celery
+    crunch and no crisp cracks. Wet sponges squeezed, slowed (flesh pushed about), a back's joints popping deep and
+    dull (low-passed), over the flesh bed."""
+    out = np.zeros(S(2.0))
+    put(out, window(435896, 2.0, loudest=False), 0, -6, hp=60, lp=1500)
+    for t, e in ((0.1, 10.53), (0.55, 12.68), (1.0, 16.79), (1.4, 21.41)):
+        put(out, at(575332, e, 0.35, rate=0.6), t, -3, hp=80, lp=3000)
+    for t, e in ((0.4, 2.96), (0.9, 4.43), (1.3, 5.55)):
+        put(out, at(764458, e, 0.15, rate=0.8), t, -5, hp=80, lp=2000)
+    return out * swell(len(out), (0, 0.3), (1.2, 1.0), (1.8, 0.6), (2.0, 0.0))
+
+
+def distortion_e(rng):
+    """Bone-led but dull: real joints cracking (back, knees) slowed to 0.7 and rolled off at 1.8 kHz, so they knock
+    instead of crunch, over the slowed sponge squelch."""
+    out = np.zeros(S(2.0))
+    put(out, at(575332, 0.41, 2.0, rate=0.55), 0, 0, hp=60, lp=2500)
+    put(out, window(435896, 2.0, loudest=False), 0, -8, hp=60, lp=1500)
+    for t, e in ((0.3, 1.66), (0.75, 5.43), (1.1, 6.30), (1.5, 4.16)):
+        put(out, at(541081, e, 0.2, rate=0.7), t, -9, hp=70, lp=1800)
+    return out * swell(len(out), (0, 0.4), (1.2, 1.0), (2.0, 0.0))
+
+
+def distortion_f(rng):
+    """Wet-led: the flesh bed at full, sponge squelches at half speed, one deep back crack at 1.2 s and a low thud
+    as the new shape settles."""
+    out = np.zeros(S(2.0))
+    put(out, window(435896, 2.0), 0, 0, hp=50, lp=1800)
+    for t, e in ((0.2, 18.70), (0.65, 22.77), (1.0, 25.26)):
+        put(out, at(575332, e, 0.4, rate=0.5), t, -4, hp=60, lp=2500)
+    put(out, at(764458, 4.43, 0.2, rate=0.7), 1.2, -3, hp=60, lp=1600)
+    put(out, body(rng, 0.4, 110, 0.12), 1.55, -6)
+    return out * swell(len(out), (0, 0.4), (1.3, 1.0), (2.0, 0.0))
+
+
+def fuse_install_d(rng):
+    """Fuse install round 2 ("all bad, redo"; round 1 was switches and a locker door). A fuse pushed into its clips:
+    the slide, the snap of the clips at 0.25 s, then the box coming live (a household breaker's clack) at 0.45."""
+    out = np.zeros(S(0.9))
+    put(out, at(708668, 1.93, 0.2), 0.0, -6, hp=200)
+    put(out, at(708668, 2.85, 0.2), 0.25, 0, hp=150)
+    put(out, at(130153, 0.10, 0.4), 0.45, -3, hp=80)
+    return out
+
+
+def fuse_install_e(rng):
+    """Breaker-led: the fuse clip's snap, then the dual-pole breaker thrown hard 80 ms later, a low body under."""
+    out = np.zeros(S(0.9))
+    put(out, at(593976, 0.04, 0.15), 0.0, -4, hp=200)
+    put(out, at(130153, 0.10, 0.5, rate=0.85), 0.08, 0, hp=60)
+    put(out, body(rng, 0.3, 120, 0.08), 0.08, -8)
+    return out
+
+
+def fuse_install_f(rng):
+    """The seat with a spark: the clips snap, the kitchen fuse switch clicks home, a short spark as the contact bites."""
+    out = np.zeros(S(0.9))
+    put(out, at(708668, 2.85, 0.2), 0.0, 0, hp=150)
+    put(out, at(593976, 1.75, 0.15), 0.12, -3, hp=200)
+    put(out, grab(807671, 0, 0.25), 0.14, -10, hp=1000)
+    return out
+
+
+R2 = {"lunge_cue": (lunge_cue_d, lunge_cue_e, lunge_cue_f), "lunge_hit": (lunge_hit_d, lunge_hit_e, lunge_hit_f),
+      "distortion": (distortion_d, distortion_e, distortion_f), "fuse_install": (fuse_install_d, fuse_install_e, fuse_install_f)}
+ROUND2 = {n: [replace(option(n, 0), name=f"{n}_{l}", build=finish(fn, DRIVE.get(n, 0.0)), ids=()) for l, fn in zip("def", fns)]
+          for n, fns in R2.items()}

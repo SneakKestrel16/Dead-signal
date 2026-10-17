@@ -39,12 +39,12 @@ RANDOM_PITCH = 1.02  # AudioStreamRandomizer spread of a sound with variants (su
 STINGER_GAIN_DB = 6.0  # data/knobs/scare.tres stinger_max_db_rel
 
 
-def shipped(name, cands):
-    """The option picks.SHIP names for `name` (A when unlisted), under the shipped name and events."""
+def shipped(name, cands, mod):
+    """The option picks.SHIP names for `name` (A when unlisted; D-F are the module's ROUND2), under the shipped name and events."""
     a, pick = cands[0], picks.SHIP.get(name, "A")
     if pick == "before":
         return replace(a, build=legacy(a.family, name, a.ids, a.loop).build, level=None, variants=1)
-    c = cands["ABC".index(pick)]
+    c = dict(zip("ABCDEF", list(cands) + list(getattr(mod, "ROUND2", {}).get(name, []))))[pick]
     return replace(c, name=name, ids=a.ids, heard_as=c.name)
 
 
@@ -52,7 +52,7 @@ def all_sounds():
     out = []
     for m in FAMILY_MODULES:
         mod = importlib.import_module("sounds." + m)
-        out += [shipped(n, c) for n, c in mod.CANDIDATES.items()]
+        out += [shipped(n, c, mod) for n, c in mod.CANDIDATES.items()]
     names = [s.name for s in out]
     assert len(names) == len(set(names)), "duplicate sound names"
     return out

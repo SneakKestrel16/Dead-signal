@@ -16,6 +16,7 @@ a speed ratio per set here. Nothing is pitched again in game, so there is no dou
 The shipped take is option A of each sound; B and C are the other candidates for the review page
 (tools/audio/review/voices/).
 """
+from dataclasses import replace
 from fractions import Fraction
 from functools import partial
 
@@ -285,3 +286,36 @@ PLAYS["pain_cry_true_form"] = ("The monster's cry when stunned in true form (not
                                "grunt). A grounded creature, big and hurt: no dog, nothing sci-fi.")
 
 SOUNDS = [c[0] for c in CANDIDATES.values()]
+
+
+# ---- round 2 (docs/audio/picks.md) ---------------------------------------------------------------------------
+# Grunts: "more like where it's a grunt but more audible and less muffled". Round 1 bent each grunt along a pitch
+# contour, moved its formants, shook it and low-passed it at 7 kHz: that is the muffle. Round 2 plays a clean recorded
+# grunt (sources/voices.toml round-2 rows) as it was recorded, varispeeded a few percent toward the survivor's voice,
+# band 80 Hz-12 kHz. D: as recorded. E: a presence lift at 2.5 kHz and a light drive, to cut through a mix.
+# F: a different take with a jolt (a quick rise, then a sag) and no other processing.
+# (source id, start s, varispeed). Inference: the varispeeds come from an autocorrelation pitch estimate of each take
+# (524558 grunts ~175-230 Hz, the women's takes ~307-416 Hz) against the survivor's speech (voices.py SPEAKER);
+# what settles it is the designer telling the five apart.
+GRUNT_R2 = {
+    1: [(524558, 29.60, 0.85), (524558, 9.33, 0.80), (524558, 48.03, 0.80)],
+    2: [(524558, 31.35, 0.95), (524558, 49.84, 0.92), (524558, 15.95, 0.88)],
+    3: [(188363, 0.85, 0.95), (464674, 0.0, 0.90), (188363, 2.55, 1.00)],
+    4: [(464675, 0.0, 0.90), (188363, 0.0, 1.00), (427430, 21.44, 1.03)],
+    5: [(524558, 33.01, 1.00), (524558, 11.51, 0.95), (464486, 0.0, 0.88)],
+}
+
+
+def _grunt_r2(k, i, rng):
+    sid, t, r = GRUNT_R2[k][i]
+    x = vari(_event(sid, max(0.0, t - 0.05), t + 0.8, 0.7), r)
+    if i == 2:
+        x = contour(x, len(x) / SR, (0, 1.0), (0.04, 1.08), (0.15, 1.0), (0.6, 0.94))
+    y = dsp.lowpass(dsp.highpass(x, 80), 12000)
+    if i == 1:
+        y = dsp.drive(dsp.eq(y, "peak", 2500, 0.9, 5.0), 1.6)
+    return _fade(y, 3, 60)
+
+
+ROUND2 = {f"grunt_c{k}": [replace(CANDIDATES[f"grunt_c{k}"][0], name=f"grunt_c{k}_{l}", build=partial(_run, partial(_grunt_r2, k), i), ids=())
+                          for i, l in enumerate("def")] for k in CHARS}

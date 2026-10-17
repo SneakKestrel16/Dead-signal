@@ -15,6 +15,7 @@ AudioStreamRandomizer (no repeat in a row) so a corridor of steps does not machi
 option A of OPTIONS; B and C are the other candidates for the review page (tools/audio/review/steps/).
 """
 import math
+from dataclasses import replace
 from functools import partial
 
 import numpy as np
@@ -50,6 +51,8 @@ POOLS = {
     635117: {"claw": [0.62, 2.25, 3.10, 3.42, 4.26, 6.41, 6.86]},  # dog claws on hardwood
     199919: {"skitter": [2.70, 6.97, 16.09, 18.49, 20.49, 20.79, 22.22]},  # medium dog on bare wood
     519600: {"paw": [7.00, 7.49, 8.06, 9.10, 9.23]},  # grizzly running past
+    834027: {"tile": [0.02, 0.91, 1.84, 2.75, 3.67, 4.59, 5.52]},  # boots on tile, shotgun mic (round 2)
+    349865: {"heavy": [2.25, 2.81, 3.84, 4.88, 5.86, 6.45, 7.53, 8.09, 8.67, 9.77, 10.90, 11.93, 13.15]},  # heavy boots on tile (round 2)
 }
 
 # A layer: (recording id, pool, gain dB, varispeed, high-pass Hz, low-pass Hz, seconds, offset ms from the layer
@@ -178,3 +181,18 @@ PLAYS = {
 SOUNDS = [option(n, 0) for n in OPTIONS]
 # Review-page candidates: A is the shipped sound, `<name>_b` and `<name>_c` are the others (not shipped).
 CANDIDATES = {n: [option(n, i) for i in range(3)] for n in OPTIONS}
+
+
+# Round 2 (docs/audio/picks.md: no pick and no note on step_tile, so three new directions on new tile recordings).
+ROUND2_OPTIONS = {
+    "step_tile": [
+        # D: boots on tile, a cleaner close recording, nothing else
+        [(834027, "tile", 0, 1.0, 80, 10000, 0.24, 0)],
+        # E: heavy boots on tile, more weight and a harder heel
+        [(349865, "heavy", 0, 1.0, 70, 9000, 0.24, 0)],
+        # F: D with the first recording's scrape just ahead of it: grit under the sole
+        [(834027, "tile", 0, 1.0, 80, 10000, 0.24, 0), (555868, "scrape", -10, 1.05, 500, 10000, 0.18, -30)],
+    ],
+}
+ROUND2 = {n: [replace(option(n, 0), name=f"{n}_{l}", build=partial(_build, layers), ids=()) for l, layers in zip("def", opts)]
+          for n, opts in ROUND2_OPTIONS.items()}

@@ -101,3 +101,19 @@ author = "Licorne_En_Fer"
 licence = "CC0-1.0"
 why = "objective_alarm: siren alarm test heard muffled from inside a nearby building, 108 s (noisy)"
 sha256 = "b34a030d7a50038fb0ea21701e1f76a8a812a1419fb845f50962243f6a9b066d"
+
+[[recording]]
+id = 478238
+url = "https://freesound.org/s/478238/"
+author = "Fission9"
+licence = "CC0-1.0"
+why = "barricade_build round 2: planks dropped onto bricks, clattering, 9.7 s"
+sha256 = "756566737d56cbf7392f6c0303b72968aa6a57a4ec9e83405a321eb03883e0a1"
+
+[[recording]]
+id = 537755
+url = "https://freesound.org/s/537755/"
+author = "Tim_Verberne"
+licence = "CC0-1.0"
+why = "barricade_build round 2: small wooden planks dropped, 15 s"
+sha256 = "8d659c02493ced9485ec9b4cc48701d6d44c0d25b7b2cc88f0f3ed4839390e4d"

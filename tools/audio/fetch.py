@@ -139,6 +139,7 @@ def fetch_all():
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")  # descriptions carry arrows and accents; the Windows console codec is cp1252
     ap = argparse.ArgumentParser()
     ap.add_argument("--info", type=int)
     ap.add_argument("--search")

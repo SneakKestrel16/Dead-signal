@@ -8,6 +8,7 @@ are read from the recordings (onsets probed at 10 ms) and chosen by ear-less rul
 settles them is the review page. Nothing here is tied to an animation clip (a scare is heard at its origin when the
 server says so), so no beat comes from a clip or a knob.
 """
+from dataclasses import replace
 from fractions import Fraction
 from functools import partial
 
@@ -335,3 +336,41 @@ PLAYS = {
 }
 SOUNDS = [option(n, 0) for n in BUILDERS]
 CANDIDATES = {n: [option(n, i) for i in range(3)] for n in BUILDERS}
+
+
+# ---- round 2 (docs/audio/picks.md) ---------------------------------------------------------------------------
+def glass_break_r2(v, rng):
+    """Round 2 of the picked B ("add more variety instead of the same sound twice"): every crack from a different
+    recording or a different moment, so the panel cracks once and the crack runs, never repeats."""
+    if v == 0:  # D: B's first crack, then the crack running: three different shard cracks, each quieter and higher
+        return mix(1.0, (cut(379015, 0.42, 0.4, 1.0, hp=800), 0.0, 0), (cut(475443, 21.65, 0.12, 1.0, hp=1500), 0.22, -5),
+                   (cut(475443, 37.16, 0.12, 1.1, hp=2000), 0.41, -8), (cut(475443, 57.28, 0.08, 1.2, hp=2500), 0.63, -12))
+    if v == 1:  # E: a hard hit on glass and the cracks forming after it (one recording), shard ticks spreading
+        return mix(1.0, (cut(418194, 0.0, 0.7, 1.0, hp=600), 0.0, 0), (cut(475443, 34.87, 0.12, 1.0, hp=1800), 0.3, -9),
+                   (specks(rng, 0.6, 18, 3000, 8000, 0.2), 0.25, -20))
+    # F: B's first crack with ice cracking under it, then one long shard crack as the panel settles
+    return mix(1.0, (cut(379015, 0.42, 0.4, 1.0, hp=800), 0.0, 0), (cut(177224, 0.22, 0.4, 1.0, hp=1200), 0.03, -7),
+               (cut(475443, 71.51, 0.45, 1.0, hp=1500), 0.35, -7))
+
+
+def alarm_evacuation_r2(v, rng):
+    """Round 2: "more like the first, where it's an actual alarm" (the first option was the old hi-lo two-tone alarm).
+    Real building fire alarms (sources/scares.toml round-2 rows) through the facility horns; no bells."""
+    if v == 0:  # D: a high-rise whoop alarm (620-870 Hz rising, 2.5 s on), close: one whoop and the start of the next
+        x = mix(4.0, (cut(155969, 0.0, 2.6, onset=False, fade=0.05), 0.0, 0), (cut(155969, 5.0, 1.3, onset=False, fade=0.1), 2.75, 0))
+        x = speaker(rng, x, 250, 4000, 1.5)
+    elif v == 1:  # E: a university fire drill sounder, slowed a fifth (2.7 kHz to 2.2: still an alarm, less piercing)
+        x = speaker(rng, cut(338355, 1.0, 4.0, 0.8, onset=False, fade=0.1), 300, 3500, 1.5)
+    else:  # F: the whoop alarm heard down the corridors (its far recording), the building sounder under it
+        x = mix(4.0, (cut(155969, 42.4, 2.6, onset=False, fade=0.05), 0.0, 0), (cut(155969, 47.4, 1.3, onset=False, fade=0.1), 2.75, 0),
+                (cut(338355, 6.0, 4.0, 0.8, lp=2500, onset=False, fade=0.1), 0.0, -12))
+        x = speaker(rng, x, 200, 3500, 1.5)
+    return fit(x, 4.0, 0.15)
+
+
+ROUND2 = {
+    "scare_glass_break": [replace(option("scare_glass_break", 0), name=f"scare_glass_break_{l}", build=partial(_build, glass_break_r2, i), ids=())
+                          for i, l in enumerate("def")],
+    "scare_alarm_evacuation": [replace(option("scare_alarm_evacuation", 0), name=f"scare_alarm_evacuation_{l}",
+                                       build=partial(_build, alarm_evacuation_r2, i), ids=()) for i, l in enumerate("def")],
+}

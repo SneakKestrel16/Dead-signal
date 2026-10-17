@@ -62,3 +62,9 @@ Traps hit in this project. The general ones are in [pipeline-handoff.md](pipelin
   measured on the padded buffer the silence dominates the median and nothing is found.
 - **Scrapes rise slowly and an onset detector skips them**: cut them from 10 ms level regions read off the
   spectrogram.
+- **`fetch.py --search` died on a description's arrow** (`UnicodeEncodeError: 'charmap'`): the Windows console is
+  cp1252; fetch now reconfigures stdout to UTF-8 (round 2).
+- **A stray `inspect.py` in `%TEMP%` shadows the stdlib** when a script runs from Temp, so numpy fails to import
+  (`No module named 'bpy'`). Keep scratch scripts in `tools/audio/.cache/` and run them with `python -I`.
+- **A kept candidate must seed from the name it was heard under** (`Sound.heard_as`), or every random choice is
+  redrawn and the picked take is gone; round 1's 37 picks were checked equal to their review renders sample for sample.

@@ -5,6 +5,7 @@
 """Build the A/B review page of a family: tools/audio/review/<family>/index.html (gitignored output).
 
     uv run tools/audio/review.py ambience
+    uv run tools/audio/review.py cues --round 2      # review/cues/r2/: what ships now, then the module's ROUND2 D, E, F
 
 For each sound the family's module lists in CANDIDATES (name -> [A, B, C] Sounds) and PLAYS (name -> what happens
 in the game when it plays): the old take as it shipped before the pipeline ("before", sources/legacy/<family>/),
@@ -20,6 +21,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib import dsp, master, page  # noqa: E402
 import analyze  # noqa: E402
+import export  # noqa: E402
 
 
 def seam_jump(x):
@@ -28,24 +30,34 @@ def seam_jump(x):
     return float(step.max() / (np.percentile(np.abs(np.diff(x)), 99.9) + 1e-12))
 
 
-def main(family):
+def render(snd, label, name):
+    """The option as export.py masters it; a sound with variants is its takes in a row (as a walk would play them)."""
+    takes = [master.render(snd, v) for v in range(snd.variants)]
+    take = takes[0]
+    gap = np.zeros(dsp.samples(0.5))
+    m = analyze.measure(take.x, dsp.SR)
+    print(f"{name} {label}: {take.lufs:.1f} LUFS peak {take.peak_db:.1f} dBFS{' LIMITED' if take.limited else ''} "
+          f"seam {seam_jump(take.x) if snd.loop else 0:.1f}x tones {m['tones'] or 'none'}")
+    return np.concatenate([a for t in takes for a in (t.x, gap)]) if len(takes) > 1 else take.x
+
+
+def main(family, rnd=1):
     mod = importlib.import_module("sounds." + family)
     items = []
-    for name, cands in mod.CANDIDATES.items():
-        opts = [("before", dsp.legacy(cands[0].family, name))]
-        for letter, snd in zip("ABC", cands):
-            takes = [master.render(snd, v) for v in range(snd.variants)]
-            take = takes[0]
-            # a sound with variants is shown as its takes in a row (as a walk would play them)
-            gap = np.zeros(dsp.samples(0.5))
-            opts.append((letter, np.concatenate([a for t in takes for a in (t.x, gap)]) if len(takes) > 1 else take.x))
-            m = analyze.measure(take.x, dsp.SR)
-            print(f"{name} {letter}: {take.lufs:.1f} LUFS peak {take.peak_db:.1f} dBFS{' LIMITED' if take.limited else ''} "
-                  f"seam {seam_jump(take.x) if snd.loop else 0:.1f}x tones {m['tones'] or 'none'}")
+    for name, cands in (mod.CANDIDATES if rnd == 1 else mod.ROUND2).items():
+        if rnd == 1:
+            opts = [("before", dsp.legacy(cands[0].family, name))] + [(l, render(s, l, name)) for l, s in zip("ABC", cands)]
+        else:  # what ships now (picks.py), then the round's candidates
+            now = export.shipped(name, mod.CANDIDATES[name], mod)
+            opts = [("now", render(now, "now", name))] + [(l, render(s, l, name)) for l, s in zip("DEF", cands)]
         items.append({"name": name, "doc": (mod.__doc__ or "").strip().split("\n")[0], "plays": mod.PLAYS[name],
                       "loop": cands[0].loop, "options": opts})
-    print("page:", page.build(Path(__file__).resolve().parent / "review" / family, items, f"Review: {family}"))
+    out = Path(__file__).resolve().parent / "review" / family
+    if rnd > 1:
+        out = out / f"r{rnd}"
+    print("page:", page.build(out, items, f"Review: {family}" + (f" round {rnd}" if rnd > 1 else ""),
+                              "picks.json" if rnd == 1 else f"picks_{family}_r{rnd}.json"))
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[2] == "--round" else 1)
