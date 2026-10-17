@@ -148,3 +148,48 @@ Known gaps:
 - The scalp falls dark under the lineup's front-low spots.
 
 Pick: (open)
+
+## Round 6 (2026-10-17): the designer's concept
+
+The designer sent a concept image, generated with a free AI image tool:
+`design/art/reference/true-form-concept-01.webp`. It shows:
+
+- a near-black, stringy, long-limbed body;
+- a pale domed head that is nothing but a mouth of needle teeth;
+- small red eyes;
+- tendrils off the skull and back;
+- shredded strips trailing off the limbs;
+- long claws.
+
+This is a creature, not the round-3 E "former staff member", and its red eyes break art bible §5's "no glowing
+eyes". Here they are red but not emissive. §5 is rewritten once the designer accepts a model from this concept.
+
+`tools/art/build_creature.py` reuses `build_experiment.py`'s MakeHuman pipeline:
+
+- **Body:** a lean, sinewy macro (muscle 0.8, weight 0) with the human head cut off. The cut is flat 6 cm under the
+  head joint, plus the head-weighted chin underside, within 20 cm of the middle so the fingertips survive.
+- **Head:** metaball ellipsoids (`HEAD_BLOBS`): dome, brow, snout, cheeks, and a sleeve over the neck's cut. The
+  lower jaw is a second metaball, so the open mouth does not fill in, hanging 32°.
+- **Teeth:** needles found by rays from inside the mouth.
+- **Parts:** a tongue, red eyes, skull tendrils, back tendrils, strips on the forearms and shins, finger and toe
+  claws.
+- **Bakes:** a normal map and a painted base colour each, for the body (sinew noise) and the head.
+
+Triangles 14,808 / 6,834 / 2,802.
+
+```bash
+BLENDER_USER_RESOURCES=tools/art/.cache/blender_user "C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup     --python tools/art/build_creature.py          # tools/art/review/true_creature.glb; -- --ship to replace
+```
+
+Renders: `tools/art/review/c7_{front,side,head,crouch,walk,dark}.png` (line-up: survivor C3, shipped form, this,
+round 5).
+
+Gaps against the concept:
+
+- The body reads grey-green under the lineup spots, not near-black.
+- The torso and arms lack the concept's muscle definition.
+- The limb strips and back tendrils are too small to read.
+- The claws hide in the clips' clenched fists.
+- A ledge shows where the head's neck sleeve meets the neck.
+
+Pick: (open)
