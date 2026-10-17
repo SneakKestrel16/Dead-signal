@@ -59,3 +59,24 @@ and the spine tips between the shoulder blades. Same rig and clips; weights by d
 Triangles 14,693 / 6,853 / 2,933. Line-up: survivor C3, shipped form, D.
 
 Pick: (open)
+
+## Round 3 (2026-10-17): one concept per creature direction
+
+The designer asked what the monster is; no design document says (the brief and Borrowed Face define what it
+does, not what it is). Three directions were offered and the designer asked for "one for all three". Same
+pipeline as D (`build_true_form.py -- --all`, or `-- --concept=e|f|g`), each its own `CONCEPTS` entry:
+
+| Concept | Direction | Look |
+|---|---|---|
+| E | Failed experiment: a former staff member | Pale clammy grey skin, a human skull and face, a surgical halo bolted to the skull with posts to the shoulders, an autopsy Y-incision held with staples, a dislocated hanging jaw, split fingertips |
+| F | Mimic organism: built to take other shapes | Wet black, a smooth head with only the start of a nose and brow, a toothed seam down the chest, unfinished faces budding from the side and back, a half-grown hand reaching out of the waist |
+| G | Something the lab dug up or contained | Stone-grey and craggy, a long skull swept back, a bone antler crown, a long toothed muzzle, a hump and tall bone plates down the spine, long claws |
+
+E and G break the art bible §5 skin rule (near-black, sRGB 40-55) on purpose: E's pale skin is the "it was one of
+us" read, G's stone grey the "old thing" read. Whichever direction is picked, the art bible §5 true-form section
+is rewritten to it. Triangles: E 14,694, F 14,693, G 14,686 at LOD0 (budget 15k).
+
+Renders: `tools/art/review/efg_{front,side,back,walk,crouch,dark}.png` (line-up: survivor C3, shipped form, E, F,
+G).
+
+Pick: (open)
