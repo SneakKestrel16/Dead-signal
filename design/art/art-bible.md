@@ -118,16 +118,20 @@ Each state is distinct by colour temperature, contrast and motion, not just brig
 
 ### Shapeshifter true form (separate look, shown after Transforming or instantly at lunge wind-up)
 
-- **What it is (designer, 2026-10-17):** a failed experiment, a former staff member of the facility the
-  experiment went wrong on. Chosen because it varies per map: each facility's victim can differ (a scientist
-  here, a guard or an engineer on another map). Review: `design/art/true-form-review.md`.
-- **Silhouette:** about 2.4 m, stretched and starved: over-long arms, narrow trunk, a human skull and face pulled
-  out of true, the jaw torn loose and hanging; distinct on the same rig family; never reads as any of the five
-  survivors (no jumpsuit, no accessory from the survivor set).
-- **Surface:** pale, clammy grey skin (sRGB ~110-125; replaces the earlier near-black rule, designer 2026-10-17),
-  wet sheen so the flashlight lights it up; bone-white teeth and split fingertips at albedo ~190-220; surgical
-  metal (the halo bolted to the skull, staples along an autopsy Y-incision) in mid grey. No eyes that glow: the
-  sockets are sunken and dark.
+- **What it is (designer, 2026-10-17):** a creature built from the designer's concept image
+  (`design/art/reference/true-form-concept-01.webp`), shipped from review round 8 as a placeholder: the designer
+  judged it "still bad" and asked to continue and fix it later. Review and open gaps:
+  `design/art/true-form-review.md`. Source: `tools/art/build_creature.py`. This replaces the earlier "former staff
+  member" direction.
+- **Silhouette:** about 2.4 m, long-limbed and stringy. A pale, elongated, crested skull is mostly mouth, with
+  needle teeth in both jaws and a hanging jaw. A mane of tendrils sweeps back off the skull and shoulders, torn
+  ribbons trail off every limb, and long claws tip open hands. It is distinct on the same rig family and never
+  reads as any of the five survivors (no jumpsuit, no accessory from the survivor set).
+- **Surface:** a near-black, blue-grey sinewy body (painted sRGB 22-34, sheen 46-66), with corded limbs, ribs on
+  the flanks, and a raw red streak down the sternum. A pale grey-green head (sRGB ~124-196) has darkened creases.
+  The teeth are bone (sRGB 214, 202, 172), the gums and tongue raw red. **Eyes:** small red eyes in sunken
+  sockets, coloured but not emissive. This relaxes the earlier "no eyes that glow" rule only as far as colour:
+  they still give off no light.
 - **Transformation:** the 2 s warp exists only while Transforming (Borrowed Face tell T1, shown on a relevant body handle), never in the steady disguised state. The reveal frame is silhouette-first: a clean, high-contrast shape at the end of the warp.
 - True form uses its own LOD0-LOD2 meshes and materials; the disguise uses the survivor meshes. Nothing carries over between forms except the skeleton.
 

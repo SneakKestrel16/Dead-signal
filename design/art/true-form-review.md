@@ -262,4 +262,8 @@ Gaps against the concept:
 - The dome's fluting shows from the side and back, but from the front the dome reads smooth.
 - The neck is thinner than the concept's.
 
-Pick: (open)
+Pick: shipped as a placeholder. Designer, 2026-10-17: "its still bad but just continue with it and fix it later".
+`build_creature.py -- --ship` wrote `assets/art/characters/shapeshifter/char_shapeshifter_true.glb`. The full suite
+passed (1731/1731). Evidence: `production/qa/evidence/true-form-round8-shipped-2026-10-17.png`. The model needs a
+later quality pass: the designer still rates it bad, on top of the gaps listed above.
+
