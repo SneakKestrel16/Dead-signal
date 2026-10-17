@@ -31,8 +31,10 @@ const ROWS: Array[Array] = [
 ]
 ## Settings whose readout is percent of their default rather than of 1.
 const RELATIVE: Array[StringName] = [&"mouse_sensitivity", &"stick_rate"]
-## Dim backing behind the panel (greybox; no art-direction spec yet).
+## Dim backing behind the panel over a round (greybox; no art-direction spec yet): the round stays visible (P15).
 const BACKING := Color(0.0, 0.0, 0.0, 0.8)
+## Backing over the lobby: opaque, or the form's fields read through the settings rows.
+const MENU_BACKING := Color(0.0, 0.0, 0.0, 1.0)
 
 ## key -> CheckButton or HSlider.
 var controls: Dictionary[StringName, Control] = {}
@@ -58,7 +60,7 @@ func _init(settings: PlayerSettings, contexts: InputContextStack,
 	_ctx = ctx
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var back := ColorRect.new()
-	back.color = BACKING
+	back.color = BACKING if in_round else MENU_BACKING
 	back.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(back)
 	var center := CenterContainer.new()
@@ -128,7 +130,8 @@ func _row(grid: GridContainer, key: StringName, label: String) -> void:
 		var s := HSlider.new()
 		s.min_value = spec[1]
 		s.max_value = spec[2]
-		s.step = (spec[2] - spec[1]) / 20.0 # P21: 5% steps
+		# P21: 5% steps. Of 1 for the percent readouts (hud_scale's range / 20 = 0.0375 left 1.0 off the grid: 101%).
+		s.step = (spec[2] - spec[1]) / 20.0 if RELATIVE.has(key) else 0.05
 		s.value = _settings.get(key)
 		s.custom_minimum_size = Vector2(260, 0)
 		s.size_flags_vertical = Control.SIZE_SHRINK_CENTER

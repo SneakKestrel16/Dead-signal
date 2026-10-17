@@ -56,6 +56,27 @@ func test_slider_steps_are_five_percent_of_range() -> void:
 	s.free()
 
 
+func test_every_slider_opens_on_its_default() -> void:
+	# A default off the step grid snaps on open: hud_scale's range / 20 showed 1.0 as 101%.
+	for key: StringName in PlayerSettings.SPEC:
+		_settings.set(key, PlayerSettings.SPEC[key][0])
+	var s := _open()
+	for key: StringName in PlayerSettings.SPEC:
+		var spec: Array = PlayerSettings.SPEC[key]
+		if spec.size() == 3:
+			assert_float((s.controls[key] as HSlider).value).override_failure_message(String(key)) 				.is_equal_approx(spec[0], 1e-9)
+	s.free()
+
+
+func test_backing_is_opaque_over_the_lobby_and_dim_over_a_round() -> void:
+	var menu := _open(InputContextStack.Ctx.MENU, false)
+	assert_float((menu.get_child(0) as ColorRect).color.a).is_equal(1.0)
+	menu.free()
+	var round_view := _open()
+	assert_float((round_view.get_child(0) as ColorRect).color.a).is_less(1.0)
+	round_view.free()
+
+
 func test_readout_shows_percent() -> void:
 	var s := _open()
 	(s.controls[&"voice_volume"] as HSlider).value = 0.5

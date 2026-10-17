@@ -31,7 +31,8 @@ class_name LobbyScreen extends Control
 ## --lobby-port=N, --lobby-name=NAME, --lobby-ready; host only: --lobby-seed=N (the queue shuffle).
 ## --lobby-shots=DIR (story match-flow/013 evidence) saves lobby.png once the room lists min_players,
 ## round.png SHOT_AFTER_S after the own body spawned, results.png SHOT_AFTER_S into Results and back.png
-## once the room shows again after the round, then quits.
+## once the room shows again after the round, then quits. --lobby-settings opens the settings screen (with
+## --lobby-shots and no host/join: settings.png, then quits).
 ## Settings (design/game-brief.md MVP; interaction-patterns.md P15): the form's and room's Settings button opens
 ## SettingsScreen under MENU on the lobby's stack; in a round Esc / Start opens it as a non-pausing OVERLAY on
 ## the round's stack (only from GAMEPLAY). Each change applies live: bus volumes here, the rest through
@@ -501,6 +502,8 @@ func _close_last_round() -> void:
 func _capture(delta: float) -> void:
 	_played = _played or _in_round
 	var in_room := _room.visible and not _state.is_empty()
+	if _shot("settings", delta, _opts.has("lobby-settings") and settings_view != null and _net == null):
+		get_tree().quit()
 	_shot("lobby", delta, in_room and not _played and _state.players.size() >= _knobs.lobby.min_players)
 	_shot("round", delta, _in_round and round_client != null and round_client.is_spawned())
 	_shot("results", delta, _in_round and _display != null and _display.is_ended())
@@ -706,6 +709,8 @@ func _autorun(args: PackedStringArray) -> void:
 		_on_host()
 	if opts.has("lobby-ready"):
 		_auto_ready.call_deferred()
+	if opts.has("lobby-settings"):
+		open_settings.call_deferred()
 
 
 func _auto_ready() -> void:
