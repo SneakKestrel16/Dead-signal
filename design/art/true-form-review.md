@@ -48,8 +48,12 @@ and the spine tips between the shoulder blades. Same rig and clips; weights by d
 (Blender's bone-heat weighting failed silently on this mesh).
 
 ```bash
-"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup     --python tools/art/build_true_form.py            # tools/art/review/true_d.glb; -- --ship replaces the shipped one
-"$G" --path . --resolution 1600x800 --write-movie <tmp>.avi res://tests/manual/character_lineup.tscn --     --shot=tools/art/review/d_front.png --dist=6.5 --true=res://tools/art/review/true_d.glb     [--turn=70 | --dark | --anim=Walk --frame=75 | --anim=Crouch_Fwd --frame=75]
+# tools/art/review/true_d.glb; add -- --ship to replace the shipped one
+"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup \
+    --python tools/art/build_true_form.py
+"$G" --path . --resolution 1600x800 --write-movie <tmp>.avi res://tests/manual/character_lineup.tscn -- \
+    --shot=tools/art/review/d_front.png --dist=6.5 --true=res://tools/art/review/true_d.glb \
+    [--turn=70 | --dark | --anim=Walk --frame=75 | --anim=Crouch_Fwd --frame=75]
 ```
 
 Triangles 14,693 / 6,853 / 2,933. Line-up: survivor C3, shipped form, D.
