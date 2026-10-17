@@ -193,3 +193,36 @@ Gaps against the concept:
 - A ledge shows where the head's neck sleeve meets the neck.
 
 Pick: (open)
+
+## Round 7 (2026-10-17): more detail, closer to the concept
+
+Designer, 2026-10-17: "add more detail and make it most like the concept art". Changes in `tools/art/build_creature.py`:
+
+- **Head:** longer and bigger. A crest swells out behind the dome, the snout runs further forward, and the jaw hangs
+  at 40° (was 32°). There are 22 teeth per jaw (was 16), 3-7.5 cm long. Three mouth strands per side, and a longer
+  tongue.
+- **Mane:** 24 skull tendrils spread over the back half of the skull and swept back, every seventh one raw red.
+  Round 6 had 12 in one clump.
+- **Back:** 16 tendrils off the shoulders and upper back, 30-50 cm long. Round 6 had 6 at about 25 cm.
+- **Strips:** five per bone on the upper arms, forearms, thighs and shins, 14-26 cm long. Round 6 had three per
+  bone, forearms and shins only.
+- **Hands:** the source clips' finger curls are dropped, so the fingers hang open. Claws are 11 cm (thumb 8 cm).
+- **Torso:** ribs slant down the flanks, and abs with a centre line, in the normal map. The sinew noise is shallower
+  (2.4 mm, was 3.5 mm in an intermediate pass).
+- **Colour:** darker body paint (sRGB 26-34 base, 54-66 sheen), clearcoat 0.15 (was 0.4). The head's paint runs
+  dark down the neck sleeve, which hides the ledge.
+- **Neck:** MakeHuman's neck-lengthening targets are dropped.
+
+Triangles 14,896 / 6,729 / 2,630.
+
+Renders: `tools/art/review/c8_{front,side,head,crouch,walk,dark}.png` (line-up: survivor C3, shipped form, this).
+Round 6's GLB was overwritten by this build; its renders `c7_*.png` remain.
+
+Gaps against the concept:
+
+- The head is still smoother and more rounded than the concept's bony, ridged dome.
+- The pale jaw-hinge bulb sits low on the neck.
+- The strips are tubes, not flat torn ribbons.
+- The body reads dark grey-green, not the concept's blue-black.
+
+Pick: (open)
