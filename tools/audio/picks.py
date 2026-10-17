@@ -13,16 +13,20 @@ SHIP = {
     "pain_cry_true_form": "C",
     # scares
     "scare_transformation_reveal": "B", "scare_door_burst": "C", "scare_ambush_lunge": "C", "scare_blackout": "B",
-    "scare_slammed_door": "C", "scare_glass_break": "B", "scare_alarm_fuse": "C", "scare_recording_room": "B",
+    "scare_slammed_door": "C", "scare_alarm_fuse": "C", "scare_recording_room": "B",
     "scare_recording_script": "C", "scare_surveillance_image": "A", "scare_stinger": "B",
     # ui
     "ui_click": "A", "ping_rejected": "C",
     # steps
     "step_concrete": "B", "step_metal": "C", "step_rubber": "A", "step_true_form": "C",
     # cues
-    "lunge_cue": "C", "lunge_scrape": "A", "taser_crackle": "B", "taser_fizz": "before", "hide_cue": "CB",
+    "lunge_scrape": "A", "taser_crackle": "B", "taser_fizz": "before", "hide_cue": "CB",
     "hide_enter": "B", "hide_exit": "C",
     # world
     "door_open": "before", "door_close": "before", "barricade_break": "B", "objective_dock": "before",
     "objective_alarm": "B",
+    # round 2 (picks_<family>_r2.json, 2026-10-16)
+    "grunt_c1": "F", "grunt_c2": "E", "grunt_c3": "D", "grunt_c4": "D", "grunt_c5": "F",
+    "scare_glass_break": "E", "scare_alarm_evacuation": "F", "step_tile": "D",
+    "lunge_cue": "F", "lunge_hit": "E", "distortion": "E", "fuse_install": "F", "barricade_build": "D",
 }
