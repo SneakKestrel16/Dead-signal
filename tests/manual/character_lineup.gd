@@ -6,7 +6,8 @@ extends Node3D
 ## --turn rotates every body (degrees; 180 shows the backs), --dist is the camera distance (m), --anim the clip
 ## every body plays, --dark drops the ambient to near black (the flashlight spots alone). Saves --shot at drawn frame --frame, then quits. No input, no network.
 ## --true=<glb>,<glb>,... (true-form review, tools/art/build_characters.py --true-options): C3, the shipped true
-## form, then one true form per glb instead of the line-up above.
+## form, then one true form per glb instead of the line-up above. --cam-x, --cam-y, --look-y and --fov frame a
+## close-up (e.g. one head).
 
 const ORDER: Array[int] = [1, 2, 3, 3, 4, 5, 0]
 const SPACING_M := 1.25
@@ -67,10 +68,12 @@ func _ready() -> void:
 	add_child(env)
 	var cam := Camera3D.new()
 	var dist := float(_args.get("dist", "4.5"))
-	cam.position = Vector3(0, 1.4, dist)
+	cam.position = Vector3(float(_args.get("cam-x", "0")), float(_args.get("cam-y", "1.4")), dist)
 	cam.fov = 2.0 * rad_to_deg(atan((order.size() * SPACING_M * 0.55) / dist)) * 0.6
 	add_child(cam)
-	cam.look_at(Vector3(0, 1.1, 0))
+	if _args.has("fov"):
+		cam.fov = float(_args["fov"])
+	cam.look_at(Vector3(cam.position.x, float(_args.get("look-y", "1.1")), 0))
 	cam.make_current()
 
 

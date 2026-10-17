@@ -82,3 +82,41 @@ G).
 Pick: E, the failed experiment (designer 2026-10-17: "that can add more variety when we do other maps"), with
 "the models are still bad". Art bible §5 rewritten to it. Next: a real human base mesh (anatomy, not primitives)
 deformed into the experiment, instead of more primitive tuning.
+
+## Round 4 (2026-10-17): E on a MakeHuman base
+
+`tools/art/build_experiment.py` drops the script primitives for a real human base mesh: MakeHuman's (MPFB 2.0.18,
+CC0 output; setup in the script's docstring) adult male, starved with its own targets (muscle and weight 0,
+hollow cheeks, sunken eyes, long neck, thin limbs). MakeHuman's rig poses it into our T-pose, our rig's joints move
+onto MakeHuman's, and the arms stretch 1.3x past the shoulder. Then:
+
+- The jaw is torn open 26° about a hinge under the ears, by moving the mesh (the rig has no jaw bone). The lip line
+  and the hinge come from MakeHuman's `lips` and `ears` groups.
+- Uneven teeth sit in both jaws, with a dark mouth behind them.
+- A halo ring is ray-cast a finger's width off the skull, with six pins into the bone and posts to the shoulders.
+- A stapled Y-incision runs from the collarbones to the navel.
+- A wrinkle normal map is baked onto MakeHuman's UVs.
+
+Triangles 14,794 / 6,858 / 2,735.
+
+```bash
+BLENDER_USER_RESOURCES=tools/art/.cache/blender_user \
+"C:/Program Files/Blender Foundation/Blender 5.2/blender.exe" --background --factory-startup \
+    --python tools/art/build_experiment.py          # tools/art/review/true_e2.glb; -- --ship to replace
+"$G" --path . --resolution 1600x900 --write-movie <tmp>.avi res://tests/manual/character_lineup.tscn -- \
+    --shot=tools/art/review/e3_front.png --dist=4.2 \
+    --true=res://tools/art/review/true_e2.glb,res://tools/art/review/true_e.glb \
+    [--turn=70 | --dark | --anim=Walk --frame=75 | --anim=Crouch_Fwd --frame=75 |
+     --dist=2.0 --cam-x=0.62 --cam-y=2.2 --look-y=2.15 --fov=22 --turn=20]   # last: head close-up
+```
+
+Renders: `tools/art/review/e3_{front,side,walk,crouch,dark,head,chest}.png` (line-up: survivor C3, shipped form,
+round 4, round 3 E).
+
+Known gaps:
+
+- The scalp falls dark under the front-low lineup spots.
+- The eyes are closed lids, not the dark sockets art bible §5 asks for.
+- The hands curl into claws.
+
+Pick: (open)
