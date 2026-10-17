@@ -13,6 +13,8 @@ extends SceneTree
 ## server's fixed path, as every real client does (RoundClient), so candidate spawns resolve.
 ## --place=monitor (facility-map story 011) spawns the first survivor in front of the C1 monitor and the
 ## shapeshifter beside the second survivor in B1, in camera c1's view; everyone else spawns as usual.
+## --place=<x>:<z> spawns every survivor at that floor spot, 1 m apart along +x, the shapeshifter 1 m short of
+## the first (art-pass screenshots).
 ## --force=<s>:power,<s>:evac (story facility-map/010 screenshots) emits a forced event on the server bus that
 ## many seconds after round start: power = ObjectiveProgressChanged terminal POWERED (Power Restored), evac =
 ## RoundPhaseChanged to Evacuation, blackout = AbilityUsed Blackout in B1 (story facility-map/011), hallucinate =
@@ -143,6 +145,8 @@ func _start() -> void:
 	_server.bus.subscribe(&"ScareTriggered", _on_scare)
 	if _place == "monitor":
 		_c.lifecycle.spawn = _placed_spawn
+	elif _place.contains(":"):
+		_c.lifecycle.spawn = _spot_spawn
 	print("ROUND STARTED: monster %d, survivors %s" % [_c.monster, _c.survivors])
 	for f in String(_args.get("force", "")).split(",", false):
 		var at_what := f.split(":")
@@ -162,6 +166,14 @@ func _placed_spawn(id: int, at: Vector3) -> void:
 		at = B1_TARGET_SPOT
 	print("PLACED %d at %s" % [id, at])
 	_c._spawn(id, at)
+## --place=<x>:<z> (art-pass screenshots): every survivor at that floor spot, 1 m apart along +x, and the
+## shapeshifter 1 m short of the first (so round_view's --bot=stage line forms inside one room).
+func _spot_spawn(id: int, at: Vector3) -> void:
+	var xz := _place.split(":")
+	at = Vector3(float(xz[0]) + _c.survivors.find(id), 0.0, float(xz[1]))
+	_c._spawn(id, at)
+
+
 ## Emits one forced lighting trigger (see --force).
 func _force(what: String) -> void:
 	if _server == null or _server.bus == null:

@@ -408,3 +408,28 @@ func test_c5_has_the_backup_panel_and_pa_speakers_hang_high_facing_into_their_ro
 				.override_failure_message("%s faces out of %s" % [n.name, room]).is_true()
 	assert_array(panels).contains_exactly([&"C5"])
 	assert_array(speakers).contains_exactly_in_any_order([&"H-N", &"H-S", &"C2"])
+
+
+# The wall pipe run (tools/art/build_dressing.py cooling_pipes: 3 m along the wall, pipes at 2.2-2.6 m) hid three
+# evacuation arrows and the H-N PA speaker hung inside one: nothing else on a wall may sit in a run's band.
+const PIPE_HALF_RUN_M := 1.5
+const PIPE_BAND := Vector2(2.2, 2.6)
+const WALL_CLEAR_M := 0.35
+
+
+func test_arrows_and_pa_speakers_hang_clear_of_wall_pipes() -> void:
+	var hung: Array[Node3D] = []
+	hung.append_array(_root.get_node(^"Arrows").get_children())
+	for n in _props():
+		if n.get_meta(&"item") == &"pa_speaker":
+			hung.append(n)
+	for pipe in _props():
+		if pipe.get_meta(&"item") != &"pipes":
+			continue
+		for n in hung:
+			var d := n.position - pipe.position
+			var on_wall := absf(d.dot(pipe.basis.z)) < 0.5
+			var in_run := absf(d.dot(pipe.basis.x)) < PIPE_HALF_RUN_M + WALL_CLEAR_M
+			var in_band := n.position.y > PIPE_BAND.x - WALL_CLEAR_M and n.position.y < PIPE_BAND.y + WALL_CLEAR_M
+			assert_bool(on_wall and in_run and in_band) 					.override_failure_message("%s behind %s" % [n.name, pipe.name]).is_false()
+

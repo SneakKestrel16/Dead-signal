@@ -29,6 +29,7 @@ extends Node3D
 ## --no-flinch (story hud-results/005) joins every client with the camera flinch off (the P8 edge pulse shows).
 ## --fake-paused (story hud-results/005): see _edge_shots.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
+## --solo hides every body but the shown client's own and the other clients' lighting (art-pass screenshots of the map).
 ## --no-roster: the shown client's Show roster off (story hud-results/002; the roster is seeded by _seed_roster).
 ## --shots=<dir> saves press.png, bar.png and full.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
@@ -228,6 +229,8 @@ func _process(delta: float) -> void:
 	if _args.has("light") and not _lit:
 		_lit = true
 		c0.toggle_flashlight()
+	if _args.has("solo"):
+		_solo(c0)
 	if c0.scripted == null and _args.has("bot"):
 		c0.scripted = InputFrame.new()
 	if _args.get("bot", "") == "hold":
@@ -789,6 +792,18 @@ const MONITOR_STEPS := [["trueform", 0, false, false], ["disguise", 0, true, fal
 	["dark_cam2", 1, false, false]]
 ## Drawn frames a step waits once its camera shows (interpolation and the feed settle) before the shot.
 const MONITOR_SETTLE := 45
+
+
+## --solo (art-pass screenshots): no remote body is drawn and only the shown client's lighting lights the world.
+func _solo(c0: RoundClient) -> void:
+	process_priority = 100 # after the clients' _process, so the hiding sticks this frame
+	for c in _clients:
+		for n: Node3D in c.remotes.values():
+			n.visible = false
+		if c != c0:
+			c.body.visible = false # its own body and viewmodel: every client draws into this window
+			if c.lights != null:
+				c.lights.visible = false
 
 
 func _monitor(c0: RoundClient) -> void:

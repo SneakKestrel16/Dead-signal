@@ -59,7 +59,7 @@ rooms = Dictionary[StringName, PackedStringArray]({
 &"C3": PackedStringArray("shelving 56 31.2 90", "shelving 56 33.1 90", "shelving 56 34.95 90", "shelving 57.5 31.2 90", "shelving 57.5 33.1 90", "shelving 57.5 34.95 90", "shelving 59 31.2 90", "shelving 59 33.1 90", "shelving 59 34.95 90", "shelving 41.05 33 0", "shelving 41.05 34.3 0", "shelving 41.05 35.6 0", "shelving 42.95 33 0", "shelving 42.95 34.3 0", "shelving 42.95 35.6 0", "file_boxes 41.5 28.6 0", "file_boxes 53.0 35.5 0"),
 &"C4": PackedStringArray("file_boxes 59.4 13.0 90", "file_boxes 59.4 26.5 90", "shelving 50.4 13.5 -90", "file_boxes 51.0 26.8 0", "chair 52.0 14.5 40", "chair 58.5 15.0 200", "file_boxes 58.8 24.2 0"),
 &"C5": PackedStringArray("shelving 41.5 4.4 180", "log_screen 40.5 6.5 -90", "file_boxes 41.5 13.6 0", "cable 46.6 4.4 0", "chair 41.3 6.5 90", "backup_panel 47.0 13.7 0"),
-&"H-N": PackedStringArray("pipes 9 0.12 180", "pipes 21 0.12 180", "pipes 27 0.12 180", "pipes 39 0.12 180", "pa_speaker 26.0 0.1 180 2.3"),
+&"H-N": PackedStringArray("pipes 9 0.12 180", "pipes 21 0.12 180", "pipes 27 0.12 180", "pipes 39 0.12 180", "pa_speaker 24.0 0.1 180 2.3"),
 &"H-S": PackedStringArray("pipes 22 39.88 0", "pipes 28 39.88 0", "pipes 44 39.88 0", "pipes 54 39.88 0", "pa_speaker 32.0 39.9 0 2.3")
 })
 clear_lines = Dictionary[StringName, PackedVector3Array]({
@@ -86,7 +86,7 @@ decals = Dictionary[StringName, PackedStringArray]({
 ; Evacuation arrows (MapDressing Arrows): H-N on its north wall, H-S on its south wall, C2 on its north and south walls,
 ; each toward the way on to C4 (H-N-C1, C3-H-S, the C2-C4 archway). Inference: the level doc names the rooms only.
 arrows = Dictionary[StringName, PackedStringArray]({
-&"H-N": PackedStringArray("> 8.0 0.12 180 2.4", "> 20.0 0.12 180 2.4", "> 32.0 0.12 180 2.4", "> 42.0 0.12 180 2.4"),
+&"H-N": PackedStringArray("> 12.0 0.12 180 2.4", "> 17.0 0.12 180 2.4", "> 32.0 0.12 180 2.4", "> 42.0 0.12 180 2.4"),
 &"H-S": PackedStringArray("< 14.0 39.88 0 2.4", "< 26.0 39.88 0 2.4", "< 38.0 39.88 0 2.4", "< 46.0 39.88 0 2.4", "> 56.0 39.88 0 2.4"),
 &"C2": PackedStringArray("> 42.0 14.12 180 2.4", "> 47.5 14.12 180 2.4", "< 42.0 27.88 0 2.4", "< 48.5 27.88 0 2.4")
 })
