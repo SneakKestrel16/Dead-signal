@@ -8,6 +8,7 @@ dense noise bodies where nothing real is needed), mastered to a loudness table, 
 | Page | What it holds |
 |---|---|
 | [pipeline-handoff.md](pipeline-handoff.md) | The designer's instructions for how sounds must be made (from the Infall project): lessons, layout, building blocks, recordings, measuring, mastering, loops, review pages. Binding. |
+| [picks.md](picks.md) | What the designer picked on each review page, their notes, and what the next round redoes. |
 | [gotchas.md](gotchas.md) | Traps hit in this project, with what was heard or seen. |
 
 ## Commands
@@ -34,7 +35,5 @@ uv run tools/audio/review.py ambience         # build tools/audio/review/ambienc
 
 ## State
 
-| Family | Directory | Status |
-|---|---|---|
-| Ambience (amb_a, amb_b, amb_c, amb_link) | `ambience/` | Rebuilt from recordings; 3 candidates each on the review page, pick pending |
-| Steps, voices, cues (creature), world (doors, impacts, alarms), scares, UI | `foot/ voice/ cue/ world/ scare/ ui/` | Placeholders: the earlier shipped sound, resampled, from `tools/audio/sources/legacy/`. Rebuilt in later batches. |
+Every family is rebuilt from recordings and reviewed once. What ships is the designer's pick per sound
+(`tools/audio/picks.py`, recorded in [picks.md](picks.md)); sounds with no pick ship candidate A until round 2.

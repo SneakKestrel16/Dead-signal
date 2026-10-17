@@ -18,12 +18,15 @@ Everything is deterministic (seeded per sound), so a re-export that changed noth
 import argparse
 import importlib
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import picks  # noqa: E402
 from lib import master  # noqa: E402
+from sounds._legacy import legacy  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[2]
 BANK = ROOT / "data/audio/sound_bank.tres"
@@ -36,10 +39,20 @@ RANDOM_PITCH = 1.02  # AudioStreamRandomizer spread of a sound with variants (su
 STINGER_GAIN_DB = 6.0  # data/knobs/scare.tres stinger_max_db_rel
 
 
+def shipped(name, cands):
+    """The option picks.SHIP names for `name` (A when unlisted), under the shipped name and events."""
+    a, pick = cands[0], picks.SHIP.get(name, "A")
+    if pick == "before":
+        return replace(a, build=legacy(a.family, name, a.ids, a.loop).build, level=None, variants=1)
+    c = cands["ABC".index(pick)]
+    return replace(c, name=name, ids=a.ids, heard_as=c.name)
+
+
 def all_sounds():
     out = []
     for m in FAMILY_MODULES:
-        out += importlib.import_module("sounds." + m).SOUNDS
+        mod = importlib.import_module("sounds." + m)
+        out += [shipped(n, c) for n, c in mod.CANDIDATES.items()]
     names = [s.name for s in out]
     assert len(names) == len(set(names)), "duplicate sound names"
     return out

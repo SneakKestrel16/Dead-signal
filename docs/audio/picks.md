@@ -1,0 +1,62 @@
+# Designer picks
+
+What the designer picked on the review pages (`tools/audio/review/<family>/index.html`, `uv run tools/audio/review.py
+<family>`) and what each note asks of the next round. The picks themselves live in `tools/audio/picks.py` (`SHIP`),
+which `tools/audio/export.py` reads: a picked candidate ships with the bytes it was heard with (it seeds from the name
+it was heard under, `Sound.heard_as`); `before` ships the pre-pipeline take from `tools/audio/sources/legacy/` as
+built. Source: the seven `picks.json` exports of 2026-10-16.
+
+## Round 1 (2026-10-16)
+
+| Sound | Ships | Designer's note | Round 2 |
+|---|---|---|---|
+| amb_a | B | | |
+| amb_b | A | | |
+| amb_c | B | on "before": should be quieter with more emphasis on the location | |
+| amb_link | B | on A: good for silent ambience | |
+| callout_c1 | B | | |
+| callout_c2 - c5 | A | | |
+| grunt_c1 - c5 | A (no pick) | "more like where it's a grunt but more audible and less muffled" | yes |
+| pain_cry_true_form | C | | |
+| scare_transformation_reveal | B | | |
+| scare_door_burst | C | | |
+| scare_ambush_lunge | C | | |
+| scare_blackout | B | | |
+| scare_slammed_door | C | | |
+| scare_glass_break | B | on B: "add more variety to it instead of the same sound twice" | yes |
+| scare_alarm_fuse | C | | |
+| scare_alarm_evacuation | A (no pick) | "more like the first where it's an actual alarm" | yes |
+| scare_recording_room | B | | |
+| scare_recording_script | C | | |
+| scare_surveillance_image | A | | |
+| scare_stinger | B | | |
+| ui_click | A | | |
+| ping_rejected | C | | |
+| step_tile | A (no pick) | none | yes |
+| step_concrete | B | | |
+| step_metal | C | | |
+| step_rubber | A | | |
+| step_true_form | C | | |
+| lunge_cue | C | "they all sound the same and none sound like a lunge" | yes |
+| lunge_scrape | A | | |
+| lunge_hit | A (no pick) | "should sound like a survivor being hit, a low thud with cloth being moved" | yes |
+| taser_crackle | B | | |
+| taser_fizz | before | | |
+| hide_cue | C | final: "C for final choice but keep B" | |
+| distortion | A (no pick) | on A: "sounds like crunching on a chip, should be flesh and bone moving" | yes |
+| fuse_install | A (no pick) | "all bad, redo" | yes |
+| hide_enter | B | | |
+| hide_exit | C | | |
+| door_open, door_close | before | | |
+| barricade_build | A (no pick) | none | yes |
+| barricade_break | B | | |
+| objective_dock | before | | |
+| objective_alarm | B | | |
+
+Open (not decided by the notes):
+
+- **hide_cue "keep B"**: C ships; B's builder stays in `sounds/cues.py`. Whether B should also play (a second take
+  through a randomizer) is the designer's call.
+- **amb_link A "good for silent ambience"**: no silent-ambience slot exists in the game; A's builder stays in
+  `sounds/ambience.py` for one.
+- **amb_c note** is on the pre-pipeline take, not on the picked B.

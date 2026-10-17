@@ -39,6 +39,7 @@ class Sound:
     loop: bool = False  # seamless loop: never trimmed, smpl chunk in the WAV
     synced: bool = False  # timed to a clip: keep the lead-in silence
     variants: int = 1  # takes, each from its own seed; the bank plays them through an AudioStreamRandomizer
+    heard_as: str = ""  # a kept candidate seeds from the name it was picked under (handoff Part 9), so it keeps its bytes
 
     def file(self, variant=0):
         return f"{self.name}_{variant}.wav" if self.variants > 1 else f"{self.name}.wav"
@@ -86,7 +87,7 @@ def trim(x, floor_db=-60.0, head=True):
 
 
 def render(sound, variant=0):
-    rng = seed(sound.name, variant)
+    rng = seed(sound.heard_as or sound.name, variant)
     x = np.asarray(sound.build(rng, variant) if sound.variants > 1 else sound.build(rng), float)  # takes know their index
     if sound.level is None:
         peak = 20 * np.log10(np.max(np.abs(x)) + 1e-12)
