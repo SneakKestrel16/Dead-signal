@@ -46,7 +46,8 @@ Stinger playback gain = `stinger_max_db_rel` 6.0 dB (data/knobs/scare.tres), bot
 | `assets/audio/cue/lunge_hit.wav` | cue | GameplayCues | -20.0 | -20.0 | -3.6 | 0.40 |
 | `assets/audio/cue/taser_crackle.wav` | cue | GameplayCues | -20.0 | -20.0 | -1.7 | 0.76 |
 | `assets/audio/cue/taser_fizz.wav` | cue | GameplayCues | -21.2 | -21.2 | -2.3 | 0.40 |
-| `assets/audio/cue/hide_cue.wav` | cue | GameplayCues | -24.0 | -24.0 | -10.0 | 1.30 |
+| `assets/audio/cue/hide_cue_0.wav` | cue | GameplayCues | -24.0 | -24.0 | -10.0 | 1.30 |
+| `assets/audio/cue/hide_cue_1.wav` | cue | GameplayCues | -24.0 | -24.0 | -7.1 | 1.30 |
 | `assets/audio/cue/distortion.wav` | cue | GameplayCues | -20.0 | -20.0 | -3.0 | 2.00 |
 | `assets/audio/cue/fuse_install.wav` | cue | GameplayCues | -20.0 | -20.0 | -4.9 | 0.62 |
 | `assets/audio/cue/hide_enter.wav` | cue | GameplayCues | -20.0 | -20.0 | -8.7 | 0.85 |

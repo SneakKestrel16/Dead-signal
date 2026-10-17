@@ -1,8 +1,8 @@
 """The designer's picks from the review pages (tools/audio/review/<family>/, picks.json exports of 2026-10-16).
 
-Name -> the option that ships: "A", "B", "C" (a candidate, kept with the bytes it was heard with) or "before" (the take
-that shipped before the pipeline, sources/legacy/<family>/, as built). A sound not listed ships A. Round 1 notes and
-what each round-2 page asks are in docs/audio/picks.md.
+Name -> the option that ships: "A" to "F" (a candidate, kept with the bytes it was heard with), several letters ("CB":
+each a take, played at random), or "before" (the take that shipped before the pipeline, sources/legacy/<family>/, as
+built). A sound not listed ships A. Round 1 notes and what each round-2 page asks are in docs/audio/picks.md.
 """
 
 SHIP = {
@@ -20,7 +20,7 @@ SHIP = {
     # steps
     "step_concrete": "B", "step_metal": "C", "step_rubber": "A", "step_true_form": "C",
     # cues
-    "lunge_cue": "C", "lunge_scrape": "A", "taser_crackle": "B", "taser_fizz": "before", "hide_cue": "C",
+    "lunge_cue": "C", "lunge_scrape": "A", "taser_crackle": "B", "taser_fizz": "before", "hide_cue": "CB",
     "hide_enter": "B", "hide_exit": "C",
     # world
     "door_open": "before", "door_close": "before", "barricade_break": "B", "objective_dock": "before",

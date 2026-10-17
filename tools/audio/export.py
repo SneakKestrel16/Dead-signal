@@ -40,11 +40,17 @@ STINGER_GAIN_DB = 6.0  # data/knobs/scare.tres stinger_max_db_rel
 
 
 def shipped(name, cands, mod):
-    """The option picks.SHIP names for `name` (A when unlisted; D-F are the module's ROUND2), under the shipped name and events."""
+    """The option picks.SHIP names for `name` (A when unlisted; D-F are the module's ROUND2; "CB" ships C and B as takes),
+    under the shipped name and events."""
     a, pick = cands[0], picks.SHIP.get(name, "A")
     if pick == "before":
         return replace(a, build=legacy(a.family, name, a.ids, a.loop).build, level=None, variants=1)
-    c = dict(zip("ABCDEF", list(cands) + list(getattr(mod, "ROUND2", {}).get(name, []))))[pick]
+    opts = dict(zip("ABCDEF", list(cands) + list(getattr(mod, "ROUND2", {}).get(name, []))))
+    if len(pick) > 1:  # several picks: one take each, played at random through the AudioStreamRandomizer
+        cs = [opts[k] for k in pick]
+        return replace(cs[0], name=name, ids=a.ids, variants=len(cs),
+                       build=lambda rng, v: cs[v].build(master.seed(cs[v].name)))
+    c = opts[pick]
     return replace(c, name=name, ids=a.ids, heard_as=c.name)
 
 

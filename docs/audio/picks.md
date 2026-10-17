@@ -42,7 +42,7 @@ built. Source: the seven `picks.json` exports of 2026-10-16.
 | lunge_hit | A (no pick) | "should sound like a survivor being hit, a low thud with cloth being moved" | yes |
 | taser_crackle | B | | |
 | taser_fizz | before | | |
-| hide_cue | C | final: "C for final choice but keep B" | |
+| hide_cue | C + B | final: "C for final choice but keep B" | |
 | distortion | A (no pick) | on A: "sounds like crunching on a chip, should be flesh and bone moving" | yes |
 | fuse_install | A (no pick) | "all bad, redo" | yes |
 | hide_enter | B | | |
@@ -55,8 +55,8 @@ built. Source: the seven `picks.json` exports of 2026-10-16.
 
 Open (not decided by the notes):
 
-- **hide_cue "keep B"**: C ships; B's builder stays in `sounds/cues.py`. Whether B should also play (a second take
-  through a randomizer) is the designer's call.
+- **hide_cue "keep B"**: settled 2026-10-16, the designer said yes to B playing too. `picks.py` ships `"CB"`: two
+  takes, `hide_cue_0` (C) and `hide_cue_1` (B), picked at random by the AudioStreamRandomizer (not strictly alternating).
 - **amb_link A "good for silent ambience"**: no silent-ambience slot exists in the game; A's builder stays in
   `sounds/ambience.py` for one.
 - **amb_c note** is on the pre-pipeline take, not on the picked B.
