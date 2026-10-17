@@ -41,10 +41,10 @@ MATS = [("mat_shapeshifter_skin", (46, 50, 56), 0.55, 0.15), ("mat_shapeshifter_
 	("mat_shapeshifter_claw", (52, 48, 46), 0.4, 0.3), ("mat_shapeshifter_tooth", (214, 202, 172), 0.5, 0.2),
 	("mat_shapeshifter_gum", (118, 22, 26), 0.35, 0.6), ("mat_shapeshifter_eye", (176, 18, 16), 0.15, 1.0)]
 ## Painted colours (sRGB): body dark with grey-green on the upper body; head pale, greyer in the creases; red raw.
-PAINT = dict(dark=(26, 29, 34), sheen=(54, 62, 66), pale=(184, 196, 186), grey=(124, 136, 132), raw=(112, 18, 24))
+PAINT = dict(dark=(22, 26, 34), sheen=(46, 54, 66), pale=(184, 196, 186), grey=(124, 136, 132), raw=(112, 18, 24), crease=(62, 68, 68))
 JAW_DEG = 40  # the lower jaw hangs open this far about its hinge
 NECK_CUT_M = 0.06
-HEAD_TRIS = 2600
+HEAD_TRIS = 3600
 FIBRE = (0.0024, 90.0, 10.0)  # sinew displacement depth (m), across-fibre and along-fibre noise frequency (1/m)
 
 
@@ -75,6 +75,27 @@ def tendril(bm, p0, d0, length, r0, r1=0.0012, sag=0.6, wiggle=0.15, segs=5, see
 	for i in range(segs):
 		t0, t1 = i / segs, (i + 1) / segs
 		tf.rod(bm, pts[i], pts[i + 1], r0 + (r1 - r0) * t0, r0 + (r1 - r0) * t1, segs=5)
+
+
+def ribbon(bm, p0, d0, nrm, length, w0, th=0.0018, segs=5, sag=0.0, twist=0.5, seed=0.0):
+	"""A flat torn strip of skin: lies along the surface (normal nrm) from p0 towards d0, narrowing raggedly to a
+	point and twisting as it trails."""
+	d0 = Vector(d0).normalized()
+	nrm = (Vector(nrm) - d0 * d0.dot(Vector(nrm))).normalized()
+	rings = []
+	for i in range(segs + 1):
+		t = i / segs
+		s = length * t
+		c = Vector(p0) + d0 * s + Vector((0, 0, -sag * s * s)) + nrm * 0.03 * s * math.sin(t * 4 + seed)
+		r = Matrix.Rotation(twist * t + 0.3 * math.sin(seed), 3, d0)
+		side, n = r @ d0.cross(nrm), r @ nrm
+		w = w0 * (1 - t) * (0.65 + 0.35 * abs(math.sin(seed * 3.1 + t * 9))) + 0.0008
+		rings.append([bm.verts.new(c + side * w * a + n * th * b) for a, b in ((-1, -1), (1, -1), (1, 1), (-1, 1))])
+	for r0, r1 in zip(rings, rings[1:]):
+		for j in range(4):
+			bm.faces.new((r0[j], r0[(j + 1) % 4], r1[(j + 1) % 4], r1[j]))
+	bm.faces.new(rings[0][::-1])
+	bm.faces.new(rings[-1])
 
 
 def cut_head(h, rig):
@@ -118,9 +139,43 @@ HEAD_BLOBS = [
 	("cheek", (-0.045, 0.07, 0.035), (0.032, 0.06, 0.035)),
 	("neck", (0, -0.005, -0.03), None),
 	("jaw", (0, 0.13, -0.03), (0.052, 0.11, 0.03)),
-	("jaw", (0, 0.04, -0.025), (0.05, 0.06, 0.04)),
+	("jaw", (0, 0.04, -0.025), (0.046, 0.05, 0.032)),
 ]
 META_K = 0.574  # a metaball ellipsoid's surface sits at this fraction of its size (measured, stiffness 2)
+
+
+def _line(p, a, b):
+	"""Distance from p to segment ab (2D or 3D tuples)."""
+	p, a, b = Vector(p), Vector(a), Vector(b)
+	t = max(0.0, min(1.0, (p - a).dot(b - a) / max((b - a).length_squared, 1e-9)))
+	return (p - a.lerp(b, t)).length
+
+
+def sculpt_head(high, o, up, fwd, right):
+	"""The concept's bony skull, in the head frame (a right, b forward, c up from the top of the neck): fluting fanning
+	back over the dome, a crest down the middle, brow and cheek ridges, sunken eye sockets, nostril slits, folds at the
+	jaw hinge, then skin noise. Upper skull only; the jaw keeps the noise. Returns each vertex's relief (m) without
+	the noise, for the crease paint."""
+	relief = []
+	for v in high.data.vertices:
+		d = v.co - o
+		a, b, c = d.dot(right), d.dot(fwd), d.dot(up)
+		ax = abs(a)
+		g = 0.0
+		if c > 0.04:
+			th = math.atan2(a, c - 0.02)
+			g += 0.011 * ((0.5 + 0.5 * math.cos(9 * th)) ** 6 - 0.3) * smooth((0.11 - b) / 0.07) * 				smooth((c - 0.06) / 0.04)
+			g += 0.012 * math.exp(-(a / 0.009) ** 2) * smooth((c - 0.12) / 0.04) * smooth((0.12 - b) / 0.06)
+			g += 0.012 * math.exp(-(_line((ax, b, c), (0.045, 0.14, 0.11), (0.064, 0.03, 0.135)) / 0.009) ** 2)
+			g += 0.009 * math.exp(-(_line((ax, b, c), (0.05, 0.12, 0.055), (0.07, -0.01, 0.06)) / 0.008) ** 2)
+			g -= 0.014 * math.exp(-(((b - 0.115) ** 2 + (c - 0.085) ** 2) ** 0.5 / 0.017) ** 2) * smooth((ax - 0.02) / 0.02)
+			g -= 0.008 * math.exp(-(((ax - 0.016) / 0.005) ** 2 + ((b - 0.225) / 0.014) ** 2 + ((c - 0.08) / 0.02) ** 2))
+		if -0.03 < b < 0.08 and ax > 0.03:  # folds over the jaw hinge
+			g += 0.003 * math.sin(b * 380 + c * 120) * math.exp(-((c - 0.01) / 0.03) ** 2)
+		relief.append(g)
+		g += noise.noise(v.co * 40) * 0.0015 + noise.noise(v.co * 160) * 0.0005
+		v.co += v.normal * g
+	return relief
 
 
 def build_head(rig, cut, mats):
@@ -161,8 +216,7 @@ def build_head(rig, cut, mats):
 	high.modifiers.new("Smooth", "CORRECTIVE_SMOOTH").iterations = 4
 	bc.activate(high)
 	bpy.ops.object.modifier_apply(modifier="Smooth")
-	for v in high.data.vertices:  # skin folds and pits on the skull
-		v.co += v.normal * (noise.noise(v.co * 40) * 0.0015 + noise.noise(v.co * 160) * 0.0004)
+	relief = sculpt_head(high, P(0, 0, 0), up, fwd, right)
 	bvh = BVHTree.FromObject(high, bpy.context.evaluated_depsgraph_get())
 	low = tf.low_mesh(high, HEAD_TRIS)
 	low.name = low.data.name = "head_low"
@@ -178,20 +232,28 @@ def build_head(rig, cut, mats):
 		return ex.surface(bvh, origin, d)
 	# teeth: needles on both jaws, found by rays from inside the open mouth; longest at the front
 	teeth, strands, roots = bmesh.new(), bmesh.new(), []
-	for k in range(22):
-		a = (k - 10.5) / 10.5
-		th = a * 1.5
-		x, b = 0.04 * math.sin(th), 0.08 + 0.12 * math.cos(th)
-		inside = P(x, b, -0.01).lerp(turn(P(x, b, -0.01)), 0.5)
-		ln = 0.03 + 0.03 * (1 - abs(a)) + (0.015 if k % 3 == 0 else 0.0)
-		for d in (up, jaw @ -up):
-			root = hit(inside, d)
-			if root is None:
-				continue
-			root = root - d * 0.003
-			tip = root - d * ln + fwd * 0.005
-			tf.rod(teeth, root, tip, 0.0045, 0.0, segs=5)
-			roots.append(root)
+	rows = {0: [], 1: []}
+	for inner, n, xs, bs, ls in ((False, 22, 1.0, 0.0, 1.0), (True, 14, 0.72, -0.025, 0.55)):
+		for k in range(n):
+			a = (k - (n - 1) / 2) / ((n - 1) / 2)
+			th = a * 1.5
+			x, b = 0.04 * xs * math.sin(th), 0.08 + bs + 0.12 * math.cos(th)
+			inside = P(x, b, -0.01).lerp(turn(P(x, b, -0.01)), 0.5)
+			ln = (0.03 + 0.03 * (1 - abs(a)) + (0.015 if k % 3 == 0 else 0.0)) * ls
+			for j, d in enumerate((up, jaw @ -up)):
+				root = hit(inside, d)
+				if root is None:
+					continue
+				root = root - d * 0.003
+				tip = root - d * ln + fwd * 0.005 + right * 0.004 * math.sin(k * 2.3)
+				tf.rod(teeth, root, tip, 0.0045 * (0.8 if inner else 1.0), 0.0, segs=5)
+				roots.append(root)
+				if not inner:
+					rows[j].append(root)
+	for row in rows.values():  # swollen red gums along each jaw
+		for r0, r1 in zip(row, row[1:]):
+			if (r1 - r0).length < 0.03:
+				tf.rod(strands, r0, r1, 0.0055, 0.0055, segs=6)
 	for s in (-1, 1):  # strands of skin stretched across the corners of the mouth
 		for b in (0.04, 0.06, 0.08):
 			tf.rod(strands, P(s * 0.044, b, 0.008), turn(P(s * 0.04, b, -0.018)), 0.0028, 0.0018, segs=5)
@@ -227,7 +289,7 @@ def build_head(rig, cut, mats):
 		w = smooth((v.co.z - (hz - 0.07)) / 0.06)
 		gh.add([v.index], w, "REPLACE")
 		gn.add([v.index], 1 - w, "REPLACE")
-	return high, low, parts, roots
+	return high, low, parts, roots, relief
 
 
 def body_parts(h, rig, mats):
@@ -255,14 +317,32 @@ def body_parts(h, rig, mats):
 			b = rig.data.bones["DEF-%s.%s" % (bone, S)]
 			d = (b.tail_local - b.head_local).normalized()
 			strips = bmesh.new()
-			for k, (t, ang) in enumerate(((0.25, 0.5), (0.45, 2.1), (0.6, 3.6), (0.75, 5.2), (0.9, 1.3))):
+			for k, (t, ang) in enumerate(((0.2, 0.5), (0.35, 2.1), (0.5, 3.6), (0.62, 5.2), (0.75, 1.3), (0.88, 4.2))):
 				c = b.head_local.lerp(b.tail_local, t)
 				side = d.cross(Vector((0, 0, 1)) if abs(d.z) < 0.9 else Vector((1, 0, 0))).normalized()
 				out_d = (Matrix.Rotation(ang, 3, d) @ side).normalized()
 				p = ex.surface(bvh, c + out_d * 0.3, -out_d) or c
-				tendril(strips, p, d * 0.9 + out_d * 0.45, 0.14 + 0.06 * (k % 3), 0.014, sag=0.0, wiggle=0.25, segs=4,
-					seed=k)
+				ribbon(strips, p - out_d * 0.002, d * 0.9 + out_d * 0.3, out_d, 0.16 + 0.07 * (k % 3), 0.016,
+					twist=1.2, seed=k + (3 if S == "R" else 0))
 			out.append(part("strips_%s_%s" % (bone, S), strips, mats["mat_shapeshifter_claw"], {b.name: 1.0}))
+	# spurs: a ridge of vertebrae down the back, a pair of bone spikes at each elbow
+	for i in (1, 2, 3):
+		bn = rig.data.bones["DEF-spine.%03d" % i]
+		spurs = bmesh.new()
+		for t in (0.15, 0.5, 0.85):
+			o = bn.head_local.lerp(bn.tail_local, t)
+			p = ex.surface(bvh, o + Vector((0, 0.4, 0)), (0, -1, 0)) or o
+			tf.rod(spurs, p - Vector((0, 0.006, 0)), p + Vector((0, 0.035 + 0.01 * i, 0.012)), 0.011, 0.0, segs=6)
+		out.append(part("spurs_%d" % i, spurs, mats["mat_shapeshifter_claw"], {bn.name: 1.0}))
+	for S in ("L", "R"):
+		b = rig.data.bones["DEF-forearm.%s" % S]
+		d = (b.tail_local - b.head_local).normalized()
+		spikes = bmesh.new()
+		for k, (t, ln) in enumerate(((0.04, 0.07), (0.12, 0.05))):
+			o = b.head_local.lerp(b.tail_local, t)
+			p = ex.surface(bvh, o + Vector((0, 0.3, 0)), (0, -1, 0)) or o
+			tf.rod(spikes, p - Vector((0, 0.008, 0)), p + Vector((0, ln, 0.01)) - d * 0.03, 0.009, 0.0, segs=6)
+		out.append(part("elbow_%s" % S, spikes, mats["mat_shapeshifter_claw"], {b.name: 1.0}))
 	return out
 
 
@@ -298,8 +378,31 @@ def sculpt_body(high, rig):
 			g += math.exp(-(x / 0.007) ** 2)
 			g += sum(math.exp(-((z - zk) / 0.007) ** 2) for zk in (z1 + 0.05, z2, z2 + 0.08)) * smooth((0.1 - ax) / 0.03)
 		if 0.06 < ax < 0.17 and z2 - 0.04 < z < z3 + 0.08:  # ribs
-			g += (0.5 + 0.5 * math.cos(2 * math.pi * (z + 0.4 * ax) / 0.034)) ** 6 * smooth((ax - 0.06) / 0.03)
+			g += (0.5 + 0.5 * math.cos(2 * math.pi * (z + 0.4 * ax) / 0.034)) ** 6 * smooth((ax - 0.06) / 0.03) * 				smooth((abs(v.normal.x) - 0.35) / 0.3)  # flanks only, not across the chest
 		v.co -= v.normal * 0.0075 * g
+		pec = math.exp(-(((ax - 0.085) / 0.06) ** 2 + ((z - (z3 + 0.07)) / 0.045) ** 2))
+		v.co += v.normal * 0.012 * pec * smooth((ax - 0.01) / 0.02)
+		v.co -= v.normal * 0.004 * math.exp(-((z - (z3 + 0.015 + 0.25 * (ax - 0.04))) / 0.008) ** 2) * (ax < 0.15)
+	# stringy limbs: raised cords spiralling down each limb bone
+	limbs = []
+	for bone in ("upper_arm", "forearm", "thigh", "shin"):
+		for S in ("L", "R"):
+			b = rig.data.bones["DEF-%s.%s" % (bone, S)]
+			d = (b.tail_local - b.head_local).normalized()
+			e1 = d.cross(Vector((0, 1, 0))).normalized()
+			limbs.append((b.head_local.copy(), b.tail_local - b.head_local, d, e1, d.cross(e1)))
+	for v in high.data.vertices:
+		best = None
+		for h0, seg, d, e1, e2 in limbs:
+			t = max(0.0, min(1.0, (v.co - h0).dot(seg) / seg.length_squared))
+			rel = v.co - (h0 + seg * t)
+			if rel.length < 0.08 and (best is None or rel.length < best[0]):
+				best = (rel.length, t, math.atan2(rel.dot(e2), rel.dot(e1)))
+		if best is None:
+			continue
+		_, t, ang = best
+		cord = (0.5 + 0.5 * math.cos(7 * ang + 2.5 * t)) ** 5
+		v.co += v.normal * 0.0035 * cord * math.sin(math.pi * t) ** 0.5
 
 
 def emit_paint(high, a, b, masks, scale=6.0):
@@ -357,7 +460,7 @@ def emit_paint(high, a, b, masks, scale=6.0):
 def mask(high, fn):
 	attr = high.data.color_attributes.new("mask", "FLOAT_COLOR", "POINT")
 	for i, v in enumerate(high.data.vertices):
-		attr.data[i].color = fn(v.co, v.normal) + (1.0,)
+		attr.data[i].color = fn(v.co, v.normal, i) + (1.0,)
 
 
 def build(out):
@@ -380,7 +483,7 @@ def build(out):
 	mats = {name: tf.material(name, rgb, rough, coat) for name, rgb, rough, coat in MATS}
 	h.data.materials.clear()
 	h.data.materials.append(mats["mat_shapeshifter_skin"])
-	head_high, head, head_parts, roots = build_head(rig, cut, mats)
+	head_high, head, head_parts, roots, relief = build_head(rig, cut, mats)
 	parts = head_parts + body_parts(h, rig, mats)
 	base = os.path.splitext(out)[0]
 	# head: normal and colour from its high copy (pale, greyer in the creases, raw red round the teeth roots)
@@ -388,15 +491,15 @@ def build(out):
 	P, up, fwd, right = head_frame(rig)
 	mouth_c = P(0, 0.09, 0.0)
 
-	def head_mask(co, nrm):
+	def head_mask(co, nrm, i):
 		root = min((co - r).length for r in roots)
 		inner = smooth(1 - (co - mouth_c).length / 0.06)
 		neck = smooth((hz0 + 0.03 - co.z) / 0.07) * smooth((0.06 - fwd.dot(co - hz_pt)) / 0.04)
-		return (0.0, max(smooth(1 - root / 0.016), inner), neck)
+		return (smooth(-relief[i] / 0.006) * 0.8, max(smooth(1 - root / 0.016), inner), neck)
 	hz_pt = rig.data.bones["DEF-head"].head_local
 	hz0 = hz_pt.z
 	mask(head_high, head_mask)
-	emit_paint(head_high, "pale", "grey", [(1, "raw"), (2, "dark")], scale=9.0)
+	emit_paint(head_high, "pale", "grey", [(0, "crease"), (1, "raw"), (2, "dark")], scale=9.0)
 	ex.bake(head_high, head, base + "_head_albedo_1024.png", "EMIT")
 	bpy.data.objects.remove(head_high)
 	# body: sinew in the normal map; grey-green over the shoulders and chest, a raw red streak down the sternum
@@ -418,7 +521,7 @@ def build(out):
 	zn, zh = rig.data.bones["DEF-neck"].head_local.z, rig.data.bones["DEF-hips"].head_local.z
 	ys = rig.data.bones["DEF-spine.003"].head_local.y
 
-	def body_mask(co, nrm):
+	def body_mask(co, nrm, _i):
 		upper = 0.45 * smooth((co.z - zh) / (zn - zh) * 1.4 - 0.4) * (0.5 + 0.5 * smooth(-nrm.y * 2))
 		streak = smooth(1 - abs(co.x) / 0.012) * smooth((co.z - (zn - 0.35)) / 0.05) * (co.y < ys)
 		return (upper, streak, 0.0)

@@ -226,3 +226,40 @@ Gaps against the concept:
 - The body reads dark grey-green, not the concept's blue-black.
 
 Pick: (open)
+
+## Round 8 (2026-10-17): head and body detail
+
+Designer, 2026-10-17: "its gonna need more detail on the head and body, use more complex shapes if needed".
+
+Head (`sculpt_head`, displaced on the high copy before decimation, so the bigger forms also reach the silhouette;
+`HEAD_TRIS` 3600, was 2600):
+
+- Fluting fans back over the dome, with a crest down the middle.
+- Brow ridges and cheekbone ridges.
+- Sunken eye sockets with the red eyes set in them, and nostril slits on the snout.
+- Folds over the jaw hinge.
+- The grooves are painted darker (`crease`, from the relief, not the noise), so they read under flat light.
+- An inner row of 14 shorter teeth behind the 22 front teeth, with swollen red gums along each jaw.
+- The pale jaw-hinge bulb is smaller.
+
+Body:
+
+- The limb strips are flat torn ribbons (`ribbon`) that narrow raggedly and twist, six per limb bone (round 7 had
+  five round tubes).
+- A ridge of nine vertebra spurs runs down the back, and two bone spikes stick out of each elbow.
+- Raised cords spiral down every limb bone, for the concept's stringy limbs.
+- Pecs with a crease under them; the ribs stay on the flanks, so the chest no longer looks corrugated.
+- The body paint is bluer (sRGB 22-34 base, 46-66 sheen).
+
+Triangles 14,930 / 6,741 / 2,626.
+
+Renders: `tools/art/review/c9_{front,side,back,body,head,headf,walk,crouch,dark}.png` (line-up: survivor C3,
+shipped form, round 8, round 7).
+
+Gaps against the concept:
+
+- The belly still shows faint horizontal lines where the concept has clean abs.
+- The dome's fluting shows from the side and back, but from the front the dome reads smooth.
+- The neck is thinner than the concept's.
+
+Pick: (open)
