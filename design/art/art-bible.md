@@ -118,8 +118,16 @@ Each state is distinct by colour temperature, contrast and motion, not just brig
 
 ### Shapeshifter true form (separate look, shown after Transforming or instantly at lunge wind-up)
 
-- **Silhouette:** about 2.4 m, over-long arms, narrow trunk, no accessory, distinct skeleton shape on the same rig family; never reads as any of the five survivors.
-- **Surface:** wet near-black albedo (sRGB ~40-55, not pure black), strong specular/clearcoat so the flashlight lights it up, pale bone-white teeth/ribs/claws at albedo ~190-220 for readable focal points. Eye-shine only as retro-reflection under a flashlight, no emissive eyes.
+- **What it is (designer, 2026-10-17):** a failed experiment, a former staff member of the facility the
+  experiment went wrong on. Chosen because it varies per map: each facility's victim can differ (a scientist
+  here, a guard or an engineer on another map). Review: `design/art/true-form-review.md`.
+- **Silhouette:** about 2.4 m, stretched and starved: over-long arms, narrow trunk, a human skull and face pulled
+  out of true, the jaw torn loose and hanging; distinct on the same rig family; never reads as any of the five
+  survivors (no jumpsuit, no accessory from the survivor set).
+- **Surface:** pale, clammy grey skin (sRGB ~110-125; replaces the earlier near-black rule, designer 2026-10-17),
+  wet sheen so the flashlight lights it up; bone-white teeth and split fingertips at albedo ~190-220; surgical
+  metal (the halo bolted to the skull, staples along an autopsy Y-incision) in mid grey. No eyes that glow: the
+  sockets are sunken and dark.
 - **Transformation:** the 2 s warp exists only while Transforming (Borrowed Face tell T1, shown on a relevant body handle), never in the steady disguised state. The reveal frame is silhouette-first: a clean, high-contrast shape at the end of the warp.
 - True form uses its own LOD0-LOD2 meshes and materials; the disguise uses the survivor meshes. Nothing carries over between forms except the skeleton.
 

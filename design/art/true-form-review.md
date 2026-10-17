@@ -79,4 +79,6 @@ is rewritten to it. Triangles: E 14,694, F 14,693, G 14,686 at LOD0 (budget 15k)
 Renders: `tools/art/review/efg_{front,side,back,walk,crouch,dark}.png` (line-up: survivor C3, shipped form, E, F,
 G).
 
-Pick: (open)
+Pick: E, the failed experiment (designer 2026-10-17: "that can add more variety when we do other maps"), with
+"the models are still bad". Art bible §5 rewritten to it. Next: a real human base mesh (anatomy, not primitives)
+deformed into the experiment, instead of more primitive tuning.
