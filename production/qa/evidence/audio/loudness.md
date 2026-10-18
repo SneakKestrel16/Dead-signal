@@ -83,3 +83,13 @@ Stinger playback gain = `stinger_max_db_rel` 6.0 dB (data/knobs/scare.tres), bot
 | `assets/audio/stinger/scare_stinger.wav` | stinger | Stinger | -30.5 | -30.5 | -18.2 | 1.48 |
 | `assets/audio/ui/ui_click.wav` | ui | SFX | -29.5 | -29.5 | -5.0 | 0.06 |
 | `assets/audio/ui/ping_rejected.wav` | ui | SFX | -29.0 | -29.0 | -3.9 | 0.13 |
+| `assets/audio/state/heartbeat.wav` | state | SFX | -26.0 | -26.0 | -7.8 | 0.50 |
+| `assets/audio/state/breath_sprint.wav` | state | SFX | -30.0 | -30.0 | -14.1 | 6.00 |
+| `assets/audio/state/flashlight_click.wav` | state | SFX | -33.0 | -33.0 | -3.1 | 0.16 |
+| `assets/audio/state/generator_spinup.wav` | state | SFX | -24.0 | -24.0 | -12.4 | 4.46 |
+| `assets/audio/state/terminal_tone.wav` | state | SFX | -30.0 | -30.0 | -17.2 | 6.00 |
+| `assets/audio/state/pa_chime.wav` | state | SFX | -24.0 | -24.0 | -17.2 | 1.19 |
+| `assets/audio/state/phase_investigation.wav` | state | SFX | -28.0 | -28.0 | -17.7 | 2.38 |
+| `assets/audio/state/phase_tick.wav` | state | SFX | -30.0 | -30.0 | -9.7 | 0.11 |
+| `assets/audio/state/phase_win.wav` | state | SFX | -24.0 | -24.0 | -10.3 | 2.86 |
+| `assets/audio/state/phase_loss.wav` | state | SFX | -24.0 | -24.0 | -10.8 | 2.84 |

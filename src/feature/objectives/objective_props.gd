@@ -285,6 +285,12 @@ func install_sparks() -> GPUParticles3D:
 	return _sparks
 
 
+## The active terminal's position, Vector3.INF before this client knows it (ClientSfx's activation tone).
+func terminal_at() -> Vector3:
+	var t := _terminal()
+	return t.global_position if t != null and t.is_inside_tree() else Vector3.INF
+
+
 ## The active terminal's prop, or null before this client knows it.
 func _terminal() -> Node3D:
 	return _props.get(_marker_of.get(SurvivorObjectives.TERMINAL_ID, -1))

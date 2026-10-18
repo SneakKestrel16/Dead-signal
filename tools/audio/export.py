@@ -31,7 +31,7 @@ from sounds._legacy import legacy  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 BANK = ROOT / "data/audio/sound_bank.tres"
 REPORT = ROOT / "production/qa/evidence/audio/loudness.md"
-FAMILY_MODULES = ["steps", "ambience", "cues", "world", "voices", "scares", "ui"]
+FAMILY_MODULES = ["steps", "ambience", "cues", "world", "voices", "scares", "ui", "states"]
 GAIT_DB = {"walk": 0.0, "sprint": 4.0, "crouch": -8.0, "crawl": -9.0}
 # zone -> footstep surface (level doc: A labs tile, B server rooms metal grate, C security and links concrete)
 SURFACE_OF_ZONE = {"A": "tile", "B": "metal", "C": "concrete", "link": "concrete"}

@@ -46,7 +46,8 @@ def main(family, rnd=1):
     items = []
     for name, cands in (mod.CANDIDATES if rnd == 1 else mod.ROUND2).items():
         if rnd == 1:
-            opts = [("before", dsp.legacy(cands[0].family, name))] + [(l, render(s, l, name)) for l, s in zip("ABC", cands)]
+            before = (dsp.SOURCES / "legacy" / cands[0].family / f"{name}.wav").exists()  # new sounds had no placeholder
+            opts = ([("before", dsp.legacy(cands[0].family, name))] if before else [])                 + [(l, render(s, l, name)) for l, s in zip("ABC", cands)]
         else:  # what ships now (picks.py), then the round's candidates
             now = export.shipped(name, mod.CANDIDATES[name], mod)
             opts = [("now", render(now, "now", name))] + [(l, render(s, l, name)) for l, s in zip("DEF", cands)]

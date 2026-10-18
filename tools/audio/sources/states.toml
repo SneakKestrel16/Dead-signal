@@ -1,0 +1,169 @@
+# Family `states`: the client's state-driven sounds (ClientSfx). CC0 only; fetched by tools/audio/fetch.py.
+
+[[recording]]
+id = 369017
+url = "https://freesound.org/s/369017/"
+author = "patobottos"
+licence = "CC0-1.0"
+why = "heartbeat: a human heartbeat at about 61 bpm built from one real beat (Woodingp 116642), 126 s"
+sha256 = "8515ecde666eb766db798dad03d998dba2e4db50925d8943816c2414f793f36d"
+
+[[recording]]
+id = 784658
+url = "https://freesound.org/s/784658/"
+author = "music_is_wiggly_air"
+licence = "CC0-1.0"
+why = "heartbeat: the author's own heartbeat through a contact mic, one soft beat, 0.3 s"
+sha256 = "995ca4bca0aa564e702180759a05abd4a9c0b1e6a397f78fdd64a45170c0b5d1"
+
+[[recording]]
+id = 456037
+url = "https://freesound.org/s/456037/"
+author = "florianreichelt"
+licence = "CC0-1.0"
+why = "breath_sprint: heavy breathing while running outdoors, 48 s"
+sha256 = "15317f9e78851cb9fd50f9154eb93570670b6ce6526bb72e1f8fe0c854e9bc4b"
+
+[[recording]]
+id = 321669
+url = "https://freesound.org/s/321669/"
+author = "darranambler"
+licence = "CC0-1.0"
+why = "breath_sprint: a young adult breathing heavily, close condenser mic, 11.6 s"
+sha256 = "185b963bbfb6b6c77b536251c6d645649c8e16a9c057d8c3b66c412c234f68e5"
+
+[[recording]]
+id = 163383
+url = "https://freesound.org/s/163383/"
+author = "Under7dude"
+licence = "CC0-1.0"
+why = "breath_sprint: a man breathing heavily, 4.3 s"
+sha256 = "cf1a53ed57bf481b1ee1dd94c62e550e53b4c8b33b3a1c0a9b00c03df5d9cd83"
+
+[[recording]]
+id = 690300
+url = "https://freesound.org/s/690300/"
+author = "Ralph0o7"
+licence = "CC0-1.0"
+why = "flashlight_click: a flashlight's switch clicked, Sennheiser e845, 0.2 s"
+sha256 = "c56aa632410a9612f3ab6e661cdb041c1f0adff486c97b4a62f63fb2e6868920"
+
+[[recording]]
+id = 502506
+url = "https://freesound.org/s/502506/"
+author = "Rudmer_Rotteveel"
+licence = "CC0-1.0"
+why = "flashlight_click: a small flashlight clicking on, fast, 0.1 s"
+sha256 = "4aae61b6427ca6b8f8bb1a6debfe9514c21bd1058feb9c6a39e6f0b5b6f11c2a"
+
+[[recording]]
+id = 187335
+url = "https://freesound.org/s/187335/"
+author = "baidonovan"
+licence = "CC0-1.0"
+why = "flashlight_click: a small flashlight's rubber button clicking on, 0.6 s"
+sha256 = "c5ed4c9ad230868db0a694f4d4b9f58d97d3dc6a823764fec4ae09a49daae33b"
+
+[[recording]]
+id = 169940
+url = "https://freesound.org/s/169940/"
+author = "JeffWojo"
+licence = "CC0-1.0"
+why = "generator_spinup: a 400 kW Generac diesel generator starting up, running and shutting down, 69 s"
+sha256 = "993248c4b50ea0e3df34ecb3c04d4db8d25c9885447b39e9c16edf565bf58c73"
+
+[[recording]]
+id = 516759
+url = "https://freesound.org/s/516759/"
+author = "jameswrowles"
+licence = "CC0-1.0"
+why = "generator_spinup: a small 5 kVA diesel generator starting, loads added and removed, 179 s"
+sha256 = "8832b5748d917221c531c182812cf83e575b1fcaece14fc19d733b20a5f83a9b"
+
+[[recording]]
+id = 453445
+url = "https://freesound.org/s/453445/"
+author = "kyles"
+licence = "CC0-1.0"
+why = "terminal_tone: an electric transformer humming in a large room, 28.7 s"
+sha256 = "f6b795ee025a84757e4166589d86ef3f02e00498fdc353f2db242680f3ba9acd"
+
+[[recording]]
+id = 648726
+url = "https://freesound.org/s/648726/"
+author = "itinerantmonk108"
+licence = "CC0-1.0"
+why = "terminal_tone: a power transformer in a basement, 10.9 s"
+sha256 = "1ae933812cb96dd8e9c3837a49987e59e729e03be5cf0c5b62bff88bd878ea88"
+
+[[recording]]
+id = 721812
+url = "https://freesound.org/s/721812/"
+author = "chungus43A"
+licence = "CC0-1.0"
+why = "terminal_tone: electrical hum, 12.8 s"
+sha256 = "8d41d731d5e0b944bed72192a11bbafd0a1fb7194340bc924eaf5bd325fe734a"
+
+[[recording]]
+id = 720565
+url = "https://freesound.org/s/720565/"
+author = "chungus43A"
+licence = "CC0-1.0"
+why = "pa_chime: a GO Transit station PA chime, 1.2 s"
+sha256 = "0eb2475e50118b8c5e1b55794a4b80562106c243a17dedd084c1973ce4c090b1"
+
+[[recording]]
+id = 720566
+url = "https://freesound.org/s/720566/"
+author = "chungus43A"
+licence = "CC0-1.0"
+why = "pa_chime: a Moscow Metro station PA chime, 1.0 s"
+sha256 = "03805108359f78aae96f6e5cea4833ffb52b1e6b72a191440fa66c16cbbf4138"
+
+[[recording]]
+id = 721020
+url = "https://freesound.org/s/721020/"
+author = "chungus43A"
+licence = "CC0-1.0"
+why = "pa_chime: an airplane cabin chime, 2.5 s"
+sha256 = "3f7f81be16b171160be414a36c91382f693ce1f6586f571f73fa931661a90576"
+
+[[recording]]
+id = 534094
+url = "https://freesound.org/s/534094/"
+author = "pbimal"
+licence = "CC0-1.0"
+why = "phase/tick: one clock tick, 0.5 s"
+sha256 = "8a46a0b0568dc5218ce8e4cfbb199c292573fbd6ca85f7cd0773ecbbbe7658db"
+
+[[recording]]
+id = 434841
+url = "https://freesound.org/s/434841/"
+author = "giddster"
+licence = "CC0-1.0"
+why = "phase/tick: a kitchen wall clock ticking, 64 s"
+sha256 = "bf62ea35e7d4fde77703d83ac1a47e419913b9c0b1ee86fd991a952dcfe86f6a"
+
+[[recording]]
+id = 42139
+url = "https://freesound.org/s/42139/"
+author = "fauxpress"
+licence = "CC0-1.0"
+why = "phase/tick: an old Scots clock ticking, 9.1 s"
+sha256 = "889622967f81b08c91c53b5b336d8cd5c6f7609693d0889d8156fa12f7033919"
+
+[[recording]]
+id = 496836
+url = "https://freesound.org/s/496836/"
+author = "hinchinbrook"
+licence = "CC0-1.0"
+why = "phase/investigation, phase/loss: a metallic groan, 9.4 s"
+sha256 = "6338c39f45ae7407ae4a388822a011e8849816549df4d74dbcd77662816a4f8c"
+
+[[recording]]
+id = 453333
+url = "https://freesound.org/s/453333/"
+author = "kyles"
+licence = "CC0-1.0"
+why = "phase/investigation: a metal crank groaning, 3.2 s"
+sha256 = "3e6b3e1432e1b5a4541168e150a3639a246fd4bb81d695d3841a7acfb6b85774"

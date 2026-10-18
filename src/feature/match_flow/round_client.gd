@@ -71,6 +71,8 @@ var hud: CanvasLayer
 ## The HUD's only data source (hud-results story 001) and the client's display of phase and clock; null when
 ## not rendering.
 var hud_model: HudModel
+## State-driven sounds: breathing, heartbeat, flashlight click, generator, terminal tone, PA chime, stings.
+var client_sfx: ClientSfx
 ## Edge cues, taser count and world progress bars (hud-results story 005); null when not rendering.
 var edge_cues: EdgeCues
 var match_display: MatchDisplay
@@ -302,6 +304,11 @@ func _on_connected() -> void:
 		hud_model = HudModel.new(match_display, knobs, router)
 		ShapeshifterHud.mount(hud, hud_model, camera) # hud-results/006: instanced on shapeshifter state only
 		hud.add_child(AlwaysOnHud.new(hud_model, net.local_player_id)) # H1-H6 (hud-results story 002)
+		var terminal_at := func() -> Vector3:
+			return objective_props.terminal_at() if objective_props != null else Vector3.INF
+		client_sfx = ClientSfx.new(SoundBank.load_shipped(), audio.play_at, camera.get_global_position, terminal_at, knobs)
+		add_child(client_sfx)
+		router.subscribe(&"ObjectiveProgressChanged", client_sfx.on_objective)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
 		add_child(ambience)
 		if ambience_debug:
@@ -493,6 +500,8 @@ func _process(delta: float) -> void:
 	_now_ms += delta * 1000.0
 	if match_display != null:
 		match_display.advance(delta)
+	if client_sfx != null:
+		client_sfx.update(delta, ClientSfx.state_of(hud_model, match_display, light.is_on()))
 	if predictor != null:
 		predictor.advance_visual(delta)
 	if head != null:

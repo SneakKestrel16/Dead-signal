@@ -26,6 +26,7 @@ FAMILIES = {
     "stinger": (-30.5, "Stinger"),
     "ambience": (-30.0, "Ambience"),
     "ui": (-26.0, "SFX"),
+    "state": (-26.0, "SFX"),  # ClientSfx: breathing, heartbeat, flashlight, generator, terminal tone, PA, stings
 }
 
 
