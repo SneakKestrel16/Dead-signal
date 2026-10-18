@@ -9,6 +9,7 @@ dense noise bodies where nothing real is needed), mastered to a loudness table, 
 |---|---|
 | [pipeline-handoff.md](pipeline-handoff.md) | The designer's instructions for how sounds must be made (from the Infall project): lessons, layout, building blocks, recordings, measuring, mastering, loops, review pages. Binding. |
 | [picks.md](picks.md) | What the designer picked on each review page, their notes, and what the next round redoes. |
+| [pa-lines.md](pa-lines.md) | The spoken PA countdown script: triggers, line text, voice. Draft until the designer approves it. |
 | [gotchas.md](gotchas.md) | Traps hit in this project, with what was heard or seen. |
 
 ## Commands
