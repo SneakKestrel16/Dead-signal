@@ -214,6 +214,8 @@ func _controller_tick(tick: int, holds: HoldService, states: Dictionary[int, Mov
 
 ## 6 players (max_players) on circles: 2 walking a radius-1 m circle round the point they hold, 1 slowed
 ## (ability.miss_slow_multiplier), 2 sprinting survivors and a sprinting true-form shapeshifter.
+## Gates only on an idle machine (BUG-0004, AD-250): parallel Godot processes push p95 past the budget
+## while p50 stays near 350 us. A failure with other Godot or agent processes running is not a regression.
 func test_controller_server_cost_fits_the_tick_budget() -> void:
 	assert_int(Engine.physics_ticks_per_second).is_equal(_knobs.net.sim_tick_hz)
 	_box(Vector3(0, -0.5, 0), Vector3(60, 1, 60))
@@ -280,4 +282,6 @@ func test_controller_server_cost_fits_the_tick_budget() -> void:
 	for id in 6:
 		var b := _bodies[id]
 		assert_float(Vector2(b.velocity.x, b.velocity.z).length()).is_equal_approx(expect[id], 0.01)
-	assert_int(p95s.min()).is_less_equal(BUDGET_P95_USEC)
+	assert_int(p95s.min()).override_failure_message(
+		"min p95 %d us > budget %d us: re-run on an idle machine before calling it a regression (BUG-0004)"
+		% [p95s.min(), BUDGET_P95_USEC]).is_less_equal(BUDGET_P95_USEC)
