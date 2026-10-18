@@ -82,3 +82,21 @@ note: grunt_c3 D "its bad but funny so keep it".
 | fuse_install | A fuse pushed into its clips, not a door. D: slide, clip snap, a breaker's clack. E: clip snap, a dual-pole breaker thrown. F: clip snap, a fuse switch, a short spark. | F |
 | barricade_build | D: a plank slapped on, three blows. E: two planks clatter, a fast nail run. F: two mallet blows, the plank rattling, settling. | D |
 | step_tile | New tile recordings. D: boots on tile, close mic. E: heavy boots on tile. F: D with a scrape just ahead. | D |
+
+## States (2026-10-17)
+
+`ClientSfx` sounds, family `state` (`tools/audio/review/states/`). Source: `picks (7).json`, 2026-10-17. Every sound
+was picked and none has a note, so there is no next round.
+
+| Sound | Ships |
+|---|---|
+| heartbeat | A |
+| breath_sprint | A |
+| flashlight_click | A |
+| generator_spinup | B |
+| terminal_tone | B |
+| pa_chime | A |
+| phase_investigation | B |
+| phase_tick | A |
+| phase_win | A |
+| phase_loss | A |

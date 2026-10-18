@@ -29,4 +29,7 @@ SHIP = {
     "grunt_c1": "F", "grunt_c2": "E", "grunt_c3": "D", "grunt_c4": "D", "grunt_c5": "F",
     "scare_glass_break": "E", "scare_alarm_evacuation": "F", "step_tile": "D",
     "lunge_cue": "F", "lunge_hit": "E", "distortion": "E", "fuse_install": "F", "barricade_build": "D",
+    # states (picks (7).json, 2026-10-17); heartbeat, breath_sprint, flashlight_click, pa_chime, phase_tick,
+    # phase_win and phase_loss picked A
+    "generator_spinup": "B", "terminal_tone": "B", "phase_investigation": "B",
 }
