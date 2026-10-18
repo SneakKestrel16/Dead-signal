@@ -36,4 +36,5 @@ SHIP = {
     # and face_unlock picked A; body_collapse was added after the page and ships A unpicked
     "drive_eject": "B", "relay_clack": "B", "eliminated_sting": "C", "search_rattle": "B", "takedown_struggle": "B",
     "release_gasp": "C", "interact_loop": "C", "ping_tick": "C", "ping_warning": "B",
+    # pa (picks (9).json, 2026-10-18): every line picked A (Zira through the horn) but pa_activation_start, unpicked
 }

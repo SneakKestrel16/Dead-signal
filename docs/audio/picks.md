@@ -130,9 +130,12 @@ Source: `picks (8).json`, 2026-10-17. Every sound was picked and none has a note
 
 ## PA lines (2026-10-18)
 
+Picks: `picks (9).json`, 2026-10-18.
+
 Generated-voice stand-in (designer: "go with a generated voice for now"); page `tools/audio/review/pa/`. A Zira
 through the ceiling horn, B David through the horn, C Zira through a smaller, harsher speaker.
 
 | Sound | Ships |
 |---|---|
-| pa_evac_timed - pa_activation_done (15 lines) | A (unpicked) |
+| pa_evac_timed - pa_activation_done, except pa_activation_start (14 lines) | A |
+| pa_activation_start | A (unpicked) |
