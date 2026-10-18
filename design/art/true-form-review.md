@@ -267,3 +267,25 @@ Pick: shipped as a placeholder. Designer, 2026-10-17: "its still bad but just co
 passed (1731/1731). Evidence: `production/qa/evidence/true-form-round8-shipped-2026-10-17.png`. The model needs a
 later quality pass: the designer still rates it bad, on top of the gaps listed above.
 
+
+## Round 9 (2026-10-18): a TRELLIS mesh of the concept
+
+Instead of growing the body from primitives, TRELLIS image-large (MIT, run locally, `tools/art/trellis/`) turns
+the concept's front figure into a mesh, seed 1. The concept's wisps come out as thin sheets; a voxel opening
+strips them. Source mesh: `assets/art/characters/shapeshifter/source/true_scan.glb`.
+
+`tools/art/build_true_scan.py` fits the survivor rig (without the arm stretch) to the scan's joints, weights it
+by distance to the posed bones and unposes it into the rest pose. It then decimates to the LOD budget and bakes
+normal and albedo (the scan's vertex colour) from the full scan. Faces that unposing stretched, faces joining a
+left limb to a right one and the slab between the feet are cut. All clips render clean.
+
+Triangles 14,654 / 6,815 / 2,895.
+
+Review: `tools/art/review/true_scan.glb` and the review sheet `C:/Users/Ockey/ai3d/out/review_r9.png` (outside
+the repo).
+
+Pick: shipped. Designer, 2026-10-18: "that looks good implement it in game". `build_true_scan.py -- --ship`
+wrote `assets/art/characters/shapeshifter/char_shapeshifter_true.glb`; the round 8 head textures it no longer
+uses were removed. Evidence: `production/qa/evidence/true-form-round9-shipped-2026-10-18.png` (line-up) and
+`production/qa/evidence/true-form-round9-closeup-2026-10-18.png`. The full suite passed (1758/1758). This replaces
+the round 8 placeholder.

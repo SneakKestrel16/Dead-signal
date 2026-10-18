@@ -242,8 +242,9 @@ def build(out):
 	low = tf.low_mesh(high, bc.LOD_TRIS[0])
 	low.data.materials.clear()
 	low.data.materials.append(tf.material("mat_shapeshifter_skin", *SKIN))
-	tf.bake_normal(high, low, os.path.splitext(out)[0] + "_normal_1024.png")
-	bake_albedo(high, low, os.path.splitext(out)[0] + "_albedo_1024.png")
+	bake = os.path.join(bc.ROOT, "tools", "art", "review", "true_scan")  # the glb embeds both; keep them out of res://
+	tf.bake_normal(high, low, bake + "_normal_1024.png")
+	bake_albedo(high, low, bake + "_albedo_1024.png")
 	bpy.data.objects.remove(high)
 	bpy.ops.object.select_all(action="DESELECT")
 	low.select_set(True)

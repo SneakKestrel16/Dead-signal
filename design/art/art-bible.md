@@ -119,10 +119,10 @@ Each state is distinct by colour temperature, contrast and motion, not just brig
 ### Shapeshifter true form (separate look, shown after Transforming or instantly at lunge wind-up)
 
 - **What it is (designer, 2026-10-17):** a creature built from the designer's concept image
-  (`design/art/reference/true-form-concept-01.webp`), shipped from review round 8 as a placeholder: the designer
-  judged it "still bad" and asked to continue and fix it later. Review and open gaps:
-  `design/art/true-form-review.md`. Source: `tools/art/build_creature.py`. This replaces the earlier "former staff
-  member" direction.
+  (`design/art/reference/true-form-concept-01.webp`). Shipped from review round 9 (designer, 2026-10-18: "that
+  looks good"): a TRELLIS image-to-3D mesh of the concept, rigged on the survivor rig. It replaces the round 8
+  placeholder. Review: `design/art/true-form-review.md`. Source: `tools/art/build_true_scan.py`. This replaces the
+  earlier "former staff member" direction.
 - **Silhouette:** about 2.4 m, long-limbed and stringy. A pale, elongated, crested skull is mostly mouth, with
   needle teeth in both jaws and a hanging jaw. A mane of tendrils sweeps back off the skull and shoulders, torn
   ribbons trail off every limb, and long claws tip open hands. It is distinct on the same rig family and never
