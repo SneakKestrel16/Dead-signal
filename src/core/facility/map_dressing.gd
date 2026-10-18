@@ -21,6 +21,8 @@ class_name MapDressing extends RefCounted
 ## - Arrows: evacuation arrow plates from the layout's `arrows` along H-N, H-S and C2 toward C4 (research-facility.md
 ##   Lighting States, Evacuation), signage atlas cells `<` `>`, above the doorway signs. Positions are inference:
 ##   the level doc names the rooms, not the spots; playtest settles them.
+## - Trim: kick plates, rails, pilasters, ceiling beams, doorway headers and jambs, corridor trays and pipes
+##   (MapTrim, child "Trim").
 ## Visual only: no collision, nothing gameplay reads.
 ## Usage: `MapDressing.build(greybox_root, map, MapQueries.new(map))`
 
@@ -67,6 +69,7 @@ static func build(root: Node3D, map: MapData, queries: MapQueries) -> Node3D:
 	_decals(_child(out, &"Decals"), layout)
 	_arrows(_child(out, &"Arrows"), layout)
 	_fixtures(_child(out, &"Fixtures"), map, LightingPresets.load_shipped())
+	MapTrim.build(out, root, map)
 	return out
 
 
