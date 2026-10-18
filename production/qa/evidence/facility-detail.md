@@ -61,3 +61,7 @@ New items, built by `tools/art/build_dressing.py` (`clutter` set, 116-668 triang
 
 Full suite: 1738/1739. The one failure is the tick-budget test under full-suite load (BUG-0004). It passes alone,
 twice: p95 350 µs against a 500 µs budget.
+
+## Sign-off
+
+Designer, 2026-10-17, after viewing the six shots above: "the facility looks good". Visual gate passed.
