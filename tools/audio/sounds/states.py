@@ -10,7 +10,7 @@ Timing (source: ClientSfx):
 - generator_spinup: once, facility-wide, when power is restored: the start and run-up, 4.5 s.
 - terminal_tone: a loop at the terminal while activation runs; ClientSfx pitches it 0.85-1.35 with progress and sags
   it to 0.7 and -12 dB while paused, so the source is a steady hum, never a melody.
-- pa_chime: the PA's attention chime at 120 s and 60 s left in Evacuation (the spoken countdown waits for lines).
+- pa_chime: the PA's attention chime; sounds/pa.py opens every spoken announcement on it.
 - phase/investigation: entering Investigation, subtle, 2.5 s.
 - phase/tick: each second of the final 30 s; short and dry so 30 in a row do not smear.
 - phase/win, phase/loss: the round's end for the own role, 3 s.
@@ -274,7 +274,7 @@ PLAYS = {
     "flashlight_click": "Your flashlight turning on or off, at once.",
     "generator_spinup": "Once, facility-wide, when the last fuse restores power.",
     "terminal_tone": "Loops at the terminal while activation runs, pitched up with progress; sags lower and quieter while paused.",
-    "pa_chime": "The PA's chime at 2:00 and 1:00 left in Evacuation (the spoken countdown comes later).",
+    "pa_chime": "The PA's chime, opening every spoken PA announcement in Evacuation.",
     "phase_investigation": "Once, entering Investigation. Meant to be subtle.",
     "phase_tick": "Each second of the final 30 s of the round.",
     "phase_win": "The round ends and your side won.",

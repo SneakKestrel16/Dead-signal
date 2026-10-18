@@ -9,7 +9,7 @@ dense noise bodies where nothing real is needed), mastered to a loudness table, 
 |---|---|
 | [pipeline-handoff.md](pipeline-handoff.md) | The designer's instructions for how sounds must be made (from the Infall project): lessons, layout, building blocks, recordings, measuring, mastering, loops, review pages. Binding. |
 | [picks.md](picks.md) | What the designer picked on each review page, their notes, and what the next round redoes. |
-| [pa-lines.md](pa-lines.md) | The spoken PA countdown script: triggers, line text, voice. Draft until the designer approves it. |
+| [pa-lines.md](pa-lines.md) | The spoken PA countdown script: triggers, line text, voice (generated stand-in, approved 2026-10-18). |
 | [gotchas.md](gotchas.md) | Traps hit in this project, with what was heard or seen. |
 
 ## Commands
@@ -21,6 +21,7 @@ uv run tools/audio/export.py --check          # write nothing; exit 1 if a file 
 uv run tools/audio/fetch.py                   # download manifest rows (tools/audio/sources/*.toml) not on disk
 uv run tools/audio/fetch.py --search "room tone"      # CC0 hits with licence, author, description, spectrogram URL
 uv run tools/audio/analyze.py 144046          # measure a recording (bands, hold, crest, lasting tones)
+uv run tools/audio/tts.py                     # re-render the PA lines' generated voice (Windows; sources/tts/)
 uv run tools/audio/review.py ambience         # build tools/audio/review/ambience/index.html (A/B page)
 uv run tools/audio/review.py cues --round 2   # round 2 page: what ships now against the module's ROUND2 (D, E, F)
 ```

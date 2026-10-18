@@ -1,6 +1,6 @@
 # Audio pass, state-driven client sounds (entity-inventory.md Audio rows 2, 7, 8, 16, 20, 34, 35): ClientSfx
 # turns the HUD model's frame state into sprint breathing, heartbeat, flashlight clicks, the generator, the
-# terminal activation tone, PA chimes and phase stings.
+# terminal activation tone, the PA's spoken lines and phase stings.
 extends GdUnitTestSuite
 
 const HERE := Vector3(1, 2, 3)
@@ -80,14 +80,57 @@ func test_terminal_tone_rises_with_progress_stalls_when_paused_and_stops() -> vo
 	assert_bool(_sfx.tone_on).is_false()
 
 
-func test_pa_chimes_at_its_marks_and_the_clock_ticks_the_final_30_s() -> void:
-	var evac := MatchFlow.Phase.EVACUATION
-	var left := 130.0
+func _run_evacuation(from_left: float, start_phase: int) -> void:
+	_sfx.update(0.016, _state({"phase": start_phase, "left_s": from_left + 0.25}))
+	var left := from_left
 	while left > 0.0:
-		_sfx.update(0.25, _state({"phase": evac, "left_s": left}))
+		_sfx.update(0.25, _state({"phase": MatchFlow.Phase.EVACUATION, "left_s": left}))
 		left -= 0.25
-	assert_int(_count(ClientSfx.PA)).is_equal(ClientSfx.PA_MARKS_S.size())
+
+
+func test_timed_evacuation_announces_itself_then_counts_down_and_the_clock_ticks_the_final_30_s() -> void:
+	_run_evacuation(_knobs.match_flow.evacuation_window_s, MatchFlow.Phase.INVESTIGATION)
+	assert_int(_count(ClientSfx.PA_EVAC_TIMED)).is_equal(1)
+	assert_int(_count(ClientSfx.PA_EVAC_ARMED)).is_equal(0)
+	assert_int(_count(&"pa/t_120")).override_failure_message("a timed start is the 2:00 mark").is_equal(0)
+	for id in [&"pa/t_60", &"pa/t_30", &"pa/t_10", &"pa/count_5", &"pa/count_4", &"pa/count_3", &"pa/count_2", &"pa/count_1"]:
+		assert_int(_count(id)).override_failure_message("%s once" % id).is_equal(1)
 	assert_int(_count(ClientSfx.TICK)).is_equal(int(ClientSfx.TICK_FROM_S))
+
+
+func test_early_evacuation_says_the_terminal_is_armed_and_calls_the_2_minute_mark() -> void:
+	_run_evacuation(200.0, MatchFlow.Phase.INVESTIGATION)
+	assert_int(_count(ClientSfx.PA_EVAC_ARMED)).is_equal(1)
+	assert_int(_count(ClientSfx.PA_EVAC_TIMED)).is_equal(0)
+	assert_int(_count(&"pa/t_120")).is_equal(1)
+
+
+func test_joining_mid_evacuation_announces_nothing() -> void:
+	_sfx.update(0.016, _state({"phase": MatchFlow.Phase.EVACUATION, "left_s": 100.0}))
+	assert_int(_count(ClientSfx.PA_EVAC_TIMED) + _count(ClientSfx.PA_EVAC_ARMED)).is_equal(0)
+
+
+func test_lockdown_only_when_the_deadline_ends_the_round() -> void:
+	_sfx.update(0.016, _state({"ended": true, "won": false, "deadline": true}))
+	assert_int(_count(ClientSfx.PA_LOCKDOWN)).is_equal(1)
+	before_test()
+	_sfx.update(0.016, _state({"ended": true, "won": true, "deadline": false}))
+	assert_int(_count(ClientSfx.PA_LOCKDOWN)).is_equal(0)
+
+
+func test_activation_announces_its_start_each_pause_and_its_completion_once() -> void:
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 15.0, "paused": false}}))
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 14.0, "paused": false}}))
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 14.0, "paused": true}}))
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 14.0, "paused": true}}))
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 13.0, "paused": false}}))
+	_sfx.update(0.016, _state({"activation": {"remaining_s": 13.0, "paused": true}}))
+	assert_int(_count(ClientSfx.PA_ACTIVATION_START)).is_equal(1)
+	assert_int(_count(ClientSfx.PA_ACTIVATION_PAUSED)).is_equal(2)
+	var done := {"objective": SurvivorObjectives.TERMINAL_ID, "state": SurvivorObjectives.TerminalState.ACTIVATED}
+	_sfx.on_objective(1, done)
+	_sfx.on_objective(2, done)
+	assert_int(_count(ClientSfx.PA_ACTIVATION_DONE)).is_equal(1)
 
 
 func test_investigation_tone_once_on_entering_investigation() -> void:
@@ -120,10 +163,11 @@ func test_generator_spins_up_once_on_power_restored() -> void:
 
 func test_every_sound_resolves_in_the_shipped_bank() -> void:
 	var bank := SoundBank.load_shipped()
-	for id in [ClientSfx.BREATH, ClientSfx.HEART, ClientSfx.CLICK, ClientSfx.GENERATOR, ClientSfx.TONE, ClientSfx.PA,
+	for id in [ClientSfx.BREATH, ClientSfx.HEART, ClientSfx.CLICK, ClientSfx.GENERATOR, ClientSfx.TONE,
 			ClientSfx.INVESTIGATION, ClientSfx.TICK, ClientSfx.WIN, ClientSfx.LOSS, ClientSfx.FACE, ClientSfx.PING,
-			ClientSfx.PING_WARNING, WorldSfx.CLATTER, WorldSfx.EJECT, WorldSfx.ALERT, WorldSfx.RELAY, WorldSfx.RELIEF,
-			WorldSfx.ELIMINATED, HidingSpots.SEARCH_SOUND, BodySfx.STRUGGLE, BodySfx.GASP, BodySfx.COLLAPSE] + BodySfx.LOOPS.values():
+			ClientSfx.PING_WARNING, ClientSfx.PA_EVAC_TIMED, ClientSfx.PA_EVAC_ARMED, ClientSfx.PA_LOCKDOWN,
+			ClientSfx.PA_ACTIVATION_START, ClientSfx.PA_ACTIVATION_PAUSED, ClientSfx.PA_ACTIVATION_DONE, WorldSfx.CLATTER, WorldSfx.EJECT, WorldSfx.ALERT, WorldSfx.RELAY, WorldSfx.RELIEF,
+			WorldSfx.ELIMINATED, HidingSpots.SEARCH_SOUND, BodySfx.STRUGGLE, BodySfx.GASP, BodySfx.COLLAPSE] + BodySfx.LOOPS.values() + ClientSfx.PA_MARKS.values():
 		var e := bank.resolve(id)
 		assert_object(e).override_failure_message("no bank entry for %s" % id).is_not_null()
 		assert_object(e.stream).is_not_null()

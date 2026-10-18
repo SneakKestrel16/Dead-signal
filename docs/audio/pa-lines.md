@@ -1,9 +1,11 @@
-# PA countdown lines (draft)
+# PA countdown lines
 
-**Status:** draft for designer approval, 2026-10-18. No audio is made until the text is approved.
+**Status:** approved by the designer, 2026-10-18: keep the pause line, keep the final count, "go with a generated
+voice for now". Built: `tools/audio/sounds/pa.py` (bank ids `pa/<id without pa_>`), played by `ClientSfx`.
 
 The facility's automated public-address system speaks during Evacuation (scare-events.md row "Evacuation –
-Emergency": alarm loop, PA countdown). Every line follows `pa_chime` (picks.md, A). Captions use the same text
+Emergency": alarm loop, PA countdown). Every announcement
+opens on `pa_chime` (picks.md, A); the countdown words come bare. Captions use the same text
 (accessibility-requirements.md, captions for PA, off by default).
 
 ## Voice
@@ -11,11 +13,13 @@ Emergency": alarm loop, PA countdown). Every line follows `pa_chime` (picks.md, 
 A recorded, pre-crash facility system: flat, clinical, mid-pitch, no emotion and no urgency of its own. The horror
 is the calm. Each line is short (under about 3 s), stays in the present tense and never names a person or a
 monster. Grounded only (README rules): an old building PA through ceiling horns, slightly band-limited, with a
-room tail. No synthetic robot voice.
+room tail.
 
-Source route, to settle after approval: a CC0 / CC BY recorded voice reading these lines, or the designer's own
-read, processed through a PA horn chain. A text-to-speech voice would break the "real recordings" rule; that is
-inference from the README rule and a designer ruling settles it.
+Source (designer, 2026-10-18): a generated voice for now. `tools/audio/tts.py` renders every line with Windows
+text-to-speech (Microsoft Zira and David, System.Speech) into `tools/audio/sources/tts/`, committed so the build
+stays offline. This is a stand-in: an exception to the README's real-recordings rule until a recorded read
+replaces it. Candidates on the review page (`uv run tools/audio/review.py pa`): A Zira through the ceiling horn
+(ships), B David through the horn, C Zira through a smaller, harsher speaker.
 
 ## Lines
 
@@ -39,10 +43,9 @@ Survivor Objectives (activation rules 19-20). Times are round-clock remaining.
 "Lockdown" is the PA's word for the evacuation deadline. Match Flow calls it "Evacuation deadline expired"
 (rule 23). It is a fiction word only and changes no rule.
 
-## Open choices
+## Decisions
 
-- **pa_activation_paused** speaks the pause aloud to the whole map, the shapeshifter included. That tells it the
-  terminal is empty. Cut the line if that is too much information; the HUD activation countdown (hud.md H3)
-  still shows the pause.
-- **pa_count_5 to pa_count_1** overlap the alarm and the final seconds of play. Drop them if the last five seconds
-  read better with the alarm alone.
+- **pa_activation_paused** stays (designer, 2026-10-18), although it tells the shapeshifter the terminal is empty.
+- **pa_count_5 to pa_count_1** stay (designer, 2026-10-18), over the alarm and the final-30 s tick.
+- The 2:00 chime ClientSfx played before (pa_chime alone) is replaced: each announcement now opens on that chime.
+- Captions for these lines (accessibility-requirements.md, off by default) are not built yet.

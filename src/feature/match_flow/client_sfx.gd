@@ -11,8 +11,9 @@ class_name ClientSfx extends Node
 ## - Terminal activation tone (survivor-objectives.md V/A): a loop at the terminal while activation runs, its
 ##   pitch rising with progress; paused, it sags to TONE_STALL_PITCH and drops TONE_STALL_DB ("stalls when
 ##   paused"). Stops when activation ends.
-## - PA chime (match-flow.md V/A, PA countdown): at each of PA_MARKS_S seconds left in Evacuation. The spoken
-##   countdown waits for recorded lines (designer, spoken lines open); the chime stands in for the PA.
+## - PA (match-flow.md V/A, PA countdown; script docs/audio/pa-lines.md): an announcement entering Evacuation
+##   (timed or terminal armed), a line at each of PA_MARKS seconds left, "lockdown" when the deadline ends the
+##   round, and the terminal activation's start, pause and completion. Facility-wide, at the listener.
 ## - Phase stings (match-flow.md V/A): a subtle tone entering Investigation (Evacuation keeps WorldSfx's
 ##   alarm), a tick each second of the final TICK_FROM_S, and a win or loss sting for the own role at the end.
 ## - Face-unlock tick (borrowed-face.md V/A): a quiet UI tick as a borrowable face becomes available, heard by
@@ -30,7 +31,16 @@ const HEART := &"heartbeat"
 const CLICK := &"flashlight_click"
 const GENERATOR := &"generator_spinup"
 const TONE := &"terminal_tone"
-const PA := &"pa_chime"
+const PA_EVAC_TIMED := &"pa/evac_timed"
+const PA_EVAC_ARMED := &"pa/evac_armed"
+const PA_LOCKDOWN := &"pa/lockdown"
+const PA_ACTIVATION_START := &"pa/activation_start"
+const PA_ACTIVATION_PAUSED := &"pa/activation_paused"
+const PA_ACTIVATION_DONE := &"pa/activation_done"
+## Seconds left in the round -> the PA's countdown line. The 2:00 line plays only when Evacuation started early
+## (terminal armed): a timed start is at 2:00 and announces itself with PA_EVAC_TIMED.
+const PA_MARKS := {120.0: &"pa/t_120", 60.0: &"pa/t_60", 30.0: &"pa/t_30", 10.0: &"pa/t_10",
+	5.0: &"pa/count_5", 4.0: &"pa/count_4", 3.0: &"pa/count_3", 2.0: &"pa/count_2", 1.0: &"pa/count_1"}
 const INVESTIGATION := &"phase/investigation"
 const TICK := &"phase/tick"
 const WIN := &"phase/win"
@@ -46,7 +56,6 @@ const TONE_PITCH := Vector2(0.85, 1.35) ## at 0 and at full activation progress
 const TONE_STALL_PITCH := 0.7
 const TONE_STALL_DB := -12.0
 const TONE_GLIDE_PER_S := 0.8 ## pitch units per second toward the target
-const PA_MARKS_S: Array[float] = [120.0, 60.0]
 const TICK_FROM_S := 30.0
 
 ## Every one-shot played, [id, at], newest last (checks).
@@ -58,6 +67,7 @@ var tone_on := false
 
 var _bank: SoundBank
 var _evac_s: float
+var _evac_window_s: float
 var _bleed_s: float
 var _play: Callable
 var _listener: Callable
@@ -71,15 +81,21 @@ var _heart_wait := 0.0
 var _last_left := INF
 var _ended := false
 var _powered := false
+var _activated := false
+var _early_evac := false
+var _act_on := false
+var _act_paused := false
 var _faces := -1
 
 
 ## `play(id, at)` (PlaceholderAudio.play_at); `listener() -> Vector3`; `terminal_at() -> Vector3` (the active
 ## terminal, Vector3.INF while unknown).
-## `knobs`: the activation length (objectives.evac_activation_s) and bleed-out length (downing.bleedout_s).
+## `knobs`: the activation length (objectives.evac_activation_s), bleed-out length (downing.bleedout_s) and the
+## timed Evacuation window (match_flow.evacuation_window_s).
 func _init(bank: SoundBank, play: Callable, listener: Callable, terminal_at: Callable, knobs: Knobs) -> void:
 	_bank = bank
 	_evac_s = knobs.objectives.evac_activation_s
+	_evac_window_s = knobs.match_flow.evacuation_window_s
 	_bleed_s = knobs.downing.bleedout_s
 	_play = play
 	_listener = listener
@@ -89,7 +105,7 @@ func _init(bank: SoundBank, play: Callable, listener: Callable, terminal_at: Cal
 
 
 ## The frame's inputs from the HUD model, the match display and the own flashlight: {phase, left_s, sprint,
-## bleed_s, light, activation, ended, won}.
+## bleed_s, light, activation, ended, won, deadline}.
 static func state_of(model: HudModel, display: MatchDisplay, light_on: bool) -> Dictionary:
 	var won := false
 	if display.is_ended():
@@ -99,11 +115,16 @@ static func state_of(model: HudModel, display: MatchDisplay, light_on: bool) -> 
 		"sprint": model.own_state().get("gait", -1) == MovementStep.Gait.SPRINT and not model.spectating(),
 		"bleed_s": model.bleed_out_s(), "light": light_on and not model.spectating(),
 		"activation": model.activation(), "ended": display.is_ended(), "won": won,
+		"deadline": display.is_ended() and display.reason() == MatchFlow.Reason.DEADLINE,
 		"faces": model.faces().filter(func(f: Dictionary) -> bool: return f["available"]).size()}
 
 
-## ClientEventRouter handler for ObjectiveProgressChanged: the generator on the terminal's POWERED event.
+## ClientEventRouter handler for ObjectiveProgressChanged: the generator on the terminal's POWERED event, the PA
+## on its ACTIVATED event.
 func on_objective(_tick: int, p: Dictionary) -> void:
+	if p.get("objective") == SurvivorObjectives.TERMINAL_ID and p.get("state") == SurvivorObjectives.TerminalState.ACTIVATED 			and not _activated:
+		_activated = true
+		_one(PA_ACTIVATION_DONE, _listener.call())
 	if p.get("objective") == SurvivorObjectives.TERMINAL_ID and p.get("state") == SurvivorObjectives.TerminalState.POWERED \
 			and not _powered:
 		_powered = true
@@ -127,18 +148,24 @@ func update(delta: float, s: Dictionary) -> void:
 		if not _ended:
 			_ended = true
 			_one(WIN if s["won"] else LOSS, here)
+			if s.get("deadline", false):
+				_one(PA_LOCKDOWN, here)
 		_set_breath(0.0)
 		_set_tone(false, 0.0, false, delta)
 		return
 	if s["phase"] != _phase:
 		if _phase != -1 and s["phase"] == MatchFlow.Phase.INVESTIGATION:
 			_one(INVESTIGATION, here)
+		if s["phase"] == MatchFlow.Phase.EVACUATION:
+			_early_evac = s["left_s"] > _evac_window_s + 1.0
+			if _phase != -1:
+				_one(PA_EVAC_ARMED if _early_evac else PA_EVAC_TIMED, here)
 		_phase = s["phase"]
 	var left: float = s["left_s"]
 	if _phase == MatchFlow.Phase.EVACUATION and _last_left != INF:
-		for mark in PA_MARKS_S:
-			if _last_left > mark and left <= mark:
-				_one(PA, here)
+		for mark: float in PA_MARKS:
+			if _last_left > mark and left <= mark and (_early_evac or mark < _evac_window_s):
+				_one(PA_MARKS[mark], here)
 		if left <= TICK_FROM_S and ceilf(left) < ceilf(_last_left) and left > 0.0:
 			_one(TICK, here)
 	_last_left = left
@@ -156,6 +183,12 @@ func update(delta: float, s: Dictionary) -> void:
 	if running:
 		progress = 1.0 - clampf(act["remaining_s"] / maxf(_evac_s, 0.001), 0.0, 1.0)
 	_set_tone(running, progress, running and act["paused"], delta)
+	if running and not _act_on:
+		_one(PA_ACTIVATION_START, here)
+	elif running and act["paused"] and not _act_paused:
+		_one(PA_ACTIVATION_PAUSED, here)
+	_act_on = running
+	_act_paused = running and act["paused"]
 
 
 func _heartbeat(delta: float, bleed_s: float, here: Vector3) -> void:
