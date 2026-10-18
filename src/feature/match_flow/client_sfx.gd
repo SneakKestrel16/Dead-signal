@@ -15,6 +15,9 @@ class_name ClientSfx extends Node
 ##   countdown waits for recorded lines (designer, spoken lines open); the chime stands in for the PA.
 ## - Phase stings (match-flow.md V/A): a subtle tone entering Investigation (Evacuation keeps WorldSfx's
 ##   alarm), a tick each second of the final TICK_FROM_S, and a win or loss sting for the own role at the end.
+## - Face-unlock tick (borrowed-face.md V/A): a quiet UI tick as a borrowable face becomes available, heard by
+##   the shapeshifter alone (only its HUD model carries faces).
+## - Ping ticks (pings-and-callouts.md V/A): a soft tick at each ping's point, a sharper tone for a warning ping.
 ## Ids resolve through the SoundBank; one with no entry plays PlaceholderAudio's beep (one-shots) or nothing
 ## (loops). Timings are inference (no source gives them; playtest settles them).
 ## Usage (client):
@@ -32,6 +35,9 @@ const INVESTIGATION := &"phase/investigation"
 const TICK := &"phase/tick"
 const WIN := &"phase/win"
 const LOSS := &"phase/loss"
+const FACE := &"face_unlock"
+const PING := &"ping/tick"
+const PING_WARNING := &"ping/warning"
 const HEART_FAST_S := 0.75
 const HEART_SLOW_S := 1.6
 const BREATH_FADE_S := 0.6 ## to full or to silence
@@ -65,6 +71,7 @@ var _heart_wait := 0.0
 var _last_left := INF
 var _ended := false
 var _powered := false
+var _faces := -1
 
 
 ## `play(id, at)` (PlaceholderAudio.play_at); `listener() -> Vector3`; `terminal_at() -> Vector3` (the active
@@ -91,7 +98,8 @@ static func state_of(model: HudModel, display: MatchDisplay, light_on: bool) -> 
 	return {"phase": model.phase(), "left_s": model.time_remaining_s(),
 		"sprint": model.own_state().get("gait", -1) == MovementStep.Gait.SPRINT and not model.spectating(),
 		"bleed_s": model.bleed_out_s(), "light": light_on and not model.spectating(),
-		"activation": model.activation(), "ended": display.is_ended(), "won": won}
+		"activation": model.activation(), "ended": display.is_ended(), "won": won,
+		"faces": model.faces().filter(func(f: Dictionary) -> bool: return f["available"]).size()}
 
 
 ## ClientEventRouter handler for ObjectiveProgressChanged: the generator on the terminal's POWERED event.
@@ -102,9 +110,19 @@ func on_objective(_tick: int, p: Dictionary) -> void:
 		_one(GENERATOR, _listener.call())
 
 
+## ClientEventRouter handler for EventBatch.PING ({kind, point, ...}): the tick at the pinged point.
+func on_ping(_tick: int, p: Dictionary) -> void:
+	if p.get("point") is Vector3 and p.get("kind") is int:
+		_one(PING_WARNING if p["kind"] in PingCalloutHud.WARNINGS else PING, p["point"])
+
+
 ## Advances every sound by `delta` seconds against frame state `s` (state_of).
 func update(delta: float, s: Dictionary) -> void:
 	var here: Vector3 = _listener.call()
+	var faces: int = s.get("faces", 0)
+	if _faces >= 0 and faces > _faces:
+		_one(FACE, here)
+	_faces = faces
 	if s["ended"]:
 		if not _ended:
 			_ended = true

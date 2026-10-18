@@ -151,7 +151,15 @@ func test_an_eject_is_an_exit_and_makes_the_exit_sound() -> void:
 	_run(M, _hs.search_id(0), _knobs.ticks(_knobs.defense.search_duration_s))
 	_run(M, -1, 1)
 	assert_bool(_hidden[A]).is_false()
-	assert_array(_sets()).is_equal([HidingSpots.ENTER_SOUND, HidingSpots.EXIT_SOUND])
+	## the search rattles the door first (entity-inventory.md Audio row 24), then the occupant's exit
+	assert_array(_sets()).is_equal([HidingSpots.ENTER_SOUND, HidingSpots.SEARCH_SOUND, HidingSpots.EXIT_SOUND])
+
+
+func test_a_search_of_an_empty_spot_still_rattles() -> void:
+	_centres[M] = _hs.point(0)
+	_run(M, _hs.search_id(0), _knobs.ticks(_knobs.defense.search_duration_s))
+	_run(M, -1, 1)
+	assert_array(_sets()).is_equal([HidingSpots.SEARCH_SOUND])
 
 
 # --- AC-2: the long-hide cue ----------------------------------------------------------------------------

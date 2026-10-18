@@ -27,6 +27,7 @@ FAMILIES = {
     "ambience": (-30.0, "Ambience"),
     "ui": (-26.0, "SFX"),
     "state": (-26.0, "SFX"),  # ClientSfx: breathing, heartbeat, flashlight, generator, terminal tone, PA, stings
+    "event": (-22.0, "WorldSFX"),  # WorldSfx, BodySfx, HidingSpots and ClientSfx event and action sounds
 }
 
 

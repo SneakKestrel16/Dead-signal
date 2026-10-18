@@ -121,9 +121,28 @@ func test_generator_spins_up_once_on_power_restored() -> void:
 func test_every_sound_resolves_in_the_shipped_bank() -> void:
 	var bank := SoundBank.load_shipped()
 	for id in [ClientSfx.BREATH, ClientSfx.HEART, ClientSfx.CLICK, ClientSfx.GENERATOR, ClientSfx.TONE, ClientSfx.PA,
-			ClientSfx.INVESTIGATION, ClientSfx.TICK, ClientSfx.WIN, ClientSfx.LOSS]:
+			ClientSfx.INVESTIGATION, ClientSfx.TICK, ClientSfx.WIN, ClientSfx.LOSS, ClientSfx.FACE, ClientSfx.PING,
+			ClientSfx.PING_WARNING, WorldSfx.CLATTER, WorldSfx.EJECT, WorldSfx.ALERT, WorldSfx.RELAY, WorldSfx.RELIEF,
+			WorldSfx.ELIMINATED, HidingSpots.SEARCH_SOUND, BodySfx.STRUGGLE, BodySfx.GASP] + BodySfx.LOOPS.values():
 		var e := bank.resolve(id)
 		assert_object(e).override_failure_message("no bank entry for %s" % id).is_not_null()
 		assert_object(e.stream).is_not_null()
 	assert_bool(bank.resolve(ClientSfx.BREATH).loop).is_true()
 	assert_bool(bank.resolve(ClientSfx.TONE).loop).is_true()
+	for id in BodySfx.LOOPS.values():
+		assert_bool(bank.resolve(id).loop).override_failure_message("%s should loop" % id).is_true()
+
+
+func test_a_face_becoming_available_ticks_once() -> void:
+	_sfx.update(0.016, _state({"faces": 1})) ## the first frame is the baseline
+	_sfx.update(0.016, _state({"faces": 2}))
+	_sfx.update(0.016, _state({"faces": 2}))
+	_sfx.update(0.016, _state({"faces": 1}))
+	assert_int(_count(ClientSfx.FACE)).is_equal(1)
+
+
+func test_pings_tick_at_their_point_and_warnings_sound_sharper() -> void:
+	_sfx.on_ping(1, {"kind": PingsCallouts.LOCATION, "point": TERMINAL})
+	_sfx.on_ping(2, {"kind": PingsCallouts.WARNING_POINT, "point": TERMINAL})
+	_sfx.on_ping(3, {"kind": PingsCallouts.LOCATION})
+	assert_array(_ids).is_equal([ClientSfx.PING, ClientSfx.PING_WARNING])

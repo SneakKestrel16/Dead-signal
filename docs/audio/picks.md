@@ -100,3 +100,10 @@ was picked and none has a note, so there is no next round.
 | phase_tick | A |
 | phase_win | A |
 | phase_loss | A |
+
+## Events (2026-10-17)
+
+Event and action sounds, family `event` (`tools/audio/review/events/`): `WorldSfx` (drive clatter and eject,
+install alert, relay clack, rescue relief, eliminated sting), `HidingSpots` (search rattle), `BodySfx` (takedown
+struggle, release gasp, interact, barricade and rescue loops) and `ClientSfx` (face unlock, ping tick and warning).
+Awaiting the designer's picks; candidate A ships until then.

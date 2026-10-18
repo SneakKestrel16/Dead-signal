@@ -65,9 +65,11 @@ func test_barricade_built_and_broken_play_at_the_door() -> void:
 
 func test_drive_dock_and_evacuation_alarm_play_once() -> void:
 	var at := Vector3(4, 0, 5)
+	_sfx.terminal_at = func() -> Vector3: return at
 	var docked := SurvivorObjectives.DriveState.DOCKED
-	_sfx.on_objective(1, {"objective": SurvivorObjectives.DRIVE_ID, "state": docked, "at": at})
-	_sfx.on_objective(2, {"objective": SurvivorObjectives.DRIVE_ID, "state": docked, "at": at})
+	## as the server sends it: a docked drive carries no `at` (only Dropped items do)
+	_sfx.on_objective(1, {"objective": SurvivorObjectives.DRIVE_ID, "state": docked, "carrier": -1})
+	_sfx.on_objective(2, {"objective": SurvivorObjectives.DRIVE_ID, "state": docked, "carrier": -1})
 	_sfx.on_objective(3, {"objective": SurvivorObjectives.FUSE_ID, "state": SurvivorObjectives.FuseState.CARRIED, "at": at})
 	_sfx.on_phase(4, {"phase": MatchFlow.Phase.INVESTIGATION})
 	_sfx.on_phase(5, {"phase": MatchFlow.Phase.EVACUATION})
@@ -79,3 +81,43 @@ func test_every_world_sound_has_a_bank_entry() -> void:
 	for s: StringName in [WorldSfx.DOOR_OPEN, WorldSfx.DOOR_CLOSE, WorldSfx.BARRICADE_BUILD,
 			WorldSfx.BARRICADE_BREAK, WorldSfx.DOCK, WorldSfx.ALARM]:
 		assert_bool(bank.resolve(s) != null).override_failure_message(String(s)).is_true()
+
+
+func test_a_dropped_drive_clatters_and_an_ejected_one_clunks_where_it_lands() -> void:
+	var d := SurvivorObjectives.DRIVE_ID + 1
+	var states := SurvivorObjectives.DriveState
+	var floor_at := Vector3(7, 0, 9)
+	var terminal := Vector3(40, 0, 20)
+	_sfx.on_objective(1, {"objective": d, "state": states.CARRIED, "carrier": 3})
+	_sfx.on_objective(2, {"objective": d, "state": states.DROPPED, "carrier": -1, "at": floor_at})
+	_sfx.on_objective(3, {"objective": d, "state": states.CARRIED, "carrier": 4})
+	_sfx.on_objective(4, {"objective": d, "state": states.DOCKED, "carrier": -1})
+	_sfx.on_objective(5, {"objective": d, "state": states.DROPPED, "carrier": -1, "at": terminal})
+	assert_array(_plays).is_equal([[WorldSfx.CLATTER, floor_at], [WorldSfx.DOCK, LISTENER], [WorldSfx.EJECT, terminal]])
+
+
+func test_install_alert_plays_at_the_listener() -> void:
+	_sfx.on_objective(1, {"centre": Vector3(5, 0, 5), "radius_m": 6.0, "duration_s": 4.0})
+	assert_array(_plays).is_equal([[WorldSfx.ALERT, LISTENER]])
+
+
+func test_relay_clacks_at_the_switch_when_a_blackout_lifts() -> void:
+	var sw: MapMarker = null
+	for m in _map.markers:
+		if m.type == &"switch":
+			sw = m
+			break
+	var rec := {"volume": sw.volume, "base": 0, "overlays": 0}
+	_sfx.on_lighting(1, rec.merged({"dark_until": 0}))
+	_sfx.on_lighting(2, rec.merged({"dark_until": 500}))
+	_sfx.on_lighting(3, rec.merged({"dark_until": 0}))
+	_sfx.on_lighting(4, rec.merged({"dark_until": 0}))
+	assert_array(_plays).is_equal([[WorldSfx.RELAY, sw.position]])
+
+
+func test_relief_is_the_rescued_players_and_the_elimination_sting_everyones() -> void:
+	_sfx.own_id = 7
+	_sfx.on_rescued(1, {"survivor": 5})
+	_sfx.on_rescued(2, {"survivor": 7})
+	_sfx.on_eliminated(3, {"survivor": 5, "reason": 0})
+	assert_array(_plays).is_equal([[WorldSfx.RELIEF, LISTENER], [WorldSfx.ELIMINATED, LISTENER]])

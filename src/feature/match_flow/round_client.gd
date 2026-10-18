@@ -73,6 +73,10 @@ var hud: CanvasLayer
 var hud_model: HudModel
 ## State-driven sounds: breathing, heartbeat, flashlight click, generator, terminal tone, PA chime, stings.
 var client_sfx: ClientSfx
+## Action-driven body sounds: takedown struggle, release gasp, interact, barricade and rescue loops.
+var body_sfx: BodySfx
+## [key, position, action] of every body drawn this frame (BodySfx).
+var _body_list: Array = []
 ## Edge cues, taser count and world progress bars (hud-results story 005); null when not rendering.
 var edge_cues: EdgeCues
 var match_display: MatchDisplay
@@ -270,10 +274,19 @@ func _on_connected() -> void:
 		disguise.cue.connect(audio.play_at)
 		shock.cue.connect(audio.play_at)
 		var world_sfx := WorldSfx.new(_map, audio.play_at, camera.get_global_position) # audio pass
+		body_sfx = BodySfx.new(SoundBank.load_shipped(), audio.play_at)
+		add_child(body_sfx)
+		router.subscribe(&"MonsterStunned", body_sfx.on_stunned)
 		router.subscribe(EventBatch.DOORS, world_sfx.on_doors)
 		router.subscribe(EventBatch.BARRICADE, world_sfx.on_barricade)
 		router.subscribe(&"ObjectiveProgressChanged", world_sfx.on_objective)
 		router.subscribe(&"RoundPhaseChanged", world_sfx.on_phase)
+		router.subscribe(EventBatch.LIGHTING, world_sfx.on_lighting)
+		router.subscribe(&"SurvivorRescued", world_sfx.on_rescued)
+		router.subscribe(&"SurvivorEliminated", world_sfx.on_eliminated)
+		world_sfx.own_id = net.local_player_id
+		world_sfx.terminal_at = func() -> Vector3:
+			return objective_props.terminal_at() if objective_props != null else Vector3.INF
 		lights = LightingPresenter.new(_map, LightingPresets.load_shipped())
 		add_child(lights)
 		camera.environment = lights.presets.environment()
@@ -309,6 +322,7 @@ func _on_connected() -> void:
 		client_sfx = ClientSfx.new(SoundBank.load_shipped(), audio.play_at, camera.get_global_position, terminal_at, knobs)
 		add_child(client_sfx)
 		router.subscribe(&"ObjectiveProgressChanged", client_sfx.on_objective)
+		router.subscribe(EventBatch.PING, client_sfx.on_ping)
 		ambience = ZoneAmbience.new(_map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
 		add_child(ambience)
 		if ambience_debug:
@@ -519,6 +533,10 @@ func _process(delta: float) -> void:
 		viewmodel.update(-1 if predictor.spectating() else predictor.last_own.get("appearance", -1),
 				defense.charges(), bar.visible, delta)
 	_draw_remotes()
+	if body_sfx != null:
+		if body != null and not predictor.spectating() and not predictor.last_own.is_empty():
+			_body_list.append([&"own", body.global_position, predictor.last_own.get("action", SnapshotCodec.Action.NONE)])
+		body_sfx.update(delta, _body_list)
 
 
 ## The map interactable index the owner's view ray picks (MapQueries, the server's own query), or -1.
@@ -617,6 +635,7 @@ func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:
 
 ## Shows every introduced handle present in the newest snapshot at its interpolated pose; hides the rest.
 func _draw_remotes() -> void:
+	_body_list.clear()
 	if puppets == null:
 		return
 	for h: int in remotes.keys():
@@ -639,6 +658,8 @@ func _draw_remotes() -> void:
 		var pose := sample(_buf[h], at, knobs.net.max_extrapolation_ms)
 		n.position = pose[0]
 		n.rotation.y = pose[1]
+		if n.visible:
+			_body_list.append([h, pose[0], st.get("action", SnapshotCodec.Action.NONE)])
 		var mat := (n.get_node(^"Mesh") as MeshInstance3D).material_override as StandardMaterial3D
 		mat.albedo_color = colour_of(st.get("appearance", SnapshotCodec.NO_APPEARANCE))
 		(n.get_node(^"Cone") as SpotLight3D).visible = st.get("flashlight", false)

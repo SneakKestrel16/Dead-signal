@@ -1,0 +1,210 @@
+# Family `events`: event and action sounds (WorldSfx, BodySfx, HidingSpots, ClientSfx pings and faces). CC0 only;
+# fetched by tools/audio/fetch.py. Reused recordings (other manifests) are named in sounds/events.py.
+
+[[recording]]
+id = 697092
+url = "https://freesound.org/s/697092/"
+author = "Lemato"
+licence = "CC0-1.0"
+why = "drive_clatter: a hollow plastic box dropped, 0.5 s"
+sha256 = "b65f7e095b8c525c711b69e34a73afdad44b291c9301a5ca12a95bef744729bc"
+
+[[recording]]
+id = 697091
+url = "https://freesound.org/s/697091/"
+author = "Lemato"
+licence = "CC0-1.0"
+why = "drive_clatter: a hollow plastic box dropped (second take), 0.3 s"
+sha256 = "da756483b73c21b48832d5364c2034c563fcfe5f877f471ea016528c9da19a8d"
+
+[[recording]]
+id = 505962
+url = "https://freesound.org/s/505962/"
+author = "jedg"
+licence = "CC0-1.0"
+why = "drive_clatter: small plastic impacts, drops and slides, 30 s"
+sha256 = "302fb4b8e438cf16ca593ae1b1a072c505805d322f6b813fbe48f5019524557d"
+
+[[recording]]
+id = 272065
+url = "https://freesound.org/s/272065/"
+author = "Bexhillcollege"
+licence = "CC0-1.0"
+why = "drive_clatter: a tape cassette in its case thrown down, a piece breaking off, 2 s"
+sha256 = "95b54814db924849c35284040d5124a5f766e4052c9c11ecabc77a88f448956b"
+
+[[recording]]
+id = 870770
+url = "https://freesound.org/s/870770/"
+author = "CHallSmith"
+licence = "CC0-1.0"
+why = "relay_clack: very large electrical relays, close, 21.9 s"
+sha256 = "c3f8b79c9111f5198b72b2bc3abfeb34df278f96ac926f5c18f07bd3fc48bd33"
+
+[[recording]]
+id = 112844
+url = "https://freesound.org/s/112844/"
+author = "xdrav"
+licence = "CC0-1.0"
+why = "relay_clack: a boiler-room rotary switch and its relay, double click, 3.5 s"
+sha256 = "4be885e55cec40c82351fd17eb3999ad785215b5d5eb4a71f38b65bc0819799d"
+
+[[recording]]
+id = 384701
+url = "https://freesound.org/s/384701/"
+author = "bassmosphere"
+licence = "CC0-1.0"
+why = "relay_clack / ping/warning: a pinball machine's knocker relay, loud click, 0.6 s"
+sha256 = "72724d09e37611904b634eab5ffaf775198e5cb9e8601e87a85b1359ec3efe20"
+
+[[recording]]
+id = 618526
+url = "https://freesound.org/s/618526/"
+author = "Jarebear1223"
+licence = "CC0-1.0"
+why = "rescue_relief / release_gasp: a gasp of relief, 1.9 s"
+sha256 = "7b8f0c4518f73513952ce06bf1a7eb2bcb84048a3f4e67fae329f8b5a0de27fc"
+
+[[recording]]
+id = 348288
+url = "https://freesound.org/s/348288/"
+author = "marilenatip"
+licence = "CC0-1.0"
+why = "rescue_relief: a sigh with relief, 0.9 s"
+sha256 = "86b3faae1bb397e9a68ec08f4d7a05750f3ffdd08222d48048815ce728c24efa"
+
+[[recording]]
+id = 724232
+url = "https://freesound.org/s/724232/"
+author = "AgusIvan"
+licence = "CC0-1.0"
+why = "rescue_relief: a relief sigh, 6 s"
+sha256 = "8fc3862cf1068410570ddd17d6ab23894b6ba01235ec4826fb472e346a7cc02a"
+
+[[recording]]
+id = 436781
+url = "https://freesound.org/s/436781/"
+author = "Alivvie"
+licence = "CC0-1.0"
+why = "release_gasp: gasping, 5.4 s"
+sha256 = "e4d739f4a8986e592f097db93bda36a61c583526f8225a53dfa5e8262ac0015e"
+
+[[recording]]
+id = 638611
+url = "https://freesound.org/s/638611/"
+author = "CaptainYulef"
+licence = "CC0-1.0"
+why = "release_gasp: breathing, 4.4 s"
+sha256 = "97d7d61300ee0dd325bdfff47953e0a8ccdb8635e9b029998a6b8b736b23b46e"
+
+[[recording]]
+id = 403540
+url = "https://freesound.org/s/403540/"
+author = "LamaMakesMusic"
+licence = "CC0-1.0"
+why = "search_rattle: a big iron locker shaken and rattled, 98.5 s"
+sha256 = "e3f5a2f2713f517fd33cfeda654193c09ae92a8a65fc7e31a29f6d149f7a5117"
+
+[[recording]]
+id = 849797
+url = "https://freesound.org/s/849797/"
+author = "IENBA"
+licence = "CC0-1.0"
+why = "search_rattle: metal rattles, 35.2 s"
+sha256 = "319278d35c965a3d21731d038920dae1036aca422203e266300506778f48e38e"
+
+[[recording]]
+id = 450792
+url = "https://freesound.org/s/450792/"
+author = "kyles"
+licence = "CC0-1.0"
+why = "search_rattle: a metal locker or shed door slammed hard, rattling, 10.9 s"
+sha256 = "95032aaf5f070d957588a44849d188061d27aaa38c43030e2ab2c63d83deb2b5"
+
+[[recording]]
+id = 852785
+url = "https://freesound.org/s/852785/"
+author = "Wigglesworth"
+licence = "CC0-1.0"
+why = "takedown_struggle: fabric movement in a fight, 14.1 s"
+sha256 = "724383faf8f56754086e074479ca60d81f1c051f5a30b845b47cf5c6ca8f2209"
+
+[[recording]]
+id = 527744
+url = "https://freesound.org/s/527744/"
+author = "radiojaja"
+licence = "CC0-1.0"
+why = "takedown_struggle: a struggle, 19 s"
+sha256 = "36daf3355fc5c29f4738b5fc72e53497656f43ef53d029d1de522d80e2fafa92"
+
+[[recording]]
+id = 481753
+url = "https://freesound.org/s/481753/"
+author = "craigsmith"
+licence = "CC0-1.0"
+why = "takedown_struggle: a man grunting and struggling, 37.9 s"
+sha256 = "ed42688a1633134ece5fe42ac8a516c3742b6f6ecc1bf47598e14dd6f02dc299"
+
+[[recording]]
+id = 860292
+url = "https://freesound.org/s/860292/"
+author = "artemditkovsky"
+licence = "CC0-1.0"
+why = "interact_loop: a technician rummaging through a toolbox by hand, 50.2 s"
+sha256 = "72e050199c727c7d7364fc955e34322b283d412d0d124bb8ea6ba04b216d0b33"
+
+[[recording]]
+id = 631823
+url = "https://freesound.org/s/631823/"
+author = "ahriik"
+licence = "CC0-1.0"
+why = "interact_loop: office desk movements, paper, objects handled, 118 s"
+sha256 = "c21ab5548c3f65b9556d06707956627aae5ba78b73cd4dd4f7048723c5da3b92"
+
+[[recording]]
+id = 685984
+url = "https://freesound.org/s/685984/"
+author = "zrrion"
+licence = "CC0-1.0"
+why = "interact_loop: typing on a modded Omnikey 101 keyboard, 9.5 s"
+sha256 = "1e8850568c297f7598b5f12132ed1502f076e89dd2d7fb9055b15d8641d0663f"
+
+[[recording]]
+id = 237047
+url = "https://freesound.org/s/237047/"
+author = "j1987"
+licence = "CC0-1.0"
+why = "rescue_loop: cloth grabbing, 37.4 s"
+sha256 = "44ba21cee8cca8ef0d1b6b5a93fd85ff04ad58894bc4eafe4655a14e561d2b95"
+
+[[recording]]
+id = 481075
+url = "https://freesound.org/s/481075/"
+author = "khenshom"
+licence = "CC0-1.0"
+why = "rescue_loop: cotton clothes rustling, 38.5 s"
+sha256 = "9b7e5537e661d7a561fc462d9363febd8b68956ae1b252af8b672953468b66e1"
+
+[[recording]]
+id = 824848
+url = "https://freesound.org/s/824848/"
+author = "BullRhino"
+licence = "CC0-1.0"
+why = "face_unlock: a Canon 6D's shutter and mirror, 10 s"
+sha256 = "5a3720a61d707737e209103146bb4b2de79ef27348e5aa26d23a6401880fa084"
+
+[[recording]]
+id = 515147
+url = "https://freesound.org/s/515147/"
+author = "blwuens"
+licence = "CC0-1.0"
+why = "face_unlock: a DSLR focusing and its shutter, 6.9 s"
+sha256 = "e141edfc4b6a7f18114fae9e9651ef2b556bb168788b47f7d81693faf934edc1"
+
+[[recording]]
+id = 549897
+url = "https://freesound.org/s/549897/"
+author = "Tairblenn"
+licence = "CC0-1.0"
+why = "ping/warning: a small metal bell hit with a teaspoon, 2.1 s"
+sha256 = "2d98c91a0de495be4ca799f6798fdfa8f7717f064b750681943044282f63dfd2"

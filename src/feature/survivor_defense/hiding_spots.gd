@@ -33,6 +33,8 @@ const CANCEL_EJECTED := &"ejected"
 const ENTER_SOUND := &"hide_enter"
 const EXIT_SOUND := &"hide_exit"
 const CUE_SOUND := &"hide_cue"
+## The monster's search rattling the spot's door open (entity-inventory.md Audio row 24), empty or not.
+const SEARCH_SOUND := &"search_rattle"
 
 ## `emit_sound(position: Vector3, sound_set: StringName, radius_m: float)`, the positional sound send
 ## (ServerMovement.emit_sound). Invalid = no hide noise or cue is sent.
@@ -223,6 +225,7 @@ func hide_completed(actor: int, spot: int) -> void:
 
 ## A Search completed (HidingHold only): ejects the occupant; on an entry, waits for it; empty: nothing.
 func search_completed(spot: int) -> void:
+	_sound(spot, SEARCH_SOUND)
 	if _occupant.has(spot):
 		_eject(spot)
 	elif _entering.has(spot):
