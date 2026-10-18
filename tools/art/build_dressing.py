@@ -45,6 +45,13 @@ bp.MATS.update({
 	"lens_amber": ("B07028", 0.3, 0.0, 0.0),
 	"lens_red": ("8E2C28", 0.3, 0.0, 0.0),
 	"strip_red": ("B3342E", 0.4, 0.0, 0.6),  # emergency strip: faint, always on (ASSET-073)
+	"extinguisher": ("8A2E28", 0.45, 0.1, 0.0),  # muted, under Security Red's saturation (§4)
+	"cork": ("8A6A48", 0.9, 0.0, 0.0),
+	"paper": ("C8C2B2", 0.85, 0.0, 0.0),  # 200, under the 225 cap
+	"wood": ("7A6448", 0.8, 0.0, 0.0),  # crate slats
+	"drum_blue": ("3E5266", 0.5, 0.4, 0.0),  # desaturated: never Signal Cyan
+	"drum_rust": ("6A4A34", 0.7, 0.3, 0.0),
+	"cardboard": ("8E7656", 0.9, 0.0, 0.0),
 })
 bp.BUDGET.clear()
 TRI_MAX = 1500  # every dressing item (spec ASSET-067..069); fixtures 300 (ASSET-070)
@@ -352,6 +359,92 @@ def strobe():
 	return p
 
 
+# --- facility detail pass (designer 2026-10-17): clutter, placed by MapClutter -----------------------------
+# Wall items: origin at the foot of the wall face, back on the wall (Blender y 0), front +Y.
+
+def clutter_extinguisher():
+	"""Fire extinguisher on a wall bracket, sign plate above (blank: §6 no text)."""
+	p = []
+	cyl(p, 0.075, 0.5, (0, 0.11, 1.0), "extinguisher", 12, bevel=0.01)
+	cyl(p, 0.05, 0.06, (0, 0.11, 1.28), "dark", 10)
+	box(p, (0.03, 0.12, 0.03), (0.03, 0.11, 1.33), "dark")  # handle
+	cyl(p, 0.012, 0.3, (-0.07, 0.17, 1.15), "rubber", 6, rot=(0, math.radians(15), 0))  # hose
+	box(p, (0.14, 0.04, 0.3), (0, 0.02, 1.05), "dark")  # bracket
+	box(p, (0.2, 0.01, 0.2), (0, 0.005, 1.55), "extinguisher")  # marker plate
+	return p
+
+
+def clutter_junction_box():
+	"""Grey electrical box with a conduit running up the wall (top under the 2.2 m pipe band)."""
+	p = []
+	box(p, (0.36, 0.14, 0.46), (0, 0.07, 1.4), "paint", 0.01)
+	box(p, (0.32, 0.01, 0.42), (0, 0.145, 1.4), "steel", 0.004)
+	box(p, (0.06, 0.02, 0.03), (0.12, 0.155, 1.4), "dark")  # latch
+	box(p, (0.12, 0.012, 0.08), (0, 0.15, 1.56), "warning")  # hazard plate
+	cyl(p, 0.022, 0.55, (0.1, 0.04, 1.9), "pipe", 8)
+	cyl(p, 0.022, 0.55, (-0.1, 0.04, 1.9), "pipe", 8)
+	return p
+
+
+def clutter_vent():
+	"""Low wall vent grille."""
+	p = []
+	box(p, (0.6, 0.03, 0.3), (0, 0.015, 0.35), "dark", 0.006)
+	for i in range(6):
+		box(p, (0.54, 0.03, 0.02), (0, 0.035, 0.24 + i * 0.044), "steel", rot=(math.radians(-30), 0, 0))
+	return p
+
+
+def clutter_notice_board():
+	"""Cork board with pinned sheets, some hanging loose."""
+	p = []
+	box(p, (0.9, 0.03, 0.6), (0, 0.015, 1.5), "cork", 0.005)
+	box(p, (0.94, 0.035, 0.03), (0, 0.018, 1.815), "dark")
+	box(p, (0.94, 0.035, 0.03), (0, 0.018, 1.185), "dark")
+	for x, z, r in ((-0.28, 1.58, 4), (-0.02, 1.62, -6), (0.25, 1.55, 9), (-0.15, 1.36, -3), (0.15, 1.34, 22)):
+		box(p, (0.2, 0.005, 0.27), (x, 0.034, z), "paper", rot=(0, math.radians(r), 0))
+	return p
+
+
+# Floor clutter: origin on the floor, back toward the room corner (-X, -Y).
+
+def clutter_crates():
+	"""Two slatted crates and a third on top, skewed."""
+	p = []
+	def crate(x, y, z, s, yaw):
+		box(p, (s, s, s), (x, y, z + s / 2), "wood", 0.01, rot=(0, 0, yaw))
+		for k in (-1, 1):  # corner battens
+			box(p, (s + 0.02, 0.05, 0.05), (x, y + k * s * 0.4, z + s * 0.92), "dark", rot=(0, 0, yaw))
+			box(p, (s + 0.02, 0.05, 0.05), (x, y + k * s * 0.4, z + s * 0.08), "dark", rot=(0, 0, yaw))
+	crate(0.35, 0.35, 0, 0.6, 0.0)
+	crate(1.0, 0.33, 0, 0.55, 0.12)
+	crate(0.4, 0.38, 0.6, 0.5, -0.2)
+	return p
+
+
+def clutter_drums():
+	"""Two steel drums and one on its side."""
+	p = []
+	for x, y, mat in ((0.33, 0.33, "drum_blue"), (0.33, 0.95, "drum_rust")):
+		cyl(p, 0.29, 0.88, (x, y, 0.44), mat, 16, bevel=0.01)
+		for z in (0.29, 0.59):
+			cyl(p, 0.3, 0.025, (x, y, z), "dark", 16)
+		cyl(p, 0.04, 0.02, (x + 0.15, y, 0.89), "dark", 8)
+	cyl(p, 0.29, 0.88, (1.05, 0.4, 0.29), "drum_blue", 16, rot=(0, math.pi / 2, 0.4), bevel=0.01)
+	return p
+
+
+def clutter_boxes():
+	"""Archive boxes stacked unevenly, one open and spilling paper."""
+	p = []
+	for x, y, z, yaw in ((0.25, 0.22, 0, 0.0), (0.68, 0.24, 0, 0.1), (0.3, 0.25, 0.3, -0.15), (0.28, 0.62, 0, 0.3)):
+		box(p, (0.42, 0.32, 0.3), (x, y, z + 0.15), "cardboard", 0.008, rot=(0, 0, yaw))
+		box(p, (0.44, 0.34, 0.03), (x, y, z + 0.3), "cardboard", 0.005, rot=(0, 0, yaw))  # lid
+	for x, y, r in ((0.8, 0.7, 20), (0.95, 0.55, -35), (0.65, 0.95, 60)):
+		box(p, (0.21, 0.3, 0.004), (x, y, 0.004), "paper", rot=(0, 0, math.radians(r)))
+	return p
+
+
 SETS = {
 	"lab": {"prop_lab_bench": lab_bench, "prop_lab_desk": lab_desk, "prop_lab_chair": lab_chair,
 		"prop_lab_fridge": lab_fridge, "prop_lab_monitor": lab_monitor, "prop_lab_binders": lab_binders},
@@ -360,6 +453,9 @@ SETS = {
 		"prop_cooling_pipes": cooling_pipes, "prop_cooling_pump": cooling_pump, "prop_cooling_fan": cooling_fan},
 	"security": {"prop_security_gate_arm": security_gate_arm, "prop_security_log_screen": security_log_screen,
 		"prop_security_shelving": security_shelving, "prop_security_file_boxes": security_file_boxes},
+	"clutter": {"prop_clutter_extinguisher": clutter_extinguisher, "prop_clutter_junction_box": clutter_junction_box,
+		"prop_clutter_vent": clutter_vent, "prop_clutter_notice_board": clutter_notice_board,
+		"prop_clutter_crates": clutter_crates, "prop_clutter_drums": clutter_drums, "prop_clutter_boxes": clutter_boxes},
 	"fixtures": {"prop_light_panel": light_panel, "prop_light_cage": light_cage,
 		"prop_emergency_strip": emergency_strip, "prop_beacon": beacon, "prop_beacon_red": beacon_red,
 		"prop_strobe": strobe},

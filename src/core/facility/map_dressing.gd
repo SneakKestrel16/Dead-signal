@@ -23,6 +23,8 @@ class_name MapDressing extends RefCounted
 ##   the level doc names the rooms, not the spots; playtest settles them.
 ## - Trim: kick plates, rails, pilasters, ceiling beams, doorway headers and jambs, corridor trays and pipes
 ##   (MapTrim, child "Trim").
+## - Clutter: wall items in the bays between pilasters and floor clutter in room corners, kept off markers,
+##   swings, doorway lanes and the rest of the dressing (MapClutter, child "Clutter").
 ## Visual only: no collision, nothing gameplay reads.
 ## Usage: `MapDressing.build(greybox_root, map, MapQueries.new(map))`
 
@@ -70,6 +72,7 @@ static func build(root: Node3D, map: MapData, queries: MapQueries) -> Node3D:
 	_arrows(_child(out, &"Arrows"), layout)
 	_fixtures(_child(out, &"Fixtures"), map, LightingPresets.load_shipped())
 	MapTrim.build(out, root, map)
+	MapClutter.build(out, root, map, queries)
 	return out
 
 

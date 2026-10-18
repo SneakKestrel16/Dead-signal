@@ -35,3 +35,29 @@ Checked by `tests/unit/facility-map/map_trim_test.gd`:
 Full suite: 1735/1735.
 
 Not yet done: more clutter props. Only the hand-placed dressing sets exist.
+
+## Clutter (2026-10-17)
+
+New items, built by `tools/art/build_dressing.py` (`clutter` set, 116-668 triangles each; previews in
+`dressing/clutter_*.png`):
+
+- wall items: extinguisher, junction box with conduit, low vent, notice board;
+- floor clutter: crates, drums, archive boxes.
+
+`MapClutter` (`src/core/facility/map_clutter.gd`) places them by rule:
+
+- **Wall items** go in about half of the bays between pilasters.
+- **Floor clutter** goes in room corners whose two walls are whole, not in corridors.
+- **Rejected:** any candidate within 1.6 m of a passage or marker, in a doorway lane, overlapping other
+  dressing, or poking out of its room.
+
+`tests/unit/facility-map/map_clutter_test.gd` re-checks the dressing rules and that placement is deterministic.
+
+| Shot | `--place` | `--yaw` / `--pitch` | Shows |
+|---|---|---|---|
+| `facility-detail/a3_clutter.png` | `5:20` | -120 / 5 | notice board on the A1 wall |
+| `facility-detail/a3b_clutter.png` | `5:20` | 60 / 5 | junction box between pilasters |
+| `facility-detail/c4_clutter.png` | `55:25` | 10 / 10 | low vents in C4 |
+
+Full suite: 1738/1739. The one failure is the tick-budget test under full-suite load (BUG-0004). It passes alone,
+twice: p95 350 µs against a 500 µs budget.
