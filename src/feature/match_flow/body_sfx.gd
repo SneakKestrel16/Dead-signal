@@ -4,6 +4,8 @@ class_name BodySfx extends Node
 ## - Takedown struggle: a loud one-shot at the victim as it is Seized (downing-and-rescue.md V/A).
 ## - Release gasp: at a Seized body set free within GASP_WINDOW_S of a MonsterStunned (a stun cancelling the
 ##   commit; the stun's crack is the taser's own).
+## - Collapse: a Seized body let go with no stun, the takedown done (Downed or Eliminated; downing-and-rescue.md
+##   V/A, collapse).
 ## - Loops at the body while the action runs: INTERACT the interact loop (a fake hold reads as INTERACT too,
 ##   survivor-objectives.md rule 25: the same quiet loop), BARRICADE hammering (building or breaking: one loop,
 ##   inference), KNEEL the rescue effort.
@@ -15,6 +17,7 @@ class_name BodySfx extends Node
 
 const STRUGGLE := &"takedown_struggle"
 const GASP := &"release_gasp"
+const COLLAPSE := &"body_collapse"
 const LOOPS: Dictionary[int, StringName] = {
 	SnapshotCodec.Action.INTERACT: &"interact_loop",
 	SnapshotCodec.Action.BARRICADE: &"barricade_loop",
@@ -58,8 +61,8 @@ func update(delta: float, bodies: Array) -> void:
 		if act != was:
 			if act == SnapshotCodec.Action.SEIZED:
 				_one(STRUGGLE, at)
-			elif was == SnapshotCodec.Action.SEIZED and _since_stun <= GASP_WINDOW_S:
-				_one(GASP, at)
+			elif was == SnapshotCodec.Action.SEIZED:
+				_one(GASP if _since_stun <= GASP_WINDOW_S else COLLAPSE, at)
 		_last[key] = act
 		_set_loop(key, LOOPS.get(act, &""), at)
 	for key: Variant in _last.keys():

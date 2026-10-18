@@ -123,7 +123,7 @@ func test_every_sound_resolves_in_the_shipped_bank() -> void:
 	for id in [ClientSfx.BREATH, ClientSfx.HEART, ClientSfx.CLICK, ClientSfx.GENERATOR, ClientSfx.TONE, ClientSfx.PA,
 			ClientSfx.INVESTIGATION, ClientSfx.TICK, ClientSfx.WIN, ClientSfx.LOSS, ClientSfx.FACE, ClientSfx.PING,
 			ClientSfx.PING_WARNING, WorldSfx.CLATTER, WorldSfx.EJECT, WorldSfx.ALERT, WorldSfx.RELAY, WorldSfx.RELIEF,
-			WorldSfx.ELIMINATED, HidingSpots.SEARCH_SOUND, BodySfx.STRUGGLE, BodySfx.GASP] + BodySfx.LOOPS.values():
+			WorldSfx.ELIMINATED, HidingSpots.SEARCH_SOUND, BodySfx.STRUGGLE, BodySfx.GASP, BodySfx.COLLAPSE] + BodySfx.LOOPS.values():
 		var e := bank.resolve(id)
 		assert_object(e).override_failure_message("no bank entry for %s" % id).is_not_null()
 		assert_object(e.stream).is_not_null()

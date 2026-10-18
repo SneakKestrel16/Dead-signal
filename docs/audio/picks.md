@@ -105,5 +105,25 @@ was picked and none has a note, so there is no next round.
 
 Event and action sounds, family `event` (`tools/audio/review/events/`): `WorldSfx` (drive clatter and eject,
 install alert, relay clack, rescue relief, eliminated sting), `HidingSpots` (search rattle), `BodySfx` (takedown
-struggle, release gasp, interact, barricade and rescue loops) and `ClientSfx` (face unlock, ping tick and warning).
-Awaiting the designer's picks; candidate A ships until then.
+struggle, release gasp, collapse, interact, barricade and rescue loops) and `ClientSfx` (face unlock, ping tick and warning).
+Source: `picks (8).json`, 2026-10-17. Every sound was picked and none has a note, so there is no next round.
+`body_collapse` (BodySfx, a takedown completing) was added after that page and ships A until picked.
+
+| Sound | Ships |
+|---|---|
+| drive_clatter | A |
+| drive_eject | B |
+| install_alert | A |
+| relay_clack | B |
+| rescue_relief | A |
+| eliminated_sting | C |
+| search_rattle | B |
+| takedown_struggle | B |
+| release_gasp | C |
+| interact_loop | C |
+| barricade_loop | A |
+| rescue_loop | A |
+| face_unlock | A |
+| ping_tick | C |
+| ping_warning | B |
+| body_collapse | A (unpicked) |

@@ -26,13 +26,13 @@ func test_seizing_struggles_once_and_a_stun_release_gasps() -> void:
 	assert_array(_ids).is_equal([[BodySfx.STRUGGLE, A], [BodySfx.GASP, A]])
 
 
-func test_a_takedown_that_completes_does_not_gasp() -> void:
+func test_a_takedown_that_completes_collapses_and_does_not_gasp() -> void:
 	var act := SnapshotCodec.Action
 	_sfx.update(0.016, [[1, A, act.SEIZED]])
 	_sfx.on_stunned(1, {"body": 9})
 	_sfx.update(2.0, [[1, A, act.SEIZED]]) ## the window passes while still held
 	_sfx.update(0.016, [[1, A, act.NONE]])
-	assert_array(_ids).is_equal([[BodySfx.STRUGGLE, A]])
+	assert_array(_ids).is_equal([[BodySfx.STRUGGLE, A], [BodySfx.COLLAPSE, A]])
 
 
 func test_loops_follow_each_bodys_action_and_stop_when_it_leaves() -> void:

@@ -32,4 +32,8 @@ SHIP = {
     # states (picks (7).json, 2026-10-17); heartbeat, breath_sprint, flashlight_click, pa_chime, phase_tick,
     # phase_win and phase_loss picked A
     "generator_spinup": "B", "terminal_tone": "B", "phase_investigation": "B",
+    # events (picks (8).json, 2026-10-17); drive_clatter, install_alert, rescue_relief, barricade_loop, rescue_loop
+    # and face_unlock picked A; body_collapse was added after the page and ships A unpicked
+    "drive_eject": "B", "relay_clack": "B", "eliminated_sting": "C", "search_rattle": "B", "takedown_struggle": "B",
+    "release_gasp": "C", "interact_loop": "C", "ping_tick": "C", "ping_warning": "B",
 }

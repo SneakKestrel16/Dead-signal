@@ -4,7 +4,8 @@ ping ticks of ClientSfx (src/feature/match_flow/, src/feature/survivor_defense/h
 recordings (sources/events.toml); reused from other manifests: the USB dock (570611, 551315, world.toml), the alarm
 bells (572529, 743963, scares.toml), the contactor (807384, scares.toml), the stinger strings and hits (683256,
 373169, 684805, scares.toml), the hammering (811941, 676730, 707525, world.toml), heavy breathing (874174,
-cues.toml), clicks (323746, 740253, 213004, ui.toml) and the metal rulers (376204, scares.toml). Grounded foley
+cues.toml), clicks (323746, 740253, 213004, ui.toml) and the metal rulers (376204, scares.toml), the body falls (568799,
+128103, cues.toml and scares.toml) and jacket rustle (235243, cues.toml). Grounded foley
 only: no oscillators, no sci-fi (designer).
 
 Timing (source: the sfx classes; lengths are inference, playtest settles them):
@@ -15,7 +16,8 @@ Timing (source: the sfx classes; lengths are inference, playtest settles them):
 - rescue_relief: the own body back on its feet, 1.5 s, at the listener.
 - eliminated_sting: a survivor eliminated, heard by everyone, 3 s.
 - search_rattle: a hiding spot searched, at the spot, 1.2 s.
-- takedown_struggle: a body Seized, loud, 1.5 s. release_gasp: set free by a stun, 1.0 s.
+- takedown_struggle: a body Seized, loud, 1.5 s. release_gasp: set free by a stun, 1.0 s. body_collapse: let go
+  with no stun (the takedown done), 1.2 s.
 - interact_loop, barricade_loop, rescue_loop: loops at the body while the action runs.
 - face_unlock: a borrowable face becomes available, shapeshifter only, quiet, 0.3 s.
 - ping/tick: a ping, 0.15 s. ping/warning: a warning ping, sharper, 0.6 s.
@@ -239,6 +241,30 @@ def release_gasp_c(rng):
     return out
 
 
+# ---- body collapse ----
+def body_collapse_a(rng):
+    """An actor collapsing on a floor: knees, then the body."""
+    out = np.zeros(S(1.2))
+    put(out, shape(grab(568799, 0, 1.1, sep=0.8), 0.002, 0.3), 0.0, 0, hp=50)
+    return out
+
+
+def body_collapse_b(rng):
+    """A body slamming down, a jacket settling after."""
+    out = np.zeros(S(1.2))
+    put(out, shape(grab(128103, 0, 0.7, sep=0.6), 0.002, 0.2), 0.0, 0, hp=50)
+    put(out, shape(window(235243, 0.5), 0.02, 0.2), 0.35, -10, hp=200)
+    return out
+
+
+def body_collapse_c(rng):
+    """Heavier and duller: the fall slowed, a low thump under it."""
+    out = np.zeros(S(1.2))
+    put(out, shape(grab(568799, 0, 1.0, sep=0.8, rate=0.85), 0.002, 0.3), 0.0, 0, hp=40, lp=4000)
+    put(out, body(rng, 0.3, 70, 0.08), 0.0, -5)
+    return out
+
+
 # ---- action loops ----
 def interact_loop_a(rng):
     """Hands working through a toolbox: metal clinks and shifting."""
@@ -368,6 +394,8 @@ EVENTS = {
     "takedown_struggle": (-20.0, (("takedown_struggle", 0.0, 1.0),), False,
                           (takedown_struggle_a, takedown_struggle_b, takedown_struggle_c)),
     "release_gasp": (-22.0, (("release_gasp", 0.0, 1.0),), False, (release_gasp_a, release_gasp_b, release_gasp_c)),
+    "body_collapse": (-24.5, (("body_collapse", 0.0, 1.0),), False,
+                      (body_collapse_a, body_collapse_b, body_collapse_c)),
     "interact_loop": (-32.0, (("interact_loop", 0.0, 1.0),), True, (interact_loop_a, interact_loop_b, interact_loop_c)),
     "barricade_loop": (-26.0, (("barricade_loop", 0.0, 1.0),), True,
                        (barricade_loop_a, barricade_loop_b, barricade_loop_c)),
@@ -387,6 +415,7 @@ PLAYS = {
     "search_rattle": "The shapeshifter searches a hiding spot, empty or not. Heard at the spot.",
     "takedown_struggle": "A survivor is seized by the shapeshifter. Loud, at the victim.",
     "release_gasp": "A seized survivor set free by a taser stun.",
+    "body_collapse": "A seized survivor hits the floor as the takedown completes (downed or eliminated).",
     "interact_loop": "Loops at a body while it works an objective (fuse box, terminal, a fake hold). Quiet.",
     "barricade_loop": "Loops at a body while it builds or breaks a barricade.",
     "rescue_loop": "Loops at a body kneeling to rescue a downed survivor.",
