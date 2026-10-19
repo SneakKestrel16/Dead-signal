@@ -73,6 +73,8 @@ var hud: CanvasLayer
 var hud_model: HudModel
 ## State-driven sounds: breathing, heartbeat, flashlight click, generator, terminal tone, PA chime, stings.
 var client_sfx: ClientSfx
+## The F1 dev menu; null in a release build.
+var dev_menu: DevMenu
 ## Action-driven body sounds: takedown struggle, release gasp, interact, barricade and rescue loops.
 var body_sfx: BodySfx
 ## [key, position, action] of every body drawn this frame (BodySfx).
@@ -343,6 +345,10 @@ func _on_connected() -> void:
 			scare_audio.captioned.connect(caption)
 		edge_cues = EdgeCues.new(knobs, camera.get_global_transform, func() -> bool: return flinch_enabled)
 		hud.add_child(edge_cues)
+		if DevCommands.enabled(): # debug builds: F1 dev menu
+			dev_menu = DevMenu.new(ping_hud.contexts, func(bytes: PackedByteArray) -> void:
+				(multiplayer as SceneMultiplayer).send_bytes(bytes, 1, MultiplayerPeer.TRANSFER_MODE_RELIABLE))
+			hud.add_child(dev_menu)
 		router.subscribe(EventBatch.SOUND, edge_cues.on_sound)
 		router.subscribe(&"ScareTriggered", edge_cues.on_scare)
 		hud.add_child(TaserCount.new(hud_model))

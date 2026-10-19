@@ -61,6 +61,8 @@ var footsteps: Footsteps
 var offset: ViewOffset
 ## Server Scare Events module (scare-events story 001); owning systems call scares.fire().
 var scares: ScareEvents
+## The dev menu's server side; null in a release build (DevCommands.enabled).
+var dev: DevCommands
 ## Facility scare state and RoundScript anchor scares (scare-events story 006).
 var scare_state: FacilityScareState
 ## The shapeshifter HUD state sender (hud-results/006); held here, batch_extras holds only its method.
@@ -308,6 +310,9 @@ func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArra
 		candidates.start_round(objectives.active(), survivors, monster,
 				SurvivorObjectives.objective_ids(map, objectives.active()))
 	sm.attach(server.tick_runner)
+	if DevCommands.enabled(): # debug builds only: the dev menu's commands
+		dev = DevCommands.new(lifecycle.match_flow(), scares, catalogue, server.bus,
+				knobs.match_flow.evacuation_window_s, _position, _live_players)
 	smp.peer_packet.connect(_on_packet)
 	return errs
 
@@ -339,6 +344,8 @@ func _on_packet(peer_id: int, bytes: PackedByteArray) -> void:
 		return
 	if RoundLifecycle.is_map_loaded_packet(bytes):
 		lifecycle.report_loaded(pid)
+		return
+	if dev != null and dev.request(pid, bytes):
 		return
 	ma.request_ability(pid, bytes)
 	bf.request_form_change(pid, bytes)

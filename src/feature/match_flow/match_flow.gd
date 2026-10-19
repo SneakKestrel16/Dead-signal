@@ -206,6 +206,29 @@ func begin() -> void:
 	_bus.emit(ev)
 
 
+## Dev menu (DevCommands, debug builds only): jumps the round clock forward so `remaining_s` are left, and
+## tells every client the moved start tick through RoundPhaseChanged's start_tick. The next tick's phase
+## update emits any phase it skipped into. Never moves the clock back.
+func dev_skip_to(remaining_s: float) -> void:
+	var target := roundi((_round_duration_s - remaining_s) * _hz)
+	if _ended or target <= _elapsed_ticks:
+		return
+	_start_tick -= target - _elapsed_ticks
+	_elapsed_ticks = target
+	_update_phase() # any phase skipped into, at once (also before the loading barrier opens)
+	var ev := EvRoundPhaseChanged.new()
+	ev.phase = _phase
+	ev.start_tick = _start_tick
+	ev.moved = true
+	_bus.emit(ev)
+
+
+## Dev menu: ends the round now with `outcome` (reason FORFEIT for survivors, DEADLINE for the shapeshifter).
+func dev_end(outcome: Outcome) -> void:
+	if not _ended:
+		_end(outcome, Reason.FORFEIT if outcome == Outcome.SURVIVORS_WIN else Reason.DEADLINE)
+
+
 ## The module to register at TickOrder.MATCH_FLOW_RESOLVE.
 func resolve_step() -> ResolveStep:
 	return ResolveStep.new(self)

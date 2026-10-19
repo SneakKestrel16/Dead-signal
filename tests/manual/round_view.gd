@@ -30,6 +30,8 @@ extends Node3D
 ## --fake-paused (story hud-results/005): see _edge_shots.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
 ## --solo hides every body but the shown client's own and the other clients' lighting (art-pass screenshots of the map).
+## --dev=<command> (dev menu evidence): once the shown client spawns, opens its F1 dev menu, sends <command>
+## (DevCommands) and saves devmenu.png 90 drawn frames later.
 ## --captions (PA captions evidence): turns the shown client's Captions setting on and, once it spawns, plays the
 ## pa/t_60 and pa/t_10 caption lines through ClientSfx.captioned, the path a real PA line takes (RoundClient wiring).
 ## --no-roster: the shown client's Show roster off (story hud-results/002; the roster is seeded by _seed_roster).
@@ -382,6 +384,12 @@ func _lighting() -> void:
 			c.router.subscribe(EventBatch.LIGHTING, _on_light.bind(i))
 		if c == _shown and c.lights.reduced_flash != _args.has("reduced-flash"):
 			c.lights.reduced_flash = _args.has("reduced-flash")
+		if c == _shown and _args.has("dev") and c.is_spawned() and c.dev_menu != null and not has_meta(&"dev"):
+			set_meta(&"dev", Engine.get_frames_drawn())
+			c.dev_menu.toggle()
+			c.dev_menu.send(String(_args["dev"]))
+		if has_meta(&"dev") and c == _shown and Engine.get_frames_drawn() == int(get_meta(&"dev")) + 90:
+			_shot("devmenu")
 		if c == _shown and _args.has("captions") and c.is_spawned() and not has_meta(&"captioned"):
 			set_meta(&"captioned", true)
 			c.settings = PlayerSettings.new(OS.get_user_data_dir() + "/captions_shot.cfg", [])

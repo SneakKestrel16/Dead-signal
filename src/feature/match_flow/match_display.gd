@@ -30,7 +30,8 @@ var _phase: int = -1
 var _outcome: int = -1
 var _reason: int = -1
 var _results: Dictionary = {}
-var _start_tick: int = -1 ## server tick of RoundPhaseChanged(Infiltration): elapsed 0
+var _start_tick: int = -1 ## server tick of RoundPhaseChanged(Infiltration): elapsed 0 (a dev skip may make it negative)
+var _clocked := false ## _start_tick is set
 var _end_tick: int = -1 ## server tick of RoundEnded: the clock stops
 var _server_tick: int = -1 ## newest snapshot tick
 var _local_s: float = 0.0 ## local seconds since that snapshot (extrapolation)
@@ -89,7 +90,7 @@ func phase() -> int:
 
 ## True once the Infiltration batch fixed the clock's start.
 func has_clock() -> bool:
-	return _start_tick >= 0
+	return _clocked
 
 
 ## Seconds since the round clock started: the server's value at the newest snapshot, plus local time
@@ -140,12 +141,18 @@ func _apply(tick: int, type: StringName, p: Dictionary) -> void:
 			return
 		if ph == MatchFlow.Phase.INFILTRATION: # rule 3: a new round's clock starts at this tick
 			_start_tick = tick
+			_clocked = true
 			_end_tick = -1
 			_server_tick = maxi(_server_tick, tick) # a catch-up's old tick never moves the clock back
 			_local_s = 0.0
 			_outcome = -1
 			_reason = -1
 			_results = {}
+		var st: Variant = p.get("start_tick")
+		if st is int and not is_ended(): # dev menu clock skip (the moved start may be negative)
+			_start_tick = st
+			_clocked = true
+			_local_s = 0.0
 		_phase = ph
 	elif type == &"RoundEnded":
 		var o: Variant = p.get("outcome")

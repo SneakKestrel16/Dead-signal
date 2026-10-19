@@ -5,6 +5,9 @@ class_name EvRoundPhaseChanged
 extends ServerEvent
 
 var phase: int
+## The round clock's moved start tick (MatchFlow.dev_skip_to); may be negative. Sent only when `moved`.
+var start_tick: int = 0
+var moved := false
 
 
 func type() -> StringName:
@@ -13,4 +16,4 @@ func type() -> StringName:
 
 ## Full to every peer (ADR-0004 §5 table: public fact).
 func project(_peer: int, _handles: HandleTable, _monster: int) -> Dictionary:
-	return {"phase": phase}
+	return {"phase": phase, "start_tick": start_tick} if moved else {"phase": phase}

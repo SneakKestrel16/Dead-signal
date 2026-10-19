@@ -389,3 +389,24 @@ func test_an_invalid_map_refuses_the_round() -> void:
 	var errs := c.start(server, rng)
 	assert_array(errs).is_not_empty()
 	assert_array(errs).is_equal(MapData.new().errors())
+
+
+## Dev menu (DevCommands, debug builds): a clock skip moves the real round clock and its phase; a forced win
+## ends the round; a non-dev packet is left for the other modules.
+func test_dev_commands_skip_the_clock_and_end_the_round() -> void:
+	_root()
+	_net = NetAuthority.new()
+	_net.setup(_knobs, SERVER_VERSION, FakeLobby.new())
+	_roots[0].add_child(_net)
+	_compose()
+	assert_object(_c.dev).override_failure_message("tests run a debug build").is_not_null()
+	var flow := _c.lifecycle.match_flow()
+	var pid: int = _c.survivors[0]
+	assert_bool(_c.dev.request(pid, RoundLifecycle.map_loaded_packet())).is_false()
+	assert_bool(_c.dev.request(pid, DevCommands.packet("last30"))).is_true()
+	_step(1)
+	assert_float(flow.time_remaining_s()).is_between(29.0, 30.0)
+	assert_int(flow.phase()).is_equal(MatchFlow.Phase.EVACUATION)
+	_c.dev.run(pid, "win_survivors")
+	assert_bool(flow.is_ended()).is_true()
+	assert_array(_c.dev.ran).is_equal(["last30", "win_survivors"])
