@@ -9,6 +9,8 @@ extends Node3D
 ## --bot=hold walks client 0 to the nearest hiding spot, aims at it and holds interact; it prints the drawn
 ## frame of the press, of the first frame the hold bar is visible (the CI-16 AC1 capture) and of the
 ## first frame it is full (the server accepted the Start, AD-217).
+## BUG-0018: --target=door aims --bot=hold at the nearest door instead: press.png shows it open, door.png
+## DOOR_SHOT_FRAMES drawn frames after the press (an instant toggle) shows the leaf the client draws.
 ## Story hud-results/003: --target=<marker type> aims --bot=hold at the nearest marker of that type instead of a
 ## hiding spot (fuse_box without a fuse: a refused Start). With --shots it waits for the prompt (prompt.png)
 ## before pressing, saves ring.png at half the ring, label.png on the first frame a refusal or cancel label
@@ -104,6 +106,8 @@ extends Node3D
 
 const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
+## --target=door: drawn frames from the press to door.png (the toggle is instant; a few ticks of replication).
+const DOOR_SHOT_FRAMES := 30
 const STAGE_AHEAD_M := 3.5
 const STAGE_SPACING_M := 1.2
 ## The line's centre sits this far +X of the shown spawn: the spawn room's west floor edge is near x 0.
@@ -304,9 +308,11 @@ func _bot(c: RoundClient) -> void:
 		var best := INF
 		for t in _map.interactables():
 			var m := t as MapMarker
-			if m != null and m.type == StringName(_args.get("target", "hiding")) and feet.distance_to(m.position) < best:
-				best = feet.distance_to(m.position)
-				_target = m.position
+			var at: Vector3 = t.position
+			var hit: bool = m.type == StringName(_args.get("target", "hiding")) if m != null else _args.get("target") == "door"
+			if hit and feet.distance_to(at) < best:
+				best = feet.distance_to(at)
+				_target = at
 		print("BOT target %s from %s" % [_target, feet])
 	var point := _target + Vector3.UP * _knobs.controller.capsule_height_m * 0.5
 	var eye := feet + Vector3.UP * _knobs.controller.eye_height_m
@@ -346,6 +352,10 @@ func _bot(c: RoundClient) -> void:
 		_press_frame = Engine.get_frames_drawn()
 		_shot("press")
 		print("PRESS frame %d target %d" % [_press_frame, c.local_target(c.scripted.yaw, c.scripted.pitch)])
+	elif _args.get("target") == "door" and _press_frame >= 0 and not has_meta(&"door"):
+		if Engine.get_frames_drawn() - _press_frame >= DOOR_SHOT_FRAMES:
+			set_meta(&"door", true)
+			_shot("door")
 	elif _press_frame >= 0 and c.bar.visible and not has_meta(&"bar"):
 		set_meta(&"bar", true)
 		_shot("bar")
