@@ -5,9 +5,9 @@
 Status sources: Done = built and in the game (commits 19885cb dressing, 6bfe46d level geometry, 81ef3ee VFX,
 2a8ba44 objective glows, 8d16dfe true form, and the character and props art passes). Approved = designer sign-off on
 record: the facility rooms (`production/qa/evidence/facility-detail.md`, 2026-10-17, "the facility looks good")
-and the true form (`design/art/true-form-review.md` round 9, 2026-10-18). ASSET-087 is Done as the screen rings
-(AD-251): hud.md I13 shows hold progress to the actor and the rescue victim only, and both rings exist (P3 at the
-crosshair, InteractionHud; H16 for the victim, OwnStateHud). No design rule asks for a world-space ring.
+and the true form (`design/art/true-form-review.md` round 9, 2026-10-18). ASSET-087 is Done as hud.md H13's world
+progress bars (`src/feature/hud_results/world_progress.gd` server side, `world_progress_bars.gd` client; story
+hud-results/005): every real hold and the activation countdown, survivors only, never hiding or fake holds.
 
 ## Progress Summary
 
