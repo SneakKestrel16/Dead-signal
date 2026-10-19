@@ -36,6 +36,10 @@ GAIT_DB = {"walk": 0.0, "sprint": 4.0, "crouch": -8.0, "crawl": -9.0}
 # zone -> footstep surface (level doc: A labs tile, B server rooms metal grate, C security and links concrete)
 SURFACE_OF_ZONE = {"A": "tile", "B": "metal", "C": "concrete", "link": "concrete"}
 RANDOM_PITCH = 1.02  # AudioStreamRandomizer spread of a sound with variants (survivor sets are 6 % apart)
+# Player gain per family over the file's level, dB (bank volume_db). Designer 2026-10-19: ambience 40 % and
+# footsteps 30 % quieter, as amplitude (20 log10 0.6, 0.7). The stinger takes the beds' trim: rule 26 sets it
+# against the bed. Files keep their LUFS targets; only the bank changes.
+FAMILY_TRIM_DB = {"ambience": -4.4, "stinger": -4.4, "foot": -3.1}
 STINGER_GAIN_DB = 6.0  # data/knobs/scare.tres stinger_max_db_rel
 
 
@@ -87,7 +91,7 @@ def bank_tres(takes):
             sid = "e%d" % len(subs)
             subs.append('[sub_resource type="Resource" id="%s"]\nscript = ExtResource("2")\nstream = %s\n'
                         'bus = &"%s"\nvolume_db = %s\npitch_scale = %s\nloop = %s\n'
-                        % (sid, ref, bus, repr(float(vol)), repr(float(pitch)), "true" if s.loop else "false"))
+                        % (sid, ref, bus, repr(round(float(vol) + FAMILY_TRIM_DB.get(s.family, 0.0), 2)), repr(float(pitch)), "true" if s.loop else "false"))
             entries.append('&"%s": SubResource("%s")' % (eid, sid))
     subs = pools + subs
     gait = ", ".join('&"%s": %s' % (g, repr(float(d))) for g, d in GAIT_DB.items())
@@ -109,12 +113,14 @@ def report_md(takes):
              "44.1 kHz, measured on the file as built). Targets are inference (no GDD number); see `lib/master.py` "
              "FAMILIES. A `legacy` row is a placeholder shipped as built: its target column is its own measurement.", "",
              "## Stinger vs zone bed (scare-events rule 26, SE-8 AC-2: at most +6 dB)", "",
-             "Stinger playback gain = `stinger_max_db_rel` %.1f dB (data/knobs/scare.tres), both at bus 0 dB." % STINGER_GAIN_DB, "",
+             "Stinger playback gain = `stinger_max_db_rel` %.1f dB (data/knobs/scare.tres), both at bus 0 dB. Bed LUFS and "
+             "Stinger as played include the bank trim (`FAMILY_TRIM_DB`)." % STINGER_GAIN_DB, "",
              "| Bed | Bed LUFS | Stinger file LUFS | Stinger as played | Over bed | Within +6 dB |", "|---|---|---|---|---|---|"]
     for b in beds:
-        over = st.lufs + STINGER_GAIN_DB - b.lufs
+        bed = b.lufs + FAMILY_TRIM_DB.get("ambience", 0.0)
+        played = st.lufs + STINGER_GAIN_DB + FAMILY_TRIM_DB.get("stinger", 0.0)
         lines.append("| %s | %.1f | %.1f | %.1f | %+.1f dB | %s |" % (
-            b.sound.file(), b.lufs, st.lufs, st.lufs + STINGER_GAIN_DB, over, "yes" if over <= 6.0 else "NO"))
+            b.sound.file(), bed, st.lufs, played, played - bed, "yes" if played - bed <= 6.0 else "NO"))
     lines += ["", "## Every file", "", "| File | Category | Bus | Target LUFS | Measured LUFS | Peak dBFS | Seconds |",
               "|---|---|---|---|---|---|---|"]
     for t in takes:

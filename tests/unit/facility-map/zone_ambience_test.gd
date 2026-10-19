@@ -47,6 +47,18 @@ func _settle(at: Vector3) -> void:
 		_amb.step(at, ZoneAmbience.CROSSFADE_S / 5.0)
 
 
+func test_settled_bed_plays_at_the_shipped_bank_gain() -> void:
+	# Arrange: the shipped bank's per-zone gain (designer trim 2026-10-19, tools/audio/export.py FAMILY_TRIM_DB)
+	_amb.gain_db = ZoneAmbience.bank_gains(SoundBank.load_shipped())
+	assert_float(_amb.gain_db.get(&"A", 0.0)).is_less(0.0)
+
+	# Act
+	_settle(IN_A1)
+
+	# Assert: full fade weight (0 dB) plus the bed's gain
+	assert_float(_player_of(&"A").volume_db).is_equal_approx(_amb.gain_db[&"A"], 0.001)
+
+
 func test_every_zone_of_the_map_has_a_distinct_placeholder_bed_on_the_ambience_bus() -> void:
 	var seen := {}
 	for v in _map.volumes:

@@ -325,7 +325,9 @@ func _on_connected() -> void:
 		add_child(client_sfx)
 		router.subscribe(&"ObjectiveProgressChanged", client_sfx.on_objective)
 		router.subscribe(EventBatch.PING, client_sfx.on_ping)
-		ambience = ZoneAmbience.new(_map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
+		var bank := SoundBank.load_shipped()
+		ambience = ZoneAmbience.new(_map, ZoneAmbience.bank_beds(bank), body)
+		ambience.gain_db = ZoneAmbience.bank_gains(bank)
 		add_child(ambience)
 		if ambience_debug:
 			hud.add_child(ambience.make_overlay())

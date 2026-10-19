@@ -62,8 +62,9 @@ func test_major_scare_plays_at_origin_then_stinger_one_tick_later_at_cap() -> vo
 	assert_int(a.stingers().size()).is_equal(1)
 	var s := a.stingers()[0]
 	assert_str(String(s.bus)).is_equal("Stinger")
-	assert_float(s.volume_db).is_less_equal(_knobs.scare.stinger_max_db_rel)
-	assert_float(s.volume_db).is_equal(_knobs.scare.stinger_max_db_rel)
+	# over the bed: the stinger entry carries the beds' trim (tools/audio/export.py FAMILY_TRIM_DB)
+	assert_float(s.volume_db - _bed_db()).is_less_equal(_knobs.scare.stinger_max_db_rel + 0.001)
+	assert_float(s.volume_db).is_equal_approx(_knobs.scare.stinger_max_db_rel + _stinger_db(), 0.001)
 
 
 func test_minor_scare_plays_origin_sound_and_no_stinger() -> void:
@@ -130,7 +131,7 @@ func test_scales_write_only_their_bus_and_never_move_stinger_timing() -> void:
 	assert_int(a.stingers().size()).is_equal(0)
 	a.advance(_tick_s() * 0.6)
 	assert_int(a.stingers().size()).is_equal(1)
-	assert_float(a.stingers()[0].volume_db).is_equal(_knobs.scare.stinger_max_db_rel) # level is the bus's job
+	assert_float(a.stingers()[0].volume_db).is_equal_approx(_knobs.scare.stinger_max_db_rel + _stinger_db(), 0.001) # level is the bus's job
 	a.on_sound(2, {"pos": ORIGIN, "set": &"lunge_cue"})
 	a.advance(1.0)
 	for w: Array in _writes:
@@ -144,3 +145,13 @@ func test_a_recording_scare_emits_its_caption_and_a_door_burst_none() -> void:
 	a.on_scare(1, _payload(&"recording_room", ScareEntry.Intensity.MINOR))
 	a.on_scare(1, _payload(&"door_burst", ScareEntry.Intensity.MAJOR))
 	assert_array(got).contains_exactly([ScareAudio.CAPTIONS[&"recording_room"]])
+
+
+## The shipped stinger entry's player gain.
+func _stinger_db() -> float:
+	return SoundBank.load_shipped().resolve(ScareAudio.STINGER_ID).volume_db
+
+
+## The shipped zone A bed's player gain (the bed reference the stinger is set against).
+func _bed_db() -> float:
+	return SoundBank.load_shipped().resolve(&"ambience/A").volume_db

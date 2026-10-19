@@ -9,7 +9,8 @@ class_name ZoneAmbience extends Node
 ## yet), the Evacuation alarm bed (Scare Events / M4 audio pass) and ducking of Ambience (ADR-0013 §4).
 ## Beds come from the SoundBank (`ambience/<zone>`, audio pass); a zone with no entry keeps its placeholder tone.
 ## Usage:
-##   var amb := ZoneAmbience.new(map, ZoneAmbience.bank_beds(SoundBank.load_shipped()), body)
+##   var amb := ZoneAmbience.new(map, ZoneAmbience.bank_beds(bank), body)
+##   amb.gain_db = ZoneAmbience.bank_gains(bank)
 ##   add_child(amb); hud.add_child(amb.make_overlay())
 
 ## ADR-0013 §1 bus, looked up by name in default_bus_layout.tres.
@@ -34,6 +35,8 @@ var active_zone: StringName = &""
 var active_volume: StringName = &""
 ## The two bed players, built once here (ADR-0013: no players created later).
 var players: Array[AudioStreamPlayer] = []
+## Per zone: the bed's player gain, dB, on top of its fade (the bank entry's volume_db); a zone with none plays at 0.
+var gain_db: Dictionary[StringName, float] = {}
 
 var _queries: MapQueries
 var _zone_of: Dictionary[StringName, StringName] = {}
@@ -81,7 +84,7 @@ func step(at: Vector3, delta: float) -> void:
 	for i in 2:
 		_weights[i] = move_toward(_weights[i], 1.0 if i == _active else 0.0, rate)
 		var p := players[i]
-		p.volume_db = linear_to_db(_weights[i])
+		p.volume_db = linear_to_db(_weights[i]) + gain_db.get(_zones[i], 0.0)
 		if _weights[i] > 0.0 and p.stream != null and not p.playing:
 			p.play()
 		elif _weights[i] == 0.0 and p.playing:
@@ -119,6 +122,16 @@ func make_overlay() -> Label:
 
 ## The bank's bed (`ambience/<zone>`, looping) for every zone in PLACEHOLDER_HZ, its placeholder tone where the
 ## bank has none.
+## The bank's player gain (`ambience/<zone>` volume_db) for every zone in PLACEHOLDER_HZ that has an entry.
+static func bank_gains(bank: SoundBank) -> Dictionary[StringName, float]:
+	var out: Dictionary[StringName, float] = {}
+	for zone: StringName in placeholder_beds():
+		var e := bank.resolve(StringName("ambience/" + zone))
+		if e != null:
+			out[zone] = e.volume_db
+	return out
+
+
 static func bank_beds(bank: SoundBank) -> Dictionary[StringName, AudioStream]:
 	var out := placeholder_beds()
 	for zone: StringName in out:

@@ -56,6 +56,8 @@ var _scare: ScareKnobs
 var _tick_s: float
 var _write: Callable
 var _stinger_tone: AudioStream
+## The stinger entry's player gain (it follows the beds' trim, so stinger_max_db_rel stays its level over the bed).
+var _stinger_db := 0.0
 var _bank: SoundBank
 var _now := 0.0
 ## Start times of stingers not started yet.
@@ -74,6 +76,7 @@ func _init(catalogue: ScareCatalogue, knobs: Knobs, write_db: Callable = Callabl
 	_tick_s = 1.0 / knobs.net.sim_tick_hz
 	_write = write_db if write_db.is_valid() else _write_bus
 	var st := bank.resolve(STINGER_ID)
+	_stinger_db = st.volume_db if st != null else 0.0
 	_stinger_tone = st.stream if st != null and st.stream != null 			else PlaceholderAudio.tone(STINGER_HZ, STINGER_S, ZoneAmbience.PLACEHOLDER_AMPLITUDE)
 	stinger_scale = 1.0
 	scare_scale = 1.0
@@ -157,7 +160,7 @@ func advance(delta: float) -> void:
 		var s := AudioStreamPlayer.new()
 		s.stream = _stinger_tone
 		s.bus = STINGER_BUS
-		s.volume_db = _scare.stinger_max_db_rel
+		s.volume_db = _scare.stinger_max_db_rel + _stinger_db
 		_start(s)
 	var target := _scare.duck_db if _now < _hold_until else 0.0
 	var was := _duck

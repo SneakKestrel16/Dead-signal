@@ -184,7 +184,7 @@ stream_1/weight = 1.0
 script = ExtResource("2")
 stream = SubResource("r0")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.0
 loop = false
 
@@ -192,7 +192,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r0")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.93
 loop = false
 
@@ -200,7 +200,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r0")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.07
 loop = false
 
@@ -208,7 +208,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r0")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.87
 loop = false
 
@@ -216,7 +216,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r0")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.13
 loop = false
 
@@ -224,7 +224,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r1")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.0
 loop = false
 
@@ -232,7 +232,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r1")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.93
 loop = false
 
@@ -240,7 +240,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r1")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.07
 loop = false
 
@@ -248,7 +248,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r1")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.87
 loop = false
 
@@ -256,7 +256,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r1")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.13
 loop = false
 
@@ -264,7 +264,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r2")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.0
 loop = false
 
@@ -272,7 +272,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r2")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.93
 loop = false
 
@@ -280,7 +280,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r2")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.07
 loop = false
 
@@ -288,7 +288,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r2")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.87
 loop = false
 
@@ -296,7 +296,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r2")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.13
 loop = false
 
@@ -304,7 +304,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r3")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.0
 loop = false
 
@@ -312,7 +312,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r3")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.93
 loop = false
 
@@ -320,7 +320,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r3")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.07
 loop = false
 
@@ -328,7 +328,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r3")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 0.87
 loop = false
 
@@ -336,7 +336,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r3")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.13
 loop = false
 
@@ -344,7 +344,7 @@ loop = false
 script = ExtResource("2")
 stream = SubResource("r4")
 bus = &"GameplayCues"
-volume_db = 0.0
+volume_db = -3.1
 pitch_scale = 1.0
 loop = false
 
@@ -352,7 +352,7 @@ loop = false
 script = ExtResource("2")
 stream = ExtResource("s5_0")
 bus = &"Ambience"
-volume_db = 0.0
+volume_db = -4.4
 pitch_scale = 1.0
 loop = true
 
@@ -360,7 +360,7 @@ loop = true
 script = ExtResource("2")
 stream = ExtResource("s6_0")
 bus = &"Ambience"
-volume_db = 0.0
+volume_db = -4.4
 pitch_scale = 1.0
 loop = true
 
@@ -368,7 +368,7 @@ loop = true
 script = ExtResource("2")
 stream = ExtResource("s7_0")
 bus = &"Ambience"
-volume_db = 0.0
+volume_db = -4.4
 pitch_scale = 1.0
 loop = true
 
@@ -376,7 +376,7 @@ loop = true
 script = ExtResource("2")
 stream = ExtResource("s8_0")
 bus = &"Ambience"
-volume_db = 0.0
+volume_db = -4.4
 pitch_scale = 1.0
 loop = true
 
@@ -688,7 +688,7 @@ loop = false
 script = ExtResource("2")
 stream = ExtResource("s47_0")
 bus = &"Stinger"
-volume_db = 0.0
+volume_db = -4.4
 pitch_scale = 1.0
 loop = false
 
