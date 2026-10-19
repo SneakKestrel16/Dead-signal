@@ -338,7 +338,7 @@ There are no enemies and no AI. "Encounters" here are spaces the layout sets up 
 | C Security/Evac | Medium-long (C3 20 m, C4 16 m). Exposed to make holding hard. | Red security tones; monitor glow in C1; beacon in C4 |
 | Corridors | Longest (48-50 m), segmented by lighting | Stripe-coloured floor guides (blue north, orange south) |
 
-Emergency lights (faint floor-level strips plus exit signage) are always on in every volume, including during Blackout **(proposed)**, matching the source's "emergency lights remain faintly visible".
+Emergency lights (faint red lights at the ceiling beside each overhead, plus exit signage; floor-level strips were dropped by the designer 2026-10-18, who disliked the line of lights down the floors) are always on in every volume, including during Blackout **(proposed)**, matching the source's "emergency lights remain faintly visible".
 
 **Lighting states** (server-driven; every client shows the same state). This map owns per-volume lighting state. Scare Events only requests these states and adds flicker and stingers on top; it defines no lighting state of its own (designer decision, 2026-10-12, cross-review B2).
 

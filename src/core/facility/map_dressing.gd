@@ -16,7 +16,7 @@ class_name MapDressing extends RefCounted
 ##   (LightingPresets.overhead_cell_m), and a beacon plus an alarm strobe on the ceiling of each beacon volume
 ##   (red with the triangle cap in C4). Meshes only, unlit diffusers: the lights stay the presenter's and
 ##   ScareVisuals', so counts and energies are unchanged. No floor strip mesh: the designer disliked the glowing
-##   line down the middle of every floor (2026-10-18); the faint emergency omni stays. Zone A and corridors take
+##   line down the middle of every floor (2026-10-18); the faint emergency omni moved up beside the overhead. Zone A and corridors take
 ##   the panel, B and C the cage (inference: the spec names no fixture for B or the corridors).
 ## - Arrows: evacuation arrow plates from the layout's `arrows` along H-N, H-S and C2 toward C4 (research-facility.md
 ##   Lighting States, Evacuation), signage atlas cells `<` `>`, above the doorway signs. Positions are inference:

@@ -2,7 +2,7 @@ class_name LightingPresenter extends Node3D
 ## Client lighting of the greybox (facility-map story 010; research-facility.md Lighting States, Precedence,
 ## AC 9 and TR-facility-010 reduced flash; ADR-0009 §6). One child Node3D per map volume (named by volume
 ## id) holding its fixture groups, each a Node3D of dynamic lights: overhead (downward spots on a grid),
-## emergency_strip (faint floor omnis), beacon (rotating spot) and beacon_steady (its reduced-flash variant),
+## emergency_strip (faint omnis beside the overheads), beacon (rotating spot) and beacon_steady (its reduced-flash variant),
 ## fuse_indicator, terminal_alarm (pulsing, steady when reduced) and exit_light. Looks come from
 ## LightingPresets only. Applies received records (EventBatch.LIGHTING, routed by ClientEventRouter) by
 ## precedence: base, then overlays on their own fixtures, then Blackout (every group off except
@@ -17,9 +17,10 @@ class_name LightingPresenter extends Node3D
 
 const GROUPS: Array[StringName] = [&"overhead", &"emergency_strip", &"beacon", &"beacon_steady",
 	&"fuse_indicator", &"terminal_alarm", &"exit_light"]
-## Fixture heights below the ceiling and above the floor, m (greybox placement, not a look).
+## Fixture gap below the ceiling, m (greybox placement, not a look). Emergency omnis hang there too: at floor
+## height they lit a row of red pools down every corridor's centre (designer 2026-10-18: "i dont like the lights
+## all along the middle of the floors").
 const CEILING_GAP_M := 0.1
-const STRIP_HEIGHT_M := 0.1
 ## Beacon cone: half-angle and downward tilt, degrees (greybox placement).
 const BEACON_ANGLE_DEG := 30.0
 const BEACON_TILT_DEG := -45.0
@@ -153,7 +154,7 @@ func _build(v: MapVolume) -> void:
 			s.position = at + Vector3.UP * top
 			groups[&"overhead"].add_child(s)
 			groups[&"emergency_strip"].add_child(_omni(presets.emergency_colour, presets.emergency_energy,
-					minf(presets.emergency_range_m, half), at + Vector3.UP * STRIP_HEIGHT_M))
+					minf(presets.emergency_range_m, half), at + Vector3.UP * top))
 	var reach := minf(presets.overlay_range_m, minf(v.box.size.x, v.box.size.z) / 2.0)
 	var centre := Vector3.UP * top
 	if String(v.id) in presets.beacon_volumes:

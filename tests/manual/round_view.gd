@@ -215,6 +215,7 @@ func _process(delta: float) -> void:
 	_pick_view()
 	_seed_roster()
 	_lighting()
+	_isolate()
 	_scare_shots()
 	_edge_shots()
 	var c0 := _shown
@@ -811,6 +812,22 @@ const MONITOR_SETTLE := 45
 
 
 ## --solo (art-pass screenshots): no remote body is drawn and only the shown client's lighting lights the world.
+## Every client draws into this one window, so the others' drawing of the round (their own bodies and
+## viewmodels, their interpolated remote bodies, the shown client's included, an interp delay behind it:
+## designer playtest 2026-10-18, "the body was lagging behind my movement") is hidden: the window shows only
+## what the shown client's own process would.
+func _isolate() -> void:
+	if _shown == null:
+		return
+	process_priority = 100 # after the clients' _process, so the hiding sticks this frame
+	for c in _clients:
+		if c == _shown:
+			continue
+		c.body.visible = false
+		for n: Node3D in c.remotes.values():
+			n.visible = false
+
+
 func _solo(c0: RoundClient) -> void:
 	process_priority = 100 # after the clients' _process, so the hiding sticks this frame
 	for c in _clients:
