@@ -81,11 +81,13 @@ Traffic uses three transfer channels, so unreliable input or state never waits b
 - snapshots;
 - reliable intents and events.
 
+(Amended 2026-10-18 from AD-69 (3), (4), measured 2026-10-13.) Input and snapshots go by `SceneMultiplayer.send_bytes` on channels 1 and 2, not `@rpc`; the rule leaves the mechanism open. The ENet channel count stays at the default: an explicit count of 4 starved input (`docs/engine-reference/godot/gotchas.md`). The ENet packet throttle is pinned full on every peer; without it, 58-62 corrections per about 4,360 states.
+
 **4. Server input queue (per player ID).**
-- **Validation.** All arrays must have equal length and at most 3 entries, and every float must be finite; otherwise the whole packet is dropped. `move` is clamped to length 1 and pitch to ±85°. Already-seen or out-of-order `seq` values are dropped. A `seq` more than `max_seq_ahead` beyond the last consumed is rejected.
+- **Validation.** All arrays must have equal length and at most 3 entries, and every float must be finite; otherwise the whole packet is dropped. `move` is clamped to length 1 and pitch to ±85°. Already-seen or out-of-order `seq` values are dropped. A `seq` more than `max_seq_ahead` beyond the last consumed plus the ticks that consumed nothing is rejected. (Amended 2026-10-18 from AD-62: under the strict "last consumed + `max_seq_ahead`" rule, a stall longer than `max_seq_ahead` ticks rejects every later packet for good, because the client keeps counting. A bad packet is counted and dropped, never asserted on.)
 - **Consumption.** The queue has an adaptive target depth of 1 or 2 frames. It normally consumes one frame per tick, and two when the backlog exceeds target + 1.
 - **Adaptation.** The target rises to 2 when starvation over a `starvation_window_s` = 2 window exceeds `starvation_high`, and falls back to 1 below `starvation_low`.
-- **Starvation.** The last frame repeats. After `intent_timeout_ms` = 500 with no frame, input is treated as released and holds are cancelled. The timeout is counted in ticks through `Knobs.ticks(intent_timeout_ms / 1000.0)` (ADR-0006 §6), never against the clock.
+- **Starvation.** The last frame repeats for intent (holds) but steps no movement. (Amended 2026-10-18 from AD-69 (1): stepping the repeated frame runs a step the owner never ran, 287 corrections per 4,811 states against the 53 per 5,022 budget. A catch-up tick steps both consumed frames, so no predicted frame is skipped.) After `intent_timeout_ms` = 500 with no frame, input is treated as released and holds are cancelled. The timeout is counted in ticks through `Knobs.ticks(intent_timeout_ms / 1000.0)` (ADR-0006 §6), never against the clock.
 - **Cap.** The queue is hard-capped at `input_queue_cap` frames and drops the oldest. If the host falls behind real time, everyone slows together and rule timers stay consistent, because they count ticks.
 - **Host.** The host's own player enqueues directly at depth 0, with no prediction: the server body is its body. This is the same queue, so ADR-0001's no-shortcut rule holds.
 
