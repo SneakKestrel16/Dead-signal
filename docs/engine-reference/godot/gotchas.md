@@ -142,6 +142,13 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** keep the loaded resource in a local and iterate its property.
 - **Source:** audio pass, 2026-10-16 (`tests/unit/audio/sound_bank_test.gd`). Verified on 4.7.2 by bisecting a one-test suite: the three forms above, leak / leak / clean; same with `ScareCatalogue.load_shipped().entries`.
 
+### A test that indexes an empty array can stall the gdUnit run instead of failing
+
+- **Symptom:** `round_composer_test.gd` ran over 20 minutes with no output, where it normally takes about 25 s; the processes had to be killed.
+- **Cause:** the new test read `_roots[0]` and `_net` without first calling the setup the other tests call (`_root()`, a NetAuthority), so it indexed an empty array. Inference: the out-of-bounds error left the suite waiting rather than failing the case; not traced into gdUnit.
+- **Fix:** build the fixture inside the test, as its neighbours do. Wrap long suite runs in `timeout` so a stall ends the run rather than the session.
+- **Source:** TD-008 test, 2026-10-18. With the setup added the test passes in 11 ms.
+
 ## Rendering
 
 ### A lit mesh with render `layers = 0` logs "indexing did not unpair geometries from light" at teardown

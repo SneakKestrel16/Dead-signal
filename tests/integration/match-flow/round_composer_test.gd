@@ -369,3 +369,23 @@ func test_five_client_scripted_round_reaches_round_end() -> void:
 	assert_bool(_saw(&"RoundEnded")).override_failure_message("no RoundEnded").is_true()
 	assert_array(_over).is_equal([true])
 	assert_int(_seen.get(&"RoundEnded", 0)).is_equal(1)
+
+
+## TD-008: an invalid map (here an empty one, which fails every MapData check) refuses the round.
+func test_an_invalid_map_refuses_the_round() -> void:
+	_root() # server root, never hosting
+	_net = NetAuthority.new()
+	_net.setup(_knobs, SERVER_VERSION, FakeLobby.new())
+	_roots[0].add_child(_net)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 10
+	var roster := Roster.lock(PackedStringArray(["t1", "t2", "t3", "t4", "t5"]), _info, SESSION, 1, _knobs,
+			RotationQueue.new(), rng)
+	var server_root := _roots[0]
+	var c := RoundComposer.new(_knobs, roster, MapData.new(), _net, server_root.multiplayer as SceneMultiplayer,
+			server_root as Node3D, TestMoveStep.apply, TestMoveStep.WORLD, TestMoveStep.make_body, _no_look)
+	var server: RoundServer = auto_free(RoundServer.new())
+	add_child(server)
+	var errs := c.start(server, rng)
+	assert_array(errs).is_not_empty()
+	assert_array(errs).is_equal(MapData.new().errors())

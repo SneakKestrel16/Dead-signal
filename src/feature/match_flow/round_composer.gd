@@ -122,6 +122,10 @@ func _init(knobs_: Knobs, roster_: Roster, map_: MapData, net_: NetAuthority, sm
 ## `rng` places the shapeshifter's spawn and the objectives' install alerts. Returns RoundServer's errors.
 func start(server_: RoundServer, rng: RandomNumberGenerator) -> PackedStringArray:
 	server = server_
+	var map_errs := map.errors() # TD-008: RoundServer (Foundation) cannot see MapData, so Match Flow refuses here
+	if not map_errs.is_empty():
+		push_error("RoundComposer: map invalid, round not started: %s" % "; ".join(map_errs))
+		return map_errs
 	var cand_errs := SurvivorObjectives.candidate_errors(map, knobs.objectives)
 	if not cand_errs.is_empty():
 		push_error("RoundComposer: map has no valid active point placement, round not started: %s" % "; ".join(cand_errs))
