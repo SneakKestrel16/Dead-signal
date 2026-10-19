@@ -142,12 +142,12 @@ Traps found by running code in this project. Each entry: symptom, cause, fix, so
 - **Fix:** keep the loaded resource in a local and iterate its property.
 - **Source:** audio pass, 2026-10-16 (`tests/unit/audio/sound_bank_test.gd`). Verified on 4.7.2 by bisecting a one-test suite: the three forms above, leak / leak / clean; same with `ScareCatalogue.load_shipped().entries`.
 
-### A test that indexes an empty array can stall the gdUnit run instead of failing
+### Under `-d`, a SCRIPT ERROR in a test hangs the gdUnit run instead of failing it
 
-- **Symptom:** `round_composer_test.gd` ran over 20 minutes with no output, where it normally takes about 25 s; the processes had to be killed.
-- **Cause:** the new test read `_roots[0]` and `_net` without first calling the setup the other tests call (`_root()`, a NetAuthority), so it indexed an empty array. Inference: the out-of-bounds error left the suite waiting rather than failing the case; not traced into gdUnit.
-- **Fix:** build the fixture inside the test, as its neighbours do. Wrap long suite runs in `timeout` so a stall ends the run rather than the session.
-- **Source:** TD-008 test, 2026-10-18. With the setup added the test passes in 11 ms.
+- **Symptom:** the run stops printing and never ends; the log repeats `Debugger Break, Reason: '...'` with the frame of the failing line. `round_composer_test.gd` sat over 20 minutes (normally about 25 s).
+- **Cause:** the CI command runs Godot with `-d` (local debugger). A runtime script error (an out-of-bounds index, a freed object passed to a typed parameter) breaks into the debugger, which waits for a command that never comes. Seen twice on 4.7.2: `_roots[0]` on an empty array (TD-008 test) and a freed `MultiplayerSynchronizer` passed to a typed parameter (TD-006 test).
+- **Fix:** wrap suite runs in `timeout`, and when one ends with code 124, grep its log for `Debugger Break` to find the line. Fix the test; never drop `-d` to hide it (the break is the error report).
+- **Source:** 2026-10-18, both reproduced from the log.
 
 ## Rendering
 

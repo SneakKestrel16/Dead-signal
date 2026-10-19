@@ -290,9 +290,11 @@ func send_proximity_voice(on: bool, player_id: int = -1) -> void:
 
 
 ## Server: lets `player_id` see (or stop seeing) `sync`, now and on every later peer of that player.
-## The synchronizer should have public_visibility = false. Callers name players, never peers.
+## The synchronizer should have public_visibility = false. Callers name players, never peers. Freed ones
+## already listed are dropped (TD-006); a freed `sync` cannot be passed (the typed parameter rejects it).
 func set_player_visibility(sync: MultiplayerSynchronizer, player_id: int, visible: bool) -> void:
-	var list: Array = _visibility.get_or_add(player_id, [])
+	var list: Array = _visibility.get(player_id, []).filter(func(s: Variant) -> bool: return is_instance_valid(s))
+	_visibility[player_id] = list
 	if visible and not sync in list:
 		list.append(sync)
 	elif not visible:
