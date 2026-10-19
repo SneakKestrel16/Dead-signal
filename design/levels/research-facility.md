@@ -402,7 +402,7 @@ None. Objective items are listed under Authored Candidate Points. There are no s
 
 ## Technical Notes
 
-- **Estimated Object Count**: Greybox only. 17 room/corridor volumes, about 26 doors and archways, 6 hiding props, 4 cameras, 14 switches, 19 candidate markers **(proposed)**.
+- **Estimated Object Count**: Greybox only. 17 room/corridor volumes, 29 doors and archways (`data/maps/research_facility.tres` passages; the greybox estimate was about 26), 6 hiding props, 4 cameras, 14 switches, 19 candidate markers **(proposed)**.
 - **Streaming Zones**: None. The map is small enough to load whole **(proposed)**.
 - **Performance Concerns**: B1 rack lanes and glass partitions (overdraw/transparency); measure once the engine is chosen.
 - **Required Systems**: Network Authority & Replication; First-Person Controller & Interaction; Survivor Objectives; Survivor Defense; Monster Abilities; Scare Events; Pings & Callouts; Match Flow & Win Conditions.

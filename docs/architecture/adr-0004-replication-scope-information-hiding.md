@@ -46,7 +46,7 @@ Roles are public: the lobby shows the rotation queue and results name the shapes
 
 ### Constraints
 - ADR-0002 already replicates player movement through custom per-peer snapshots, so bodies need no `MultiplayerSpawner`.
-- 17 lighting volumes, about 26 doors, glass partitions (`research-facility.md`).
+- 17 lighting volumes, 29 doors and archways (`data/maps/research_facility.tres`; the level doc first estimated about 26), glass partitions (`research-facility.md`).
 - One developer: relevance must be cheap and data-driven.
 
 ### Requirements
