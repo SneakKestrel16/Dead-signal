@@ -218,15 +218,21 @@ func _show_form(message: String) -> void:
 	_room.hide()
 	_form.show()
 	_status.text = message
-	_name.grab_focus.call_deferred()
+	_focus.call_deferred(_name)
 
 
 func _show_room() -> void:
 	_form.hide()
 	_room.show()
 	_ready_button.button_pressed = false
-	_ready_button.grab_focus.call_deferred()
+	_focus.call_deferred(_ready_button)
 	_last_round_button.visible = not _last_round.is_empty()
+
+
+# Deferred focus: on host left the scene is swapped before the call runs, so the control may be out of the tree.
+func _focus(c: Control) -> void:
+	if c.is_inside_tree():
+		c.grab_focus()
 
 
 func _new_net() -> NetAuthority:
@@ -400,7 +406,9 @@ func _drop_round() -> void:
 	if _seat != null:
 		# BUG-0015: the seat's multiplayer stays rooted until the seat has left the tree, so its synchronizers
 		# stop replication on the API that tracks them (unrooted first, they reach the lobby's and log errors).
-		_seat.tree_exited.connect(get_tree().set_multiplayer.bind(null, _seat.get_path()), CONNECT_ONE_SHOT)
+		# Out of the tree already (the lobby's own _exit_tree at quit): nothing left to unroot, no path to read.
+		if _seat.is_inside_tree():
+			_seat.tree_exited.connect(get_tree().set_multiplayer.bind(null, _seat.get_path()), CONNECT_ONE_SHOT)
 		_seat.queue_free()
 	_seat = null
 	_round_line.hide()
