@@ -33,7 +33,7 @@ art-director and technical-artist skipped — Solo mode: specs derived in this s
 
 **Generation Prompt:** `stylised PBR game character, facility evacuee in padded work jumpsuit, dark visor, neutral pose T-pose front and side orthographic, light grey suit, subtle baked wear, matte, soft studio light, clean silhouette`
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-002..006 — Survivor looks C1-C5
 
@@ -62,7 +62,7 @@ art-director and technical-artist skipped — Solo mode: specs derived in this s
 
 **Generation Prompt:** `stylised game character turnaround, padded work jumpsuit in [suit colour hex], [accessory], retro-reflective chest stripe [pattern], dark visor, dim industrial corridor, single flashlight from front, silhouette readable`
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-007 — Retro-reflective stripe material
 
@@ -78,7 +78,7 @@ art-director and technical-artist skipped — Solo mode: specs derived in this s
 
 **Generation Prompt:** n/a (flat mask; author by hand).
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-008 — Survivor animation set
 
@@ -101,7 +101,7 @@ These merge inventory rows 8-10.
 
 **Generation Prompt:** n/a (motion; reference video or mocap library, licence recorded).
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-009 — Shapeshifter true form
 
@@ -119,7 +119,7 @@ These merge inventory rows 8-10.
 
 **Generation Prompt:** `stylised horror creature concept, 2.4 m tall emaciated humanoid, over-long arms, narrow trunk, wet glossy near-black skin, bone-white exposed ribs teeth and claws, lit by a single flashlight from below-front, dark industrial corridor, high-contrast silhouette, orthographic turnaround` + common negative prompt and `no glowing eyes`
 
-**Status:** Needed
+**Status:** Approved (round 9 shipped 2026-10-18, `design/art/true-form-review.md`)
 
 ## ASSET-010 — True form animations
 
@@ -129,7 +129,7 @@ These merge inventory rows 8-10.
 
 **Art Bible Anchors:** §3 and §5; monster-abilities rule 4 (wind-up telegraph).
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-011 — First-person arms (viewmodel)
 
@@ -143,7 +143,7 @@ These merge inventory rows 8-10.
 
 **Art Bible Anchors:** §5, §8.
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-012 — Flashlight
 
@@ -159,7 +159,7 @@ These merge inventory rows 8-10.
 
 **Generation Prompt:** `stylised PBR prop, industrial rubber-grip flashlight, scuffed dark grey, orthographic three views`
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-013 — Taser
 
@@ -175,7 +175,7 @@ These merge inventory rows 8-10.
 
 **Generation Prompt:** `stylised PBR prop, compact yellow and black stun gun, visible cartridge window, orthographic three views`
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
 
 ## ASSET-014 — Taser darts and wires
 
@@ -185,4 +185,4 @@ These merge inventory rows 8-10.
 
 **Art Bible Anchors:** survivor-defense V/A.
 
-**Status:** Needed
+**Status:** Done (see `design/assets/asset-manifest.md`)
