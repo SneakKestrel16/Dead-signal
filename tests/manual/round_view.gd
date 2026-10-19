@@ -30,6 +30,8 @@ extends Node3D
 ## --fake-paused (story hud-results/005): see _edge_shots.
 ## --light turns the shown client's flashlight on once it has a body. Bots drive the shown client.
 ## --solo hides every body but the shown client's own and the other clients' lighting (art-pass screenshots of the map).
+## --captions (PA captions evidence): turns the shown client's Captions setting on and, once it spawns, plays the
+## pa/t_60 and pa/t_10 caption lines through ClientSfx.captioned, the path a real PA line takes (RoundClient wiring).
 ## --no-roster: the shown client's Show roster off (story hud-results/002; the roster is seeded by _seed_roster).
 ## --shots=<dir> saves press.png, bar.png and full.png (bot) and view.png at drawn frame --shot-at=N.
 ## --bot=stage (borrowed-face story 009) lines the other clients up STAGE_AHEAD_M in front of the shown
@@ -380,6 +382,12 @@ func _lighting() -> void:
 			c.router.subscribe(EventBatch.LIGHTING, _on_light.bind(i))
 		if c == _shown and c.lights.reduced_flash != _args.has("reduced-flash"):
 			c.lights.reduced_flash = _args.has("reduced-flash")
+		if c == _shown and _args.has("captions") and c.is_spawned() and not has_meta(&"captioned"):
+			set_meta(&"captioned", true)
+			c.settings = PlayerSettings.new(OS.get_user_data_dir() + "/captions_shot.cfg", [])
+			c.settings.captions = true
+			for id: StringName in [&"pa/t_60", &"pa/t_10"]:
+				c.client_sfx.captioned.emit("%s %s" % [tr("PA:"), ClientSfx.PA_TEXT[id]])
 		if _args.has("blackout") and not _blackout_sent and c.is_spawned() and c.is_monster():
 			_blackout_sent = true
 			(c.multiplayer as SceneMultiplayer).send_bytes(MonsterAbilities.request_packet(

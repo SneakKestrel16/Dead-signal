@@ -358,13 +358,21 @@ func _label(warn: bool, who: int, dist: float) -> String:
 
 ## Feed lines shown now, oldest first: the newest FEED_VISIBLE of those younger than FEED_HOLD_S, or every
 ## retained line while `scrollback`. {text, angle}; angle is the arrow's screen angle (0 right, PI/2 down =
-## behind).
+## behind), NAN for a caption.
 func feed_lines() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for l in _feed:
 		if scrollback or _clock - l["at"] < FEED_HOLD_S:
-			out.append({"text": l["text"], "angle": _bearing(l["origin"])})
+			out.append({"text": l["text"], "angle": _bearing(l["origin"]) if l["origin"] is Vector3 else NAN})
 	return out if scrollback else out.slice(maxi(0, out.size() - FEED_VISIBLE))
+
+
+## Adds a caption line (hud.md H18: "PA: [text]", no direction arrow) to the feed, in arrival order.
+func add_caption(text: String) -> void:
+	_feed.append({"text": text, "origin": null, "at": _clock})
+	if _feed.size() > FEED_SCROLLBACK:
+		_feed.pop_front()
+	feed_region.accessibility_name = text
 
 
 ## The last FEED_SCROLLBACK feed texts, oldest first.
@@ -524,7 +532,8 @@ func _draw() -> void:
 	for l in lines:
 		var tw := font.get_string_size(l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT).x
 		draw_string(font, Vector2(x + 8, y), l["text"], HORIZONTAL_ALIGNMENT_LEFT, -1, FEED_FONT, FEED_TEXT)
-		_arrow(Vector2(x + tw + 32, y - FEED_FONT / 2.0 + 2), l["angle"], 10.0, FEED_TEXT)
+		if not is_nan(l["angle"]): # captions carry no arrow
+			_arrow(Vector2(x + tw + 32, y - FEED_FONT / 2.0 + 2), l["angle"], 10.0, FEED_TEXT)
 		y += FEED_FONT + 10
 	var centre := size_px / 2.0
 	if too_fast_s > 0.0:

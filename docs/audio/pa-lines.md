@@ -48,4 +48,5 @@ Survivor Objectives (activation rules 19-20). Times are round-clock remaining.
 - **pa_activation_paused** stays (designer, 2026-10-18), although it tells the shapeshifter the terminal is empty.
 - **pa_count_5 to pa_count_1** stay (designer, 2026-10-18), over the alarm and the final-30 s tick.
 - The 2:00 chime ClientSfx played before (pa_chime alone) is replaced: each announcement now opens on that chime.
-- Captions for these lines (accessibility-requirements.md, off by default) are not built yet.
+- Captions: the Captions setting (off by default) puts each line in the feed as `PA: [text]`, no arrow (hud.md
+  H18). The caption text is `ClientSfx.PA_TEXT`: change it with this page and `sounds/pa.py`.

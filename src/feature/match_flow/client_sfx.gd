@@ -13,7 +13,8 @@ class_name ClientSfx extends Node
 ##   paused"). Stops when activation ends.
 ## - PA (match-flow.md V/A, PA countdown; script docs/audio/pa-lines.md): an announcement entering Evacuation
 ##   (timed or terminal armed), a line at each of PA_MARKS seconds left, "lockdown" when the deadline ends the
-##   round, and the terminal activation's start, pause and completion. Facility-wide, at the listener.
+##   round, and the terminal activation's start, pause and completion. Facility-wide, at the listener. Each
+##   line emits `captioned` with its PA_TEXT (hud.md H18; the owner shows it when captions are on).
 ## - Phase stings (match-flow.md V/A): a subtle tone entering Investigation (Evacuation keeps WorldSfx's
 ##   alarm), a tick each second of the final TICK_FROM_S, and a win or loss sting for the own role at the end.
 ## - Face-unlock tick (borrowed-face.md V/A): a quiet UI tick as a borrowable face becomes available, heard by
@@ -25,6 +26,9 @@ class_name ClientSfx extends Node
 ##   var sfx := ClientSfx.new(SoundBank.load_shipped(), audio.play_at, camera.get_global_position, terminal_at, knobs)
 ##   add_child(sfx); router.subscribe(&"ObjectiveProgressChanged", sfx.on_objective)
 ##   sfx.update(delta, ClientSfx.state_of(hud_model, match_display, light.is_on()))  # each frame
+
+## Emitted with a PA line's caption text ("PA: ...") as the line plays.
+signal captioned(text: String)
 
 const BREATH := &"breath_sprint"
 const HEART := &"heartbeat"
@@ -41,6 +45,20 @@ const PA_ACTIVATION_DONE := &"pa/activation_done"
 ## (terminal armed): a timed start is at 2:00 and announces itself with PA_EVAC_TIMED.
 const PA_MARKS := {120.0: &"pa/t_120", 60.0: &"pa/t_60", 30.0: &"pa/t_30", 10.0: &"pa/t_10",
 	5.0: &"pa/count_5", 4.0: &"pa/count_4", 3.0: &"pa/count_3", 2.0: &"pa/count_2", 1.0: &"pa/count_1"}
+## PA line -> what it says (docs/audio/pa-lines.md; the audio is tools/audio/sounds/pa.py LINES: change all three).
+const PA_TEXT := {
+	&"pa/evac_timed": "Attention. Facility evacuation is now in effect. All personnel proceed to the evacuation terminal.",
+	&"pa/evac_armed": "Attention. Power restored. Evacuation terminal is armed.",
+	&"pa/t_120": "Two minutes to facility lockdown.",
+	&"pa/t_60": "One minute to facility lockdown.",
+	&"pa/t_30": "Thirty seconds.",
+	&"pa/t_10": "Ten seconds.",
+	&"pa/count_5": "Five.", &"pa/count_4": "Four.", &"pa/count_3": "Three.", &"pa/count_2": "Two.", &"pa/count_1": "One.",
+	&"pa/lockdown": "Lockdown complete. Evacuation is closed.",
+	&"pa/activation_start": "Evacuation sequence initiated. Remain at the terminal.",
+	&"pa/activation_paused": "Sequence paused. Operator absent.",
+	&"pa/activation_done": "Evacuation sequence complete. Exit doors open.",
+}
 const INVESTIGATION := &"phase/investigation"
 const TICK := &"phase/tick"
 const WIN := &"phase/win"
@@ -239,6 +257,8 @@ func _set_tone(on: bool, progress: float, paused: bool, delta: float) -> void:
 func _one(id: StringName, at: Vector3) -> void:
 	played.append([id, at])
 	_play.call(id, at)
+	if PA_TEXT.has(id):
+		captioned.emit("%s %s" % [tr("PA:"), tr(PA_TEXT[id])])
 
 
 ## A loop player for `id`, child of this node, or null when the bank has no stream for it.

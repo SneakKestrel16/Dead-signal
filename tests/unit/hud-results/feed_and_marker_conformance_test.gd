@@ -150,3 +150,10 @@ func test_feed_zone_keeps_64_px_from_the_16_9_safe_rect_at_21_9() -> void:
 	var ref := PingCalloutHud.zone_rect(Vector2(1920, 1080))
 	assert_that(ref).is_equal(Rect2(48, 48, 1920 - 96, 1080 - 96))
 	assert_that(PingCalloutHud.zone_rect(Vector2(1920, 1200))).is_equal(Rect2(48, 48, 1920 - 96, 1200 - 96))
+
+
+func test_a_caption_joins_the_feed_in_arrival_order_with_no_arrow() -> void:
+	_hud.add_caption("PA: Ten seconds.")
+	var lines := _hud.feed_lines()
+	assert_array(_texts(lines)).contains_exactly(["PA: Ten seconds."])
+	assert_bool(is_nan(lines[0]["angle"])).is_true()

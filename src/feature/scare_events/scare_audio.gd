@@ -14,13 +14,21 @@ class_name ScareAudio extends Node3D
 ## production/qa/evidence/audio/loudness.md), so its player gain stinger_max_db_rel is its level over the bed.
 ## ponytail: the duck holds for a fixed time per trigger (a placeholder cue's length, or duck_release_s for the
 ## stun events) instead of ADR-0013's start/finish counter; equivalent while every cue is a fixed-length beep.
+## A scare voice line (CAPTIONS) emits `captioned` as it plays (hud.md H18; the owner shows it when captions
+## are on). The recordings are distorted until no words survive (tools/audio/sounds/scares.py), so the caption
+## names the sound, not a script.
 ## Usage (client):
 ##   var sa := ScareAudio.new(ScareCatalogue.load_shipped(), knobs); add_child(sa)
 ##   router.subscribe(&"ScareTriggered", sa.on_scare); router.subscribe(EventBatch.SOUND, sa.on_sound)
 ##   router.subscribe(&"PlayerShocked", sa.on_stun); router.subscribe(&"MonsterStunned", sa.on_stun)
 
 ## ADR-0013 §1 buses, looked up by name in default_bus_layout.tres.
+## Emitted with a scare voice line's caption text as it plays.
+signal captioned(text: String)
+
 const SFX_BUS := &"ScareSFX"
+## Scare id -> its caption (hud.md H18 "[Voice]: [text]").
+const CAPTIONS := {&"recording_room": "Speaker: (distorted voice)", &"recording_script": "Speaker: (distorted voice)"}
 const STINGER_BUS := &"Stinger"
 const SCARE_BUS := &"Scare"
 const DUCKED: Array[StringName] = [&"Ambience", &"ScareDuck"]
@@ -91,6 +99,8 @@ func on_scare(_tick: int, payload: Dictionary) -> void:
 	p.top_level = true
 	_start(p)
 	p.global_position = at
+	if CAPTIONS.has(id):
+		captioned.emit(tr(CAPTIONS[id]))
 	if payload.get("intensity") == ScareEntry.Intensity.MAJOR:
 		_pending.append(_now + _tick_s)
 

@@ -190,3 +190,13 @@ func test_pings_tick_at_their_point_and_warnings_sound_sharper() -> void:
 	_sfx.on_ping(2, {"kind": PingsCallouts.WARNING_POINT, "point": TERMINAL})
 	_sfx.on_ping(3, {"kind": PingsCallouts.LOCATION})
 	assert_array(_ids).is_equal([ClientSfx.PING, ClientSfx.PING_WARNING])
+
+
+func test_every_pa_line_has_a_caption_and_emits_it_as_it_plays() -> void:
+	for id: StringName in [ClientSfx.PA_EVAC_TIMED, ClientSfx.PA_EVAC_ARMED, ClientSfx.PA_LOCKDOWN,
+			ClientSfx.PA_ACTIVATION_START, ClientSfx.PA_ACTIVATION_PAUSED, ClientSfx.PA_ACTIVATION_DONE] + ClientSfx.PA_MARKS.values():
+		assert_bool(ClientSfx.PA_TEXT.has(id)).override_failure_message("no caption for %s" % id).is_true()
+	var got: Array[String] = []
+	_sfx.captioned.connect(func(t: String) -> void: got.append(t))
+	_sfx.update(0.016, _state({"ended": true, "won": false, "deadline": true}))
+	assert_array(got).contains_exactly(["PA: Lockdown complete. Evacuation is closed."])

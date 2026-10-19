@@ -56,7 +56,7 @@ In a round, bodies are identified only by character look and colour (`lobby-role
 | Photosensitivity warning | Basic | First launch | Not Started | Seizure warning screen before the main menu. |
 | Flash intensity scale and flash cap | Standard (elevated) | Scare flashes, flicker, beacons | Not Started | Scale 0–1; ≤ 3 flashes/s at any setting; scale 0 = non-flashing change; reduced-flash beacons (`scare-events.md` rules 24–25, `research-facility.md`, ADR-0009 §6–7). |
 | Reduced motion | Standard (elevated) | Camera | Not Started | Flinch toggle (`scare-events.md` rule 27; screen-edge pulse instead), head-bob 0–100%, sprint FOV kick on/off, damage camera-impact shake on/off. Visual only; the server view direction is unaffected except by the flinch. |
-| Captions — on/off | Basic | Callouts, PA countdown | Not Started | The callout feed line is always on: it is a gameplay channel (`pings-and-callouts.md`). Separate captions for PA and scare voices: off by default. |
+| Captions — on/off | Basic | Callouts, PA countdown | Done | Settings row Captions (off) built 2026-10-18; PA lines and the two recording scares ("Speaker: (distorted voice)") caption into the feed (`production/qa/evidence/pa-captions-feed-2026-10-18.png`). The callout feed line is always on: it is a gameplay channel (`pings-and-callouts.md`). Separate captions for PA and scare voices: off by default. |
 | Captions — speaker identification | Standard | Callouts | Not Started | The feed shows the displayed identity's name. A fake callout shows the impersonated name: intended (False Signal); captions must never reveal fakes. |
 | Visual indicators for monster cues | Standard (elevated) | Lunge wind-up, transform distortion | Not Started | See Auditory Accessibility. |
 
@@ -116,7 +116,7 @@ Sound is evidence in this game: footsteps, interaction noise and False Signal fa
 
 | Feature | Target Tier | Scope | Status | Implementation Notes |
 |---------|-------------|-------|--------|---------------------|
-| Subtitles for all spoken dialogue | Basic | Callouts, PA countdown, scare voice lines | Not Started | Callouts: the feed line is the caption (always on; the monster receives audio only, as designed). PA and scare voice lines: captions off by default. Proximity voice cannot be captioned (Known Intentional Limitations). |
+| Subtitles for all spoken dialogue | Basic | Callouts, PA countdown, scare voice lines | Done (2026-10-18; the recordings have no surviving words, so their caption names the sound) | Callouts: the feed line is the caption (always on; the monster receives audio only, as designed). PA and scare voice lines: captions off by default. Proximity voice cannot be captioned (Known Intentional Limitations). |
 | Closed captions for gameplay-critical SFX | Standard (elevated, subset) | Lunge wind-up, transform distortion | Not Started | Shown as directional screen-edge indicators (below), not bracket text. Other SFX: see the audit table. |
 | Mono audio option | Comprehensive | — | Not Committed | Candidate (Open Questions): cheap, and it only removes direction for the player who picks it. |
 | Independent volume controls | Basic | Master, Music, SFX, Voice (callouts), Proximity voice, UI, Stinger, Scare master | Not Started | Stinger and scare master are separate from SFX so gameplay cues stay audible (`scare-events.md` rule 26). 0–100%, default 80%; also in the in-round overlay. |

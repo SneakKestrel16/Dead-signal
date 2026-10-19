@@ -135,3 +135,12 @@ func test_scales_write_only_their_bus_and_never_move_stinger_timing() -> void:
 	a.advance(1.0)
 	for w: Array in _writes:
 		assert_bool(w[0] in NEVER).override_failure_message("wrote %s" % w[0]).is_false()
+
+
+func test_a_recording_scare_emits_its_caption_and_a_door_burst_none() -> void:
+	var a := _audio()
+	var got: Array[String] = []
+	a.captioned.connect(func(t: String) -> void: got.append(t))
+	a.on_scare(1, _payload(&"recording_room", ScareEntry.Intensity.MINOR))
+	a.on_scare(1, _payload(&"door_burst", ScareEntry.Intensity.MAJOR))
+	assert_array(got).contains_exactly([ScareAudio.CAPTIONS[&"recording_room"]])

@@ -335,6 +335,12 @@ func _on_connected() -> void:
 		input.contexts = ping_hud.contexts
 		ShapeshifterAim.mount(hud, hud_model, camera, ping_hud.contexts, smp, _map, knobs) # MA-11: abilities, S7
 		ping_hud.contexts.viewport = get_viewport()
+		var caption := func(text: String) -> void: # hud.md H18, off by default
+			if settings != null and settings.captions:
+				ping_hud.add_caption(text)
+		client_sfx.captioned.connect(caption)
+		if scare_audio != null:
+			scare_audio.captioned.connect(caption)
 		edge_cues = EdgeCues.new(knobs, camera.get_global_transform, func() -> bool: return flinch_enabled)
 		hud.add_child(edge_cues)
 		router.subscribe(EventBatch.SOUND, edge_cues.on_sound)

@@ -6,7 +6,7 @@ class_name SettingsScreen extends Control
 ## runs top to bottom and ends on Back; Esc / B (ui_cancel) and Esc / Start (menu) close it. It pushes `ctx`
 ## on `contexts` with the first row focused and pops it on exit, unless a reset already dropped it (round
 ## end, ADR-0014 §1). Closing saves the settings file.
-## Deviations: no tab bar (P27) and no scroll (P28): twelve rows fit one page. No theme focus stylebox yet
+## Deviations: no tab bar (P27) and no scroll (P28): thirteen rows fit one page. No theme focus stylebox yet
 ## (P17): the stock focus ring is used. Mouse sensitivity and stick speed read as percent of their default.
 ## Usage:
 ##   var s := SettingsScreen.new(settings, contexts, InputContextStack.Ctx.OVERLAY, true)
@@ -28,6 +28,7 @@ const ROWS: Array[Array] = [
 	[&"mouse_sensitivity", "Mouse sensitivity"],
 	[&"stick_rate", "Stick look speed"],
 	[&"hud_scale", "HUD scale"],
+	[&"captions", "Captions"],
 ]
 ## Settings whose readout is percent of their default rather than of 1.
 const RELATIVE: Array[StringName] = [&"mouse_sensitivity", &"stick_rate"]

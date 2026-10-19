@@ -14,7 +14,8 @@ const PATH := "user://settings.cfg"
 const SECTION := "settings"
 ## key -> [default] for a toggle, [default, min, max] for a slider.
 ## Volumes 0-1, default 80% (accessibility-requirements.md Independent volume controls). flash_scale 0-1
-## (scare-events.md rule 24). hud_scale 0.75-1.5 (hud.md Tuning Knobs). camera_flinch on (ADR-0015 §4).
+## (scare-events.md rule 24). hud_scale 0.75-1.5 (hud.md Tuning Knobs). camera_flinch on (ADR-0015 §4). captions
+## off (hud.md H18, accessibility-requirements.md: PA and scare voice lines).
 ## mouse_sensitivity rad/px and stick_rate rad/s: LocalInput's defaults; the 0.25x-4x and 1-6 rad/s ranges are
 ## NOT SOURCEABLE (inference; a playtest settles them).
 const SPEC := {
@@ -30,6 +31,7 @@ const SPEC := {
 	&"mouse_sensitivity": [0.0025, 0.000625, 0.01],
 	&"stick_rate": [3.0, 1.0, 6.0],
 	&"hud_scale": [1.0, 0.75, 1.5],
+	&"captions": [false],
 }
 ## User flag -> the toggle it turns on for the session.
 const FLAGS := {"--reduced-motion": &"reduced_motion", "--reduced-flash": &"reduced_flash"}
@@ -49,6 +51,7 @@ var scare_volume := 0.8
 var mouse_sensitivity := 0.0025
 var stick_rate := 3.0
 var hud_scale := 1.0
+var captions := false
 
 var _path: String
 ## key -> the stored value a flag hides for this session (saved instead of the flagged one).
