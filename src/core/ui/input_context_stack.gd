@@ -111,10 +111,11 @@ func reapply_mouse_mode() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if wants_cursor(top()) else captured_mode()
 
 
-## MOUSE_MODE_CAPTURED, except while Movie Maker records (--write-movie): screenshot runs launched beside the
-## designer's desktop must not take their mouse.
+## MOUSE_MODE_CAPTURED, except while Movie Maker records (--write-movie) or with the user flag --no-capture
+## (scripted bot and screenshot runs): runs launched beside the designer's desktop must not take their mouse.
 static func captured_mode() -> Input.MouseMode:
-	return Input.MOUSE_MODE_CAPTURED if Engine.get_write_movie_path().is_empty() else Input.MOUSE_MODE_VISIBLE
+	var free := not Engine.get_write_movie_path().is_empty() or OS.get_cmdline_user_args().has("--no-capture")
+	return Input.MOUSE_MODE_VISIBLE if free else Input.MOUSE_MODE_CAPTURED
 
 
 ## True once after each switch to the captured mouse: the caller drops that relative motion, which on

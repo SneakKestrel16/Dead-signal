@@ -285,6 +285,8 @@ func test_bars_show_percent_and_paused_from_server_progress() -> void:
 	assert_float(bars.progress_of(7)).is_equal_approx(0.5, 0.0001)
 	assert_str(bars.text_of(7)).contains("50%")
 	assert_str(bars.text_of(7)).not_contains("Paused")
+	bars._process(0.0)
+	assert_float(bars.fill_of(7)).override_failure_message("the drawn bar follows server progress").is_equal_approx(0.5, 0.0001)
 	bars.on_progress(12, {"key": WorldProgress.ACTIVATION_KEY, "at": Vector3.ONE, "progress": 0.4, "rate": 0.0,
 		"paused": true})
 	assert_str(bars.text_of(WorldProgress.ACTIVATION_KEY)).contains("40%")

@@ -7,7 +7,9 @@ Status sources: Done = built and in the game (commits 19885cb dressing, 6bfe46d 
 record: the facility rooms (`production/qa/evidence/facility-detail.md`, 2026-10-17, "the facility looks good")
 and the true form (`design/art/true-form-review.md` round 9, 2026-10-18). ASSET-087 is Done as hud.md H13's world
 progress bars (`src/feature/hud_results/world_progress.gd` server side, `world_progress_bars.gd` client; story
-hud-results/005): every real hold and the activation countdown, survivors only, never hiding or fake holds.
+hud-results/005): every real hold and the activation countdown, survivors only, never hiding or fake holds. The
+greybox text bar became a drawn bar (`spatial_ui_world_progress.gdshader`) on 2026-10-18
+(`production/qa/evidence/world-progress-bar-art-2026-10-18.png`).
 
 ## Progress Summary
 
