@@ -12,12 +12,12 @@ class_name MapDressing extends RefCounted
 ## - Decals: static stains, cracks, scuffs and notes from the layout's `decals`, as alpha quads on mat_decal_set
 ##   with the atlas cell picked by uv1 offset/scale. Quads, not Decal nodes: Decal has no UV region and an
 ##   AtlasTexture on a Decal is unverified (assets/art/materials/README.md); a quad renders headless and in game.
-## - Fixtures (ASSET-070..076): a ceiling fixture over each overhead light and a floor strip under each emergency
-##   light, on the LightingPresenter's grid (LightingPresets.overhead_cell_m), and a beacon plus an alarm strobe
-##   on the ceiling of each beacon volume (red with the triangle cap in C4). Meshes only, unlit diffusers: the
-##   lights stay the presenter's and ScareVisuals', so counts and energies are unchanged; the strips glow faintly
-##   as they are always on. Zone A and corridors take the panel, B and C the cage (inference: the spec names
-##   no fixture for B or the corridors).
+## - Fixtures (ASSET-070..076): a ceiling fixture over each overhead light, on the LightingPresenter's grid
+##   (LightingPresets.overhead_cell_m), and a beacon plus an alarm strobe on the ceiling of each beacon volume
+##   (red with the triangle cap in C4). Meshes only, unlit diffusers: the lights stay the presenter's and
+##   ScareVisuals', so counts and energies are unchanged. No floor strip mesh: the designer disliked the glowing
+##   line down the middle of every floor (2026-10-18); the faint emergency omni stays. Zone A and corridors take
+##   the panel, B and C the cage (inference: the spec names no fixture for B or the corridors).
 ## - Arrows: evacuation arrow plates from the layout's `arrows` along H-N, H-S and C2 toward C4 (research-facility.md
 ##   Lighting States, Evacuation), signage atlas cells `<` `>`, above the doorway signs. Positions are inference:
 ##   the level doc names the rooms, not the spots; playtest settles them.
@@ -259,7 +259,6 @@ static func _fixtures(parent: Node3D, map: MapData, presets: LightingPresets) ->
 				n += 1
 				_fixture(parent, scenes, CEILING_FIXTURE.get(v.zone, "prop_light_panel"), "Overhead_%s_%d" % [v.id, n],
 						at + Vector3.UP * v.box.size.y)
-				_fixture(parent, scenes, "prop_emergency_strip", "Strip_%s_%d" % [v.id, n], at)
 		if String(v.id) in presets.beacon_volumes:
 			var top := Vector3(v.box.get_center().x, v.box.end.y, v.box.get_center().z)
 			_fixture(parent, scenes, BEACON_FIXTURE.get(v.id, "prop_beacon"), "Beacon_%s" % v.id, top)

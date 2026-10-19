@@ -336,10 +336,8 @@ func test_fixtures_sit_where_the_lighting_presenter_puts_its_lights() -> void:
 		for l: Node3D in vol.get_node(^"overhead").get_children():
 			n_lights += 1
 			assert_bool(_at(overhead, l.global_position)).override_failure_message("no fixture over %s light" % v.id).is_true()
-		for o: Node3D in vol.get_node(^"emergency_strip").get_children():
-			assert_bool(_at(strips, o.global_position)).override_failure_message("no strip under %s" % v.id).is_true()
 	assert_int(overhead.size()).is_equal(n_lights)
-	assert_int(strips.size()).is_equal(n_lights)
+	assert_int(strips.size()).override_failure_message("no floor strip meshes (designer, 2026-10-18)").is_equal(0)
 	for f in overhead:
 		var v := _map.volumes.filter(func(x: MapVolume) -> bool: return x.contains(f.global_position))[0] as MapVolume
 		assert_float(f.global_position.y).is_equal_approx(v.box.end.y, EPS)
