@@ -47,15 +47,23 @@ func glyph_text(action: StringName) -> String:
 		var pad := e is InputEventJoypadButton or e is InputEventJoypadMotion
 		if pad != (device == Device.GAMEPAD):
 			continue
-		if e is InputEventKey:
-			var k := e as InputEventKey
-			return OS.get_keycode_string(k.keycode if k.keycode != KEY_NONE else k.physical_keycode)
-		if e is InputEventMouseButton:
-			return "Mouse %d" % (e as InputEventMouseButton).button_index
-		if e is InputEventJoypadButton:
-			var b := (e as InputEventJoypadButton).button_index
-			return PAD_BUTTONS[b] if b >= 0 and b < PAD_BUTTONS.size() else "Pad %d" % b
-		if e is InputEventJoypadMotion:
-			var a := (e as InputEventJoypadMotion).axis
-			return PAD_AXES[a] if a >= 0 and a < PAD_AXES.size() else "Axis %d" % a
+		var t := event_text(e)
+		if t != UNBOUND:
+			return t
+	return UNBOUND
+
+
+## Text glyph of one binding event; UNBOUND for a kind with no glyph (the settings screen shares it).
+static func event_text(e: InputEvent) -> String:
+	if e is InputEventKey:
+		var k := e as InputEventKey
+		return OS.get_keycode_string(k.keycode if k.keycode != KEY_NONE else k.physical_keycode)
+	if e is InputEventMouseButton:
+		return "Mouse %d" % (e as InputEventMouseButton).button_index
+	if e is InputEventJoypadButton:
+		var b := (e as InputEventJoypadButton).button_index
+		return PAD_BUTTONS[b] if b >= 0 and b < PAD_BUTTONS.size() else "Pad %d" % b
+	if e is InputEventJoypadMotion:
+		var a := (e as InputEventJoypadMotion).axis
+		return PAD_AXES[a] if a >= 0 and a < PAD_AXES.size() else "Axis %d" % a
 	return UNBOUND

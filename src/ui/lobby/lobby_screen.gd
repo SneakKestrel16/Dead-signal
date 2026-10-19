@@ -32,7 +32,7 @@ class_name LobbyScreen extends Control
 ## --lobby-shots=DIR (story match-flow/013 evidence) saves lobby.png once the room lists min_players,
 ## round.png SHOT_AFTER_S after the own body spawned, results.png SHOT_AFTER_S into Results and back.png
 ## once the room shows again after the round, then quits. --lobby-settings opens the settings screen (with
-## --lobby-shots and no host/join: settings.png, then quits).
+## --lobby-shots and no host/join: settings.png, then quits); --lobby-settings-tab=N opens tab N.
 ## Settings (design/game-brief.md MVP; interaction-patterns.md P15): the form's and room's Settings button opens
 ## SettingsScreen under MENU on the lobby's stack; in a round Esc / Start opens it as a non-pausing OVERLAY on
 ## the round's stack (only from GAMEPLAY). Each change applies live: bus volumes here, the rest through
@@ -103,6 +103,8 @@ func _ready() -> void:
 	if settings == null:
 		settings = PlayerSettings.new()
 	settings.apply_audio()
+	settings.apply_bindings()
+	settings.apply_video(get_viewport())
 	settings.changed.connect(_on_setting_changed)
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
@@ -465,6 +467,8 @@ func open_settings() -> void:
 	else:
 		settings_view = SettingsScreen.new(settings, _contexts, InputContextStack.Ctx.MENU, false)
 		add_child(settings_view)
+		if _opts.has("lobby-settings-tab"): # evidence captures of one tab
+			settings_view.tabs.current_tab = clampi(int(_opts["lobby-settings-tab"]), 0, SettingsScreen.TABS.size() - 1)
 	settings_view.closed.connect(close_settings)
 
 
@@ -479,6 +483,7 @@ func close_settings() -> void:
 
 func _on_setting_changed(_key: StringName) -> void:
 	settings.apply_audio()
+	settings.apply_video(get_viewport())
 	if round_client != null:
 		round_client.apply_settings(settings)
 

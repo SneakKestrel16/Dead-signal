@@ -129,7 +129,8 @@ func test_focus_runs_down_the_rows_and_ends_on_back() -> void:
 	for i in stops.size() - 1:
 		assert_object(stops[i].get_node(stops[i].focus_neighbor_bottom)).is_same(stops[i + 1])
 		assert_object(stops[i + 1].get_node(stops[i + 1].focus_neighbor_top)).is_same(stops[i])
-	assert_object(stops[0]).is_same(s.controls[&"reduced_motion"])
+	assert_object(stops[0]).is_same(s.tabs.get_tab_bar())
+	assert_object(stops[1]).is_same(s.controls[SettingsScreen.TABS[0][1][0][0]])
 	s.free()
 
 
