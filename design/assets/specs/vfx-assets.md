@@ -25,4 +25,4 @@ art-director and technical-artist skipped — Solo mode: specs derived in this s
 | ASSET-086 | Drive and exit glow | Soft cyan pool under a dropped drive; ejected-drive arc; green flood when Exit Open | survivor-objectives V/A; §4 |
 | ASSET-087 | World progress ring | World-space ring or bar over objects for hold interactions (install, hide, barricade, rescue), in the HUD style. hud.md owns its colour | survivor-objectives V/A; downing-and-rescue V/A |
 
-**Status:** ASSET-078..086 Done (81ef3ee, 2a8ba44); ASSET-087 Needed (only the screen-space hold ring exists). See `design/assets/asset-manifest.md`.
+**Status:** ASSET-078..086 Done (81ef3ee, 2a8ba44); ASSET-087 Done as the screen rings P3 and H16 (AD-251): hud.md I13 shows hold progress to the actor and the rescue victim only, so no world-space ring is built. See `design/assets/asset-manifest.md`.

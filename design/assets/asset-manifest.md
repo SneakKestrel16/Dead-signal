@@ -5,14 +5,15 @@
 Status sources: Done = built and in the game (commits 19885cb dressing, 6bfe46d level geometry, 81ef3ee VFX,
 2a8ba44 objective glows, 8d16dfe true form, and the character and props art passes). Approved = designer sign-off on
 record: the facility rooms (`production/qa/evidence/facility-detail.md`, 2026-10-17, "the facility looks good")
-and the true form (`design/art/true-form-review.md` round 9, 2026-10-18). ASSET-087 stays Needed: the hold ring is
-drawn in screen space by InteractionHud for the holder only; no world-space ring exists.
+and the true form (`design/art/true-form-review.md` round 9, 2026-10-18). ASSET-087 is Done as the screen rings
+(AD-251): hud.md I13 shows hold progress to the actor and the rescue victim only, and both rings exist (P3 at the
+crosshair, InteractionHud; H16 for the victim, OwnStateHud). No design rule asks for a world-space ring.
 
 ## Progress Summary
 
 | Total | Needed | In Progress | Done | Approved |
 |-------|--------|-------------|------|----------|
-| 87 | 1 | 0 | 68 | 18 |
+| 87 | 0 | 0 | 69 | 18 |
 
 ## Assets by Context
 
@@ -113,4 +114,4 @@ drawn in screen space by InteractionHud for the holder only; no world-space ring
 | ASSET-084 | Glass shards | VFX | Done | design/assets/specs/vfx-assets.md |
 | ASSET-085 | Lunge impact | VFX | Done | design/assets/specs/vfx-assets.md |
 | ASSET-086 | Drive and exit glow | VFX | Done | design/assets/specs/vfx-assets.md |
-| ASSET-087 | World progress ring | VFX | Needed | design/assets/specs/vfx-assets.md |
+| ASSET-087 | World progress ring | VFX | Done | design/assets/specs/vfx-assets.md |
