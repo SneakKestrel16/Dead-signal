@@ -258,3 +258,19 @@ func test_no_script_under_src_sets_a_layer_or_mask_from_a_literal() -> void:
 						bad.append("%s%s: %s" % [dir, f, line])
 	assert_int(scanned).is_greater(10) ## the walk really reached the sources
 	assert_array(bad).is_empty()
+
+
+## TD-007: a body placed while frozen (the round's spawn) resumes from there: last_valid follows it, so an
+## inside-geometry restore never sends it back to where it stood before. An unknown player is ignored.
+func test_resuming_takes_the_current_position_as_last_valid() -> void:
+	var net := NetAuthority.new()
+	net.setup(_knobs, "test", null)
+	var sm := ServerMovement.new(_knobs, net, SceneMultiplayer.new(), TestMoveStep.apply, PhysicsLayers.WORLD)
+	var b := _body(Vector3.ZERO)
+	sm.add_player(0, b, true)
+	sm.set_frozen(0, true)
+	b.global_position = Vector3(5, 0, 5)
+	sm.set_frozen(0, false)
+	assert_vector(sm.last_valid_position_of(0)).is_equal(Vector3(5, 0, 5))
+	sm.set_frozen(99, true) # unknown: no error
+	net.free()

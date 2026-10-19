@@ -201,11 +201,18 @@ func push_local(player_id: int, frame: InputFrame) -> void:
 
 
 ## Stops (true) or resumes the player's movement step. The owner of Eliminated and Escaped (Match Flow)
-## calls it together with PlayerBody.set_out(), which removes the body's collision (ADR-0007).
+## calls it together with PlayerBody.set_out(), which removes the body's collision (ADR-0007). An unknown
+## player is ignored. Resuming takes the body's current position as the last valid one, so a body placed while
+## frozen (the round's spawn) is never restored to where it stood before (TD-007).
 func set_frozen(player_id: int, frozen: bool) -> void:
-	_players[player_id].frozen = frozen
+	var p: Variant = _players.get(player_id)
+	if p == null:
+		return
+	p.frozen = frozen
 	if frozen:
-		_players[player_id].body.velocity = Vector3.ZERO
+		p.body.velocity = Vector3.ZERO
+	else:
+		p.last_valid = p.body.global_position
 
 
 ## The player's modifiers; the controller arbitration (story 002) writes them.

@@ -9,7 +9,9 @@ class_name NetKnobs extends Resource
 @export var starvation_window_s: float = NAN
 @export var correction_deadzone_m: float = NAN
 @export var correction_smooth_max_m: float = NAN
-@export var correction_smooth_s: float = NAN
+## Range 0.01..1 s: inference (TD-005), ADR-0002 gives only the value 0.1; 0 would divide the smoothing by zero and
+## over 1 s a correction drags visibly. A netcode playtest settles it.
+@export_range(0.01, 1.0) var correction_smooth_s: float = NAN
 ## Range 0..200 ms: inference, ADR-0003 §1 gives only the value 50; a netcode playtest settles it.
 @export_range(0, 200) var interp_delay_ms: int = KnobUnset.INT
 ## Range 0..200 ms: inference, ADR-0003 §1 gives only the value 50; a netcode playtest settles it.
