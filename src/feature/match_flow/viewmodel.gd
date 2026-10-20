@@ -33,6 +33,8 @@ var reduced_motion := false
 ## The held items (children of hand BoneAttachment3Ds).
 var flashlight: Node3D
 var taser: Node3D
+## The taser's darts and wires (ASSET-014); RoundClient fires them on use_item.
+var darts: TaserDarts
 
 var _visuals: BodyVisual
 var _arms: Node3D
@@ -64,6 +66,8 @@ func _init(visuals: BodyVisual) -> void:
 		(g as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		if g.name != ARMS_MESH:
 			(g as GeometryInstance3D).material_override = _props_material()
+	darts = TaserDarts.new(taser) # after the held items' materials: darts and wires are not drawn over walls
+	add_child(darts)
 
 
 ## Whether the arms show for own appearance `appearance` (snapshot byte; -1 before the first own snapshot).

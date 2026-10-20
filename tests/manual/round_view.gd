@@ -9,6 +9,8 @@ extends Node3D
 ## --bot=hold walks client 0 to the nearest hiding spot, aims at it and holds interact; it prints the drawn
 ## frame of the press, of the first frame the hold bar is visible (the CI-16 AC1 capture) and of the
 ## first frame it is full (the server accepted the Start, AD-217).
+## --fire-at=N: the shown client fires its taser at drawn frame N and saves darts_fly.png, darts_hang.png and
+## darts_reel.png (DART_SHOTS frames later); with --bot=look the darts fly at the nearest drawn body.
 ## BUG-0018: --target=door aims --bot=hold at the nearest door instead: press.png shows it open, door.png
 ## DOOR_SHOT_FRAMES drawn frames after the press (an instant toggle) shows the leaf the client draws.
 ## Story hud-results/003: --target=<marker type> aims --bot=hold at the nearest marker of that type instead of a
@@ -108,6 +110,8 @@ const LINK_PORT_OFFSET := 100
 const LINK_SEED := 11
 ## --target=door: drawn frames from the press to door.png (the toggle is instant; a few ticks of replication).
 const DOOR_SHOT_FRAMES := 30
+## --fire-at=N (taser darts, ASSET-014): the shown client fires at drawn frame N; screenshot -> frames after it.
+const DART_SHOTS := {"darts_fly": 3, "darts_hang": 20, "darts_reel": 52}
 const STAGE_AHEAD_M := 3.5
 const STAGE_SPACING_M := 1.2
 ## The line's centre sits this far +X of the shown spawn: the spawn room's west floor edge is near x 0.
@@ -214,6 +218,13 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _args.has("shot-at") and Engine.get_frames_drawn() == int(_args["shot-at"]):
 		_shot("view")
+	if _args.has("fire-at") and _shown != null:
+		var n := Engine.get_frames_drawn() - int(_args["fire-at"])
+		if n == 0:
+			print("FIRE sent %s" % _shown.fire_taser())
+		for tag: String in DART_SHOTS:
+			if n == DART_SHOTS[tag]:
+				_shot(tag)
 	if _link != null:
 		_link.pump(Time.get_ticks_msec() / 1000.0)
 	_pick_view()

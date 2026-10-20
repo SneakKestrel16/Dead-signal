@@ -471,7 +471,31 @@ func fire_taser() -> bool:
 		return false
 	(multiplayer as SceneMultiplayer).send_bytes(SurvivorDefense.fire_packet(), 1,
 			MultiplayerPeer.TRANSFER_MODE_RELIABLE)
+	if viewmodel != null and viewmodel.visible and body != null:
+		viewmodel.darts.fire(_dart_ends())
 	return true
+
+
+## Where the own darts stop (TaserDarts.end_of): the top one along the aim, the lower one SPREAD_DEG under it;
+## walls, glass and doors from the physics space, the drawn remote bodies by their capsules.
+func _dart_ends() -> Array[Vector3]:
+	var space := body.get_world_3d().direct_space_state
+	var own := body.get_rid()
+	var ray := func(from: Vector3, to: Vector3) -> Dictionary:
+		return space.intersect_ray(PhysicsRayQueryParameters3D.create(from, to,
+				PhysicsLayers.PROJECTILE | PhysicsLayers.DOORS, [own]))
+	var bodies: Array[Vector4] = []
+	for n: Node3D in remotes.values():
+		if n.visible:
+			bodies.append(Vector4(n.global_position.x, n.global_position.y, n.global_position.z,
+					knobs.controller.capsule_height_m))
+	var eye := camera.global_position
+	var aim := -camera.global_basis.z
+	var out: Array[Vector3] = []
+	for dir in [aim, TaserDarts.lower(aim, camera.global_basis.x)]:
+		out.append(TaserDarts.end_of(eye, dir, knobs.defense.stun_range_m, ray, bodies,
+				knobs.controller.player_radius_m))
+	return out
 
 
 ## use_item gate: a cartridge in the last server count (-1, no taser, for the shapeshifter; 0 is the GDD's

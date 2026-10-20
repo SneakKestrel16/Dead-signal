@@ -80,6 +80,8 @@ func test_no_viewmodel_geometry_casts_shadows_and_all_of_it_draws_over_walls() -
 	for g: Node in _vm.find_children("*", "GeometryInstance3D", true, false):
 		var gi := g as GeometryInstance3D
 		assert_int(gi.cast_shadow).is_equal(GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
+		if _vm.darts.is_ancestor_of(gi): # the darts fly into the world: walls hide them like any other prop
+			continue
 		if gi.material_override is StandardMaterial3D:
 			assert_bool((gi.material_override as StandardMaterial3D).use_z_clip_scale).is_true()
 
